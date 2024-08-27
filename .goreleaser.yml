@@ -1,0 +1,107 @@
+version: 2
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: "upx"
+    main: ./cmd/billbank
+    binary: billbank
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+    gcflags:
+      - "all=-B -l=120"
+    ldflags:
+      - -s -w
+      - -X github.com/jaeiya/billbank/lib.appVersion={{ .Version }}
+      - -X github.com/jaeiya/billbank/lib.commitSha={{ .ShortCommit }}
+    goarch:
+      - amd64
+    goamd64:
+      - v2
+      - v3
+    hooks:
+      post: # Hook to run after the build
+        - upx --best --lzma -qq --force-overwrite --force-macos {{ .Path }}
+
+  - id: "no-upx"
+    main: ./cmd/billbank
+    binary: billbank
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+    gcflags:
+      - "all=-B -l=120"
+    ldflags:
+      - -s -w
+      - -X github.com/jaeiya/billbank/lib.appVersion={{ .Version }}
+      - -X github.com/jaeiya/billbank/lib.commitSha={{ .ShortCommit }}
+    goarch:
+      - arm64
+    goarm:
+      - "7"
+    ignore:
+      - goos: windows
+        goarch: arm64
+
+snapshot:
+  version_template: "build-{{ .ShortCommit }}"
+
+archives:
+  - id: unix
+    name_template: >-
+      {{ .Binary }}_
+      {{- if .IsSnapshot }}
+      {{ .ShortCommit }}_
+      {{- else }}{{ .Tag }}_
+      {{- end }}
+      {{- .Os }}_
+      {{- if (eq .Arch "amd64") }}x86_64
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if not (eq .Amd64 "v2") }}_{{ .Amd64 }}{{ end }}
+    format_overrides:
+      - goos: windows
+        format: zip
+
+changelog:
+  sort: asc
+  use: github
+  filters:
+    exclude:
+      - "^tdd"
+      - "^test"
+  groups:
+    - title: New
+      regexp: "^.*feat[(\\w)]*:+.*$"
+      order: 100
+
+    - title: Changes
+      regexp: "^.*upd[(\\w)]*:+.*$"
+      order: 200
+
+    - title: "Fixes"
+      regexp: "^.*fix[(\\w)]*:+.*$"
+      order: 300
+
+    - title: "Docs"
+      regexp: "^.*docs[(\\w)]*:+.*$"
+      order: 400
+
+    - title: "Cleaning"
+      regexp: "^.*clean[(\\w)]*:+.*$"
+      order: 500
+
+    - title: "Maintenance"
+      regexp: "^.*chore[(\\w)]*:+.*$"
+      order: 600
+
+    - title: "Testing"
+      regexp: "^.*tdd[(\\w)]*:+.*$"
+      order: 700
+
+    - title: "Other"
+      order: 999
