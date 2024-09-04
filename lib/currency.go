@@ -6,29 +6,29 @@ import (
 	"strings"
 )
 
-type CurrencyType = uint8
+type CurrencyKind = uint8
 
 const (
-	USD = CurrencyType(iota)
+	USD = CurrencyKind(iota)
 	EUR
 	JPY
 )
 
 var (
-	ErrCurrencyFloat    = fmt.Errorf("failed to parse input as float")
-	ErrCurrencyInt      = fmt.Errorf("failed to parse input as int")
-	ErrUSDDollar        = fmt.Errorf("not a valid dollar amount")
-	ErrUSDCents         = fmt.Errorf("too precise; round to cents only")
-	ErrCurrencyType     = fmt.Errorf("using an unsupported currency type")
-	ErrCurrencyConflict = fmt.Errorf("currency types do not match")
+	ErrCurrencyFloat = fmt.Errorf("failed to parse input as float")
+	ErrCurrencyInt   = fmt.Errorf("failed to parse input as int")
+	ErrUSDDollar     = fmt.Errorf("not a valid dollar amount")
+	ErrUSDCents      = fmt.Errorf("too precise; round to cents only")
+	ErrCurrency      = fmt.Errorf("using an unsupported currency")
+	ErrCurrencyKind  = fmt.Errorf("cannot combine currencies of different kinds")
 )
 
 type Currency struct {
-	amount       int
-	currencyType CurrencyType
+	amount int
+	kind   CurrencyKind
 }
 
-func NewCurrency(amount string, ct CurrencyType) *Currency {
+func NewCurrency(amount string, ct CurrencyKind) *Currency {
 	c := &Currency{}
 	switch ct {
 	case USD:
@@ -39,14 +39,14 @@ func NewCurrency(amount string, ct CurrencyType) *Currency {
 			}
 		}
 	default:
-		panic(ErrCurrencyType)
+		panic(ErrCurrency)
 
 	}
 	return c
 }
 
 func (c *Currency) Add(amount string) error {
-	switch c.currencyType {
+	switch c.kind {
 
 	case USD:
 		err := verifyUSDAmount(amount)
@@ -61,7 +61,7 @@ func (c *Currency) Add(amount string) error {
 		c.amount += intAmount
 
 	default:
-		panic(ErrCurrencyType)
+		panic(ErrCurrency)
 
 	}
 	return nil
@@ -69,8 +69,8 @@ func (c *Currency) Add(amount string) error {
 
 func (c *Currency) AddCurrency(currencies ...*Currency) {
 	for _, c2 := range currencies {
-		if c.currencyType != c2.currencyType {
-			panic(ErrCurrencyConflict)
+		if c.kind != c2.kind {
+			panic(ErrCurrencyKind)
 		}
 		c.amount += c2.amount
 	}
@@ -86,19 +86,46 @@ func (c *Currency) Subtract(amount string) error {
 
 func (c *Currency) SubtractCurrency(currencies ...*Currency) {
 	for _, c2 := range currencies {
-		if c.currencyType != c2.currencyType {
-			panic(ErrCurrencyConflict)
+		if c.kind != c2.kind {
+			panic(ErrCurrencyKind)
 		}
 		c.amount -= c2.amount
 	}
 }
 
+func (c *Currency) Set(amount string) error {
+	switch c.kind {
+	case USD:
+		if err := verifyUSDAmount(amount); err != nil {
+			return err
+		}
+
+		cents, err := toUSDCents(amount)
+		if err != nil {
+			return err
+		}
+		c.amount = cents
+
+	default:
+		panic(ErrCurrencyKind)
+	}
+
+	return nil
+}
+
+func (c *Currency) SetCurrency(c2 Currency) {
+	if c.kind != c2.kind {
+		panic(ErrCurrencyKind)
+	}
+	c.amount = c2.amount
+}
+
 func (c *Currency) String() string {
-	switch c.currencyType {
+	switch c.kind {
 	case USD:
 		return fmt.Sprintf("$%d.%02d", c.amount/100, c.amount%100)
 	default:
-		panic(ErrCurrencyType)
+		panic(ErrCurrency)
 	}
 }
 
