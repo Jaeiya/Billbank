@@ -122,10 +122,59 @@ func TestCurrency(t *testing.T) {
 		})
 	}
 
-	t.Run("panic with bad denomination", func(t *testing.T) {
+	t.Run("should set currency", func(t *testing.T) {
+		t.Parallel()
+		c := NewCurrency("", USD)
+		a := assert.New(t)
+
+		c.Set("1.56")
+		a.Equal(c.String(), "$1.56")
+
+		c.SetCurrency(*NewCurrency(".5", USD))
+		a.Equal(c.String(), "$0.50")
+	})
+
+	t.Run("should error with non-number USD amount", func(t *testing.T) {
+		t.Parallel()
+		c := NewCurrency("", USD)
+		a := assert.New(t)
+		a.ErrorIs(c.Add("hello there"), ErrUSDDollar)
+	})
+
+	t.Run("should error with invalid float USD amount", func(t *testing.T) {
+		t.Parallel()
+		c := NewCurrency("", USD)
+		a := assert.New(t)
+		a.ErrorIs(c.Add("t.t"), ErrCurrencyFloat)
+	})
+
+	t.Run("should panic with unsupported currency", func(t *testing.T) {
+		t.Parallel()
+		a := assert.New(t)
+		a.PanicsWithError(ErrCurrency.Error(), func() { NewCurrency("", EUR) })
+
+		c := NewCurrency("", USD)
+		c.kind = EUR
+		c2 := NewCurrency("", USD)
+		a.PanicsWithError(ErrCurrencyKind.Error(), func() { c.AddCurrency(c2) })
+		a.PanicsWithError(ErrCurrencyKind.Error(), func() { c.SubtractCurrency(c2) })
+		a.PanicsWithError(ErrCurrencyKind.Error(), func() { c.SetCurrency(*c2) })
+	})
+
+	t.Run("should error with micro-cent USD amount", func(t *testing.T) {
 		t.Parallel()
 		c := NewCurrency("", USD)
 		a := assert.New(t)
 		a.ErrorIs(c.Add("24.232384"), ErrUSDCents)
+	})
+
+	t.Run("should error if conversion to cents is non-int USD amount", func(t *testing.T) {
+		t.Parallel()
+		a := assert.New(t)
+		_, err := toUSDCents("abc")
+		a.ErrorIs(err, ErrCurrencyInt)
+
+		_, err = toUSDCents("a.b")
+		a.ErrorIs(err, ErrCurrencyInt)
 	})
 }
