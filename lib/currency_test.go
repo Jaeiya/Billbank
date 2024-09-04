@@ -126,7 +126,6 @@ func TestCurrency(t *testing.T) {
 		t.Parallel()
 		c := NewCurrency("", USD)
 		a := assert.New(t)
-		a.Errorf(c.Add("24.232384"), ErrUSDCents)
+		a.ErrorIs(c.Add("24.232384"), ErrUSDCents)
 	})
-
 }

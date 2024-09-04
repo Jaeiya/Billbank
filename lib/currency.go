@@ -14,21 +14,13 @@ const (
 	JPY
 )
 
-type CurrencyError struct {
-	Msg string
-}
-
-func (err *CurrencyError) Error() string {
-	return err.Msg
-}
-
 var (
-	ErrCurrencyFloat    = &CurrencyError{"failed to parse input as float"}
-	ErrCurrencyInt      = &CurrencyError{"failed to parse input as int"}
-	ErrUSDDollar        = &CurrencyError{"not a valid dollar amount"}
-	ErrUSDCents         = &CurrencyError{"too precise; round to cents only"}
-	ErrCurrencyType     = &CurrencyError{"using an unsupported currency type"}
-	ErrCurrencyConflict = &CurrencyError{"currency types do not match"}
+	ErrCurrencyFloat    = fmt.Errorf("failed to parse input as float")
+	ErrCurrencyInt      = fmt.Errorf("failed to parse input as int")
+	ErrUSDDollar        = fmt.Errorf("not a valid dollar amount")
+	ErrUSDCents         = fmt.Errorf("too precise; round to cents only")
+	ErrCurrencyType     = fmt.Errorf("using an unsupported currency type")
+	ErrCurrencyConflict = fmt.Errorf("currency types do not match")
 )
 
 type Currency struct {
@@ -53,7 +45,7 @@ func NewCurrency(amount string, ct CurrencyType) *Currency {
 	return c
 }
 
-func (c *Currency) Add(amount string) *CurrencyError {
+func (c *Currency) Add(amount string) error {
 	switch c.currencyType {
 
 	case USD:
@@ -84,7 +76,7 @@ func (c *Currency) AddCurrency(currencies ...*Currency) {
 	}
 }
 
-func (c *Currency) Subtract(amount string) *CurrencyError {
+func (c *Currency) Subtract(amount string) error {
 	err := c.Add("-" + amount)
 	if err != nil {
 		return err
@@ -110,7 +102,7 @@ func (c *Currency) String() string {
 	}
 }
 
-func verifyUSDAmount(amount string) *CurrencyError {
+func verifyUSDAmount(amount string) error {
 	if !strings.Contains(amount, ".") {
 		if _, err := strconv.ParseInt(amount, 10, 64); err != nil {
 			return ErrUSDDollar
@@ -129,7 +121,7 @@ func verifyUSDAmount(amount string) *CurrencyError {
 	return nil
 }
 
-func toUSDCents(amount string) (int, *CurrencyError) {
+func toUSDCents(amount string) (int, error) {
 	if !strings.Contains(amount, ".") {
 		intAmount, err := strconv.Atoi(amount)
 		if err != nil {
