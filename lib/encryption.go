@@ -43,10 +43,7 @@ func ValidatePassword(password string, storedPass string) (bool, error) {
 	hash := storedBytes[16:]
 	newHash := argon2.IDKey([]byte(password), salt, timeCost, memoryCost, threads, hashLength)
 
-	if bytes.Equal(hash, newHash) {
-		return true, nil
-	}
-	return false, nil
+	return bytes.Equal(hash, newHash), nil
 }
 
 func EncryptData(data string, password string) string {
