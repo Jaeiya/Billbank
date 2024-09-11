@@ -100,7 +100,7 @@ func NewSqliteDb(name string, cc lib.CurrencyCode) *SqliteDb {
 	return &SqliteDb{db, cc}
 }
 
-func (sdb *SqliteDb) CreateMonth(t time.Time) error {
+func (sdb SqliteDb) CreateMonth(t time.Time) error {
 	// Make sure any prior date arithmetic, used a clean date
 	isClean := t.Day() == 1 &&
 		t.Hour() == 0 &&
@@ -118,7 +118,7 @@ func (sdb *SqliteDb) CreateMonth(t time.Time) error {
 	return nil
 }
 
-func (sdb *SqliteDb) QueryMonth() {
+func (sdb SqliteDb) QueryMonth() {
 	rows, err := sdb.handle.Query("SELECT * FROM months")
 	if err != nil {
 		panic(err)
@@ -136,7 +136,7 @@ func (sdb *SqliteDb) QueryMonth() {
 	}
 }
 
-func (sdb *SqliteDb) CreateBankAccount(
+func (sdb SqliteDb) CreateBankAccount(
 	name string,
 	password, accountNumber, notes *string,
 ) error {
@@ -163,7 +163,7 @@ func (sdb *SqliteDb) CreateBankAccount(
 	return err
 }
 
-func (sdb *SqliteDb) QueryBankAccount(accountId int, password *string) (BankInfo, error) {
+func (sdb SqliteDb) QueryBankAccount(accountId int, password *string) (BankInfo, error) {
 	var query string
 
 	if password == nil {
@@ -221,7 +221,7 @@ func (sdb *SqliteDb) QueryBankAccount(accountId int, password *string) (BankInfo
 	return BankInfo{name, acctNum, notes}, nil
 }
 
-func (sdb *SqliteDb) CreateIncome(name string, c lib.Currency, p Period) (int64, error) {
+func (sdb SqliteDb) CreateIncome(name string, c lib.Currency, p Period) (int64, error) {
 	res, err := sdb.handle.Exec(sdb.InsertInto(INCOME, name, c.ToAmount(), p))
 	if err != nil {
 		return 0, err
@@ -235,7 +235,7 @@ func (sdb *SqliteDb) CreateIncome(name string, c lib.Currency, p Period) (int64,
 	return id, nil
 }
 
-func (sdb *SqliteDb) SetIncome(id int, c lib.Currency) error {
+func (sdb SqliteDb) SetIncome(id int, c lib.Currency) error {
 	_, err := sdb.handle.Exec(
 		fmt.Sprintf("UPDATE income SET amount=%d WHERE id=%d", c.ToAmount(), id),
 	)
@@ -248,12 +248,12 @@ be a bonus or overtime amount.
 
 🟡The id is an income_history_id, not an income_id
 */
-func (sdb *SqliteDb) AffixIncome(id int, name string, c lib.Currency) error {
+func (sdb SqliteDb) AffixIncome(id int, name string, c lib.Currency) error {
 	_, err := sdb.handle.Exec(sdb.InsertInto(INCOME_AFFIXES, id, c.ToAmount()))
 	return err
 }
 
-func (sdb *SqliteDb) QueryIncome() (IncomeInfo, error) {
+func (sdb SqliteDb) QueryIncome() (IncomeInfo, error) {
 	rows, err := sdb.handle.Query("SELECT * FROM income")
 	if err != nil {
 		panic(err)
@@ -282,7 +282,7 @@ func (sdb *SqliteDb) QueryIncome() (IncomeInfo, error) {
 	return IncomeInfo{name, *c, Period(period)}, nil
 }
 
-func (sdb *SqliteDb) InsertInto(t Table, values ...any) string {
+func (sdb SqliteDb) InsertInto(t Table, values ...any) string {
 	columns, exists := tableData[t]
 	if !exists {
 		panic("unsupported table")
@@ -319,7 +319,7 @@ func (sdb *SqliteDb) InsertInto(t Table, values ...any) string {
 	return sbColumns.String()[:len(sbColumns.String())-1] + ")"
 }
 
-func (sdb *SqliteDb) Close() {
+func (sdb SqliteDb) Close() {
 	_ = sdb.handle.Close()
 }
 
