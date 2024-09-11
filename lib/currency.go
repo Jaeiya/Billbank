@@ -130,10 +130,10 @@ func (c *Currency) String() string {
 }
 
 /*
-ToAmount returns the total amount in the lowest denomination
+ToInt returns the total amount in the lowest denomination
 for that currency. Should only be used for storage.
 */
-func (c *Currency) ToAmount() int {
+func (c *Currency) ToInt() int {
 	return c.amount
 }
 

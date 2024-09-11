@@ -221,8 +221,8 @@ func (sdb SqliteDb) QueryBankAccount(accountId int, password *string) (BankInfo,
 	return BankInfo{name, acctNum, notes}, nil
 }
 
-func (sdb SqliteDb) CreateIncome(name string, c lib.Currency, p Period) (int64, error) {
-	res, err := sdb.handle.Exec(sdb.InsertInto(INCOME, name, c.ToAmount(), p))
+func (sdb SqliteDb) CreateIncome(name string, amount lib.Currency, p Period) (int64, error) {
+	res, err := sdb.handle.Exec(sdb.InsertInto(INCOME, name, amount.ToInt(), p))
 	if err != nil {
 		return 0, err
 	}
@@ -235,9 +235,9 @@ func (sdb SqliteDb) CreateIncome(name string, c lib.Currency, p Period) (int64, 
 	return id, nil
 }
 
-func (sdb SqliteDb) SetIncome(id int, c lib.Currency) error {
+func (sdb SqliteDb) SetIncome(id int, amount lib.Currency) error {
 	_, err := sdb.handle.Exec(
-		fmt.Sprintf("UPDATE income SET amount=%d WHERE id=%d", c.ToAmount(), id),
+		fmt.Sprintf("UPDATE income SET amount=%d WHERE id=%d", amount.ToInt(), id),
 	)
 	return err
 }
@@ -248,8 +248,8 @@ be a bonus or overtime amount.
 
 🟡The id is an income_history_id, not an income_id
 */
-func (sdb SqliteDb) AffixIncome(id int, name string, c lib.Currency) error {
-	_, err := sdb.handle.Exec(sdb.InsertInto(INCOME_AFFIXES, id, c.ToAmount()))
+func (sdb SqliteDb) AffixIncome(id int, name string, amount lib.Currency) error {
+	_, err := sdb.handle.Exec(sdb.InsertInto(INCOME_AFFIXES, id, amount.ToInt()))
 	return err
 }
 
