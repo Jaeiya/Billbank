@@ -13,7 +13,7 @@ import (
 
 type Period string
 
-//go:embed sql/create_bank.sqlite
+//go:embed sql/init_db.sqlite
 var sqlCreateBank string
 
 const (
