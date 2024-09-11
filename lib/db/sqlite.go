@@ -75,6 +75,12 @@ type BankInfo struct {
 	Notes         string
 }
 
+type IncomeInfo struct {
+	Name   string
+	Amount lib.Currency
+	Period Period
+}
+
 type SqliteDb struct {
 	handle *sql.DB
 }
@@ -246,29 +252,33 @@ func (sdb *SqliteDb) AffixIncome(id int, name string, c lib.Currency) error {
 	return err
 }
 
-func (sdb *SqliteDb) QueryIncome() error {
+func (sdb *SqliteDb) QueryIncome() (IncomeInfo, error) {
 	rows, err := sdb.handle.Query("SELECT * FROM income")
 	if err != nil {
 		panic(err)
 	}
 	defer rows.Close()
 
-	for rows.Next() {
-		var id int
-		var name string
-		var amount int
-		var period string
-		err := rows.Scan(&id, &name, &amount, &period)
-		if err != nil {
-			panic(err)
-		}
-
-		c := lib.NewCurrency("", lib.USD)
-		c.LoadAmount(amount)
-
-		fmt.Println(name, c, period)
+	if !rows.Next() {
+		return IncomeInfo{}, fmt.Errorf("missing income entry")
 	}
-	return nil
+
+	var (
+		id     int
+		name   string
+		amount int
+		period string
+	)
+
+	err = rows.Scan(&id, &name, &amount, &period)
+	if err != nil {
+		return IncomeInfo{}, err
+	}
+
+	c := lib.NewCurrency("", lib.USD)
+	c.LoadAmount(amount)
+
+	return IncomeInfo{name, *c, Period(period)}, nil
 }
 
 func (sdb *SqliteDb) InsertInto(t Table, values ...any) string {
