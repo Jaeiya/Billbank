@@ -1,0 +1,106 @@
+CREATE TABLE IF NOT EXISTS bank (
+    id TINYINT NOT NULL PRIMARY KEY,
+    currency varchar(3) NOT NULL CHECK (currency='USD'),
+    current_month_id INT,
+    UNIQUE (id)
+);
+
+
+CREATE TABLE IF NOT EXISTS months (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    date VARCHAR(50)
+);
+
+
+CREATE TABLE IF NOT EXISTS income (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    name   VARCHAR(50) NOT NULL UNIQUE,
+    amount INTEGER NOT NULL,
+    period VARCHAR(20) CHECK (
+        period='yearly' OR
+        period='monthly' OR
+        period='biweekly' OR
+        period='weekly'
+    )
+);
+
+
+CREATE TABLE IF NOT EXISTS income_history (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    income_id INTEGER NOT NULL,
+    month_id INTEGER NOT NULL,
+    amount INTEGER CHECK (amount>0),
+    FOREIGN KEY (income_id) REFERENCES income (id),
+    FOREIGN KEY (month_id) REFERENCES months (id)
+);
+
+-- When income has been raised through bonuses or overtime
+CREATE TABLE IF NOT EXISTS income_affixes (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    income_history_id INTEGER NOT NULL,
+    name VARCHAR(50) NOT NULL,
+    amount INTEGER DEFAULT 0 CHECK (amount>0),
+    FOREIGN KEY (income_history_id) REFERENCES income_history (id)
+);
+
+
+CREATE TABLE IF NOT EXISTS bank_accounts (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    name VARCHAR(30) NOT NULL,
+    -- Should only store the encrypted value
+    account_number VARCHAR(30),
+    notes VARCHAR(255)
+);
+
+
+CREATE TABLE IF NOT EXISTS bank_account_history (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    month_id INTEGER NOT NULL,
+    bank_account_id INTEGER NOT NULL,
+    balance INTEGER DEFAULT 0,
+    FOREIGN KEY (month_id) REFERENCES months (id),
+    FOREIGN KEY (bank_account_id) REFERENCES bank_accounts (id)
+);
+
+
+CREATE TABLE IF NOT EXISTS transfers (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    bank_account_id INTEGER NOT NULL,
+    month_id INTEGER NOT NULL,
+    name      VARCHAR(50) NOT NULL,
+    amount    INTEGER NOT NULL,
+    date      VARCHAR(50) NOT NULL,
+    to_whom   VARCHAR(100),
+    from_whom VARCHAR(100),
+    code      VARCHAR(20) NOT NULL CHECK (
+        code='withdrawal' OR
+        code='deposit' OR
+        code='move'
+    ),
+    FOREIGN KEY (bank_account_id) REFERENCES bank_accounts (id),
+    FOREIGN KEY (month_id) REFERENCES months (id)
+);
+
+
+CREATE TABLE IF NOT EXISTS credit_cards (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    name             VARCHAR(30) NOT NULL UNIQUE,
+    -- Should only store the encrypted value
+    card_number      VARCHAR(255),
+    last_four_digits VARCHAR(4)
+);
+
+
+CREATE TABLE IF NOT EXISTS credit_card_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    credit_card_id INTEGER,
+    month_id       INTEGER,
+    balance        INTEGER,
+    credit_limit   INTEGER,
+    paid_amount    INTEGER,
+    paid_date      VARCHAR(50),
+    due_date       VARCHAR(50),
+    period         VARCHAR(50) CHECK (period="monthly"),
+    FOREIGN KEY (month_id) REFERENCES months (id),
+    FOREIGN KEY (credit_card_id) REFERENCES credit_cards (id)
+);
