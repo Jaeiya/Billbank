@@ -130,7 +130,7 @@ func TestCurrency(t *testing.T) {
 		c.Set("1.56")
 		a.Equal(c.String(), "$1.56")
 
-		c.SetCurrency(*NewCurrency(".5", USD))
+		c.SetCurrency(NewCurrency(".5", USD))
 		a.Equal(c.String(), "$0.50")
 	})
 
@@ -158,7 +158,7 @@ func TestCurrency(t *testing.T) {
 		c2 := NewCurrency("", USD)
 		a.PanicsWithError(ErrCurrencyKind.Error(), func() { c.AddCurrency(c2) })
 		a.PanicsWithError(ErrCurrencyKind.Error(), func() { c.SubtractCurrency(c2) })
-		a.PanicsWithError(ErrCurrencyKind.Error(), func() { c.SetCurrency(*c2) })
+		a.PanicsWithError(ErrCurrencyKind.Error(), func() { c.SetCurrency(c2) })
 	})
 
 	t.Run("should error with micro-cent USD amount", func(t *testing.T) {

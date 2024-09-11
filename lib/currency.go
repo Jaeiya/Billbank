@@ -28,8 +28,8 @@ type Currency struct {
 	code   CurrencyCode
 }
 
-func NewCurrency(amount string, code CurrencyCode) *Currency {
-	c := &Currency{}
+func NewCurrency(amount string, code CurrencyCode) Currency {
+	c := Currency{}
 	switch code {
 	case USD:
 		if amount != "" {
@@ -67,7 +67,7 @@ func (c *Currency) Add(amount string) error {
 	return nil
 }
 
-func (c *Currency) AddCurrency(currencies ...*Currency) {
+func (c *Currency) AddCurrency(currencies ...Currency) {
 	for _, c2 := range currencies {
 		if c.code != c2.code {
 			panic(ErrCurrencyKind)
@@ -84,7 +84,7 @@ func (c *Currency) Subtract(amount string) error {
 	return nil
 }
 
-func (c *Currency) SubtractCurrency(currencies ...*Currency) {
+func (c *Currency) SubtractCurrency(currencies ...Currency) {
 	for _, c2 := range currencies {
 		if c.code != c2.code {
 			panic(ErrCurrencyKind)
@@ -142,8 +142,9 @@ LoadAmount loads an amount as the smallest denomination for the
 currency. For example, if the currency is USD, then the amount
 is assumed to be in Cents, not Dollars.
 */
-func (c *Currency) LoadAmount(amount int) {
+func (c *Currency) LoadAmount(amount int) Currency {
 	c.amount = amount
+	return *c
 }
 
 func verifyUSDAmount(amount string) error {
