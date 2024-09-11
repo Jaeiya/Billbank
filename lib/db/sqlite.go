@@ -82,10 +82,11 @@ type IncomeInfo struct {
 }
 
 type SqliteDb struct {
-	handle *sql.DB
+	handle       *sql.DB
+	currencyCode lib.CurrencyCode
 }
 
-func NewSqliteDb(name string) *SqliteDb {
+func NewSqliteDb(name string, cc lib.CurrencyCode) *SqliteDb {
 	db, err := sql.Open("sqlite", name+".db")
 	if err != nil {
 		panic(err)
@@ -96,7 +97,7 @@ func NewSqliteDb(name string) *SqliteDb {
 		panic(err)
 	}
 
-	return &SqliteDb{db}
+	return &SqliteDb{db, cc}
 }
 
 func (sdb *SqliteDb) CreateMonth(t time.Time) error {
