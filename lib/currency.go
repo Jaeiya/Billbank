@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-type CurrencyCode = uint8
+type CurrencyCode uint8
 
 const (
 	USD = CurrencyCode(iota)
