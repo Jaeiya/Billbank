@@ -6,10 +6,10 @@ import (
 	"strings"
 )
 
-type CurrencyKind = uint8
+type CurrencyCode = uint8
 
 const (
-	USD = CurrencyKind(iota)
+	USD = CurrencyCode(iota)
 	EUR
 	JPY
 )
@@ -25,12 +25,12 @@ var (
 
 type Currency struct {
 	amount int
-	kind   CurrencyKind
+	code   CurrencyCode
 }
 
-func NewCurrency(amount string, ct CurrencyKind) *Currency {
+func NewCurrency(amount string, code CurrencyCode) *Currency {
 	c := &Currency{}
-	switch ct {
+	switch code {
 	case USD:
 		if amount != "" {
 			err := c.Add(amount)
@@ -46,7 +46,7 @@ func NewCurrency(amount string, ct CurrencyKind) *Currency {
 }
 
 func (c *Currency) Add(amount string) error {
-	switch c.kind {
+	switch c.code {
 
 	case USD:
 		err := verifyUSDAmount(amount)
@@ -69,7 +69,7 @@ func (c *Currency) Add(amount string) error {
 
 func (c *Currency) AddCurrency(currencies ...*Currency) {
 	for _, c2 := range currencies {
-		if c.kind != c2.kind {
+		if c.code != c2.code {
 			panic(ErrCurrencyKind)
 		}
 		c.amount += c2.amount
@@ -86,7 +86,7 @@ func (c *Currency) Subtract(amount string) error {
 
 func (c *Currency) SubtractCurrency(currencies ...*Currency) {
 	for _, c2 := range currencies {
-		if c.kind != c2.kind {
+		if c.code != c2.code {
 			panic(ErrCurrencyKind)
 		}
 		c.amount -= c2.amount
@@ -94,7 +94,7 @@ func (c *Currency) SubtractCurrency(currencies ...*Currency) {
 }
 
 func (c *Currency) Set(amount string) error {
-	switch c.kind {
+	switch c.code {
 	case USD:
 		if err := verifyUSDAmount(amount); err != nil {
 			return err
@@ -114,14 +114,14 @@ func (c *Currency) Set(amount string) error {
 }
 
 func (c *Currency) SetCurrency(c2 Currency) {
-	if c.kind != c2.kind {
+	if c.code != c2.code {
 		panic(ErrCurrencyKind)
 	}
 	c.amount = c2.amount
 }
 
 func (c *Currency) String() string {
-	switch c.kind {
+	switch c.code {
 	case USD:
 		return fmt.Sprintf("$%d.%02d", c.amount/100, c.amount%100)
 	default:

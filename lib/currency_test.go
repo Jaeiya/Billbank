@@ -154,7 +154,7 @@ func TestCurrency(t *testing.T) {
 		a.PanicsWithError(ErrCurrency.Error(), func() { NewCurrency("", EUR) })
 
 		c := NewCurrency("", USD)
-		c.kind = EUR
+		c.code = EUR
 		c2 := NewCurrency("", USD)
 		a.PanicsWithError(ErrCurrencyKind.Error(), func() { c.AddCurrency(c2) })
 		a.PanicsWithError(ErrCurrencyKind.Error(), func() { c.SubtractCurrency(c2) })
