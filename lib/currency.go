@@ -129,6 +129,23 @@ func (c *Currency) String() string {
 	}
 }
 
+/*
+ToAmount returns the total amount in the lowest denomination
+for that currency. Should only be used for storage.
+*/
+func (c *Currency) ToAmount() int {
+	return c.amount
+}
+
+/*
+LoadAmount loads an amount as the smallest denomination for the
+currency. For example, if the currency is USD, then the amount
+is assumed to be in Cents, not Dollars.
+*/
+func (c *Currency) LoadAmount(amount int) {
+	c.amount = amount
+}
+
 func verifyUSDAmount(amount string) error {
 	if !strings.Contains(amount, ".") {
 		if _, err := strconv.ParseInt(amount, 10, 64); err != nil {
