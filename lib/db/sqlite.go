@@ -276,7 +276,7 @@ func (sdb *SqliteDb) QueryIncome() (IncomeInfo, error) {
 		return IncomeInfo{}, err
 	}
 
-	c := lib.NewCurrency("", lib.USD)
+	c := lib.NewCurrency("", sdb.currencyCode)
 	c.LoadAmount(amount)
 
 	return IncomeInfo{name, *c, Period(period)}, nil
