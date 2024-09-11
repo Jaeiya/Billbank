@@ -23,7 +23,7 @@ const (
 	BIWEEKLY = Period("biweekly")
 )
 
-type Table = int
+type Table int
 
 const (
 	MONTHS = Table(iota)
@@ -271,8 +271,8 @@ func (sdb *SqliteDb) QueryIncome() error {
 	return nil
 }
 
-func (sdb *SqliteDb) InsertInto(table Table, values ...any) string {
-	columns, exists := tableData[table]
+func (sdb *SqliteDb) InsertInto(t Table, values ...any) string {
+	columns, exists := tableData[t]
 	if !exists {
 		panic("unsupported table")
 	}
@@ -290,7 +290,7 @@ func (sdb *SqliteDb) InsertInto(table Table, values ...any) string {
 		realCols = append(realCols, col)
 	}
 	sbColumns.WriteString(
-		fmt.Sprintf("INSERT INTO %s (%s)", getTableName(table), strings.Join(realCols, ",")),
+		fmt.Sprintf("INSERT INTO %s (%s)", getTableName(t), strings.Join(realCols, ",")),
 	)
 
 	sbColumns.WriteString(" VALUES (")
