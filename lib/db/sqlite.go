@@ -11,78 +11,6 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-type Period string
-
-const (
-	YEARLY   = Period("yearly")
-	MONTHLY  = Period("monthly")
-	WEEKLY   = Period("weekly")
-	BIWEEKLY = Period("biweekly")
-)
-
-type Table int
-
-const (
-	MONTHS = Table(iota)
-	INCOME
-	INCOME_HISTORY
-	INCOME_AFFIXES
-	BANK_ACCOUNTS
-	BANK_ACCOUNT_HISTORY
-	TRANSFERS
-	CREDIT_CARDS
-	CREDIT_CARD_HISTORY
-)
-
-type TableData = map[Table][]string
-
-var tableData = TableData{
-	MONTHS:               {"date"},
-	INCOME:               {"name", "amount", "period"},
-	INCOME_HISTORY:       {"income_id", "month_id", "amount"},
-	INCOME_AFFIXES:       {"income_history_id", "name", "amount"},
-	BANK_ACCOUNTS:        {"name", "account_number", "notes"},
-	BANK_ACCOUNT_HISTORY: {"bank_account_id", "month_id", "balance"},
-	TRANSFERS: {
-		"bank_account_history_id",
-		"month_id",
-		"name",
-		"amount",
-		"date",
-		"kind",
-		"to_whom",
-		"from_whom",
-	},
-	CREDIT_CARDS: {"name", "card_number", "last_four_digits"},
-	CREDIT_CARD_HISTORY: {
-		"credit_card_id",
-		"month_id",
-		"balance",
-		"credit_limit",
-		"paid_amount",
-		"paid_date",
-		"due_date",
-		"period",
-	},
-}
-
-type MonthInfo struct {
-	Id   int
-	Date string
-}
-
-type BankInfo struct {
-	Name          string
-	AccountNumber string
-	Notes         string
-}
-
-type IncomeInfo struct {
-	Name   string
-	Amount lib.Currency
-	Period Period
-}
-
 type SqliteDb struct {
 	handle       *sql.DB
 	currencyCode lib.CurrencyCode
@@ -331,6 +259,47 @@ func (sdb SqliteDb) InsertInto(t Table, values ...any) string {
 
 func (sdb SqliteDb) Close() {
 	_ = sdb.handle.Close()
+}
+
+func createQueryStr(t Table, wm WhereMap) string {
+	td := tableData[t]
+	for k := range wm {
+		if k == "id" {
+			continue
+		}
+		for ii, d := range td {
+			if d == k {
+				break
+			}
+			if ii+1 == len(d) {
+				panic("id name does not exist on provided table")
+			}
+		}
+	}
+
+	query := fmt.Sprintf("SELECT * FROM %s WHERE ", getTableName(t))
+
+	sb := strings.Builder{}
+	sb.WriteString(query)
+
+	mapPos := 0
+	mapLen := len(wm)
+	for k, v := range wm {
+		switch v.(type) {
+		case string:
+			sb.WriteString(fmt.Sprintf("%s='%s'", k, v))
+		case int:
+			sb.WriteString(fmt.Sprintf("%s=%d", k, v))
+		default:
+			panic("unsupported type for 'where' filter")
+		}
+		if mapPos+1 != mapLen {
+			sb.WriteString(" AND ")
+		}
+		mapPos++
+	}
+
+	return sb.String()
 }
 
 func getTableName(table Table) string {
