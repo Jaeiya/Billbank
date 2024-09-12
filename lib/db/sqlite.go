@@ -13,9 +13,6 @@ import (
 
 type Period string
 
-//go:embed sql/init_db.sqlite
-var sqlCreateBank string
-
 const (
 	YEARLY   = Period("yearly")
 	MONTHLY  = Period("monthly")
@@ -91,13 +88,16 @@ type SqliteDb struct {
 	currencyCode lib.CurrencyCode
 }
 
+//go:embed sql/init_db.sqlite
+var initBankSQL string
+
 func NewSqliteDb(name string, cc lib.CurrencyCode) *SqliteDb {
 	db, err := sql.Open("sqlite", name+".db")
 	if err != nil {
 		panic(err)
 	}
 
-	_, err = db.Exec(sqlCreateBank)
+	_, err = db.Exec(initBankSQL)
 	if err != nil {
 		panic(err)
 	}
