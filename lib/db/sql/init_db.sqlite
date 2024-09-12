@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS months (
 CREATE TABLE IF NOT EXISTS income (
     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     name   VARCHAR(50) NOT NULL UNIQUE,
-    amount INTEGER NOT NULL,
+    amount INTEGER NOT NULL CHECK (amount>0),
     period VARCHAR(20) CHECK (
         period='yearly' OR
         period='monthly' OR
