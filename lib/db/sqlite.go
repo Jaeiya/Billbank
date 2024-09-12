@@ -69,6 +69,11 @@ var tableData = TableData{
 	},
 }
 
+type MonthInfo struct {
+	Id   int
+	Date string
+}
+
 type BankInfo struct {
 	Name          string
 	AccountNumber string
@@ -118,22 +123,28 @@ func (sdb SqliteDb) CreateMonth(t time.Time) error {
 	return nil
 }
 
-func (sdb SqliteDb) QueryMonth() {
+func (sdb SqliteDb) QueryMonths() (MonthInfo, error) {
 	rows, err := sdb.handle.Query("SELECT * FROM months")
 	if err != nil {
-		panic(err)
+		return MonthInfo{}, err
 	}
 	defer rows.Close()
 
-	for rows.Next() {
-		var id int
-		var date string
-		err := rows.Scan(&id, &date)
-		if err != nil {
-			panic(err)
-		}
-		fmt.Println(id, date)
+	if !rows.Next() {
+		return MonthInfo{}, fmt.Errorf("empty month table")
 	}
+
+	var (
+		id   int
+		date string
+	)
+
+	err = rows.Scan(&id, &date)
+	if err != nil {
+		return MonthInfo{}, err
+	}
+
+	return MonthInfo{id, date}, nil
 }
 
 func (sdb SqliteDb) CreateBankAccount(
