@@ -67,16 +67,16 @@ CREATE TABLE IF NOT EXISTS transfers (
     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     bank_account_id INTEGER NOT NULL,
     month_id INTEGER NOT NULL,
-    name      VARCHAR(50) NOT NULL,
-    amount    INTEGER NOT NULL,
-    date      VARCHAR(50) NOT NULL,
-    to_whom   VARCHAR(100),
-    from_whom VARCHAR(100),
-    code      VARCHAR(20) NOT NULL CHECK (
-        code='withdrawal' OR
-        code='deposit' OR
-        code='move'
+    name       VARCHAR(50) NOT NULL,
+    amount     INTEGER NOT NULL,
+    date       VARCHAR(50) NOT NULL,
+    type       VARCHAR(20) NOT NULL CHECK (
+        type = 'withdrawal' OR
+        type = 'deposit' OR
+        type = 'move'
     ),
+    to_whom    VARCHAR(100),
+    from_whom  VARCHAR(100),
     FOREIGN KEY (bank_account_id) REFERENCES bank_accounts (id),
     FOREIGN KEY (month_id) REFERENCES months (id)
 );
