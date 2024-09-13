@@ -32,7 +32,7 @@ type DecryptedBankInfo struct {
 	Notes         *string
 }
 
-type BankAccountHistoryConfig struct {
+type BankHistoryConfig struct {
 	MonthID       int
 	BankAccountID int
 	Balance       lib.Currency
@@ -130,7 +130,7 @@ func (sdb SqliteDb) QueryDecryptedBankAccount(
 	return DecryptedBankInfo{id, name, &decryptedAcctNum, &decryptedNotes}, nil
 }
 
-func (sdb SqliteDb) CreateBankAccountHistory(config BankAccountHistoryConfig) {
+func (sdb SqliteDb) CreateBankAccountHistory(config BankHistoryConfig) {
 	_, err := sdb.handle.Exec(
 		sdb.InsertInto(
 			BANK_ACCOUNT_HISTORY,
