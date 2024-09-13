@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS income_history (
     FOREIGN KEY (month_id) REFERENCES months (id)
 );
 
--- When income has been raised through bonuses or overtime
+-- When income has been raised through bonuses, overtime, etc..
 CREATE TABLE IF NOT EXISTS income_affixes (
     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     income_history_id INTEGER NOT NULL,

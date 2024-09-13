@@ -20,6 +20,13 @@ type IncomeHistoryRow struct {
 	Amount   lib.Currency
 }
 
+type AffixIncomeRow struct {
+	ID              int
+	IncomeHistoryID int
+	Name            string
+	Amount          lib.Currency
+}
+
 func (sdb SqliteDb) CreateIncome(name string, amount lib.Currency, p Period) int64 {
 	res, err := sdb.handle.Exec(sdb.InsertInto(INCOME, name, amount.ToInt(), p))
 	if err != nil {
@@ -38,19 +45,6 @@ func (sdb SqliteDb) SetIncome(id int, amount lib.Currency) {
 	_, err := sdb.handle.Exec(
 		fmt.Sprintf("UPDATE income SET amount=%d WHERE id=%d", amount.ToInt(), id),
 	)
-	if err != nil {
-		panic(err)
-	}
-}
-
-/*
-AffixIncome tracks an appended amount to an existing income. This could
-be a bonus or overtime amount.
-
-🟡The id is an income_history_id, not an income_id
-*/
-func (sdb SqliteDb) AffixIncome(id int, name string, amount lib.Currency) {
-	_, err := sdb.handle.Exec(sdb.InsertInto(INCOME_AFFIXES, id, amount.ToInt()))
 	if err != nil {
 		panic(err)
 	}
@@ -89,7 +83,7 @@ func (sdb SqliteDb) QueryAllIncome() ([]IncomeRow, error) {
 }
 
 func (sdb SqliteDb) QueryIncome(incomeID int) IncomeRow {
-	queryStr := createQueryStr(INCOME, FieldMap{"id": incomeID})
+	queryStr := buildQueryStr(INCOME, FieldMap{"id": incomeID})
 	row := sdb.handle.QueryRow(queryStr)
 
 	var (
@@ -120,7 +114,7 @@ func (sdb SqliteDb) CreateIncomeHistory(incomeID int, monthID int) {
 
 func (sdb SqliteDb) QueryIncomeHistory(qw QueryMap) ([]IncomeHistoryRow, error) {
 	fieldMap := buildFieldMap(BY_ID|BY_INCOME_ID|BY_MONTH_ID, qw)
-	queryStr := createQueryStr(INCOME_HISTORY, fieldMap)
+	queryStr := buildQueryStr(INCOME_HISTORY, fieldMap)
 	rows, err := sdb.handle.Query(queryStr)
 	if err != nil {
 		panic(err)
@@ -154,4 +148,52 @@ func (sdb SqliteDb) QueryIncomeHistory(qw QueryMap) ([]IncomeHistoryRow, error) 
 	}
 
 	return incomeHistoryRows, nil
+}
+
+/*
+AffixIncome tracks an appended amount to an existing income. This could
+be a bonus or overtime amount.
+*/
+func (sdb SqliteDb) AffixIncome(historyID int, name string, amount lib.Currency) {
+	_, err := sdb.handle.Exec(sdb.InsertInto(INCOME_AFFIXES, historyID, name, amount.ToInt()))
+	if err != nil {
+		panic(err)
+	}
+}
+
+func (sdb SqliteDb) QueryAffixIncome(qm QueryMap) ([]AffixIncomeRow, error) {
+	fieldMap := buildFieldMap(BY_ID|BY_INCOME_ID, qm)
+	queryStr := buildQueryStr(INCOME_AFFIXES, fieldMap)
+	rows, err := sdb.handle.Query(queryStr)
+	if err != nil {
+		panic(err)
+	}
+
+	var (
+		id           int
+		incomeHistID int
+		name         string
+		amount       int
+		affixRows    []AffixIncomeRow
+	)
+
+	for rows.Next() {
+		err = rows.Scan(&id, &incomeHistID, &name, &amount)
+		if err != nil {
+			panic(err)
+		}
+
+		c := lib.NewCurrency("", sdb.currencyCode)
+		c.LoadAmount(amount)
+
+		affixRows = append(affixRows, AffixIncomeRow{
+			id, incomeHistID, name, c,
+		})
+	}
+
+	if len(affixRows) == 0 {
+		return []AffixIncomeRow{}, fmt.Errorf("no results from query")
+	}
+
+	return affixRows, nil
 }

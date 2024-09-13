@@ -58,7 +58,7 @@ func (sdb SqliteDb) CreateTransfer(td TransferConfig) {
 
 func (sdb SqliteDb) QueryTransfers(qm QueryMap) ([]TransferData, error) {
 	fieldMap := buildFieldMap(BY_ID|BY_MONTH_ID|BY_BANK_ACCOUNT_ID, qm)
-	queryStr := createQueryStr(TRANSFERS, fieldMap)
+	queryStr := buildQueryStr(TRANSFERS, fieldMap)
 	rows, err := sdb.handle.Query(queryStr)
 	if err != nil {
 		panic(err)

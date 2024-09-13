@@ -217,7 +217,7 @@ func buildFieldMap(allowedFields FieldFlag, qm QueryMap) FieldMap {
 	return fm
 }
 
-func createQueryStr(t Table, fm FieldMap) string {
+func buildQueryStr(t Table, fm FieldMap) string {
 	td := tableData[t]
 	for k := range fm {
 		if k == "id" {
