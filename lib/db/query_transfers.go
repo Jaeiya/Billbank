@@ -31,7 +31,7 @@ type TransferData struct {
 	ID int
 }
 
-func (sdb SqliteDb) CreateTransfer(td TransferConfig) error {
+func (sdb SqliteDb) CreateTransfer(td TransferConfig) {
 	tryDereference := func(data *string) any /* nil|string */ {
 		if data == nil {
 			return nil
@@ -52,10 +52,8 @@ func (sdb SqliteDb) CreateTransfer(td TransferConfig) error {
 		),
 	)
 	if err != nil {
-		return err
+		panic(err)
 	}
-
-	return nil
 }
 
 func (sdb SqliteDb) QueryTransfers(qm QueryMap) ([]TransferData, error) {

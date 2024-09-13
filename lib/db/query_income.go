@@ -20,25 +20,27 @@ type IncomeHistoryRow struct {
 	Amount   lib.Currency
 }
 
-func (sdb SqliteDb) CreateIncome(name string, amount lib.Currency, p Period) (int64, error) {
+func (sdb SqliteDb) CreateIncome(name string, amount lib.Currency, p Period) int64 {
 	res, err := sdb.handle.Exec(sdb.InsertInto(INCOME, name, amount.ToInt(), p))
 	if err != nil {
-		return 0, err
+		panic(err)
 	}
 
 	id, err := res.LastInsertId()
 	if err != nil {
-		return 0, err
+		panic(err)
 	}
 
-	return id, nil
+	return id
 }
 
-func (sdb SqliteDb) SetIncome(id int, amount lib.Currency) error {
+func (sdb SqliteDb) SetIncome(id int, amount lib.Currency) {
 	_, err := sdb.handle.Exec(
 		fmt.Sprintf("UPDATE income SET amount=%d WHERE id=%d", amount.ToInt(), id),
 	)
-	return err
+	if err != nil {
+		panic(err)
+	}
 }
 
 /*
@@ -47,9 +49,11 @@ be a bonus or overtime amount.
 
 🟡The id is an income_history_id, not an income_id
 */
-func (sdb SqliteDb) AffixIncome(id int, name string, amount lib.Currency) error {
+func (sdb SqliteDb) AffixIncome(id int, name string, amount lib.Currency) {
 	_, err := sdb.handle.Exec(sdb.InsertInto(INCOME_AFFIXES, id, amount.ToInt()))
-	return err
+	if err != nil {
+		panic(err)
+	}
 }
 
 func (sdb SqliteDb) QueryAllIncome() ([]IncomeRow, error) {
@@ -70,7 +74,7 @@ func (sdb SqliteDb) QueryAllIncome() ([]IncomeRow, error) {
 	for rows.Next() {
 		err = rows.Scan(&id, &name, &amount, &period)
 		if err != nil {
-			return []IncomeRow{}, err
+			panic(err)
 		}
 
 		c := lib.NewCurrency("", sdb.currencyCode)
@@ -78,13 +82,13 @@ func (sdb SqliteDb) QueryAllIncome() ([]IncomeRow, error) {
 	}
 
 	if len(incomeRow) == 0 {
-		return []IncomeRow{}, fmt.Errorf("income table is empty")
+		return []IncomeRow{}, fmt.Errorf("table is empty")
 	}
 
 	return incomeRow, nil
 }
 
-func (sdb SqliteDb) QueryIncome(incomeID int) (IncomeRow, error) {
+func (sdb SqliteDb) QueryIncome(incomeID int) IncomeRow {
 	queryStr := createQueryStr(INCOME, FieldMap{"id": incomeID})
 	row := sdb.handle.QueryRow(queryStr)
 
@@ -97,22 +101,21 @@ func (sdb SqliteDb) QueryIncome(incomeID int) (IncomeRow, error) {
 
 	err := row.Scan(&id, &name, &amount, &period)
 	if err != nil {
-		return IncomeRow{}, err
+		panic(err)
 	}
 	c := lib.NewCurrency("", sdb.currencyCode)
 	c.LoadAmount(amount)
-	return IncomeRow{id, name, c, period}, nil
+	return IncomeRow{id, name, c, period}
 }
 
-func (sdb SqliteDb) CreateIncomeHistory(incomeID int, monthID int) error {
-	info, err := sdb.QueryIncome(incomeID)
-	_, err = sdb.handle.Exec(
-		sdb.InsertInto(INCOME_HISTORY, incomeID, monthID, info.Amount.ToInt()),
+func (sdb SqliteDb) CreateIncomeHistory(incomeID int, monthID int) {
+	incomeRow := sdb.QueryIncome(incomeID)
+	_, err := sdb.handle.Exec(
+		sdb.InsertInto(INCOME_HISTORY, incomeID, monthID, incomeRow.Amount.ToInt()),
 	)
 	if err != nil {
-		return err
+		panic(err)
 	}
-	return nil
 }
 
 func (sdb SqliteDb) QueryIncomeHistory(qw QueryMap) ([]IncomeHistoryRow, error) {
@@ -120,7 +123,7 @@ func (sdb SqliteDb) QueryIncomeHistory(qw QueryMap) ([]IncomeHistoryRow, error) 
 	queryStr := createQueryStr(INCOME_HISTORY, fieldMap)
 	rows, err := sdb.handle.Query(queryStr)
 	if err != nil {
-		return []IncomeHistoryRow{}, err
+		panic(err)
 	}
 	defer rows.Close()
 
@@ -135,7 +138,7 @@ func (sdb SqliteDb) QueryIncomeHistory(qw QueryMap) ([]IncomeHistoryRow, error) 
 	for rows.Next() {
 		err = rows.Scan(&id, &incomeID, &monthID, &amount)
 		if err != nil {
-			return []IncomeHistoryRow{}, err
+			panic(err)
 		}
 		c := lib.NewCurrency("", sdb.currencyCode)
 		c.LoadAmount(amount)
@@ -147,7 +150,7 @@ func (sdb SqliteDb) QueryIncomeHistory(qw QueryMap) ([]IncomeHistoryRow, error) 
 	}
 
 	if len(incomeHistoryRows) == 0 {
-		return []IncomeHistoryRow{}, fmt.Errorf("could not find any data related to query")
+		return []IncomeHistoryRow{}, fmt.Errorf("query returned no results")
 	}
 
 	return incomeHistoryRows, nil
