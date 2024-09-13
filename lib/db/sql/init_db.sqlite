@@ -55,8 +55,8 @@ CREATE TABLE IF NOT EXISTS bank_accounts (
 
 CREATE TABLE IF NOT EXISTS bank_account_history (
     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    month_id INTEGER NOT NULL,
     bank_account_id INTEGER NOT NULL,
+    month_id INTEGER NOT NULL,
     balance INTEGER DEFAULT 0,
     FOREIGN KEY (month_id) REFERENCES months (id),
     FOREIGN KEY (bank_account_id) REFERENCES bank_accounts (id)

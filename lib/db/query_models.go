@@ -83,9 +83,3 @@ type MonthInfo struct {
 	Id   int
 	Date string
 }
-
-type BankInfo struct {
-	Name          string
-	AccountNumber string
-	Notes         string
-}
