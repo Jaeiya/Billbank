@@ -30,6 +30,16 @@ func NewSqliteDb(name string, cc lib.CurrencyCode) *SqliteDb {
 		panic(err)
 	}
 
+	_, err = db.Exec("PRAGMA foreign_keys = ON;")
+	if err != nil {
+		panic(err)
+	}
+
+	_, err = db.Exec("PRAGMA user_version = 1;")
+	if err != nil {
+		panic(err)
+	}
+
 	return &SqliteDb{db, cc}
 }
 
