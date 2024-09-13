@@ -201,23 +201,25 @@ func (sdb SqliteDb) Close() {
 	_ = sdb.handle.Close()
 }
 
-func (sdb SqliteDb) getRowCount(t Table) int {
-	var count int
-	rows, err := sdb.handle.Query(fmt.Sprintf("SELECT COUNT(*) FROM %s", getTableName(t)))
-	if err != nil {
-		panic(err)
+func buildFieldMap(allowedFields FieldFlag, qm QueryMap) FieldMap {
+	fm := FieldMap{}
+	for ff, fieldValue := range qm {
+		if allowedFields&ff == 0 {
+			panic("unsupported 'where' field")
+		}
+		if field, exists := WhereFieldMap[ff]; exists {
+			fm[field] = fieldValue
+			continue
+		}
+		panic("missing field")
 	}
-	defer rows.Close()
-	rows.Next()
-	if err := rows.Scan(&count); err != nil {
-		panic(err)
-	}
-	return count
+
+	return fm
 }
 
-func createQueryStr(t Table, wm WhereMap) string {
+func createQueryStr(t Table, fm FieldMap) string {
 	td := tableData[t]
-	for k := range wm {
+	for k := range fm {
 		if k == "id" {
 			continue
 		}
@@ -237,8 +239,8 @@ func createQueryStr(t Table, wm WhereMap) string {
 	sb.WriteString(query)
 
 	mapPos := 0
-	mapLen := len(wm)
-	for k, v := range wm {
+	mapLen := len(fm)
+	for k, v := range fm {
 		sb.WriteString(fmt.Sprintf("%s=%d", k, v))
 		if mapPos+1 != mapLen {
 			sb.WriteString(" AND ")

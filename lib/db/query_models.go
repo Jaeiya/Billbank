@@ -1,7 +1,5 @@
 package db
 
-import "github.com/jaeiya/billbank/lib"
-
 type Period string
 
 const (
@@ -11,10 +9,10 @@ const (
 	BIWEEKLY = Period("biweekly")
 )
 
-type Where int
+type FieldFlag int
 
 const (
-	BY_ID = Where(iota)
+	BY_ID = FieldFlag(1 << iota)
 	BY_MONTH_ID
 	BY_BANK_ACCOUNT_ID
 	BY_INCOME_ID
@@ -22,9 +20,18 @@ const (
 	BY_CREDIT_CARD_ID
 )
 
-type QueryWhereMap map[Where]int
+var WhereFieldMap = map[FieldFlag]string{
+	BY_ID:                "id",
+	BY_MONTH_ID:          "month_id",
+	BY_BANK_ACCOUNT_ID:   "bank_account_id",
+	BY_INCOME_ID:         "income_id",
+	BY_INCOME_HISTORY_ID: "income_history_id",
+	BY_CREDIT_CARD_ID:    "credit_card_id",
+}
 
-type WhereMap map[string]int
+type QueryMap map[FieldFlag]int
+
+type FieldMap map[string]int
 
 type Table int
 
@@ -81,11 +88,4 @@ type BankInfo struct {
 	Name          string
 	AccountNumber string
 	Notes         string
-}
-
-type IncomeInfo struct {
-	ID     int
-	Name   string
-	Amount lib.Currency
-	Period Period
 }

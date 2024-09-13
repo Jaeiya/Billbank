@@ -6,7 +6,14 @@ import (
 	"github.com/jaeiya/billbank/lib"
 )
 
-type IncomeHistory struct {
+type IncomeRow struct {
+	ID     int
+	Name   string
+	Amount lib.Currency
+	Period Period
+}
+
+type IncomeHistoryRow struct {
 	ID       int
 	IncomeID int
 	MonthID  int
@@ -45,11 +52,7 @@ func (sdb SqliteDb) AffixIncome(id int, name string, amount lib.Currency) error 
 	return err
 }
 
-func (sdb SqliteDb) QueryAllIncome() ([]IncomeInfo, error) {
-	if sdb.getRowCount(INCOME) == 0 {
-		return []IncomeInfo{}, fmt.Errorf("income table is empty")
-	}
-
+func (sdb SqliteDb) QueryAllIncome() ([]IncomeRow, error) {
 	rows, err := sdb.handle.Query("SELECT * FROM income")
 	if err != nil {
 		panic(err)
@@ -57,28 +60,32 @@ func (sdb SqliteDb) QueryAllIncome() ([]IncomeInfo, error) {
 	defer rows.Close()
 
 	var (
-		id     int
-		name   string
-		amount int
-		period string
-		info   []IncomeInfo
+		id        int
+		name      string
+		amount    int
+		period    string
+		incomeRow []IncomeRow
 	)
 
 	for rows.Next() {
 		err = rows.Scan(&id, &name, &amount, &period)
 		if err != nil {
-			return []IncomeInfo{}, err
+			return []IncomeRow{}, err
 		}
 
 		c := lib.NewCurrency("", sdb.currencyCode)
-		info = append(info, IncomeInfo{id, name, c.LoadAmount(amount), Period(period)})
+		incomeRow = append(incomeRow, IncomeRow{id, name, c.LoadAmount(amount), Period(period)})
 	}
 
-	return info, nil
+	if len(incomeRow) == 0 {
+		return []IncomeRow{}, fmt.Errorf("income table is empty")
+	}
+
+	return incomeRow, nil
 }
 
-func (sdb SqliteDb) QueryIncome(incomeID int) (IncomeInfo, error) {
-	queryStr := createQueryStr(INCOME, WhereMap{"id": incomeID})
+func (sdb SqliteDb) QueryIncome(incomeID int) (IncomeRow, error) {
+	queryStr := createQueryStr(INCOME, FieldMap{"id": incomeID})
 	row := sdb.handle.QueryRow(queryStr)
 
 	var (
@@ -90,11 +97,11 @@ func (sdb SqliteDb) QueryIncome(incomeID int) (IncomeInfo, error) {
 
 	err := row.Scan(&id, &name, &amount, &period)
 	if err != nil {
-		return IncomeInfo{}, err
+		return IncomeRow{}, err
 	}
 	c := lib.NewCurrency("", sdb.currencyCode)
 	c.LoadAmount(amount)
-	return IncomeInfo{id, name, c, period}, nil
+	return IncomeRow{id, name, c, period}, nil
 }
 
 func (sdb SqliteDb) CreateIncomeHistory(incomeID int, monthID int) error {
@@ -108,49 +115,40 @@ func (sdb SqliteDb) CreateIncomeHistory(incomeID int, monthID int) error {
 	return nil
 }
 
-func (sdb SqliteDb) QueryIncomeHistory(qw QueryWhereMap) (IncomeHistory, error) {
-	wMap := WhereMap{}
-	for k, v := range qw {
-		switch k {
-
-		case BY_ID:
-			wMap["id"] = v
-
-		case BY_INCOME_ID:
-			wMap["income_id"] = v
-
-		case BY_MONTH_ID:
-			wMap["month_id"] = v
-
-		default:
-			panic("unsupported 'where' filter")
-
-		}
-	}
-
-	queryStr := createQueryStr(INCOME_HISTORY, wMap)
+func (sdb SqliteDb) QueryIncomeHistory(qw QueryMap) ([]IncomeHistoryRow, error) {
+	fieldMap := buildFieldMap(BY_ID|BY_INCOME_ID|BY_MONTH_ID, qw)
+	queryStr := createQueryStr(INCOME_HISTORY, fieldMap)
 	rows, err := sdb.handle.Query(queryStr)
 	if err != nil {
-		return IncomeHistory{}, err
+		return []IncomeHistoryRow{}, err
 	}
 	defer rows.Close()
 
-	if !rows.Next() {
-		return IncomeHistory{}, fmt.Errorf("could not find any data related to query")
-	}
-
 	var (
-		id       int
-		incomeID int
-		monthID  int
-		amount   int
+		id                int
+		incomeID          int
+		monthID           int
+		amount            int
+		incomeHistoryRows []IncomeHistoryRow
 	)
 
-	err = rows.Scan(&id, &incomeID, &monthID, &amount)
-	if err != nil {
-		return IncomeHistory{}, err
+	for rows.Next() {
+		err = rows.Scan(&id, &incomeID, &monthID, &amount)
+		if err != nil {
+			return []IncomeHistoryRow{}, err
+		}
+		c := lib.NewCurrency("", sdb.currencyCode)
+		c.LoadAmount(amount)
+
+		incomeHistoryRows = append(
+			incomeHistoryRows,
+			IncomeHistoryRow{id, incomeID, monthID, c},
+		)
 	}
-	c := lib.NewCurrency("", sdb.currencyCode)
-	c.LoadAmount(amount)
-	return IncomeHistory{id, incomeID, monthID, c}, nil
+
+	if len(incomeHistoryRows) == 0 {
+		return []IncomeHistoryRow{}, fmt.Errorf("could not find any data related to query")
+	}
+
+	return incomeHistoryRows, nil
 }

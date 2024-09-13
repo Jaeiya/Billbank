@@ -54,29 +54,11 @@ func (sdb SqliteDb) CreateTransfer(td TransferConfig) error {
 	return nil
 }
 
-func (sdb SqliteDb) QueryTransfer(qwm QueryWhereMap) TransferData {
-	wMap := WhereMap{}
-	for k, v := range qwm {
-		switch k {
-
-		case BY_ID:
-			wMap["id"] = v
-
-		case BY_MONTH_ID:
-			wMap["month_id"] = v
-
-		case BY_BANK_ACCOUNT_ID:
-			wMap["bank_account_id"] = v
-
-		default:
-			panic("unsupported 'where' filter")
-
-		}
-	}
-	return sdb.queryTransfers(wMap)
+func (sdb SqliteDb) QueryTransfer(qm QueryMap) TransferData {
+	return sdb.queryTransfers(buildFieldMap(BY_ID|BY_MONTH_ID|BY_BANK_ACCOUNT_ID, qm))
 }
 
-func (sdb SqliteDb) queryTransfers(wm WhereMap) TransferData {
+func (sdb SqliteDb) queryTransfers(wm FieldMap) TransferData {
 	queryStr := createQueryStr(TRANSFERS, wm)
 	rows, err := sdb.handle.Query(queryStr)
 	if err != nil {
