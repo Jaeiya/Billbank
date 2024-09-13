@@ -16,12 +16,15 @@ type Where int
 const (
 	BY_ID = Where(iota)
 	BY_MONTH_ID
-	BY_ACCOUNT_ID
+	BY_BANK_ACCOUNT_ID
+	BY_INCOME_ID
+	BY_INCOME_HISTORY_ID
+	BY_CREDIT_CARD_ID
 )
 
-type QueryWhere map[Where]int
+type QueryWhereMap map[Where]int
 
-type WhereMap map[string]any
+type WhereMap map[string]int
 
 type Table int
 
@@ -81,6 +84,7 @@ type BankInfo struct {
 }
 
 type IncomeInfo struct {
+	ID     int
 	Name   string
 	Amount lib.Currency
 	Period Period

@@ -160,66 +160,6 @@ func (sdb SqliteDb) QueryBankAccount(accountId int, password *string) (BankInfo,
 	return BankInfo{name, acctNum, notes}, nil
 }
 
-func (sdb SqliteDb) CreateIncome(name string, amount lib.Currency, p Period) (int64, error) {
-	res, err := sdb.handle.Exec(sdb.InsertInto(INCOME, name, amount.ToInt(), p))
-	if err != nil {
-		return 0, err
-	}
-
-	id, err := res.LastInsertId()
-	if err != nil {
-		return 0, err
-	}
-
-	return id, nil
-}
-
-func (sdb SqliteDb) SetIncome(id int, amount lib.Currency) error {
-	_, err := sdb.handle.Exec(
-		fmt.Sprintf("UPDATE income SET amount=%d WHERE id=%d", amount.ToInt(), id),
-	)
-	return err
-}
-
-/*
-AffixIncome tracks an appended amount to an existing income. This could
-be a bonus or overtime amount.
-
-🟡The id is an income_history_id, not an income_id
-*/
-func (sdb SqliteDb) AffixIncome(id int, name string, amount lib.Currency) error {
-	_, err := sdb.handle.Exec(sdb.InsertInto(INCOME_AFFIXES, id, amount.ToInt()))
-	return err
-}
-
-func (sdb SqliteDb) QueryIncome() (IncomeInfo, error) {
-	rows, err := sdb.handle.Query("SELECT * FROM income")
-	if err != nil {
-		panic(err)
-	}
-	defer rows.Close()
-
-	if !rows.Next() {
-		return IncomeInfo{}, fmt.Errorf("missing income entry")
-	}
-
-	var (
-		id     int
-		name   string
-		amount int
-		period string
-	)
-
-	err = rows.Scan(&id, &name, &amount, &period)
-	if err != nil {
-		return IncomeInfo{}, err
-	}
-
-	c := lib.NewCurrency("", sdb.currencyCode)
-
-	return IncomeInfo{name, c.LoadAmount(amount), Period(period)}, nil
-}
-
 func (sdb SqliteDb) InsertInto(t Table, values ...any) string {
 	columns, exists := tableData[t]
 	if !exists {
@@ -261,6 +201,20 @@ func (sdb SqliteDb) Close() {
 	_ = sdb.handle.Close()
 }
 
+func (sdb SqliteDb) getRowCount(t Table) int {
+	var count int
+	rows, err := sdb.handle.Query(fmt.Sprintf("SELECT COUNT(*) FROM %s", getTableName(t)))
+	if err != nil {
+		panic(err)
+	}
+	defer rows.Close()
+	rows.Next()
+	if err := rows.Scan(&count); err != nil {
+		panic(err)
+	}
+	return count
+}
+
 func createQueryStr(t Table, wm WhereMap) string {
 	td := tableData[t]
 	for k := range wm {
@@ -285,14 +239,7 @@ func createQueryStr(t Table, wm WhereMap) string {
 	mapPos := 0
 	mapLen := len(wm)
 	for k, v := range wm {
-		switch v.(type) {
-		case string:
-			sb.WriteString(fmt.Sprintf("%s='%s'", k, v))
-		case int:
-			sb.WriteString(fmt.Sprintf("%s=%d", k, v))
-		default:
-			panic("unsupported type for 'where' filter")
-		}
+		sb.WriteString(fmt.Sprintf("%s=%d", k, v))
 		if mapPos+1 != mapLen {
 			sb.WriteString(" AND ")
 		}

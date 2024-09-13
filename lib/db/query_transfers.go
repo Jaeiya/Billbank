@@ -54,7 +54,7 @@ func (sdb SqliteDb) CreateTransfer(td TransferConfig) error {
 	return nil
 }
 
-func (sdb SqliteDb) QueryTransfer(qwm QueryWhere) TransferData {
+func (sdb SqliteDb) QueryTransfer(qwm QueryWhereMap) TransferData {
 	wMap := WhereMap{}
 	for k, v := range qwm {
 		switch k {
@@ -65,8 +65,11 @@ func (sdb SqliteDb) QueryTransfer(qwm QueryWhere) TransferData {
 		case BY_MONTH_ID:
 			wMap["month_id"] = v
 
-		case BY_ACCOUNT_ID:
+		case BY_BANK_ACCOUNT_ID:
 			wMap["bank_account_id"] = v
+
+		default:
+			panic("unsupported 'where' filter")
 
 		}
 	}
