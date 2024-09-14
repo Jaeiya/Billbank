@@ -111,7 +111,7 @@ func (sdb SqliteDb) InsertInto(t Table, values ...any) string {
 	valTemplate := "%v,"
 	for _, val := range values {
 		switch val.(type) {
-		case string:
+		case string, Period:
 			valTemplate = "'%v',"
 		case nil:
 			continue

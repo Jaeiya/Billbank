@@ -66,7 +66,7 @@ var tableData = TableData{
 		"to_whom",
 		"from_whom",
 	},
-	CREDIT_CARDS: {"name", "card_number", "last_four_digits"},
+	CREDIT_CARDS: {"name", "card_number", "last_four_digits", "notes"},
 	CREDIT_CARD_HISTORY: {
 		"credit_card_id",
 		"month_id",
@@ -74,7 +74,7 @@ var tableData = TableData{
 		"credit_limit",
 		"paid_amount",
 		"paid_date",
-		"due_date",
+		"due_day",
 		"period",
 	},
 }

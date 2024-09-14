@@ -74,7 +74,18 @@ func EncryptData(data string, password string) string {
 	return base64.StdEncoding.EncodeToString(encryptedData)
 }
 
-func DecryptData(data string, password string) string {
+/*
+EncryptNotNil encrypts data using the password and returns the encrypted
+string; however if data is nil it returns nil.
+*/
+func EncryptNotNil(data *string, password string) any /* nil|string */ {
+	if data == nil {
+		return nil
+	}
+	return EncryptData(*data, password)
+}
+
+func DecryptData(data string, password string) (string, error) {
 	cipherText, err := base64.StdEncoding.DecodeString(data)
 	if err != nil {
 		panic(err)
