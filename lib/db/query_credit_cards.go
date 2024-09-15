@@ -260,7 +260,7 @@ func (sdb SqliteDb) SetCreditCardHistory(historyID int, fieldMap CCFieldMap) {
 			sb.WriteString(fmt.Sprintf("due_day = %d,", value))
 
 		case CC_PAID_DATE:
-			if _, isType := value.(string); !isType {
+			if !lib.IsString(value) {
 				panic(fmt.Sprintf("%s should be of type: string", field))
 			}
 			sb.WriteString(fmt.Sprintf("paid_date = '%s',", value))
