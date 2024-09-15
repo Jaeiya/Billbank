@@ -9,6 +9,7 @@ import (
 type CreditCardConfig struct {
 	Name           string
 	CardNumber     *string
+	DueDay         int
 	LastFourDigits string
 	Notes          *string
 	Password       *string
@@ -25,6 +26,7 @@ type CreditCardHistoryConfig struct {
 type CreditCardRow struct {
 	ID             int
 	Name           string
+	DueDay         int
 	CardNumber     *string
 	LastFourDigits string
 	Notes          *string
@@ -32,9 +34,10 @@ type CreditCardRow struct {
 
 func (cr CreditCardRow) String() string {
 	return fmt.Sprintf(
-		"\nid: %d\nname: %s\nnum: %v\nlastFour: %v\nnotes: %v",
+		"\nid: %d\nname: %s\ndueDay: %d\nnum: %v\nlastFour: %v\nnotes: %v",
 		cr.ID,
 		cr.Name,
+		cr.DueDay,
 		lib.TryDeref(cr.CardNumber),
 		cr.LastFourDigits,
 		lib.TryDeref(cr.Notes),
@@ -69,7 +72,14 @@ func (chr CreditCardHistoryRow) String() string {
 func (sdb SqliteDb) CreateCreditCard(config CreditCardConfig) {
 	if config.Password == nil {
 		_, err := sdb.handle.Exec(
-			sdb.InsertInto(CREDIT_CARDS, config.Name, nil, config.LastFourDigits, nil),
+			sdb.InsertInto(
+				CREDIT_CARDS,
+				config.Name,
+				config.DueDay,
+				nil,
+				config.LastFourDigits,
+				nil,
+			),
 		)
 		if err != nil {
 			panic(err)
@@ -80,6 +90,7 @@ func (sdb SqliteDb) CreateCreditCard(config CreditCardConfig) {
 		sdb.InsertInto(
 			CREDIT_CARDS,
 			config.Name,
+			config.DueDay,
 			lib.EncryptNotNil(config.CardNumber, *config.Password),
 			config.LastFourDigits,
 			lib.EncryptNotNil(config.Notes, *config.Password),
@@ -100,6 +111,7 @@ func (sdb SqliteDb) QueryAllCreditCards() ([]CreditCardRow, error) {
 	var (
 		id             int
 		name           string
+		dueDay         int
 		encCardNum     *string
 		lastFourDigits string
 		encNotes       *string
@@ -107,9 +119,12 @@ func (sdb SqliteDb) QueryAllCreditCards() ([]CreditCardRow, error) {
 	)
 
 	for rows.Next() {
-		err = rows.Scan(&id, &name, &encCardNum, &lastFourDigits, &encNotes)
+		err = rows.Scan(&id, &name, &dueDay, &encCardNum, &lastFourDigits, &encNotes)
+		if err != nil {
+			panic(err)
+		}
 		cards = append(cards, CreditCardRow{
-			id, name, encCardNum, lastFourDigits, encNotes,
+			id, name, dueDay, encCardNum, lastFourDigits, encNotes,
 		})
 	}
 
