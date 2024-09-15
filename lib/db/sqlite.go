@@ -130,14 +130,14 @@ func (sdb SqliteDb) Close() {
 func buildFieldMap(allowedFields FieldFlag, qm QueryMap) FieldMap {
 	fm := FieldMap{}
 	for ff, fieldValue := range qm {
+		field, fieldExists := WhereFieldMap[ff]
+		if !fieldExists {
+			panic("unsupported field")
+		}
 		if allowedFields&ff == 0 {
-			panic("unsupported 'where' field")
+			panic(fmt.Sprintf("field not allowed: %v", WhereFieldMap[ff]))
 		}
-		if field, exists := WhereFieldMap[ff]; exists {
-			fm[field] = fieldValue
-			continue
-		}
-		panic("missing field")
+		fm[field] = fieldValue
 	}
 
 	return fm
