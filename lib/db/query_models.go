@@ -13,6 +13,8 @@ type FieldFlag int
 
 const (
 	BY_ID = FieldFlag(1 << iota)
+	BY_BALANCE
+	BY_AMOUNT
 	BY_MONTH_ID
 	BY_BANK_ACCOUNT_ID
 	BY_INCOME_ID
@@ -23,15 +25,17 @@ const (
 var WhereFieldMap = map[FieldFlag]string{
 	BY_ID:                "id",
 	BY_MONTH_ID:          "month_id",
+	BY_AMOUNT:            "amount",
+	BY_BALANCE:           "balance",
 	BY_BANK_ACCOUNT_ID:   "bank_account_id",
 	BY_INCOME_ID:         "income_id",
 	BY_INCOME_HISTORY_ID: "income_history_id",
 	BY_CREDIT_CARD_ID:    "credit_card_id",
 }
 
-type QueryMap map[FieldFlag]int
+type QueryMap map[FieldFlag]any
 
-type FieldMap map[string]int
+type FieldMap map[string]any
 
 type Table string
 

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	_ "embed"
 	"fmt"
+	"reflect"
 	"strings"
 	"time"
 
@@ -166,7 +167,16 @@ func buildQueryStr(t Table, fm FieldMap) string {
 	mapPos := 0
 	mapLen := len(fm)
 	for k, v := range fm {
-		sb.WriteString(fmt.Sprintf("%s=%d", k, v))
+		switch realVal := v.(type) {
+		case string:
+			sb.WriteString(fmt.Sprintf("%s=%s", k, realVal))
+		case int, int64, int32:
+			sb.WriteString(fmt.Sprintf("%s=%v", k, realVal))
+		case lib.Currency:
+			sb.WriteString(fmt.Sprintf("%s=%d", k, realVal.ToInt()))
+		default:
+			panic(fmt.Sprintf("unsupported type: %v", reflect.TypeOf(v)))
+		}
 		if mapPos+1 != mapLen {
 			sb.WriteString(" AND ")
 		}
