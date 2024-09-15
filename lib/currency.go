@@ -147,6 +147,16 @@ func (c *Currency) LoadAmount(amount int) Currency {
 	return *c
 }
 
+/*
+ToCurrency tries to return 'v' as a Currency
+*/
+func ToCurrency(v any) (Currency, error) {
+	if _, ok := v.(Currency); ok {
+		return v.(Currency), nil
+	}
+	return Currency{}, fmt.Errorf("not a currency")
+}
+
 func verifyUSDAmount(amount string) error {
 	if !strings.Contains(amount, ".") {
 		if _, err := strconv.ParseInt(amount, 10, 64); err != nil {

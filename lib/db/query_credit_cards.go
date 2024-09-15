@@ -2,8 +2,22 @@ package db
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/jaeiya/billbank/lib"
+)
+
+type (
+	CCField    string
+	CCFieldMap map[CCField]any
+)
+
+const (
+	CC_BALANCE     = CCField("balance")
+	CC_LIMIT       = CCField("credit_limit")
+	CC_PAID_AMOUNT = CCField("paid_amount")
+	CC_PAID_DATE   = CCField("paid_date")
+	CC_DUE_DAY     = CCField("due_day")
 )
 
 type CreditCardConfig struct {
@@ -64,7 +78,7 @@ func (chr CreditCardHistoryRow) String() string {
 		chr.Balance.String(),
 		chr.CreditLimit,
 		chr.PaidAmount.String(),
-		chr.PaidDate,
+		lib.TryDeref(chr.PaidDate),
 		chr.DueDay,
 	)
 }
@@ -223,4 +237,42 @@ func (sdb SqliteDb) QueryCreditCardHistory() ([]CreditCardHistoryRow, error) {
 	}
 
 	return ccRows, nil
+}
+
+func (sdb SqliteDb) SetCreditCardHistory(historyID int, fieldMap CCFieldMap) {
+	sb := strings.Builder{}
+	sb.WriteString(fmt.Sprintf("UPDATE %s\nSET ", getTableName(CREDIT_CARD_HISTORY)))
+
+	for field, value := range fieldMap {
+		switch field {
+
+		case CC_BALANCE, CC_LIMIT, CC_PAID_AMOUNT:
+			c, err := lib.ToCurrency(value)
+			if err != nil {
+				panic(fmt.Sprintf("%s should be of type: lib.Currency", field))
+			}
+			sb.WriteString(fmt.Sprintf("%s = %d,", field, c.ToInt()))
+
+		case CC_DUE_DAY:
+			if !lib.IsInt(value) {
+				panic(fmt.Sprintf("%s should of of type: int", field))
+			}
+			sb.WriteString(fmt.Sprintf("due_day = %d,", value))
+
+		case CC_PAID_DATE:
+			if _, isType := value.(string); !isType {
+				panic(fmt.Sprintf("%s should be of type: string", field))
+			}
+			sb.WriteString(fmt.Sprintf("paid_date = '%s',", value))
+
+		default:
+			panic("unsupported credit card history field")
+		}
+	}
+
+	query := fmt.Sprintf("%s\nWHERE id = %d;", sb.String()[:sb.Len()-1], historyID)
+	_, err := sdb.handle.Exec(query)
+	if err != nil {
+		panic(err)
+	}
 }
