@@ -121,15 +121,19 @@ func (sdb SqliteDb) QueryAllCreditCards() ([]CreditCardRow, error) {
 }
 
 func (sdb SqliteDb) CreateCreditCardHistory(config CreditCardHistoryConfig) {
+	creditLimit := lib.TryDeref(config.CreditLimit)
+	if creditLimit != nil {
+		creditLimit = config.CreditLimit.ToInt()
+	}
 	_, err := sdb.handle.Exec(
 		sdb.InsertInto(
 			CREDIT_CARD_HISTORY,
 			config.CreditCardID,
 			config.MonthID,
 			config.Balance.ToInt(),
-			nil,
-			nil,
-			nil,
+			creditLimit,
+			nil, // paid amount -- defaults to 0
+			nil, // paid date
 			config.DueDay,
 			MONTHLY,
 		),
