@@ -116,7 +116,7 @@ func (sdb SqliteDb) CreateCreditCard(config CreditCardConfig) {
 }
 
 func (sdb SqliteDb) QueryAllCreditCards() ([]CreditCardRow, error) {
-	queryStr := fmt.Sprintf("SELECT * FROM %s", getTableName(CREDIT_CARDS))
+	queryStr := fmt.Sprintf("SELECT * FROM %s", CREDIT_CARDS)
 	rows, err := sdb.handle.Query(queryStr)
 	if err != nil {
 		panic(err)
@@ -173,7 +173,7 @@ func (sdb SqliteDb) CreateCreditCardHistory(config CreditCardHistoryConfig) {
 }
 
 func (sdb SqliteDb) QueryCreditCardHistory() ([]CreditCardHistoryRow, error) {
-	queryStr := fmt.Sprintf("SELECT * FROM %s", getTableName(CREDIT_CARD_HISTORY))
+	queryStr := fmt.Sprintf("SELECT * FROM %s", CREDIT_CARD_HISTORY)
 	rows, err := sdb.handle.Query(queryStr)
 	if err != nil {
 		panic(err)
@@ -241,7 +241,7 @@ func (sdb SqliteDb) QueryCreditCardHistory() ([]CreditCardHistoryRow, error) {
 
 func (sdb SqliteDb) SetCreditCardHistory(historyID int, fieldMap CCFieldMap) {
 	sb := strings.Builder{}
-	sb.WriteString(fmt.Sprintf("UPDATE %s\nSET ", getTableName(CREDIT_CARD_HISTORY)))
+	sb.WriteString(fmt.Sprintf("UPDATE %s\nSET ", CREDIT_CARD_HISTORY))
 
 	for field, value := range fieldMap {
 		switch field {

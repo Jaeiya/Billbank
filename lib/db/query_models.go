@@ -33,18 +33,18 @@ type QueryMap map[FieldFlag]int
 
 type FieldMap map[string]int
 
-type Table int
+type Table string
 
 const (
-	MONTHS = Table(iota)
-	INCOME
-	INCOME_HISTORY
-	INCOME_AFFIXES
-	BANK_ACCOUNTS
-	BANK_ACCOUNT_HISTORY
-	TRANSFERS
-	CREDIT_CARDS
-	CREDIT_CARD_HISTORY
+	MONTHS               = Table("months")
+	INCOME               = Table("income")
+	INCOME_HISTORY       = Table("income_history")
+	INCOME_AFFIXES       = Table("income_affixes")
+	BANK_ACCOUNTS        = Table("bank_accounts")
+	BANK_ACCOUNT_HISTORY = Table("bank_account_history")
+	TRANSFERS            = Table("transfers")
+	CREDIT_CARDS         = Table("credit_cards")
+	CREDIT_CARD_HISTORY  = Table("credit_card_history")
 )
 
 type TableData = map[Table][]string

@@ -104,7 +104,7 @@ func (sdb SqliteDb) InsertInto(t Table, values ...any) string {
 		realCols = append(realCols, col)
 	}
 	sbColumns.WriteString(
-		fmt.Sprintf("INSERT INTO %s (%s)", getTableName(t), strings.Join(realCols, ",")),
+		fmt.Sprintf("INSERT INTO %s (%s)", t, strings.Join(realCols, ",")),
 	)
 
 	sbColumns.WriteString(" VALUES (")
@@ -158,7 +158,7 @@ func buildQueryStr(t Table, fm FieldMap) string {
 		}
 	}
 
-	query := fmt.Sprintf("SELECT * FROM %s WHERE ", getTableName(t))
+	query := fmt.Sprintf("SELECT * FROM %s WHERE ", t)
 
 	sb := strings.Builder{}
 	sb.WriteString(query)
@@ -174,32 +174,4 @@ func buildQueryStr(t Table, fm FieldMap) string {
 	}
 
 	return sb.String()
-}
-
-func getTableName(table Table) string {
-	switch table {
-	case MONTHS:
-		return "months"
-
-	case BANK_ACCOUNTS:
-		return "bank_accounts"
-	case BANK_ACCOUNT_HISTORY:
-		return "bank_account_history"
-	case TRANSFERS:
-		return "transfers"
-
-	case INCOME:
-		return "income"
-	case INCOME_HISTORY:
-		return "income_history"
-	case INCOME_AFFIXES:
-		return "income_affixes"
-
-	case CREDIT_CARDS:
-		return "credit_cards"
-	case CREDIT_CARD_HISTORY:
-		return "credit_card_history"
-	}
-
-	panic("unsupported table name")
 }
