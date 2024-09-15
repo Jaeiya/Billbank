@@ -74,14 +74,17 @@ func EncryptData(data string, password string) string {
 }
 
 /*
-EncryptNotNil encrypts data using the password and returns the encrypted
+EncryptNonNil encrypts data using the password and returns the encrypted
 string; however if data is nil it returns nil.
 */
-func EncryptNotNil(data *string, password string) any /* nil|string */ {
+func EncryptNonNil(data *string, password *string) any /* nil|string */ {
 	if data == nil {
 		return nil
 	}
-	return EncryptData(*data, password)
+	if password == nil {
+		panic("cannot encrypt data without password")
+	}
+	return EncryptData(*data, *password)
 }
 
 func DecryptData(data string, password string) (string, error) {

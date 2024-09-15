@@ -105,9 +105,9 @@ func (sdb SqliteDb) CreateCreditCard(config CreditCardConfig) {
 			CREDIT_CARDS,
 			config.Name,
 			config.DueDay,
-			lib.EncryptNotNil(config.CardNumber, *config.Password),
+			lib.EncryptNonNil(config.CardNumber, config.Password),
 			config.LastFourDigits,
-			lib.EncryptNotNil(config.Notes, *config.Password),
+			lib.EncryptNonNil(config.Notes, config.Password),
 		),
 	)
 	if err != nil {

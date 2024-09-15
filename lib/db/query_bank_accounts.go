@@ -43,19 +43,12 @@ func (sdb SqliteDb) CreateBankAccount(config BankAccountConfig) {
 		sdb.handle.Exec(sdb.InsertInto(BANK_ACCOUNTS, config.Name, nil, nil))
 	}
 
-	encrypt := func(data, password *string) any /* nil|string */ {
-		if data == nil {
-			return nil
-		}
-		return lib.EncryptData(*data, *password)
-	}
-
 	_, err := sdb.handle.Exec(
 		sdb.InsertInto(
 			BANK_ACCOUNTS,
 			config.Name,
-			encrypt(config.AccountNumber, config.Password),
-			encrypt(config.Notes, config.Password),
+			lib.EncryptNonNil(config.AccountNumber, config.Password),
+			lib.EncryptNonNil(config.Notes, config.Password),
 		),
 	)
 	if err != nil {
