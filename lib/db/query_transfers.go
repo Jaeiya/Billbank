@@ -32,12 +32,6 @@ type TransferData struct {
 }
 
 func (sdb SqliteDb) CreateTransfer(td TransferConfig) {
-	tryDereference := func(data *string) any /* nil|string */ {
-		if data == nil {
-			return nil
-		}
-		return *data
-	}
 	_, err := sdb.handle.Exec(
 		sdb.InsertInto(
 			TRANSFERS,
@@ -47,8 +41,8 @@ func (sdb SqliteDb) CreateTransfer(td TransferConfig) {
 			td.Amount.ToInt(),
 			td.Date,
 			td.TransferType,
-			tryDereference(td.ToWhom),
-			tryDereference(td.FromWhom),
+			lib.TryDeref(td.ToWhom),
+			lib.TryDeref(td.FromWhom),
 		),
 	)
 	if err != nil {
