@@ -69,9 +69,8 @@ func EncryptData(data string, password string) string {
 	}
 
 	cipherText := aesGCM.Seal(nonce, nonce, []byte(data), nil)
-	encryptedData := append(salt, cipherText...)
 
-	return base64.StdEncoding.EncodeToString(encryptedData)
+	return base64.StdEncoding.EncodeToString(append(salt, cipherText...))
 }
 
 /*
@@ -88,7 +87,7 @@ func EncryptNotNil(data *string, password string) any /* nil|string */ {
 func DecryptData(data string, password string) (string, error) {
 	cipherText, err := base64.StdEncoding.DecodeString(data)
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 
 	salt := cipherText[:16]
@@ -96,12 +95,12 @@ func DecryptData(data string, password string) (string, error) {
 
 	cBlock, err := aes.NewCipher(key)
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 
 	aesGCM, err := cipher.NewGCM(cBlock)
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 
 	nonceSize := aesGCM.NonceSize()
@@ -111,9 +110,9 @@ func DecryptData(data string, password string) (string, error) {
 
 	text, err := aesGCM.Open(nil, nonce, cipherText, nil)
 	if err != nil {
-		panic(err)
+		return "", err
 	}
-	return string(text)
+	return string(text), nil
 }
 
 func deriveKey(password string, salt []byte) []byte {
