@@ -247,9 +247,7 @@ func (sdb SqliteDb) QueryCreditCardHistory() ([]CreditCardHistoryRow, error) {
 }
 
 func (sdb SqliteDb) SetCreditCardHistory(historyID int, fieldMap CCFieldMap) {
-	sb := strings.Builder{}
-	sb.WriteString(fmt.Sprintf("UPDATE %s\nSET ", CREDIT_CARD_HISTORY))
-
+	conditions := make([]string, 0, len(fieldMap))
 	for field, value := range fieldMap {
 		switch field {
 
@@ -258,28 +256,33 @@ func (sdb SqliteDb) SetCreditCardHistory(historyID int, fieldMap CCFieldMap) {
 			if err != nil {
 				panic(fmt.Sprintf("%s should be of type: lib.Currency", field))
 			}
-			sb.WriteString(fmt.Sprintf("%s = %d,", field, c.ToInt()))
+			conditions = append(conditions, fmt.Sprintf("%s=%d", field, c.ToInt()))
 
 		case CC_DUE_DAY:
 			if !lib.IsInt(value) {
 				panic(fmt.Sprintf("%s should of of type: int", field))
 			}
-			sb.WriteString(fmt.Sprintf("due_day = %d,", value))
+			conditions = append(conditions, fmt.Sprintf("due_day=%d", value))
 
 		case CC_PAID_DATE:
 			if !lib.IsString(value) {
 				panic(fmt.Sprintf("%s should be of type: string", field))
 			}
-			sb.WriteString(fmt.Sprintf("paid_date = '%s',", value))
+			conditions = append(conditions, fmt.Sprintf("paid_date='%s'", value))
 
 		default:
-			panic("unsupported credit card history field")
+			panic(fmt.Sprintf("unsupported credit card history field: %s", field))
 		}
 	}
 
-	query := fmt.Sprintf("%s\nWHERE id = %d;", sb.String()[:sb.Len()-1], historyID)
-	_, err := sdb.handle.Exec(query)
-	if err != nil {
+	query := fmt.Sprintf(
+		"UPDATE %s SET %s WHERE id = %d",
+		CREDIT_CARD_HISTORY,
+		strings.Join(conditions, ","),
+		historyID,
+	)
+
+	if _, err := sdb.handle.Exec(query); err != nil {
 		panic(err)
 	}
 }
