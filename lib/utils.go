@@ -21,9 +21,9 @@ func IsInt(v any) bool {
 	return false
 }
 
-func StrArrayContains(val string, values []string) bool {
-	for _, v := range values {
-		if val == v {
+func StrSliceContains(slice []string, target string) bool {
+	for _, value := range slice {
+		if target == value {
 			return true
 		}
 	}

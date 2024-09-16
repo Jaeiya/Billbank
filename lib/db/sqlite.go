@@ -112,7 +112,7 @@ func buildQueryStr(t Table, fm FieldMap) string {
 			panic("id is auto-incremented and should not be manually set")
 		}
 
-		if !lib.StrArrayContains(field, td) {
+		if !lib.StrSliceContains(td, field) {
 			panic(fmt.Sprintf("%s is an unsupported field for the table: %s", field, t))
 		}
 
