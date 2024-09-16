@@ -117,7 +117,7 @@ func buildQueryStr(t Table, fm FieldMap) string {
 		}
 
 		switch realVal := val.(type) {
-		case string:
+		case string, Period:
 			conditions = append(conditions, fmt.Sprintf("%s='%s'", field, realVal))
 		case int, int64, int32:
 			conditions = append(conditions, fmt.Sprintf("%s=%v", field, realVal))
