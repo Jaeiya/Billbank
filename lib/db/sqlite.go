@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	_ "embed"
 	"fmt"
-	"reflect"
 	"strings"
 	"time"
 
@@ -102,44 +101,32 @@ func buildFieldMap(allowedFields FieldFlag, qm QueryMap) FieldMap {
 }
 
 func buildQueryStr(t Table, fm FieldMap) string {
-	td := tableData[t]
-	for k := range fm {
-		if k == "id" {
-			continue
-		}
-		for ii, d := range td {
-			if d == k {
-				break
-			}
-			if ii+1 == len(d) {
-				panic("id name does not exist on provided table")
-			}
-		}
+	td, ok := tableData[t]
+	if !ok {
+		panic("table does not exist")
 	}
 
-	query := fmt.Sprintf("SELECT * FROM %s WHERE ", t)
+	var conditions []string
+	for field, val := range fm {
+		if field == "id" {
+			panic("id is auto-incremented and should not be manually set")
+		}
 
-	sb := strings.Builder{}
-	sb.WriteString(query)
+		if !lib.StrArrayContains(field, td) {
+			panic(fmt.Sprintf("%s is an unsupported field for the table: %s", field, t))
+		}
 
-	mapPos := 0
-	mapLen := len(fm)
-	for k, v := range fm {
-		switch realVal := v.(type) {
+		switch realVal := val.(type) {
 		case string:
-			sb.WriteString(fmt.Sprintf("%s=%s", k, realVal))
+			conditions = append(conditions, fmt.Sprintf("%s='%s'", field, realVal))
 		case int, int64, int32:
-			sb.WriteString(fmt.Sprintf("%s=%v", k, realVal))
+			conditions = append(conditions, fmt.Sprintf("%s=%v", field, realVal))
 		case lib.Currency:
-			sb.WriteString(fmt.Sprintf("%s=%d", k, realVal.ToInt()))
+			conditions = append(conditions, fmt.Sprintf("%s=%d", field, realVal.ToInt()))
 		default:
-			panic(fmt.Sprintf("unsupported type: %v", reflect.TypeOf(v)))
+			panic(fmt.Sprintf("unsupported type: %T", val))
 		}
-		if mapPos+1 != mapLen {
-			sb.WriteString(" AND ")
-		}
-		mapPos++
 	}
 
-	return sb.String()
+	return fmt.Sprintf("SELECT * FROM %s WHERE %s", t, strings.Join(conditions, " AND "))
 }

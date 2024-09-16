@@ -20,3 +20,12 @@ func IsInt(v any) bool {
 	}
 	return false
 }
+
+func StrArrayContains(val string, values []string) bool {
+	for _, v := range values {
+		if val == v {
+			return true
+		}
+	}
+	return false
+}
