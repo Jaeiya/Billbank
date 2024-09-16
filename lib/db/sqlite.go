@@ -44,83 +44,41 @@ func NewSqliteDb(name string, cc lib.CurrencyCode) *SqliteDb {
 	return &SqliteDb{db, cc}
 }
 
-func (sdb SqliteDb) CreateMonth(t time.Time) error {
-	// Make sure any prior date arithmetic, used a clean date
-	isClean := t.Day() == 1 &&
-		t.Hour() == 0 &&
-		t.Minute() == 0 &&
-		t.Second() == 0 &&
-		t.Nanosecond() == 0
-
-	if !isClean {
-		return fmt.Errorf("not a clean date")
-	}
-	_, err := sdb.handle.Exec(sdb.InsertInto(MONTHS, t.Format("2006-01")))
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (sdb SqliteDb) QueryMonths() (MonthInfo, error) {
-	rows, err := sdb.handle.Query("SELECT * FROM months")
-	if err != nil {
-		return MonthInfo{}, err
-	}
-	defer rows.Close()
-
-	if !rows.Next() {
-		return MonthInfo{}, fmt.Errorf("empty month table")
-	}
-
-	var (
-		id   int
-		date string
-	)
-
-	err = rows.Scan(&id, &date)
-	if err != nil {
-		return MonthInfo{}, err
-	}
-
-	return MonthInfo{id, date}, nil
-}
-
 func (sdb SqliteDb) InsertInto(t Table, values ...any) string {
 	columns, exists := tableData[t]
 	if !exists {
 		panic("unsupported table")
 	}
 
-	if len(columns) > len(values) || len(columns) < len(values) {
+	if len(columns) != len(values) {
 		panic(fmt.Sprintf("expected %d values, but got %d", len(columns), len(values)))
 	}
 
-	sbColumns := strings.Builder{}
 	var realCols []string
+	var realValues []string
+
 	for i, col := range columns {
 		if values[i] == nil {
 			continue
 		}
 		realCols = append(realCols, col)
-	}
-	sbColumns.WriteString(
-		fmt.Sprintf("INSERT INTO %s (%s)", t, strings.Join(realCols, ",")),
-	)
 
-	sbColumns.WriteString(" VALUES (")
-	valTemplate := "%v,"
-	for _, val := range values {
-		switch val.(type) {
+		switch v := values[i].(type) {
 		case string, Period:
-			valTemplate = "'%v',"
-		case nil:
-			continue
+			realValues = append(realValues, fmt.Sprintf("'%v'", v))
+		case time.Month:
+			realValues = append(realValues, fmt.Sprintf("%d", v))
+		default:
+			realValues = append(realValues, fmt.Sprintf("%v", v))
 		}
-		sbColumns.WriteString(fmt.Sprintf(valTemplate, val))
 	}
 
-	return sbColumns.String()[:len(sbColumns.String())-1] + ")"
+	return fmt.Sprintf(
+		"INSERT INTO %s (%s) VALUES (%s)",
+		t,
+		strings.Join(realCols, ","),
+		strings.Join(realValues, ","),
+	)
 }
 
 func (sdb SqliteDb) Close() {

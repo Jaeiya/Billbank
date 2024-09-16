@@ -8,7 +8,9 @@ CREATE TABLE IF NOT EXISTS bank (
 
 CREATE TABLE IF NOT EXISTS months (
     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    date VARCHAR(50)
+    -- If my program survives to the year 3000, then something went wrong lol
+    year  INTEGER NOT NULL CHECK (year < 3000 AND year > 2000),
+    month INTEGER NOT NULL CHECK (month > 0 AND month < 13)
 );
 
 

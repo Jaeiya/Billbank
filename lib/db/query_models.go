@@ -9,12 +9,18 @@ const (
 	BIWEEKLY = Period("biweekly")
 )
 
-type FieldFlag int
+type (
+	QueryMap  map[FieldFlag]any
+	FieldMap  map[string]any
+	FieldFlag int
+)
 
 const (
 	BY_ID = FieldFlag(1 << iota)
-	BY_BALANCE
 	BY_AMOUNT
+	BY_BALANCE
+	BY_YEAR
+	BY_MONTH
 	BY_MONTH_ID
 	BY_BANK_ACCOUNT_ID
 	BY_INCOME_ID
@@ -24,18 +30,16 @@ const (
 
 var WhereFieldMap = map[FieldFlag]string{
 	BY_ID:                "id",
-	BY_MONTH_ID:          "month_id",
 	BY_AMOUNT:            "amount",
 	BY_BALANCE:           "balance",
+	BY_YEAR:              "year",
+	BY_MONTH:             "month",
+	BY_MONTH_ID:          "month_id",
 	BY_BANK_ACCOUNT_ID:   "bank_account_id",
 	BY_INCOME_ID:         "income_id",
 	BY_INCOME_HISTORY_ID: "income_history_id",
 	BY_CREDIT_CARD_ID:    "credit_card_id",
 }
-
-type QueryMap map[FieldFlag]any
-
-type FieldMap map[string]any
 
 type Table string
 
@@ -54,7 +58,7 @@ const (
 type TableData = map[Table][]string
 
 var tableData = TableData{
-	MONTHS:               {"date"},
+	MONTHS:               {"year", "month"},
 	INCOME:               {"name", "amount", "period"},
 	INCOME_HISTORY:       {"income_id", "month_id", "amount"},
 	INCOME_AFFIXES:       {"income_history_id", "name", "amount"},
@@ -81,9 +85,4 @@ var tableData = TableData{
 		"due_day",
 		"period",
 	},
-}
-
-type MonthInfo struct {
-	Id   int
-	Date string
 }
