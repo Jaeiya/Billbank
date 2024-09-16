@@ -14,9 +14,9 @@ const (
 	CREDIT_CARD_HISTORY  = Table("credit_card_history")
 )
 
-type TableData = map[Table][]string
+type TableFields = map[Table][]string
 
-var tableData = TableData{
+var tableData = TableFields{
 	MONTHS:               {"year", "month"},
 	INCOME:               {"name", "amount", "period"},
 	INCOME_HISTORY:       {"income_id", "month_id", "amount"},
