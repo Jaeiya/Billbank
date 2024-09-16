@@ -1,46 +1,5 @@
 package db
 
-type Period string
-
-const (
-	YEARLY   = Period("yearly")
-	MONTHLY  = Period("monthly")
-	WEEKLY   = Period("weekly")
-	BIWEEKLY = Period("biweekly")
-)
-
-type (
-	QueryMap  map[FieldFlag]any
-	FieldMap  map[string]any
-	FieldFlag int
-)
-
-const (
-	BY_ID = FieldFlag(1 << iota)
-	BY_AMOUNT
-	BY_BALANCE
-	BY_YEAR
-	BY_MONTH
-	BY_MONTH_ID
-	BY_BANK_ACCOUNT_ID
-	BY_INCOME_ID
-	BY_INCOME_HISTORY_ID
-	BY_CREDIT_CARD_ID
-)
-
-var WhereFieldMap = map[FieldFlag]string{
-	BY_ID:                "id",
-	BY_AMOUNT:            "amount",
-	BY_BALANCE:           "balance",
-	BY_YEAR:              "year",
-	BY_MONTH:             "month",
-	BY_MONTH_ID:          "month_id",
-	BY_BANK_ACCOUNT_ID:   "bank_account_id",
-	BY_INCOME_ID:         "income_id",
-	BY_INCOME_HISTORY_ID: "income_history_id",
-	BY_CREDIT_CARD_ID:    "credit_card_id",
-}
-
 type Table string
 
 const (
@@ -86,3 +45,44 @@ var tableData = TableData{
 		"period",
 	},
 }
+
+type (
+	QueryMap  map[FieldFlag]any
+	FieldMap  map[string]any
+	FieldFlag int
+)
+
+const (
+	BY_ID = FieldFlag(1 << iota)
+	BY_AMOUNT
+	BY_BALANCE
+	BY_YEAR
+	BY_MONTH
+	BY_MONTH_ID
+	BY_BANK_ACCOUNT_ID
+	BY_INCOME_ID
+	BY_INCOME_HISTORY_ID
+	BY_CREDIT_CARD_ID
+)
+
+var WhereFieldMap = map[FieldFlag]string{
+	BY_ID:                "id",
+	BY_AMOUNT:            "amount",
+	BY_BALANCE:           "balance",
+	BY_YEAR:              "year",
+	BY_MONTH:             "month",
+	BY_MONTH_ID:          "month_id",
+	BY_BANK_ACCOUNT_ID:   "bank_account_id",
+	BY_INCOME_ID:         "income_id",
+	BY_INCOME_HISTORY_ID: "income_history_id",
+	BY_CREDIT_CARD_ID:    "credit_card_id",
+}
+
+type Period string
+
+const (
+	YEARLY   = Period("yearly")
+	MONTHLY  = Period("monthly")
+	WEEKLY   = Period("weekly")
+	BIWEEKLY = Period("biweekly")
+)
