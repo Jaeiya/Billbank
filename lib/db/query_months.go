@@ -23,8 +23,9 @@ func (sdb SqliteDb) CreateMonth(t time.Time) error {
 	if !isClean {
 		return fmt.Errorf("not a clean date")
 	}
-	_, err := sdb.handle.Exec(sdb.InsertInto(MONTHS, t.Year(), t.Month()))
-	if err != nil {
+	if _, err := sdb.handle.Exec(
+		sdb.InsertInto(MONTHS, t.Year(), t.Month()),
+	); err != nil {
 		return err
 	}
 	return nil
@@ -45,8 +46,7 @@ func (sdb SqliteDb) QueryAllMonths() ([]MonthInfo, error) {
 	)
 
 	for rows.Next() {
-		err = rows.Scan(&id, &year, &month)
-		if err != nil {
+		if err = rows.Scan(&id, &year, &month); err != nil {
 			panic(err)
 		}
 		monthRows = append(monthRows, MonthInfo{id, year, month})
@@ -69,8 +69,7 @@ func (sdb SqliteDb) QueryMonth(qm QueryMap) (MonthInfo, error) {
 		month int
 	)
 
-	err := row.Scan(&id, &year, &month)
-	if err != nil {
+	if err := row.Scan(&id, &year, &month); err != nil {
 		if strings.Contains(err.Error(), "no rows in result set") {
 			return MonthInfo{}, err
 		}

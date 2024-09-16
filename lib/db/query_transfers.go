@@ -32,7 +32,7 @@ type TransferData struct {
 }
 
 func (sdb SqliteDb) CreateTransfer(td TransferConfig) {
-	_, err := sdb.handle.Exec(
+	if _, err := sdb.handle.Exec(
 		sdb.InsertInto(
 			TRANSFERS,
 			td.AccountID,
@@ -44,8 +44,7 @@ func (sdb SqliteDb) CreateTransfer(td TransferConfig) {
 			lib.TryDeref(td.ToWhom),
 			lib.TryDeref(td.FromWhom),
 		),
-	)
-	if err != nil {
+	); err != nil {
 		panic(err)
 	}
 }
@@ -73,7 +72,7 @@ func (sdb SqliteDb) QueryTransfers(qm QueryMap) ([]TransferData, error) {
 	)
 
 	for rows.Next() {
-		err = rows.Scan(
+		if err = rows.Scan(
 			&id,
 			&accountID,
 			&monthID,
@@ -83,8 +82,7 @@ func (sdb SqliteDb) QueryTransfers(qm QueryMap) ([]TransferData, error) {
 			&tt,
 			&toWhom,
 			&fromWhom,
-		)
-		if err != nil {
+		); err != nil {
 			panic(err)
 		}
 		c := lib.NewCurrency("", sdb.currencyCode)

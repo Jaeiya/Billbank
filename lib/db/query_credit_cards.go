@@ -90,7 +90,7 @@ func (sdb SqliteDb) CreateCreditCard(config CreditCardConfig) {
 		creditLimit = config.CreditLimit.ToInt()
 	}
 	if config.Password == nil {
-		_, err := sdb.handle.Exec(
+		if _, err := sdb.handle.Exec(
 			sdb.InsertInto(
 				CREDIT_CARDS,
 				config.Name,
@@ -100,13 +100,13 @@ func (sdb SqliteDb) CreateCreditCard(config CreditCardConfig) {
 				config.LastFourDigits,
 				nil,
 			),
-		)
-		if err != nil {
+		); err != nil {
 			panic(err)
 		}
 		return
 	}
-	_, err := sdb.handle.Exec(
+
+	if _, err := sdb.handle.Exec(
 		sdb.InsertInto(
 			CREDIT_CARDS,
 			config.Name,
@@ -116,8 +116,7 @@ func (sdb SqliteDb) CreateCreditCard(config CreditCardConfig) {
 			config.LastFourDigits,
 			lib.EncryptNonNil(config.Notes, config.Password),
 		),
-	)
-	if err != nil {
+	); err != nil {
 		panic(err)
 	}
 }
@@ -140,8 +139,14 @@ func (sdb SqliteDb) QueryAllCreditCards() ([]CreditCardRow, error) {
 	)
 
 	for rows.Next() {
-		err = rows.Scan(&id, &name, &dueDay, &encCardNum, &lastFourDigits, &encNotes)
-		if err != nil {
+		if err = rows.Scan(
+			&id,
+			&name,
+			&dueDay,
+			&encCardNum,
+			&lastFourDigits,
+			&encNotes,
+		); err != nil {
 			panic(err)
 		}
 		cards = append(cards, CreditCardRow{
@@ -161,7 +166,7 @@ func (sdb SqliteDb) CreateCreditCardHistory(config CreditCardHistoryConfig) {
 	if creditLimit != nil {
 		creditLimit = config.CreditLimit.ToInt()
 	}
-	_, err := sdb.handle.Exec(
+	if _, err := sdb.handle.Exec(
 		sdb.InsertInto(
 			CREDIT_CARD_HISTORY,
 			config.CreditCardID,
@@ -173,8 +178,7 @@ func (sdb SqliteDb) CreateCreditCardHistory(config CreditCardHistoryConfig) {
 			config.DueDay,
 			MONTHLY,
 		),
-	)
-	if err != nil {
+	); err != nil {
 		panic(err)
 	}
 }
@@ -200,7 +204,7 @@ func (sdb SqliteDb) QueryCreditCardHistory() ([]CreditCardHistoryRow, error) {
 	)
 
 	for rows.Next() {
-		err = rows.Scan(
+		if err = rows.Scan(
 			&id,
 			&ccID,
 			&monthID,
@@ -210,8 +214,7 @@ func (sdb SqliteDb) QueryCreditCardHistory() ([]CreditCardHistoryRow, error) {
 			&paidDate,
 			&dueDay,
 			&period,
-		)
-		if err != nil {
+		); err != nil {
 			panic(err)
 		}
 		balanceCurrency := lib.NewCurrency("", sdb.currencyCode)

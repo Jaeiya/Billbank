@@ -40,18 +40,21 @@ type BankHistoryConfig struct {
 
 func (sdb SqliteDb) CreateBankAccount(config BankAccountConfig) {
 	if config.Password == nil || (config.AccountNumber == nil && config.Notes == nil) {
-		sdb.handle.Exec(sdb.InsertInto(BANK_ACCOUNTS, config.Name, nil, nil))
+		if _, err := sdb.handle.Exec(
+			sdb.InsertInto(BANK_ACCOUNTS, config.Name, nil, nil),
+		); err != nil {
+			panic(err)
+		}
 	}
 
-	_, err := sdb.handle.Exec(
+	if _, err := sdb.handle.Exec(
 		sdb.InsertInto(
 			BANK_ACCOUNTS,
 			config.Name,
 			lib.EncryptNonNil(config.AccountNumber, config.Password),
 			lib.EncryptNonNil(config.Notes, config.Password),
 		),
-	)
-	if err != nil {
+	); err != nil {
 		panic(err)
 	}
 }
@@ -70,8 +73,7 @@ func (sdb SqliteDb) QueryAllBankAccounts() ([]BankInfoRow, error) {
 	)
 
 	for rows.Next() {
-		err = rows.Scan(&id, &name)
-		if err != nil {
+		if err = rows.Scan(&id, &name); err != nil {
 			panic(err)
 		}
 		bankInfoRows = append(bankInfoRows, BankInfoRow{id, name})
@@ -124,15 +126,14 @@ func (sdb SqliteDb) QueryDecryptedBankAccount(
 }
 
 func (sdb SqliteDb) CreateBankAccountHistory(config BankHistoryConfig) {
-	_, err := sdb.handle.Exec(
+	if _, err := sdb.handle.Exec(
 		sdb.InsertInto(
 			BANK_ACCOUNT_HISTORY,
 			config.BankAccountID,
 			config.MonthID,
 			config.Balance.ToInt(),
 		),
-	)
-	if err != nil {
+	); err != nil {
 		panic(err)
 	}
 }
@@ -154,8 +155,7 @@ func (sdb SqliteDb) QueryBankAccountHistory(qm QueryMap) ([]BankHistoryRow, erro
 	)
 
 	for rows.Next() {
-		err := rows.Scan(&id, &bankAcctID, &monthID, &balance)
-		if err != nil {
+		if err := rows.Scan(&id, &bankAcctID, &monthID, &balance); err != nil {
 			panic(err)
 		}
 

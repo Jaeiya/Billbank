@@ -77,8 +77,7 @@ func (sdb SqliteDb) QueryAllIncome() ([]IncomeRow, error) {
 	)
 
 	for rows.Next() {
-		err = rows.Scan(&id, &name, &amount, &period)
-		if err != nil {
+		if err = rows.Scan(&id, &name, &amount, &period); err != nil {
 			panic(err)
 		}
 
@@ -104,8 +103,7 @@ func (sdb SqliteDb) QueryIncome(incomeID int) IncomeRow {
 		period Period
 	)
 
-	err := row.Scan(&id, &name, &amount, &period)
-	if err != nil {
+	if err := row.Scan(&id, &name, &amount, &period); err != nil {
 		panic(err)
 	}
 	c := lib.NewCurrency("", sdb.currencyCode)
@@ -115,10 +113,9 @@ func (sdb SqliteDb) QueryIncome(incomeID int) IncomeRow {
 
 func (sdb SqliteDb) CreateIncomeHistory(incomeID int, monthID int) {
 	incomeRow := sdb.QueryIncome(incomeID)
-	_, err := sdb.handle.Exec(
+	if _, err := sdb.handle.Exec(
 		sdb.InsertInto(INCOME_HISTORY, incomeID, monthID, incomeRow.Amount.ToInt()),
-	)
-	if err != nil {
+	); err != nil {
 		panic(err)
 	}
 }
@@ -141,8 +138,7 @@ func (sdb SqliteDb) QueryIncomeHistory(qw QueryMap) ([]IncomeHistoryRow, error) 
 	)
 
 	for rows.Next() {
-		err = rows.Scan(&id, &incomeID, &monthID, &amount)
-		if err != nil {
+		if err = rows.Scan(&id, &incomeID, &monthID, &amount); err != nil {
 			panic(err)
 		}
 		c := lib.NewCurrency("", sdb.currencyCode)
@@ -166,8 +162,9 @@ AffixIncome tracks an appended amount to an existing income. This could
 be a bonus or overtime amount.
 */
 func (sdb SqliteDb) AffixIncome(historyID int, name string, amount lib.Currency) {
-	_, err := sdb.handle.Exec(sdb.InsertInto(INCOME_AFFIXES, historyID, name, amount.ToInt()))
-	if err != nil {
+	if _, err := sdb.handle.Exec(
+		sdb.InsertInto(INCOME_AFFIXES, historyID, name, amount.ToInt()),
+	); err != nil {
 		panic(err)
 	}
 }
@@ -189,8 +186,7 @@ func (sdb SqliteDb) QueryAffixIncome(qm QueryMap) ([]AffixIncomeRow, error) {
 	)
 
 	for rows.Next() {
-		err = rows.Scan(&id, &incomeHistID, &name, &amount)
-		if err != nil {
+		if err = rows.Scan(&id, &incomeHistID, &name, &amount); err != nil {
 			panic(err)
 		}
 
