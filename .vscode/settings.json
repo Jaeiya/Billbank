@@ -1,6 +1,10 @@
 {
   "cSpell.words": [
+    "AUTOINCREMENT",
     "billbank",
+    "bubbletea",
+    "charmbracelet",
+    "Debouncer",
     "gcflags",
     "goamd",
     "goarch",
@@ -12,7 +16,10 @@
     "gotest",
     "Gotestsum",
     "junitfile",
+    "lipgloss",
     "mikepenz",
+    "textinput",
     "trimpath"
-  ]
+  ],
+  "go.lintFlags": ["--disable-all"]
 }
