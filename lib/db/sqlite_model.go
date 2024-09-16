@@ -33,7 +33,14 @@ var tableData = TableFields{
 		"to_whom",
 		"from_whom",
 	},
-	CREDIT_CARDS: {"name", "due_day", "card_number", "last_four_digits", "notes"},
+	CREDIT_CARDS: {
+		"name",
+		"due_day",
+		"credit_limit",
+		"card_number",
+		"last_four_digits",
+		"notes",
+	},
 	CREDIT_CARD_HISTORY: {
 		"credit_card_id",
 		"month_id",

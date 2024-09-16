@@ -22,8 +22,9 @@ const (
 
 type CreditCardConfig struct {
 	Name           string
-	CardNumber     *string
 	DueDay         int
+	CreditLimit    *lib.Currency
+	CardNumber     *string
 	LastFourDigits string
 	Notes          *string
 	Password       *string
@@ -84,12 +85,17 @@ func (chr CreditCardHistoryRow) String() string {
 }
 
 func (sdb SqliteDb) CreateCreditCard(config CreditCardConfig) {
+	creditLimit := lib.TryDeref(config.CreditLimit)
+	if creditLimit != nil {
+		creditLimit = config.CreditLimit.ToInt()
+	}
 	if config.Password == nil {
 		_, err := sdb.handle.Exec(
 			sdb.InsertInto(
 				CREDIT_CARDS,
 				config.Name,
 				config.DueDay,
+				creditLimit,
 				nil,
 				config.LastFourDigits,
 				nil,
@@ -105,6 +111,7 @@ func (sdb SqliteDb) CreateCreditCard(config CreditCardConfig) {
 			CREDIT_CARDS,
 			config.Name,
 			config.DueDay,
+			creditLimit,
 			lib.EncryptNonNil(config.CardNumber, config.Password),
 			config.LastFourDigits,
 			lib.EncryptNonNil(config.Notes, config.Password),
