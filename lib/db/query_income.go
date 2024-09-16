@@ -20,6 +20,17 @@ type IncomeHistoryRow struct {
 	Amount   lib.Currency
 }
 
+func (ih IncomeHistoryRow) String() string {
+	s := fmt.Sprintf(
+		"id: %d\nincomeID: %d\nmonthID: %d\namount: %s",
+		ih.ID,
+		ih.IncomeID,
+		ih.MonthID,
+		ih.Amount.String(),
+	)
+	return s
+}
+
 type AffixIncomeRow struct {
 	ID              int
 	IncomeHistoryID int
