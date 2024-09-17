@@ -85,46 +85,30 @@ func (sdb SqliteDb) Close() {
 }
 
 func (sdb SqliteDb) query(t Table, qm QueryMap) *sql.Rows {
+	var fm FieldMap
 	switch t {
 	case BANK_ACCOUNTS:
-		fm := buildFieldMap(WHERE_ID, qm)
-		queryStr := buildQueryStr(t, fm)
-		rows, err := sdb.handle.Query(queryStr)
-		if err != nil {
-			panic(err)
-		}
-		return rows
+		fm = buildFieldMap(WHERE_ID, qm)
 
 	case BANK_ACCOUNT_HISTORY:
-		fm := buildFieldMap(WHERE_ID|WHERE_BANK_ACCOUNT_ID|WHERE_MONTH_ID, qm)
-		queryStr := buildQueryStr(t, fm)
-		rows, err := sdb.handle.Query(queryStr)
-		if err != nil {
-			panic(err)
-		}
-		return rows
+		fm = buildFieldMap(WHERE_ID|WHERE_BANK_ACCOUNT_ID|WHERE_MONTH_ID, qm)
 
 	case CREDIT_CARDS:
-		fm := buildFieldMap(WHERE_ID|WHERE_NAME, qm)
-		queryStr := buildQueryStr(t, fm)
-		rows, err := sdb.handle.Query(queryStr)
-		if err != nil {
-			panic(err)
-		}
-		return rows
+		fm = buildFieldMap(WHERE_ID|WHERE_NAME, qm)
 
 	case CREDIT_CARD_HISTORY:
-		fm := buildFieldMap(WHERE_ID|WHERE_CREDIT_CARD_ID|WHERE_MONTH_ID, qm)
-		queryStr := buildQueryStr(t, fm)
-		rows, err := sdb.handle.Query(queryStr)
-		if err != nil {
-			panic(err)
-		}
-		return rows
+		fm = buildFieldMap(WHERE_ID|WHERE_CREDIT_CARD_ID|WHERE_MONTH_ID, qm)
 
+	default:
+		panic(fmt.Sprintf("unsupported table: %s", t))
 	}
 
-	return nil
+	queryStr := buildQueryStr(t, fm)
+	rows, err := sdb.handle.Query(queryStr)
+	if err != nil {
+		panic(err)
+	}
+	return rows
 }
 
 func buildFieldMap(allowedFields WhereFlag, qm QueryMap) FieldMap {
