@@ -18,8 +18,8 @@
     "junitfile",
     "lipgloss",
     "mikepenz",
+    "modernc",
     "textinput",
     "trimpath"
-  ],
-  "go.lintFlags": ["--disable-all"]
+  ]
 }
