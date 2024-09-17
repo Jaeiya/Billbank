@@ -2,7 +2,6 @@ package db
 
 import (
 	"fmt"
-	"strings"
 	"time"
 )
 
@@ -31,25 +30,16 @@ func (sdb SqliteDb) CreateMonth(t time.Time) error {
 	return nil
 }
 
-func (sdb SqliteDb) QueryAllMonths() ([]MonthInfo, error) {
-	rows, err := sdb.handle.Query(fmt.Sprintf("SELECT * FROM %s", MONTHS))
-	if err != nil {
-		panic(err)
-	}
-	defer rows.Close()
-
-	var (
-		id        int
-		year      int
-		month     int
-		monthRows []MonthInfo
-	)
+func (sdb SqliteDb) QueryAllMonths(qm QueryMap) ([]MonthInfo, error) {
+	rows := sdb.query(MONTHS, qm)
+	var monthRows []MonthInfo
 
 	for rows.Next() {
-		if err = rows.Scan(&id, &year, &month); err != nil {
+		var row MonthInfo
+		if err := rows.Scan(&row.ID, &row.Year, &row.Month); err != nil {
 			panic(err)
 		}
-		monthRows = append(monthRows, MonthInfo{id, year, month})
+		monthRows = append(monthRows, row)
 	}
 
 	if len(monthRows) == 0 {
@@ -57,24 +47,4 @@ func (sdb SqliteDb) QueryAllMonths() ([]MonthInfo, error) {
 	}
 
 	return monthRows, nil
-}
-
-func (sdb SqliteDb) QueryMonth(qm QueryMap) (MonthInfo, error) {
-	fm := buildFieldMap(WHERE_MONTH_ID|WHERE_MONTH|WHERE_YEAR, qm)
-	row := sdb.handle.QueryRow(buildQueryStr(MONTHS, fm))
-
-	var (
-		id    int
-		year  int
-		month int
-	)
-
-	if err := row.Scan(&id, &year, &month); err != nil {
-		if strings.Contains(err.Error(), "no rows in result set") {
-			return MonthInfo{}, err
-		}
-		panic(err)
-	}
-
-	return MonthInfo{id, year, month}, nil
 }

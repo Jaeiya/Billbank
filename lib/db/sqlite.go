@@ -108,6 +108,9 @@ func (sdb SqliteDb) query(t Table, qm QueryMap) *sql.Rows {
 	case TRANSFERS:
 		fm = buildFieldMap(WHERE_ID|WHERE_BANK_ACCOUNT_ID|WHERE_MONTH_ID, qm)
 
+	case MONTHS:
+		fm = buildFieldMap(WHERE_ID|WHERE_MONTH|WHERE_YEAR, qm)
+
 	default:
 		panic(fmt.Sprintf("unsupported table: %s", t))
 	}
