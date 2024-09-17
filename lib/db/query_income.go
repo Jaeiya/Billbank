@@ -116,10 +116,9 @@ func (sdb SqliteDb) QueryIncome(incomeID int) IncomeRow {
 	return IncomeRow{id, name, lib.NewCurrencyFromStore(amount, sdb.currencyCode), period}
 }
 
-func (sdb SqliteDb) CreateIncomeHistory(incomeID int, monthID int) {
-	incomeRow := sdb.QueryIncome(incomeID)
+func (sdb SqliteDb) CreateIncomeHistory(incomeID int, monthID int, amount lib.Currency) {
 	if _, err := sdb.handle.Exec(
-		sdb.InsertInto(INCOME_HISTORY, incomeID, monthID, incomeRow.Amount.ToInt()),
+		sdb.InsertInto(INCOME_HISTORY, incomeID, monthID, amount.ToInt()),
 	); err != nil {
 		panic(err)
 	}
