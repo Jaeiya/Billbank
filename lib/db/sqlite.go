@@ -146,7 +146,7 @@ func buildQueryStr(t Table, fm FieldMap) string {
 
 		switch realVal := val.(type) {
 		case string, Period:
-			conditions = append(conditions, fmt.Sprintf("%s='%s'", field, realVal))
+			conditions = append(conditions, fmt.Sprintf("%s LIKE '%%%s%%'", field, realVal))
 		case int, int64, int32:
 			conditions = append(conditions, fmt.Sprintf("%s=%v", field, realVal))
 		case lib.Currency:
