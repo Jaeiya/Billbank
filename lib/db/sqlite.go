@@ -87,7 +87,7 @@ func (sdb SqliteDb) Close() {
 func (sdb SqliteDb) query(t Table, qm QueryMap) *sql.Rows {
 	var fm FieldMap
 	switch t {
-	case BANK_ACCOUNTS:
+	case BANK_ACCOUNTS, INCOME:
 		fm = buildFieldMap(WHERE_ID, qm)
 
 	case BANK_ACCOUNT_HISTORY:
@@ -98,6 +98,12 @@ func (sdb SqliteDb) query(t Table, qm QueryMap) *sql.Rows {
 
 	case CREDIT_CARD_HISTORY:
 		fm = buildFieldMap(WHERE_ID|WHERE_CREDIT_CARD_ID|WHERE_MONTH_ID, qm)
+
+	case INCOME_HISTORY:
+		fm = buildFieldMap(WHERE_ID|WHERE_INCOME_ID|WHERE_MONTH_ID, qm)
+
+	case INCOME_AFFIXES:
+		fm = buildFieldMap(WHERE_ID|WHERE_INCOME_ID, qm)
 
 	default:
 		panic(fmt.Sprintf("unsupported table: %s", t))
@@ -139,7 +145,7 @@ func buildQueryStr(t Table, fm FieldMap) string {
 	}
 
 	for field, val := range fm {
-		// id's are not part of the table data, because they are created
+		// id's are not part of the table data because they are created
 		// automatically by SQL.
 		if field != "id" {
 			if !lib.StrSliceContains(td, field) {

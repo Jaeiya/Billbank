@@ -61,35 +61,18 @@ func (sdb SqliteDb) SetIncome(id int, amount lib.Currency) {
 	}
 }
 
-func (sdb SqliteDb) QueryAllIncome() ([]IncomeRow, error) {
-	rows, err := sdb.handle.Query("SELECT * FROM income")
-	if err != nil {
-		panic(err)
-	}
-	defer rows.Close()
-
-	var (
-		id        int
-		name      string
-		amount    int
-		period    string
-		incomeRow []IncomeRow
-	)
+func (sdb SqliteDb) QueryIncome(qm QueryMap) ([]IncomeRow, error) {
+	rows := sdb.query(INCOME, qm)
+	var amount int
+	var incomeRow []IncomeRow
 
 	for rows.Next() {
-		if err = rows.Scan(&id, &name, &amount, &period); err != nil {
+		var row IncomeRow
+		if err := rows.Scan(&row.ID, &row.Name, &amount, &row.Period); err != nil {
 			panic(err)
 		}
-
-		incomeRow = append(
-			incomeRow,
-			IncomeRow{
-				id,
-				name,
-				lib.NewCurrencyFromStore(amount, sdb.currencyCode),
-				Period(period),
-			},
-		)
+		row.Amount = lib.NewCurrencyFromStore(amount, sdb.currencyCode)
+		incomeRow = append(incomeRow, row)
 	}
 
 	if len(incomeRow) == 0 {
@@ -97,23 +80,6 @@ func (sdb SqliteDb) QueryAllIncome() ([]IncomeRow, error) {
 	}
 
 	return incomeRow, nil
-}
-
-func (sdb SqliteDb) QueryIncome(incomeID int) IncomeRow {
-	queryStr := buildQueryStr(INCOME, FieldMap{"id": incomeID})
-	row := sdb.handle.QueryRow(queryStr)
-
-	var (
-		id     int
-		name   string
-		amount int
-		period Period
-	)
-
-	if err := row.Scan(&id, &name, &amount, &period); err != nil {
-		panic(err)
-	}
-	return IncomeRow{id, name, lib.NewCurrencyFromStore(amount, sdb.currencyCode), period}
 }
 
 func (sdb SqliteDb) CreateIncomeHistory(incomeID int, monthID int, amount lib.Currency) {
@@ -124,37 +90,18 @@ func (sdb SqliteDb) CreateIncomeHistory(incomeID int, monthID int, amount lib.Cu
 	}
 }
 
-func (sdb SqliteDb) QueryIncomeHistory(qw QueryMap) ([]IncomeHistoryRow, error) {
-	fieldMap := buildFieldMap(WHERE_ID|WHERE_INCOME_ID|WHERE_MONTH_ID, qw)
-	queryStr := buildQueryStr(INCOME_HISTORY, fieldMap)
-	rows, err := sdb.handle.Query(queryStr)
-	if err != nil {
-		panic(err)
-	}
-	defer rows.Close()
-
-	var (
-		id                int
-		incomeID          int
-		monthID           int
-		amount            int
-		incomeHistoryRows []IncomeHistoryRow
-	)
+func (sdb SqliteDb) QueryIncomeHistory(qm QueryMap) ([]IncomeHistoryRow, error) {
+	rows := sdb.query(INCOME_HISTORY, qm)
+	var amount int
+	var incomeHistoryRows []IncomeHistoryRow
 
 	for rows.Next() {
-		if err = rows.Scan(&id, &incomeID, &monthID, &amount); err != nil {
+		var row IncomeHistoryRow
+		if err := rows.Scan(&row.ID, &row.IncomeID, &row.MonthID, &amount); err != nil {
 			panic(err)
 		}
-
-		incomeHistoryRows = append(
-			incomeHistoryRows,
-			IncomeHistoryRow{
-				id,
-				incomeID,
-				monthID,
-				lib.NewCurrencyFromStore(amount, sdb.currencyCode),
-			},
-		)
+		row.Amount = lib.NewCurrencyFromStore(amount, sdb.currencyCode)
+		incomeHistoryRows = append(incomeHistoryRows, row)
 	}
 
 	if len(incomeHistoryRows) == 0 {
@@ -177,29 +124,17 @@ func (sdb SqliteDb) AffixIncome(historyID int, name string, amount lib.Currency)
 }
 
 func (sdb SqliteDb) QueryAffixIncome(qm QueryMap) ([]AffixIncomeRow, error) {
-	fieldMap := buildFieldMap(WHERE_ID|WHERE_INCOME_ID, qm)
-	queryStr := buildQueryStr(INCOME_AFFIXES, fieldMap)
-	rows, err := sdb.handle.Query(queryStr)
-	if err != nil {
-		panic(err)
-	}
-
-	var (
-		id           int
-		incomeHistID int
-		name         string
-		amount       int
-		affixRows    []AffixIncomeRow
-	)
+	rows := sdb.query(INCOME_AFFIXES, qm)
+	var amount int
+	var affixRows []AffixIncomeRow
 
 	for rows.Next() {
-		if err = rows.Scan(&id, &incomeHistID, &name, &amount); err != nil {
+		var row AffixIncomeRow
+		if err := rows.Scan(&row.ID, &row.IncomeHistoryID, &row.Name, &amount); err != nil {
 			panic(err)
 		}
-
-		affixRows = append(affixRows, AffixIncomeRow{
-			id, incomeHistID, name, lib.NewCurrencyFromStore(amount, sdb.currencyCode),
-		})
+		row.Amount = lib.NewCurrencyFromStore(amount, sdb.currencyCode)
+		affixRows = append(affixRows, row)
 	}
 
 	if len(affixRows) == 0 {
