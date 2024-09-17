@@ -134,7 +134,7 @@ func (sdb SqliteDb) CreateBankAccountHistory(config BankHistoryConfig) {
 			BANK_ACCOUNT_HISTORY,
 			config.BankAccountID,
 			config.MonthID,
-			config.Balance.ToInt(),
+			config.Balance.GetStoredValue(),
 		),
 	); err != nil {
 		panic(err)

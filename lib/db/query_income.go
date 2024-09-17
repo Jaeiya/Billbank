@@ -39,7 +39,7 @@ type AffixIncomeRow struct {
 }
 
 func (sdb SqliteDb) CreateIncome(name string, amount lib.Currency, p Period) int64 {
-	res, err := sdb.handle.Exec(sdb.InsertInto(INCOME, name, amount.ToInt(), p))
+	res, err := sdb.handle.Exec(sdb.InsertInto(INCOME, name, amount.GetStoredValue(), p))
 	if err != nil {
 		panic(err)
 	}
@@ -54,7 +54,7 @@ func (sdb SqliteDb) CreateIncome(name string, amount lib.Currency, p Period) int
 
 func (sdb SqliteDb) SetIncome(id int, amount lib.Currency) {
 	_, err := sdb.handle.Exec(
-		fmt.Sprintf("UPDATE income SET amount=%d WHERE id=%d", amount.ToInt(), id),
+		fmt.Sprintf("UPDATE income SET amount=%d WHERE id=%d", amount.GetStoredValue(), id),
 	)
 	if err != nil {
 		panic(err)
@@ -84,7 +84,7 @@ func (sdb SqliteDb) QueryIncome(qm QueryMap) ([]IncomeRow, error) {
 
 func (sdb SqliteDb) CreateIncomeHistory(incomeID int, monthID int, amount lib.Currency) {
 	if _, err := sdb.handle.Exec(
-		sdb.InsertInto(INCOME_HISTORY, incomeID, monthID, amount.ToInt()),
+		sdb.InsertInto(INCOME_HISTORY, incomeID, monthID, amount.GetStoredValue()),
 	); err != nil {
 		panic(err)
 	}
@@ -117,7 +117,7 @@ be a bonus or overtime amount.
 */
 func (sdb SqliteDb) AffixIncome(historyID int, name string, amount lib.Currency) {
 	if _, err := sdb.handle.Exec(
-		sdb.InsertInto(INCOME_AFFIXES, historyID, name, amount.ToInt()),
+		sdb.InsertInto(INCOME_AFFIXES, historyID, name, amount.GetStoredValue()),
 	); err != nil {
 		panic(err)
 	}

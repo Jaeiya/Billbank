@@ -90,7 +90,7 @@ func (chr CreditCardHistoryRow) String() string {
 func (sdb SqliteDb) CreateCreditCard(config CreditCardConfig) {
 	creditLimit := lib.TryDeref(config.CreditLimit)
 	if creditLimit != nil {
-		creditLimit = config.CreditLimit.ToInt()
+		creditLimit = config.CreditLimit.GetStoredValue()
 	}
 
 	if config.Password == nil {
@@ -213,14 +213,14 @@ func (sdb SqliteDb) QueryDecryptedCreditCard(
 func (sdb SqliteDb) CreateCreditCardHistory(config CreditCardHistoryConfig) {
 	creditLimit := lib.TryDeref(config.CreditLimit)
 	if creditLimit != nil {
-		creditLimit = config.CreditLimit.ToInt()
+		creditLimit = config.CreditLimit.GetStoredValue()
 	}
 	if _, err := sdb.handle.Exec(
 		sdb.InsertInto(
 			CREDIT_CARD_HISTORY,
 			config.CreditCardID,
 			config.MonthID,
-			config.Balance.ToInt(),
+			config.Balance.GetStoredValue(),
 			creditLimit,
 			nil, // paid amount -- defaults to 0
 			nil, // paid date
@@ -286,7 +286,7 @@ func (sdb SqliteDb) SetCreditCardHistory(historyID int, fieldMap CCFieldMap) {
 			if err != nil {
 				panic(fmt.Sprintf("%s should be of type: lib.Currency", field))
 			}
-			conditions = append(conditions, fmt.Sprintf("%s=%d", field, c.ToInt()))
+			conditions = append(conditions, fmt.Sprintf("%s=%d", field, c.GetStoredValue()))
 
 		case CC_DUE_DAY:
 			if !lib.IsInt(value) {

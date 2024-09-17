@@ -38,7 +38,7 @@ func (sdb SqliteDb) CreateTransfer(td TransferConfig) {
 			td.AccountID,
 			td.MonthID,
 			td.Name,
-			td.Amount.ToInt(),
+			td.Amount.GetStoredValue(),
 			td.Date,
 			td.TransferType,
 			lib.TryDeref(td.ToWhom),

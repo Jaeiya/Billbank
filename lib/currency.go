@@ -144,10 +144,14 @@ func (c Currency) String() string {
 }
 
 /*
-ToInt returns the total amount in the lowest denomination
-for that currency. Should only be used for storage.
+GetStoredValue returns the total currency amount in the lowest
+denomination for that currency. If the currency code is USD
+then it would return the total Cents.
+
+🟠 As the name suggests, it should only be used when needing
+to store the value.
 */
-func (c *Currency) ToInt() int {
+func (c *Currency) GetStoredValue() int {
 	return c.amount
 }
 
