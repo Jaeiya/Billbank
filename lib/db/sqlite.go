@@ -108,12 +108,12 @@ func buildQueryStr(t Table, fm FieldMap) string {
 
 	var conditions []string
 	for field, val := range fm {
-		if field == "id" {
-			panic("id is auto-incremented and should not be manually set")
-		}
-
-		if !lib.StrSliceContains(td, field) {
-			panic(fmt.Sprintf("%s is an unsupported field for the table: %s", field, t))
+		// id's are not part of the table data, because they are created
+		// automatically by SQL.
+		if field != "id" {
+			if !lib.StrSliceContains(td, field) {
+				panic(fmt.Sprintf("%s is an unsupported field for the table: %s", field, t))
+			}
 		}
 
 		switch realVal := val.(type) {
