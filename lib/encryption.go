@@ -87,6 +87,19 @@ func EncryptNonNil(data *string, password *string) any /* nil|string */ {
 	return EncryptData(*data, *password)
 }
 
+func DecryptNonNil(data *string, password string) (*string, error) {
+	if data == nil {
+		return nil, nil
+	}
+
+	decData, err := DecryptData(*data, password)
+	if err != nil {
+		return nil, err
+	}
+
+	return &decData, err
+}
+
 func DecryptData(data string, password string) (string, error) {
 	cipherText, err := base64.StdEncoding.DecodeString(data)
 	if err != nil {

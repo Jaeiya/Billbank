@@ -42,6 +42,7 @@ type CreditCardRow struct {
 	ID             int
 	Name           string
 	DueDay         int
+	CreditLimit    *lib.Currency
 	CardNumber     *string
 	LastFourDigits string
 	Notes          *string
@@ -49,10 +50,11 @@ type CreditCardRow struct {
 
 func (cr CreditCardRow) String() string {
 	return fmt.Sprintf(
-		"\nid: %d\nname: %s\ndueDay: %d\nnum: %v\nlastFour: %v\nnotes: %v",
+		"\nid: %d\nname: %s\ndueDay: %d\nlimit: %s\nnum: %v\nlastFour: %v\nnotes: %v",
 		cr.ID,
 		cr.Name,
 		cr.DueDay,
+		cr.CreditLimit,
 		lib.TryDeref(cr.CardNumber),
 		cr.LastFourDigits,
 		lib.TryDeref(cr.Notes),
@@ -89,6 +91,7 @@ func (sdb SqliteDb) CreateCreditCard(config CreditCardConfig) {
 	if creditLimit != nil {
 		creditLimit = config.CreditLimit.ToInt()
 	}
+
 	if config.Password == nil {
 		if _, err := sdb.handle.Exec(
 			sdb.InsertInto(
@@ -132,6 +135,7 @@ func (sdb SqliteDb) QueryAllCreditCards() ([]CreditCardRow, error) {
 		id             int
 		name           string
 		dueDay         int
+		creditLimit    *int
 		encCardNum     *string
 		lastFourDigits string
 		encNotes       *string
@@ -143,15 +147,84 @@ func (sdb SqliteDb) QueryAllCreditCards() ([]CreditCardRow, error) {
 			&id,
 			&name,
 			&dueDay,
+			&creditLimit,
 			&encCardNum,
 			&lastFourDigits,
 			&encNotes,
 		); err != nil {
 			panic(err)
 		}
+
+		var realCLimit *lib.Currency
+		if creditLimit != nil {
+			c := lib.NewCurrency("", sdb.currencyCode)
+			c.LoadAmount(*creditLimit)
+			realCLimit = &c
+		}
+
 		cards = append(cards, CreditCardRow{
-			id, name, dueDay, encCardNum, lastFourDigits, encNotes,
+			id, name, dueDay, realCLimit, encCardNum, lastFourDigits, encNotes,
 		})
+	}
+
+	if len(cards) == 0 {
+		return []CreditCardRow{}, fmt.Errorf("no results found")
+	}
+
+	return cards, nil
+}
+
+func (sdb SqliteDb) QueryDecryptedCreditCard(
+	qm QueryMap,
+	password string,
+) ([]CreditCardRow, error) {
+	fm := buildFieldMap(BY_ID, qm)
+	queryStr := buildQueryStr(CREDIT_CARDS, fm)
+	rows, err := sdb.handle.Query(queryStr)
+	if err != nil {
+		panic(err)
+	}
+
+	var (
+		creditLimit *int
+		encCardNum  *string
+		encNotes    *string
+		cards       []CreditCardRow
+	)
+
+	for rows.Next() {
+		var card CreditCardRow
+
+		err := rows.Scan(
+			&card.ID,
+			&card.Name,
+			&card.DueDay,
+			&creditLimit,
+			&encCardNum,
+			&card.LastFourDigits,
+			&encNotes,
+		)
+		if err != nil {
+			panic(err)
+		}
+
+		card.CardNumber, err = lib.DecryptNonNil(encCardNum, password)
+		if err != nil {
+			panic(err)
+		}
+
+		card.Notes, err = lib.DecryptNonNil(encNotes, password)
+		if err != nil {
+			panic(err)
+		}
+
+		if creditLimit != nil {
+			c := lib.NewCurrency("", sdb.currencyCode)
+			c.LoadAmount(*creditLimit)
+			card.CreditLimit = &c
+		}
+
+		cards = append(cards, card)
 	}
 
 	if len(cards) == 0 {
