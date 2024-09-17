@@ -70,6 +70,7 @@ type CreditCardHistoryRow struct {
 	PaidAmount   lib.Currency
 	PaidDate     *string
 	DueDay       int
+	Period       Period
 }
 
 func (chr CreditCardHistoryRow) String() string {
@@ -124,47 +125,33 @@ func (sdb SqliteDb) CreateCreditCard(config CreditCardConfig) {
 	}
 }
 
-func (sdb SqliteDb) QueryAllCreditCards() ([]CreditCardRow, error) {
-	queryStr := fmt.Sprintf("SELECT * FROM %s", CREDIT_CARDS)
-	rows, err := sdb.handle.Query(queryStr)
-	if err != nil {
-		panic(err)
-	}
-
-	var (
-		id             int
-		name           string
-		dueDay         int
-		creditLimit    *int
-		encCardNum     *string
-		lastFourDigits string
-		encNotes       *string
-		cards          []CreditCardRow
-	)
+func (sdb SqliteDb) QueryCreditCards(qm QueryMap) ([]CreditCardRow, error) {
+	rows := sdb.query(CREDIT_CARDS, qm)
+	var creditLimit *int
+	var cards []CreditCardRow
 
 	for rows.Next() {
-		if err = rows.Scan(
-			&id,
-			&name,
-			&dueDay,
+		var card CreditCardRow
+
+		if err := rows.Scan(
+			&card.ID,
+			&card.Name,
+			&card.DueDay,
 			&creditLimit,
-			&encCardNum,
-			&lastFourDigits,
-			&encNotes,
+			&card.CardNumber,
+			&card.LastFourDigits,
+			&card.Notes,
 		); err != nil {
 			panic(err)
 		}
 
-		var realCLimit *lib.Currency
 		if creditLimit != nil {
 			c := lib.NewCurrency("", sdb.currencyCode)
 			c.LoadAmount(*creditLimit)
-			realCLimit = &c
+			card.CreditLimit = &c
 		}
 
-		cards = append(cards, CreditCardRow{
-			id, name, dueDay, realCLimit, encCardNum, lastFourDigits, encNotes,
-		})
+		cards = append(cards, card)
 	}
 
 	if len(cards) == 0 {
@@ -178,19 +165,10 @@ func (sdb SqliteDb) QueryDecryptedCreditCard(
 	qm QueryMap,
 	password string,
 ) ([]CreditCardRow, error) {
-	fm := buildFieldMap(WHERE_ID, qm)
-	queryStr := buildQueryStr(CREDIT_CARDS, fm)
-	rows, err := sdb.handle.Query(queryStr)
-	if err != nil {
-		panic(err)
-	}
-
-	var (
-		creditLimit *int
-		encCardNum  *string
-		encNotes    *string
-		cards       []CreditCardRow
-	)
+	rows := sdb.query(CREDIT_CARDS, qm)
+	var creditLimit *int
+	var encCardNum, encNotes *string
+	var cards []CreditCardRow
 
 	for rows.Next() {
 		var card CreditCardRow
@@ -256,63 +234,48 @@ func (sdb SqliteDb) CreateCreditCardHistory(config CreditCardHistoryConfig) {
 	}
 }
 
-func (sdb SqliteDb) QueryCreditCardHistory() ([]CreditCardHistoryRow, error) {
-	queryStr := fmt.Sprintf("SELECT * FROM %s", CREDIT_CARD_HISTORY)
-	rows, err := sdb.handle.Query(queryStr)
-	if err != nil {
-		panic(err)
-	}
+func (sdb SqliteDb) QueryCreditCardHistory(qm QueryMap) ([]CreditCardHistoryRow, error) {
+	rows := sdb.query(CREDIT_CARD_HISTORY, qm)
 
 	var (
-		id          int
-		ccID        int
-		monthID     int
 		balance     int
 		creditLimit *int
 		paidAmount  int
-		paidDate    *string
-		dueDay      int
-		period      Period
 		ccRows      []CreditCardHistoryRow
 	)
 
 	for rows.Next() {
-		if err = rows.Scan(
-			&id,
-			&ccID,
-			&monthID,
+		var row CreditCardHistoryRow
+
+		if err := rows.Scan(
+			&row.ID,
+			&row.CreditCardID,
+			&row.MonthID,
 			&balance,
 			&creditLimit,
 			&paidAmount,
-			&paidDate,
-			&dueDay,
-			&period,
+			&row.PaidDate,
+			&row.DueDay,
+			&row.Period,
 		); err != nil {
 			panic(err)
 		}
-		balanceCurrency := lib.NewCurrency("", sdb.currencyCode)
-		balanceCurrency.LoadAmount(balance)
 
-		var cLimitCurrency *lib.Currency
+		realBalance := lib.NewCurrency("", sdb.currencyCode)
+		realBalance.LoadAmount(balance)
+		row.Balance = realBalance
+
 		if creditLimit != nil {
 			c := lib.NewCurrency("", sdb.currencyCode)
 			c.LoadAmount(*creditLimit)
-			cLimitCurrency = &c
+			row.CreditLimit = &c
 		}
 
-		paidAmountCurrency := lib.NewCurrency("", sdb.currencyCode)
-		paidAmountCurrency.LoadAmount(paidAmount)
+		realPaidAmount := lib.NewCurrency("", sdb.currencyCode)
+		realPaidAmount.LoadAmount(paidAmount)
+		row.PaidAmount = realPaidAmount
 
-		ccRows = append(ccRows, CreditCardHistoryRow{
-			id,
-			ccID,
-			monthID,
-			balanceCurrency,
-			cLimitCurrency,
-			paidAmountCurrency,
-			paidDate,
-			dueDay,
-		})
+		ccRows = append(ccRows, row)
 	}
 
 	if len(ccRows) == 0 {

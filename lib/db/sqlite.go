@@ -103,6 +103,25 @@ func (sdb SqliteDb) query(t Table, qm QueryMap) *sql.Rows {
 			panic(err)
 		}
 		return rows
+
+	case CREDIT_CARDS:
+		fm := buildFieldMap(WHERE_ID|WHERE_NAME, qm)
+		queryStr := buildQueryStr(t, fm)
+		rows, err := sdb.handle.Query(queryStr)
+		if err != nil {
+			panic(err)
+		}
+		return rows
+
+	case CREDIT_CARD_HISTORY:
+		fm := buildFieldMap(WHERE_ID|WHERE_CREDIT_CARD_ID|WHERE_MONTH_ID, qm)
+		queryStr := buildQueryStr(t, fm)
+		rows, err := sdb.handle.Query(queryStr)
+		if err != nil {
+			panic(err)
+		}
+		return rows
+
 	}
 
 	return nil
