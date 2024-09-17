@@ -54,35 +54,37 @@ var tableData = TableFields{
 }
 
 type (
-	QueryMap  map[FieldFlag]any
+	QueryMap  map[WhereFlag]any
 	FieldMap  map[string]any
-	FieldFlag int
+	WhereFlag int
 )
 
 const (
-	BY_ID = FieldFlag(1 << iota)
-	BY_AMOUNT
-	BY_BALANCE
-	BY_YEAR
-	BY_MONTH
-	BY_MONTH_ID
-	BY_BANK_ACCOUNT_ID
-	BY_INCOME_ID
-	BY_INCOME_HISTORY_ID
-	BY_CREDIT_CARD_ID
+	WHERE_ID = WhereFlag(1 << iota)
+	WHERE_NAME
+	WHERE_AMOUNT
+	WHERE_BALANCE
+	WHERE_YEAR
+	WHERE_MONTH
+	WHERE_MONTH_ID
+	WHERE_BANK_ACCOUNT_ID
+	WHERE_INCOME_ID
+	WHERE_INCOME_HISTORY_ID
+	WHERE_CREDIT_CARD_ID
 )
 
-var WhereFieldMap = map[FieldFlag]string{
-	BY_ID:                "id",
-	BY_AMOUNT:            "amount",
-	BY_BALANCE:           "balance",
-	BY_YEAR:              "year",
-	BY_MONTH:             "month",
-	BY_MONTH_ID:          "month_id",
-	BY_BANK_ACCOUNT_ID:   "bank_account_id",
-	BY_INCOME_ID:         "income_id",
-	BY_INCOME_HISTORY_ID: "income_history_id",
-	BY_CREDIT_CARD_ID:    "credit_card_id",
+var WhereFieldMap = map[WhereFlag]string{
+	WHERE_ID:                "id",
+	WHERE_NAME:              "name",
+	WHERE_AMOUNT:            "amount",
+	WHERE_BALANCE:           "balance",
+	WHERE_YEAR:              "year",
+	WHERE_MONTH:             "month",
+	WHERE_MONTH_ID:          "month_id",
+	WHERE_BANK_ACCOUNT_ID:   "bank_account_id",
+	WHERE_INCOME_ID:         "income_id",
+	WHERE_INCOME_HISTORY_ID: "income_history_id",
+	WHERE_CREDIT_CARD_ID:    "credit_card_id",
 }
 
 type Period string

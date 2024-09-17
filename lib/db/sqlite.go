@@ -84,7 +84,31 @@ func (sdb SqliteDb) Close() {
 	_ = sdb.handle.Close()
 }
 
-func buildFieldMap(allowedFields FieldFlag, qm QueryMap) FieldMap {
+func (sdb SqliteDb) query(t Table, qm QueryMap) *sql.Rows {
+	switch t {
+	case BANK_ACCOUNTS:
+		fm := buildFieldMap(WHERE_ID, qm)
+		queryStr := buildQueryStr(t, fm)
+		rows, err := sdb.handle.Query(queryStr)
+		if err != nil {
+			panic(err)
+		}
+		return rows
+
+	case BANK_ACCOUNT_HISTORY:
+		fm := buildFieldMap(WHERE_ID|WHERE_BANK_ACCOUNT_ID|WHERE_MONTH_ID, qm)
+		queryStr := buildQueryStr(t, fm)
+		rows, err := sdb.handle.Query(queryStr)
+		if err != nil {
+			panic(err)
+		}
+		return rows
+	}
+
+	return nil
+}
+
+func buildFieldMap(allowedFields WhereFlag, qm QueryMap) FieldMap {
 	fm := FieldMap{}
 	for ff, fieldValue := range qm {
 		field, fieldExists := WhereFieldMap[ff]

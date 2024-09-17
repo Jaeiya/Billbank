@@ -121,7 +121,7 @@ func (sdb SqliteDb) CreateIncomeHistory(incomeID int, monthID int) {
 }
 
 func (sdb SqliteDb) QueryIncomeHistory(qw QueryMap) ([]IncomeHistoryRow, error) {
-	fieldMap := buildFieldMap(BY_ID|BY_INCOME_ID|BY_MONTH_ID, qw)
+	fieldMap := buildFieldMap(WHERE_ID|WHERE_INCOME_ID|WHERE_MONTH_ID, qw)
 	queryStr := buildQueryStr(INCOME_HISTORY, fieldMap)
 	rows, err := sdb.handle.Query(queryStr)
 	if err != nil {
@@ -170,7 +170,7 @@ func (sdb SqliteDb) AffixIncome(historyID int, name string, amount lib.Currency)
 }
 
 func (sdb SqliteDb) QueryAffixIncome(qm QueryMap) ([]AffixIncomeRow, error) {
-	fieldMap := buildFieldMap(BY_ID|BY_INCOME_ID, qm)
+	fieldMap := buildFieldMap(WHERE_ID|WHERE_INCOME_ID, qm)
 	queryStr := buildQueryStr(INCOME_AFFIXES, fieldMap)
 	rows, err := sdb.handle.Query(queryStr)
 	if err != nil {

@@ -25,11 +25,31 @@ type BankHistoryRow struct {
 	Balance       lib.Currency
 }
 
-type DecryptedBankInfo struct {
+func (bhr BankHistoryRow) String() string {
+	return fmt.Sprintf(
+		"id: %d\naccID: %d\nmonthID: %d\nbalance: %s",
+		bhr.ID,
+		bhr.BankAccountID,
+		bhr.MonthID,
+		bhr.Balance,
+	)
+}
+
+type DecryptedBankRow struct {
 	ID            int
 	Name          string
 	AccountNumber *string
 	Notes         *string
+}
+
+func (dbr DecryptedBankRow) String() string {
+	return fmt.Sprintf(
+		"id: %d\nname: %s\nacc: %s\nnotes: %s",
+		dbr.ID,
+		dbr.Name,
+		*dbr.AccountNumber,
+		*dbr.Notes,
+	)
 }
 
 type BankHistoryConfig struct {
@@ -89,40 +109,48 @@ func (sdb SqliteDb) QueryAllBankAccounts() ([]BankInfoRow, error) {
 func (sdb SqliteDb) QueryDecryptedBankAccount(
 	accountID int,
 	password string,
-) (DecryptedBankInfo, error) {
-	queryStr := buildQueryStr(BANK_ACCOUNTS, FieldMap{"id": accountID})
-	row := sdb.handle.QueryRow(queryStr)
+) ([]DecryptedBankRow, error) {
+	rows := sdb.query(BANK_ACCOUNTS, QueryMap{WHERE_ID: accountID})
 
 	var (
-		id               int
-		name             string
-		encryptedAcctNum *string
-		encryptedNotes   *string
-		decryptedAcctNum string
-		decryptedNotes   string
+		id                int
+		name              string
+		encryptedAcctNum  *string
+		encryptedNotes    *string
+		decryptedAcctNum  string
+		decryptedNotes    string
+		decryptedBankRows []DecryptedBankRow
 	)
 
-	err := row.Scan(&id, &name, &encryptedAcctNum, &encryptedNotes)
-	if err != nil {
-		panic(err)
-	}
-
-	if encryptedAcctNum != nil {
-		decryptedAcctNum, err = lib.DecryptData(*encryptedAcctNum, password)
+	for rows.Next() {
+		err := rows.Scan(&id, &name, &encryptedAcctNum, &encryptedNotes)
 		if err != nil {
-			return DecryptedBankInfo{}, err
-		}
-	}
-
-	if encryptedNotes != nil {
-		decryptedNotes, err = lib.DecryptData(*encryptedNotes, password)
-		if err != nil {
-			return DecryptedBankInfo{}, err
+			panic(err)
 		}
 
+		if encryptedAcctNum != nil {
+			decryptedAcctNum, err = lib.DecryptData(*encryptedAcctNum, password)
+			if err != nil {
+				return []DecryptedBankRow{}, err
+			}
+		}
+
+		if encryptedNotes != nil {
+			decryptedNotes, err = lib.DecryptData(*encryptedNotes, password)
+			if err != nil {
+				return []DecryptedBankRow{}, err
+			}
+		}
+		decryptedBankRows = append(decryptedBankRows, DecryptedBankRow{
+			id, name, &decryptedAcctNum, &decryptedNotes,
+		})
 	}
 
-	return DecryptedBankInfo{id, name, &decryptedAcctNum, &decryptedNotes}, nil
+	if len(decryptedBankRows) == 0 {
+		return []DecryptedBankRow{}, fmt.Errorf("no query results")
+	}
+
+	return decryptedBankRows, nil
 }
 
 func (sdb SqliteDb) CreateBankAccountHistory(config BankHistoryConfig) {
@@ -139,12 +167,7 @@ func (sdb SqliteDb) CreateBankAccountHistory(config BankHistoryConfig) {
 }
 
 func (sdb SqliteDb) QueryBankAccountHistory(qm QueryMap) ([]BankHistoryRow, error) {
-	fm := buildFieldMap(BY_ID|BY_BANK_ACCOUNT_ID|BY_MONTH_ID, qm)
-	queryStr := buildQueryStr(BANK_ACCOUNT_HISTORY, fm)
-	rows, err := sdb.handle.Query(queryStr)
-	if err != nil {
-		panic(err)
-	}
+	rows := sdb.query(BANK_ACCOUNT_HISTORY, qm)
 
 	var (
 		id              int

@@ -60,7 +60,7 @@ func (sdb SqliteDb) QueryAllMonths() ([]MonthInfo, error) {
 }
 
 func (sdb SqliteDb) QueryMonth(qm QueryMap) (MonthInfo, error) {
-	fm := buildFieldMap(BY_MONTH_ID|BY_MONTH|BY_YEAR, qm)
+	fm := buildFieldMap(WHERE_MONTH_ID|WHERE_MONTH|WHERE_YEAR, qm)
 	row := sdb.handle.QueryRow(buildQueryStr(MONTHS, fm))
 
 	var (

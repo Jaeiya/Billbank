@@ -178,7 +178,7 @@ func (sdb SqliteDb) QueryDecryptedCreditCard(
 	qm QueryMap,
 	password string,
 ) ([]CreditCardRow, error) {
-	fm := buildFieldMap(BY_ID, qm)
+	fm := buildFieldMap(WHERE_ID, qm)
 	queryStr := buildQueryStr(CREDIT_CARDS, fm)
 	rows, err := sdb.handle.Query(queryStr)
 	if err != nil {
