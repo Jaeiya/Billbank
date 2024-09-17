@@ -152,9 +152,7 @@ func (sdb SqliteDb) QueryBankAccountHistory(qm QueryMap) ([]BankHistoryRow, erro
 			panic(err)
 		}
 
-		c := lib.NewCurrency("", sdb.currencyCode)
-		c.LoadAmount(balance)
-		row.Balance = c
+		row.Balance = lib.NewCurrencyFromStore(balance, sdb.currencyCode)
 		bankHistoryRows = append(bankHistoryRows, row)
 	}
 

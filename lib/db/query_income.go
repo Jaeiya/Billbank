@@ -81,8 +81,15 @@ func (sdb SqliteDb) QueryAllIncome() ([]IncomeRow, error) {
 			panic(err)
 		}
 
-		c := lib.NewCurrency("", sdb.currencyCode)
-		incomeRow = append(incomeRow, IncomeRow{id, name, c.LoadAmount(amount), Period(period)})
+		incomeRow = append(
+			incomeRow,
+			IncomeRow{
+				id,
+				name,
+				lib.NewCurrencyFromStore(amount, sdb.currencyCode),
+				Period(period),
+			},
+		)
 	}
 
 	if len(incomeRow) == 0 {
@@ -106,9 +113,7 @@ func (sdb SqliteDb) QueryIncome(incomeID int) IncomeRow {
 	if err := row.Scan(&id, &name, &amount, &period); err != nil {
 		panic(err)
 	}
-	c := lib.NewCurrency("", sdb.currencyCode)
-	c.LoadAmount(amount)
-	return IncomeRow{id, name, c, period}
+	return IncomeRow{id, name, lib.NewCurrencyFromStore(amount, sdb.currencyCode), period}
 }
 
 func (sdb SqliteDb) CreateIncomeHistory(incomeID int, monthID int) {
@@ -141,12 +146,15 @@ func (sdb SqliteDb) QueryIncomeHistory(qw QueryMap) ([]IncomeHistoryRow, error) 
 		if err = rows.Scan(&id, &incomeID, &monthID, &amount); err != nil {
 			panic(err)
 		}
-		c := lib.NewCurrency("", sdb.currencyCode)
-		c.LoadAmount(amount)
 
 		incomeHistoryRows = append(
 			incomeHistoryRows,
-			IncomeHistoryRow{id, incomeID, monthID, c},
+			IncomeHistoryRow{
+				id,
+				incomeID,
+				monthID,
+				lib.NewCurrencyFromStore(amount, sdb.currencyCode),
+			},
 		)
 	}
 
@@ -190,11 +198,8 @@ func (sdb SqliteDb) QueryAffixIncome(qm QueryMap) ([]AffixIncomeRow, error) {
 			panic(err)
 		}
 
-		c := lib.NewCurrency("", sdb.currencyCode)
-		c.LoadAmount(amount)
-
 		affixRows = append(affixRows, AffixIncomeRow{
-			id, incomeHistID, name, c,
+			id, incomeHistID, name, lib.NewCurrencyFromStore(amount, sdb.currencyCode),
 		})
 	}
 

@@ -85,8 +85,6 @@ func (sdb SqliteDb) QueryTransfers(qm QueryMap) ([]TransferData, error) {
 		); err != nil {
 			panic(err)
 		}
-		c := lib.NewCurrency("", sdb.currencyCode)
-		c.LoadAmount(amount)
 
 		transferRows = append(transferRows, TransferData{
 			ID: id,
@@ -94,7 +92,7 @@ func (sdb SqliteDb) QueryTransfers(qm QueryMap) ([]TransferData, error) {
 				AccountID:    accountID,
 				MonthID:      monthID,
 				Name:         name,
-				Amount:       c,
+				Amount:       lib.NewCurrencyFromStore(amount, sdb.currencyCode),
 				Date:         date,
 				TransferType: tt,
 				ToWhom:       toWhom,

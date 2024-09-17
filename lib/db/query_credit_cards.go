@@ -146,8 +146,7 @@ func (sdb SqliteDb) QueryCreditCards(qm QueryMap) ([]CreditCardRow, error) {
 		}
 
 		if creditLimit != nil {
-			c := lib.NewCurrency("", sdb.currencyCode)
-			c.LoadAmount(*creditLimit)
+			c := lib.NewCurrencyFromStore(*creditLimit, sdb.currencyCode)
 			card.CreditLimit = &c
 		}
 
@@ -197,8 +196,7 @@ func (sdb SqliteDb) QueryDecryptedCreditCard(
 		}
 
 		if creditLimit != nil {
-			c := lib.NewCurrency("", sdb.currencyCode)
-			c.LoadAmount(*creditLimit)
+			c := lib.NewCurrencyFromStore(*creditLimit, sdb.currencyCode)
 			card.CreditLimit = &c
 		}
 
@@ -261,20 +259,13 @@ func (sdb SqliteDb) QueryCreditCardHistory(qm QueryMap) ([]CreditCardHistoryRow,
 			panic(err)
 		}
 
-		realBalance := lib.NewCurrency("", sdb.currencyCode)
-		realBalance.LoadAmount(balance)
-		row.Balance = realBalance
-
 		if creditLimit != nil {
-			c := lib.NewCurrency("", sdb.currencyCode)
-			c.LoadAmount(*creditLimit)
+			c := lib.NewCurrencyFromStore(*creditLimit, sdb.currencyCode)
 			row.CreditLimit = &c
 		}
 
-		realPaidAmount := lib.NewCurrency("", sdb.currencyCode)
-		realPaidAmount.LoadAmount(paidAmount)
-		row.PaidAmount = realPaidAmount
-
+		row.Balance = lib.NewCurrencyFromStore(balance, sdb.currencyCode)
+		row.PaidAmount = lib.NewCurrencyFromStore(paidAmount, sdb.currencyCode)
 		ccRows = append(ccRows, row)
 	}
 
