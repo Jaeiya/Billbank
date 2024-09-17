@@ -14,8 +14,20 @@ type BankAccountConfig struct {
 }
 
 type BankInfoRow struct {
-	ID   int
-	Name string
+	ID            int
+	Name          string
+	AccountNumber *string
+	Notes         *string
+}
+
+func (dbr BankInfoRow) String() string {
+	return fmt.Sprintf(
+		"id: %d\nname: %s\nacc: %s\nnotes: %s",
+		dbr.ID,
+		dbr.Name,
+		*dbr.AccountNumber,
+		*dbr.Notes,
+	)
 }
 
 type BankHistoryRow struct {
@@ -32,23 +44,6 @@ func (bhr BankHistoryRow) String() string {
 		bhr.BankAccountID,
 		bhr.MonthID,
 		bhr.Balance,
-	)
-}
-
-type DecryptedBankRow struct {
-	ID            int
-	Name          string
-	AccountNumber *string
-	Notes         *string
-}
-
-func (dbr DecryptedBankRow) String() string {
-	return fmt.Sprintf(
-		"id: %d\nname: %s\nacc: %s\nnotes: %s",
-		dbr.ID,
-		dbr.Name,
-		*dbr.AccountNumber,
-		*dbr.Notes,
 	)
 }
 
@@ -79,18 +74,13 @@ func (sdb SqliteDb) CreateBankAccount(config BankAccountConfig) {
 	}
 }
 
-func (sdb SqliteDb) QueryAllBankAccounts() ([]BankInfoRow, error) {
-	queryStr := "SELECT id, name FROM bank_accounts"
-	rows, err := sdb.handle.Query(queryStr)
-	if err != nil {
-		panic(err)
-	}
-
+func (sdb SqliteDb) QueryBankAccounts(qm QueryMap) ([]BankInfoRow, error) {
+	rows := sdb.query(BANK_ACCOUNTS, qm)
 	var bankInfoRows []BankInfoRow
 
 	for rows.Next() {
 		var row BankInfoRow
-		if err = rows.Scan(&row.ID, &row.Name); err != nil {
+		if err := rows.Scan(&row.ID, &row.Name, &row.AccountNumber, &row.Notes); err != nil {
 			panic(err)
 		}
 		bankInfoRows = append(bankInfoRows, row)
@@ -106,13 +96,13 @@ func (sdb SqliteDb) QueryAllBankAccounts() ([]BankInfoRow, error) {
 func (sdb SqliteDb) QueryDecryptedBankAccount(
 	accountID int,
 	password string,
-) ([]DecryptedBankRow, error) {
+) ([]BankInfoRow, error) {
 	rows := sdb.query(BANK_ACCOUNTS, QueryMap{WHERE_ID: accountID})
 	var encAcctNum, encNotes *string
-	var decryptedBankRows []DecryptedBankRow
+	var decryptedBankRows []BankInfoRow
 
 	for rows.Next() {
-		var row DecryptedBankRow
+		var row BankInfoRow
 		err := rows.Scan(&row.ID, &row.Name, &encAcctNum, &encNotes)
 		if err != nil {
 			panic(err)
@@ -132,7 +122,7 @@ func (sdb SqliteDb) QueryDecryptedBankAccount(
 	}
 
 	if len(decryptedBankRows) == 0 {
-		return []DecryptedBankRow{}, fmt.Errorf("no query results")
+		return []BankInfoRow{}, fmt.Errorf("no query results")
 	}
 
 	return decryptedBankRows, nil
