@@ -45,6 +45,20 @@ func NewCurrency(amount string, code CurrencyCode) Currency {
 	return c
 }
 
+/*
+NewCurrencyFromStore creates a new currency with an amount as the lowest possible
+denomination of the specified currency code. For example, if the currency
+code is USD, then the amount is interpreted as Cents.
+
+🟠 As the name suggests, this method should be used strictly for loading
+stored amounts
+*/
+func NewCurrencyFromStore(amount int, code CurrencyCode) Currency {
+	c := Currency{}
+	c.amount = amount
+	return c
+}
+
 func (c *Currency) Add(amount string) error {
 	switch c.code {
 
