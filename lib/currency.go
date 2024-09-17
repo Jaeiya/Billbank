@@ -156,16 +156,6 @@ func (c *Currency) GetStoredValue() int {
 }
 
 /*
-LoadAmount loads an amount as the smallest denomination for the
-currency. For example, if the currency is USD, then the amount
-is assumed to be in Cents, not Dollars.
-*/
-func (c *Currency) LoadAmount(amount int) Currency {
-	c.amount = amount
-	return *c
-}
-
-/*
 ToCurrency tries to return 'v' as a Currency
 */
 func ToCurrency(v any) (Currency, error) {
