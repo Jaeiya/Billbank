@@ -131,6 +131,10 @@ func buildQueryStr(t Table, fm FieldMap) string {
 	}
 
 	var conditions []string
+	if len(fm) == 0 {
+		return fmt.Sprintf("SELECT * FROM %s", t)
+	}
+
 	for field, val := range fm {
 		// id's are not part of the table data, because they are created
 		// automatically by SQL.
