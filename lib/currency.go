@@ -120,7 +120,7 @@ func (c *Currency) SetCurrency(c2 Currency) {
 	c.amount = c2.amount
 }
 
-func (c *Currency) String() string {
+func (c Currency) String() string {
 	switch c.code {
 	case USD:
 		return fmt.Sprintf("$%d.%02d", c.amount/100, c.amount%100)
