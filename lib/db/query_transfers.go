@@ -50,56 +50,27 @@ func (sdb SqliteDb) CreateTransfer(td TransferConfig) {
 }
 
 func (sdb SqliteDb) QueryTransfers(qm QueryMap) ([]TransferData, error) {
-	fieldMap := buildFieldMap(WHERE_ID|WHERE_MONTH_ID|WHERE_BANK_ACCOUNT_ID, qm)
-	queryStr := buildQueryStr(TRANSFERS, fieldMap)
-	rows, err := sdb.handle.Query(queryStr)
-	if err != nil {
-		panic(err)
-	}
-	defer rows.Close()
-
-	var (
-		id           int
-		accountID    int
-		monthID      int
-		name         string
-		amount       int
-		date         string
-		tt           TransferType
-		toWhom       *string
-		fromWhom     *string
-		transferRows []TransferData
-	)
+	rows := sdb.query(TRANSFERS, qm)
+	var amount int
+	var transferRows []TransferData
 
 	for rows.Next() {
-		if err = rows.Scan(
-			&id,
-			&accountID,
-			&monthID,
-			&name,
+		var row TransferData
+		if err := rows.Scan(
+			&row.ID,
+			&row.AccountID,
+			&row.MonthID,
+			&row.Name,
 			&amount,
-			&date,
-			&tt,
-			&toWhom,
-			&fromWhom,
+			&row.Date,
+			&row.TransferType,
+			&row.ToWhom,
+			&row.FromWhom,
 		); err != nil {
 			panic(err)
 		}
-
-		transferRows = append(transferRows, TransferData{
-			ID: id,
-			TransferConfig: TransferConfig{
-				AccountID:    accountID,
-				MonthID:      monthID,
-				Name:         name,
-				Amount:       lib.NewCurrencyFromStore(amount, sdb.currencyCode),
-				Date:         date,
-				TransferType: tt,
-				ToWhom:       toWhom,
-				FromWhom:     fromWhom,
-			},
-		})
-
+		row.Amount = lib.NewCurrencyFromStore(amount, sdb.currencyCode)
+		transferRows = append(transferRows, row)
 	}
 
 	if len(transferRows) == 0 {
