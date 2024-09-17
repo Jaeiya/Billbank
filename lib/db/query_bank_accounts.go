@@ -86,17 +86,14 @@ func (sdb SqliteDb) QueryAllBankAccounts() ([]BankInfoRow, error) {
 		panic(err)
 	}
 
-	var (
-		id           int
-		name         string
-		bankInfoRows []BankInfoRow
-	)
+	var bankInfoRows []BankInfoRow
 
 	for rows.Next() {
-		if err = rows.Scan(&id, &name); err != nil {
+		var row BankInfoRow
+		if err = rows.Scan(&row.ID, &row.Name); err != nil {
 			panic(err)
 		}
-		bankInfoRows = append(bankInfoRows, BankInfoRow{id, name})
+		bankInfoRows = append(bankInfoRows, row)
 	}
 
 	if len(bankInfoRows) == 0 {
@@ -111,39 +108,27 @@ func (sdb SqliteDb) QueryDecryptedBankAccount(
 	password string,
 ) ([]DecryptedBankRow, error) {
 	rows := sdb.query(BANK_ACCOUNTS, QueryMap{WHERE_ID: accountID})
-
-	var (
-		id                int
-		name              string
-		encryptedAcctNum  *string
-		encryptedNotes    *string
-		decryptedAcctNum  string
-		decryptedNotes    string
-		decryptedBankRows []DecryptedBankRow
-	)
+	var encAcctNum, encNotes *string
+	var decryptedBankRows []DecryptedBankRow
 
 	for rows.Next() {
-		err := rows.Scan(&id, &name, &encryptedAcctNum, &encryptedNotes)
+		var row DecryptedBankRow
+		err := rows.Scan(&row.ID, &row.Name, &encAcctNum, &encNotes)
 		if err != nil {
 			panic(err)
 		}
 
-		if encryptedAcctNum != nil {
-			decryptedAcctNum, err = lib.DecryptData(*encryptedAcctNum, password)
-			if err != nil {
-				return []DecryptedBankRow{}, err
-			}
+		row.AccountNumber, err = lib.DecryptNonNil(encAcctNum, password)
+		if err != nil {
+			panic(err)
 		}
 
-		if encryptedNotes != nil {
-			decryptedNotes, err = lib.DecryptData(*encryptedNotes, password)
-			if err != nil {
-				return []DecryptedBankRow{}, err
-			}
+		row.Notes, err = lib.DecryptNonNil(encNotes, password)
+		if err != nil {
+			panic(err)
 		}
-		decryptedBankRows = append(decryptedBankRows, DecryptedBankRow{
-			id, name, &decryptedAcctNum, &decryptedNotes,
-		})
+
+		decryptedBankRows = append(decryptedBankRows, row)
 	}
 
 	if len(decryptedBankRows) == 0 {
@@ -168,23 +153,19 @@ func (sdb SqliteDb) CreateBankAccountHistory(config BankHistoryConfig) {
 
 func (sdb SqliteDb) QueryBankAccountHistory(qm QueryMap) ([]BankHistoryRow, error) {
 	rows := sdb.query(BANK_ACCOUNT_HISTORY, qm)
-
-	var (
-		id              int
-		bankAcctID      int
-		monthID         int
-		balance         int
-		bankHistoryRows []BankHistoryRow
-	)
+	var balance int
+	var bankHistoryRows []BankHistoryRow
 
 	for rows.Next() {
-		if err := rows.Scan(&id, &bankAcctID, &monthID, &balance); err != nil {
+		var row BankHistoryRow
+		if err := rows.Scan(&row.ID, &row.BankAccountID, &row.MonthID, &balance); err != nil {
 			panic(err)
 		}
 
 		c := lib.NewCurrency("", sdb.currencyCode)
 		c.LoadAmount(balance)
-		bankHistoryRows = append(bankHistoryRows, BankHistoryRow{id, bankAcctID, monthID, c})
+		row.Balance = c
+		bankHistoryRows = append(bankHistoryRows, row)
 	}
 
 	if len(bankHistoryRows) == 0 {
