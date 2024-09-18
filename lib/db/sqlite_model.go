@@ -12,6 +12,8 @@ const (
 	TRANSFERS            = Table("transfers")
 	CREDIT_CARDS         = Table("credit_cards")
 	CREDIT_CARD_HISTORY  = Table("credit_card_history")
+	BILLS                = Table("bills")
+	BILL_HISTORY         = Table("bill_history")
 )
 
 type TableFields = map[Table][]string
@@ -51,6 +53,21 @@ var tableData = TableFields{
 		"due_day",
 		"period",
 	},
+	BILLS: {
+		"name",
+		"amount",
+		"due_day",
+		"period",
+	},
+	BILL_HISTORY: {
+		"bill_id",
+		"month_id",
+		"amount",
+		"paid_amount",
+		"paid_date",
+		"due_day",
+		"notes",
+	},
 }
 
 type (
@@ -71,6 +88,7 @@ const (
 	WHERE_INCOME_ID
 	WHERE_INCOME_HISTORY_ID
 	WHERE_CREDIT_CARD_ID
+	WHERE_BILL_ID
 )
 
 var WhereFieldMap = map[WhereFlag]string{
@@ -85,6 +103,7 @@ var WhereFieldMap = map[WhereFlag]string{
 	WHERE_INCOME_ID:         "income_id",
 	WHERE_INCOME_HISTORY_ID: "income_history_id",
 	WHERE_CREDIT_CARD_ID:    "credit_card_id",
+	WHERE_BILL_ID:           "bill_id",
 }
 
 type Period string

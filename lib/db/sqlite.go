@@ -86,30 +86,34 @@ func (sdb SqliteDb) Close() {
 
 func (sdb SqliteDb) query(t Table, qm QueryMap) *sql.Rows {
 	var fm FieldMap
+	whereIDOrMonthID := WHERE_ID | WHERE_MONTH_ID
 	switch t {
 	case MONTHS:
 		fm = buildFieldMap(WHERE_ID|WHERE_MONTH|WHERE_YEAR, qm)
 
-	case BANK_ACCOUNTS, INCOME:
+	case BANK_ACCOUNTS, INCOME, BILLS:
 		fm = buildFieldMap(WHERE_ID, qm)
 
 	case BANK_ACCOUNT_HISTORY:
-		fm = buildFieldMap(WHERE_ID|WHERE_BANK_ACCOUNT_ID|WHERE_MONTH_ID, qm)
+		fm = buildFieldMap(whereIDOrMonthID|WHERE_BANK_ACCOUNT_ID, qm)
+
+	case TRANSFERS:
+		fm = buildFieldMap(whereIDOrMonthID|WHERE_BANK_ACCOUNT_ID, qm)
 
 	case CREDIT_CARDS:
 		fm = buildFieldMap(WHERE_ID|WHERE_NAME, qm)
 
 	case CREDIT_CARD_HISTORY:
-		fm = buildFieldMap(WHERE_ID|WHERE_CREDIT_CARD_ID|WHERE_MONTH_ID, qm)
+		fm = buildFieldMap(whereIDOrMonthID|WHERE_CREDIT_CARD_ID, qm)
 
 	case INCOME_HISTORY:
-		fm = buildFieldMap(WHERE_ID|WHERE_INCOME_ID|WHERE_MONTH_ID, qm)
+		fm = buildFieldMap(whereIDOrMonthID|WHERE_INCOME_ID, qm)
 
 	case INCOME_AFFIXES:
 		fm = buildFieldMap(WHERE_ID|WHERE_INCOME_ID, qm)
 
-	case TRANSFERS:
-		fm = buildFieldMap(WHERE_ID|WHERE_BANK_ACCOUNT_ID|WHERE_MONTH_ID, qm)
+	case BILL_HISTORY:
+		fm = buildFieldMap(whereIDOrMonthID|WHERE_BILL_ID, qm)
 
 	default:
 		panic(fmt.Sprintf("unsupported table: %s", t))
