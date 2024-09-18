@@ -2,6 +2,7 @@ package lib
 
 import (
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 )
@@ -132,6 +133,10 @@ func (c *Currency) SetCurrency(c2 Currency) {
 		panic(ErrCurrencyKind)
 	}
 	c.amount = c2.amount
+}
+
+func (c Currency) GetPercentage(p int) int {
+	return int(math.Round(float64(c.amount*p) / 100))
 }
 
 func (c Currency) String() string {
