@@ -1,13 +1,12 @@
 CREATE TABLE IF NOT EXISTS bank (
-    id TINYINT NOT NULL PRIMARY KEY,
-    currency_code varchar(3) NOT NULL CHECK (currency_code='USD'),
-    current_month_id INT,
-    UNIQUE (id)
+    id               TINYINT NOT NULL PRIMARY KEY UNIQUE,
+    currency_code    VARCHAR(3) NOT NULL CHECK (currency_code='USD'),
+    current_month_id INT
 );
 
 
 CREATE TABLE IF NOT EXISTS months (
-    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    id    INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     -- If my program survives to the year 3000, then something went wrong lol
     year  INTEGER NOT NULL CHECK (year < 3000 AND year > 2000),
     month INTEGER NOT NULL CHECK (month > 0 AND month < 13)
@@ -28,26 +27,26 @@ CREATE TABLE IF NOT EXISTS income (
 
 
 CREATE TABLE IF NOT EXISTS income_history (
-    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    id        INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     income_id INTEGER NOT NULL,
-    month_id INTEGER NOT NULL,
-    amount INTEGER CHECK (amount>0),
+    month_id  INTEGER NOT NULL,
+    amount    INTEGER CHECK (amount>0),
     FOREIGN KEY (income_id) REFERENCES income (id),
     FOREIGN KEY (month_id) REFERENCES months (id)
 );
 
 -- When income has been raised through bonuses, overtime, etc..
 CREATE TABLE IF NOT EXISTS income_affixes (
-    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    income_history_id INTEGER NOT NULL,
-    name VARCHAR(50) NOT NULL,
-    amount INTEGER DEFAULT 0 CHECK (amount>0),
-    FOREIGN KEY (income_history_id) REFERENCES income_history (id)
+    id         INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    history_id INTEGER NOT NULL,
+    name       VARCHAR(50) NOT NULL,
+    amount     INTEGER DEFAULT 0 CHECK (amount>0),
+    FOREIGN KEY (history_id) REFERENCES income_history (id)
 );
 
 
 CREATE TABLE IF NOT EXISTS bank_accounts (
-    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    id   INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     name VARCHAR(30) NOT NULL,
     -- Should only store the encrypted value
     account_number VARCHAR(30),
@@ -57,19 +56,19 @@ CREATE TABLE IF NOT EXISTS bank_accounts (
 
 
 CREATE TABLE IF NOT EXISTS bank_account_history (
-    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    bank_account_id INTEGER NOT NULL,
-    month_id INTEGER NOT NULL,
-    balance INTEGER DEFAULT 0,
+    id         INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    account_id INTEGER NOT NULL,
+    month_id   INTEGER NOT NULL,
+    balance    INTEGER DEFAULT 0,
     FOREIGN KEY (month_id) REFERENCES months (id),
-    FOREIGN KEY (bank_account_id) REFERENCES bank_accounts (id)
+    FOREIGN KEY (account_id) REFERENCES bank_accounts (id)
 );
 
 
 CREATE TABLE IF NOT EXISTS transfers (
-    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    bank_account_id INTEGER NOT NULL,
-    month_id INTEGER NOT NULL,
+    id         INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    account_id INTEGER NOT NULL,
+    month_id   INTEGER NOT NULL,
     name       VARCHAR(50) NOT NULL,
     amount     INTEGER NOT NULL,
     date       VARCHAR(50) NOT NULL,
@@ -80,7 +79,7 @@ CREATE TABLE IF NOT EXISTS transfers (
     ),
     to_whom    VARCHAR(100),
     from_whom  VARCHAR(100),
-    FOREIGN KEY (bank_account_id) REFERENCES bank_accounts (id),
+    FOREIGN KEY (account_id) REFERENCES bank_accounts (id),
     FOREIGN KEY (month_id) REFERENCES months (id)
 );
 
@@ -99,15 +98,15 @@ CREATE TABLE IF NOT EXISTS credit_cards (
 
 
 CREATE TABLE IF NOT EXISTS credit_card_history (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    credit_card_id INTEGER NOT NULL,
-    month_id       INTEGER NOT NULL,
-    balance        INTEGER NOT NULL,
-    credit_limit   INTEGER,
-    paid_amount    INTEGER DEFAULT 0,
-    paid_date      VARCHAR(50),
-    due_day        INTEGER NOT NULL CHECK (due_day > 0 AND due_day < 32),
-    period         VARCHAR(50) CHECK (period="monthly"),
-    FOREIGN KEY (credit_card_id) REFERENCES credit_cards (id),
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    card_id      INTEGER NOT NULL,
+    month_id     INTEGER NOT NULL,
+    balance      INTEGER NOT NULL,
+    credit_limit INTEGER,
+    paid_amount  INTEGER DEFAULT 0,
+    paid_date    VARCHAR(50),
+    due_day      INTEGER NOT NULL CHECK (due_day > 0 AND due_day < 32),
+    period       VARCHAR(50) CHECK (period="monthly"),
+    FOREIGN KEY (card_id) REFERENCES credit_cards (id),
     FOREIGN KEY (month_id) REFERENCES months (id)
 );
