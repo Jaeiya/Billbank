@@ -30,7 +30,7 @@ func (sdb SqliteDb) CreateMonth(t time.Time) error {
 	return nil
 }
 
-func (sdb SqliteDb) QueryAllMonths(qm QueryMap) ([]MonthInfo, error) {
+func (sdb SqliteDb) QueryMonths(qm QueryMap) ([]MonthInfo, error) {
 	rows := sdb.query(MONTHS, qm)
 	var monthRows []MonthInfo
 
