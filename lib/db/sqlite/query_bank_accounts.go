@@ -28,31 +28,11 @@ type BankRecord struct {
 	Notes         *string
 }
 
-func (dbr BankRecord) String() string {
-	return fmt.Sprintf(
-		"id: %d\nname: %s\nacc: %s\nnotes: %s",
-		dbr.ID,
-		dbr.Name,
-		*dbr.AccountNumber,
-		*dbr.Notes,
-	)
-}
-
 type BankHistoryRecord struct {
 	ID            int
 	BankAccountID int
 	MonthID       int
 	Balance       lib.Currency
-}
-
-func (bhr BankHistoryRecord) String() string {
-	return fmt.Sprintf(
-		"id: %d\naccID: %d\nmonthID: %d\nbalance: %s",
-		bhr.ID,
-		bhr.BankAccountID,
-		bhr.MonthID,
-		bhr.Balance,
-	)
 }
 
 type BankHistoryConfig struct {
@@ -85,6 +65,7 @@ func (sdb SqliteDb) CreateBankAccount(config BankAccountConfig) {
 		); err != nil {
 			panic(err)
 		}
+		return
 	}
 
 	if _, err := sdb.handle.Exec(
