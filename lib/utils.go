@@ -29,3 +29,7 @@ func StrSliceContains(slice []string, target string) bool {
 	}
 	return false
 }
+
+func GetPointer[T any](v T) *T {
+	return &v
+}
