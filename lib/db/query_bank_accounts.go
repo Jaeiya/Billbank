@@ -13,14 +13,14 @@ type BankAccountConfig struct {
 	Notes         *string
 }
 
-type BankInfoRow struct {
+type BankRecord struct {
 	ID            int
 	Name          string
 	AccountNumber *string
 	Notes         *string
 }
 
-func (dbr BankInfoRow) String() string {
+func (dbr BankRecord) String() string {
 	return fmt.Sprintf(
 		"id: %d\nname: %s\nacc: %s\nnotes: %s",
 		dbr.ID,
@@ -30,14 +30,14 @@ func (dbr BankInfoRow) String() string {
 	)
 }
 
-type BankHistoryRow struct {
+type BankHistoryRecord struct {
 	ID            int
 	BankAccountID int
 	MonthID       int
 	Balance       lib.Currency
 }
 
-func (bhr BankHistoryRow) String() string {
+func (bhr BankHistoryRecord) String() string {
 	return fmt.Sprintf(
 		"id: %d\naccID: %d\nmonthID: %d\nbalance: %s",
 		bhr.ID,
@@ -74,58 +74,67 @@ func (sdb SqliteDb) CreateBankAccount(config BankAccountConfig) {
 	}
 }
 
-func (sdb SqliteDb) QueryBankAccounts(qm QueryMap) ([]BankInfoRow, error) {
+func (sdb SqliteDb) QueryBankAccounts(qm QueryMap) ([]BankRecord, error) {
 	rows := sdb.query(BANK_ACCOUNTS, qm)
-	var bankInfoRows []BankInfoRow
+	var records []BankRecord
 
 	for rows.Next() {
-		var row BankInfoRow
-		if err := rows.Scan(&row.ID, &row.Name, &row.AccountNumber, &row.Notes); err != nil {
+		var record BankRecord
+		if err := rows.Scan(
+			&record.ID,
+			&record.Name,
+			&record.AccountNumber,
+			&record.Notes,
+		); err != nil {
 			panic(err)
 		}
-		bankInfoRows = append(bankInfoRows, row)
+		records = append(records, record)
 	}
 
-	if len(bankInfoRows) == 0 {
-		return []BankInfoRow{}, fmt.Errorf("no bank accounts")
+	if len(records) == 0 {
+		return []BankRecord{}, fmt.Errorf("no bank accounts")
 	}
 
-	return bankInfoRows, nil
+	return records, nil
 }
 
 func (sdb SqliteDb) QueryDecryptedBankAccount(
 	accountID int,
 	password string,
-) ([]BankInfoRow, error) {
+) ([]BankRecord, error) {
 	rows := sdb.query(BANK_ACCOUNTS, QueryMap{WHERE_ID: accountID})
 	var encAcctNum, encNotes *string
-	var decryptedBankRows []BankInfoRow
+	var records []BankRecord
 
 	for rows.Next() {
-		var row BankInfoRow
-		err := rows.Scan(&row.ID, &row.Name, &encAcctNum, &encNotes)
-		if err != nil {
+		var record BankRecord
+		var err error
+
+		if err = rows.Scan(
+			&record.ID,
+			&record.Name,
+			&encAcctNum,
+			&encNotes,
+		); err != nil {
 			panic(err)
 		}
 
-		row.AccountNumber, err = lib.DecryptNonNil(encAcctNum, password)
-		if err != nil {
+		if record.AccountNumber, err = lib.DecryptNonNil(encAcctNum, password); err != nil {
 			panic(err)
 		}
 
-		row.Notes, err = lib.DecryptNonNil(encNotes, password)
-		if err != nil {
+		if record.Notes, err = lib.DecryptNonNil(encNotes, password); err != nil {
 			panic(err)
 		}
 
-		decryptedBankRows = append(decryptedBankRows, row)
+		records = append(records, record)
 	}
 
-	if len(decryptedBankRows) == 0 {
-		return []BankInfoRow{}, fmt.Errorf("no query results")
+	if len(records) == 0 {
+		return []BankRecord{}, fmt.Errorf("no query results")
 	}
 
-	return decryptedBankRows, nil
+	return records, nil
 }
 
 func (sdb SqliteDb) CreateBankAccountHistory(config BankHistoryConfig) {
@@ -141,24 +150,29 @@ func (sdb SqliteDb) CreateBankAccountHistory(config BankHistoryConfig) {
 	}
 }
 
-func (sdb SqliteDb) QueryBankAccountHistory(qm QueryMap) ([]BankHistoryRow, error) {
+func (sdb SqliteDb) QueryBankAccountHistory(qm QueryMap) ([]BankHistoryRecord, error) {
 	rows := sdb.query(BANK_ACCOUNT_HISTORY, qm)
 	var balance int
-	var bankHistoryRows []BankHistoryRow
+	var records []BankHistoryRecord
 
 	for rows.Next() {
-		var row BankHistoryRow
-		if err := rows.Scan(&row.ID, &row.BankAccountID, &row.MonthID, &balance); err != nil {
+		var record BankHistoryRecord
+		if err := rows.Scan(
+			&record.ID,
+			&record.BankAccountID,
+			&record.MonthID,
+			&balance,
+		); err != nil {
 			panic(err)
 		}
 
-		row.Balance = lib.NewCurrencyFromStore(balance, sdb.currencyCode)
-		bankHistoryRows = append(bankHistoryRows, row)
+		record.Balance = lib.NewCurrencyFromStore(balance, sdb.currencyCode)
+		records = append(records, record)
 	}
 
-	if len(bankHistoryRows) == 0 {
-		return []BankHistoryRow{}, fmt.Errorf("no query results found")
+	if len(records) == 0 {
+		return []BankHistoryRecord{}, fmt.Errorf("no query results found")
 	}
 
-	return bankHistoryRows, nil
+	return records, nil
 }

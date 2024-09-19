@@ -38,7 +38,7 @@ type CreditCardHistoryConfig struct {
 	DueDay       int
 }
 
-type CreditCardRow struct {
+type CreditCardRecord struct {
 	ID             int
 	Name           string
 	DueDay         int
@@ -48,7 +48,7 @@ type CreditCardRow struct {
 	Notes          *string
 }
 
-func (cr CreditCardRow) String() string {
+func (cr CreditCardRecord) String() string {
 	return fmt.Sprintf(
 		"\nid: %d\nname: %s\ndueDay: %d\nlimit: %s\nnum: %v\nlastFour: %v\nnotes: %v",
 		cr.ID,
@@ -61,7 +61,7 @@ func (cr CreditCardRow) String() string {
 	)
 }
 
-type CreditCardHistoryRow struct {
+type CardHistoryRecord struct {
 	ID           int
 	CreditCardID int
 	MonthID      int
@@ -73,7 +73,7 @@ type CreditCardHistoryRow struct {
 	Period       Period
 }
 
-func (chr CreditCardHistoryRow) String() string {
+func (chr CardHistoryRecord) String() string {
 	return fmt.Sprintf(
 		"\nid: %d\nccid: %d\nmid: %d\nbal: %s\nclimit: %v\npaidA: %s\npaidD: %v\ndueday: %d",
 		chr.ID,
@@ -125,89 +125,87 @@ func (sdb SqliteDb) CreateCreditCard(config CreditCardConfig) {
 	}
 }
 
-func (sdb SqliteDb) QueryCreditCards(qm QueryMap) ([]CreditCardRow, error) {
+func (sdb SqliteDb) QueryCreditCards(qm QueryMap) ([]CreditCardRecord, error) {
 	rows := sdb.query(CREDIT_CARDS, qm)
 	var creditLimit *int
-	var cards []CreditCardRow
+	var records []CreditCardRecord
 
 	for rows.Next() {
-		var card CreditCardRow
+		var record CreditCardRecord
 
 		if err := rows.Scan(
-			&card.ID,
-			&card.Name,
-			&card.DueDay,
+			&record.ID,
+			&record.Name,
+			&record.DueDay,
 			&creditLimit,
-			&card.CardNumber,
-			&card.LastFourDigits,
-			&card.Notes,
+			&record.CardNumber,
+			&record.LastFourDigits,
+			&record.Notes,
 		); err != nil {
 			panic(err)
 		}
 
 		if creditLimit != nil {
 			c := lib.NewCurrencyFromStore(*creditLimit, sdb.currencyCode)
-			card.CreditLimit = &c
+			record.CreditLimit = &c
 		}
 
-		cards = append(cards, card)
+		records = append(records, record)
 	}
 
-	if len(cards) == 0 {
-		return []CreditCardRow{}, fmt.Errorf("no results found")
+	if len(records) == 0 {
+		return []CreditCardRecord{}, fmt.Errorf("no results found")
 	}
 
-	return cards, nil
+	return records, nil
 }
 
 func (sdb SqliteDb) QueryDecryptedCreditCard(
 	qm QueryMap,
 	password string,
-) ([]CreditCardRow, error) {
+) ([]CreditCardRecord, error) {
 	rows := sdb.query(CREDIT_CARDS, qm)
 	var creditLimit *int
 	var encCardNum, encNotes *string
-	var cards []CreditCardRow
+	var records []CreditCardRecord
 
 	for rows.Next() {
-		var card CreditCardRow
+		var record CreditCardRecord
+		var err error
 
-		err := rows.Scan(
-			&card.ID,
-			&card.Name,
-			&card.DueDay,
+		if err = rows.Scan(
+			&record.ID,
+			&record.Name,
+			&record.DueDay,
 			&creditLimit,
 			&encCardNum,
-			&card.LastFourDigits,
+			&record.LastFourDigits,
 			&encNotes,
-		)
-		if err != nil {
+		); err != nil {
 			panic(err)
 		}
 
-		card.CardNumber, err = lib.DecryptNonNil(encCardNum, password)
-		if err != nil {
+		if record.CardNumber, err = lib.DecryptNonNil(encCardNum, password); err != nil {
 			panic(err)
 		}
 
-		card.Notes, err = lib.DecryptNonNil(encNotes, password)
-		if err != nil {
+		if record.Notes, err = lib.DecryptNonNil(encNotes, password); err != nil {
 			panic(err)
 		}
 
 		if creditLimit != nil {
 			c := lib.NewCurrencyFromStore(*creditLimit, sdb.currencyCode)
-			card.CreditLimit = &c
+			record.CreditLimit = &c
 		}
 
-		cards = append(cards, card)
+		records = append(records, record)
 	}
 
-	if len(cards) == 0 {
-		return []CreditCardRow{}, fmt.Errorf("no results found")
+	if len(records) == 0 {
+		return []CreditCardRecord{}, fmt.Errorf("no results found")
 	}
 
-	return cards, nil
+	return records, nil
 }
 
 func (sdb SqliteDb) CreateCreditCardHistory(config CreditCardHistoryConfig) {
@@ -232,48 +230,48 @@ func (sdb SqliteDb) CreateCreditCardHistory(config CreditCardHistoryConfig) {
 	}
 }
 
-func (sdb SqliteDb) QueryCreditCardHistory(qm QueryMap) ([]CreditCardHistoryRow, error) {
+func (sdb SqliteDb) QueryCreditCardHistory(qm QueryMap) ([]CardHistoryRecord, error) {
 	rows := sdb.query(CREDIT_CARD_HISTORY, qm)
 
 	var (
 		balance     int
 		creditLimit *int
 		paidAmount  int
-		ccRows      []CreditCardHistoryRow
+		records     []CardHistoryRecord
 	)
 
 	for rows.Next() {
-		var row CreditCardHistoryRow
+		var record CardHistoryRecord
 
 		if err := rows.Scan(
-			&row.ID,
-			&row.CreditCardID,
-			&row.MonthID,
+			&record.ID,
+			&record.CreditCardID,
+			&record.MonthID,
 			&balance,
 			&creditLimit,
 			&paidAmount,
-			&row.PaidDate,
-			&row.DueDay,
-			&row.Period,
+			&record.PaidDate,
+			&record.DueDay,
+			&record.Period,
 		); err != nil {
 			panic(err)
 		}
 
 		if creditLimit != nil {
 			c := lib.NewCurrencyFromStore(*creditLimit, sdb.currencyCode)
-			row.CreditLimit = &c
+			record.CreditLimit = &c
 		}
 
-		row.Balance = lib.NewCurrencyFromStore(balance, sdb.currencyCode)
-		row.PaidAmount = lib.NewCurrencyFromStore(paidAmount, sdb.currencyCode)
-		ccRows = append(ccRows, row)
+		record.Balance = lib.NewCurrencyFromStore(balance, sdb.currencyCode)
+		record.PaidAmount = lib.NewCurrencyFromStore(paidAmount, sdb.currencyCode)
+		records = append(records, record)
 	}
 
-	if len(ccRows) == 0 {
-		return []CreditCardHistoryRow{}, fmt.Errorf("no query results")
+	if len(records) == 0 {
+		return []CardHistoryRecord{}, fmt.Errorf("no query results")
 	}
 
-	return ccRows, nil
+	return records, nil
 }
 
 func (sdb SqliteDb) SetCreditCardHistory(historyID int, fieldMap CCFieldMap) {

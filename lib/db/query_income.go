@@ -6,21 +6,21 @@ import (
 	"github.com/jaeiya/billbank/lib"
 )
 
-type IncomeRow struct {
+type IncomeRecord struct {
 	ID     int
 	Name   string
 	Amount lib.Currency
 	Period Period
 }
 
-type IncomeHistoryRow struct {
+type IncomeHistoryRecord struct {
 	ID       int
 	IncomeID int
 	MonthID  int
 	Amount   lib.Currency
 }
 
-func (ih IncomeHistoryRow) String() string {
+func (ih IncomeHistoryRecord) String() string {
 	s := fmt.Sprintf(
 		"id: %d\nincomeID: %d\nmonthID: %d\namount: %s",
 		ih.ID,
@@ -31,7 +31,7 @@ func (ih IncomeHistoryRow) String() string {
 	return s
 }
 
-type AffixIncomeRow struct {
+type AffixIncomeRecord struct {
 	ID              int
 	IncomeHistoryID int
 	Name            string
@@ -61,25 +61,30 @@ func (sdb SqliteDb) SetIncome(id int, amount lib.Currency) {
 	}
 }
 
-func (sdb SqliteDb) QueryIncome(qm QueryMap) ([]IncomeRow, error) {
+func (sdb SqliteDb) QueryIncome(qm QueryMap) ([]IncomeRecord, error) {
 	rows := sdb.query(INCOME, qm)
 	var amount int
-	var incomeRow []IncomeRow
+	var records []IncomeRecord
 
 	for rows.Next() {
-		var row IncomeRow
-		if err := rows.Scan(&row.ID, &row.Name, &amount, &row.Period); err != nil {
+		var record IncomeRecord
+		if err := rows.Scan(
+			&record.ID,
+			&record.Name,
+			&amount,
+			&record.Period,
+		); err != nil {
 			panic(err)
 		}
-		row.Amount = lib.NewCurrencyFromStore(amount, sdb.currencyCode)
-		incomeRow = append(incomeRow, row)
+		record.Amount = lib.NewCurrencyFromStore(amount, sdb.currencyCode)
+		records = append(records, record)
 	}
 
-	if len(incomeRow) == 0 {
-		return []IncomeRow{}, fmt.Errorf("table is empty")
+	if len(records) == 0 {
+		return []IncomeRecord{}, fmt.Errorf("table is empty")
 	}
 
-	return incomeRow, nil
+	return records, nil
 }
 
 func (sdb SqliteDb) CreateIncomeHistory(incomeID int, monthID int, amount lib.Currency) {
@@ -90,25 +95,30 @@ func (sdb SqliteDb) CreateIncomeHistory(incomeID int, monthID int, amount lib.Cu
 	}
 }
 
-func (sdb SqliteDb) QueryIncomeHistory(qm QueryMap) ([]IncomeHistoryRow, error) {
+func (sdb SqliteDb) QueryIncomeHistory(qm QueryMap) ([]IncomeHistoryRecord, error) {
 	rows := sdb.query(INCOME_HISTORY, qm)
 	var amount int
-	var incomeHistoryRows []IncomeHistoryRow
+	var records []IncomeHistoryRecord
 
 	for rows.Next() {
-		var row IncomeHistoryRow
-		if err := rows.Scan(&row.ID, &row.IncomeID, &row.MonthID, &amount); err != nil {
+		var record IncomeHistoryRecord
+		if err := rows.Scan(
+			&record.ID,
+			&record.IncomeID,
+			&record.MonthID,
+			&amount,
+		); err != nil {
 			panic(err)
 		}
-		row.Amount = lib.NewCurrencyFromStore(amount, sdb.currencyCode)
-		incomeHistoryRows = append(incomeHistoryRows, row)
+		record.Amount = lib.NewCurrencyFromStore(amount, sdb.currencyCode)
+		records = append(records, record)
 	}
 
-	if len(incomeHistoryRows) == 0 {
-		return []IncomeHistoryRow{}, fmt.Errorf("query returned no results")
+	if len(records) == 0 {
+		return []IncomeHistoryRecord{}, fmt.Errorf("query returned no results")
 	}
 
-	return incomeHistoryRows, nil
+	return records, nil
 }
 
 /*
@@ -123,23 +133,28 @@ func (sdb SqliteDb) AffixIncome(historyID int, name string, amount lib.Currency)
 	}
 }
 
-func (sdb SqliteDb) QueryAffixIncome(qm QueryMap) ([]AffixIncomeRow, error) {
+func (sdb SqliteDb) QueryAffixIncome(qm QueryMap) ([]AffixIncomeRecord, error) {
 	rows := sdb.query(INCOME_AFFIXES, qm)
 	var amount int
-	var affixRows []AffixIncomeRow
+	var records []AffixIncomeRecord
 
 	for rows.Next() {
-		var row AffixIncomeRow
-		if err := rows.Scan(&row.ID, &row.IncomeHistoryID, &row.Name, &amount); err != nil {
+		var record AffixIncomeRecord
+		if err := rows.Scan(
+			&record.ID,
+			&record.IncomeHistoryID,
+			&record.Name,
+			&amount,
+		); err != nil {
 			panic(err)
 		}
-		row.Amount = lib.NewCurrencyFromStore(amount, sdb.currencyCode)
-		affixRows = append(affixRows, row)
+		record.Amount = lib.NewCurrencyFromStore(amount, sdb.currencyCode)
+		records = append(records, record)
 	}
 
-	if len(affixRows) == 0 {
-		return []AffixIncomeRow{}, fmt.Errorf("no results from query")
+	if len(records) == 0 {
+		return []AffixIncomeRecord{}, fmt.Errorf("no results from query")
 	}
 
-	return affixRows, nil
+	return records, nil
 }

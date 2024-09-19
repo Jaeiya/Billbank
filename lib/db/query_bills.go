@@ -13,7 +13,7 @@ type BillsConfig struct {
 	Period Period
 }
 
-type BillRow struct {
+type BillRecord struct {
 	ID int
 	BillsConfig
 }
@@ -28,7 +28,7 @@ type BillHistoryConfig struct {
 	Notes      *string
 }
 
-type BillHistoryRow struct {
+type BillHistoryRecord struct {
 	ID int
 	BillHistoryConfig
 }
@@ -42,26 +42,31 @@ func (sdb SqliteDb) CreateNewBill(cfg BillsConfig) {
 	}
 }
 
-func (sdb SqliteDb) QueryBills(qm QueryMap) ([]BillRow, error) {
+func (sdb SqliteDb) QueryBills(qm QueryMap) ([]BillRecord, error) {
 	rows := sdb.query(BILLS, qm)
 	var amount int
-	var serializedRows []BillRow
+	var records []BillRecord
 
 	for rows.Next() {
-		var row BillRow
-		err := rows.Scan(&row.ID, &row.Name, &amount, &row.DueDay, &row.Period)
-		if err != nil {
+		var record BillRecord
+		if err := rows.Scan(
+			&record.ID,
+			&record.Name,
+			&amount,
+			&record.DueDay,
+			&record.Period,
+		); err != nil {
 			panic(err)
 		}
-		row.Amount = lib.NewCurrencyFromStore(amount, sdb.currencyCode)
-		serializedRows = append(serializedRows, row)
+		record.Amount = lib.NewCurrencyFromStore(amount, sdb.currencyCode)
+		records = append(records, record)
 	}
 
-	if len(serializedRows) == 0 {
-		return []BillRow{}, fmt.Errorf("no query results")
+	if len(records) == 0 {
+		return []BillRecord{}, fmt.Errorf("no query results")
 	}
 
-	return serializedRows, nil
+	return records, nil
 }
 
 func (sdb SqliteDb) CreateBillHistory(cfg BillHistoryConfig) {
@@ -86,42 +91,41 @@ func (sdb SqliteDb) CreateBillHistory(cfg BillHistoryConfig) {
 	}
 }
 
-func (sdb SqliteDb) QueryBillHistory(qm QueryMap) ([]BillHistoryRow, error) {
+func (sdb SqliteDb) QueryBillHistory(qm QueryMap) ([]BillHistoryRecord, error) {
 	rows := sdb.query(BILL_HISTORY, qm)
 
 	var amount int
 	var paidAmount *int
-	var serializedRows []BillHistoryRow
+	var records []BillHistoryRecord
 
 	for rows.Next() {
-		var row BillHistoryRow
-		err := rows.Scan(
-			&row.ID,
-			&row.BillID,
-			&row.MonthID,
+		var record BillHistoryRecord
+		if err := rows.Scan(
+			&record.ID,
+			&record.BillID,
+			&record.MonthID,
 			&amount,
 			&paidAmount,
-			&row.PaidDate,
-			&row.DueDay,
-			&row.Notes,
-		)
-		if err != nil {
+			&record.PaidDate,
+			&record.DueDay,
+			&record.Notes,
+		); err != nil {
 			panic(err)
 		}
 
-		row.Amount = lib.NewCurrencyFromStore(amount, sdb.currencyCode)
+		record.Amount = lib.NewCurrencyFromStore(amount, sdb.currencyCode)
 
 		if paidAmount != nil {
 			pa := lib.NewCurrencyFromStore(*paidAmount, sdb.currencyCode)
-			row.PaidAmount = &pa
+			record.PaidAmount = &pa
 		}
 
-		serializedRows = append(serializedRows, row)
+		records = append(records, record)
 	}
 
-	if len(serializedRows) == 0 {
+	if len(records) == 0 {
 		return nil, fmt.Errorf("no results from query")
 	}
 
-	return serializedRows, nil
+	return records, nil
 }

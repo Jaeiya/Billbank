@@ -26,7 +26,7 @@ type TransferConfig struct {
 	FromWhom *string
 }
 
-type TransferData struct {
+type TransferRecord struct {
 	TransferConfig
 	ID int
 }
@@ -49,33 +49,33 @@ func (sdb SqliteDb) CreateTransfer(td TransferConfig) {
 	}
 }
 
-func (sdb SqliteDb) QueryTransfers(qm QueryMap) ([]TransferData, error) {
+func (sdb SqliteDb) QueryTransfers(qm QueryMap) ([]TransferRecord, error) {
 	rows := sdb.query(TRANSFERS, qm)
 	var amount int
-	var transferRows []TransferData
+	var records []TransferRecord
 
 	for rows.Next() {
-		var row TransferData
+		var record TransferRecord
 		if err := rows.Scan(
-			&row.ID,
-			&row.AccountID,
-			&row.MonthID,
-			&row.Name,
+			&record.ID,
+			&record.AccountID,
+			&record.MonthID,
+			&record.Name,
 			&amount,
-			&row.Date,
-			&row.TransferType,
-			&row.ToWhom,
-			&row.FromWhom,
+			&record.Date,
+			&record.TransferType,
+			&record.ToWhom,
+			&record.FromWhom,
 		); err != nil {
 			panic(err)
 		}
-		row.Amount = lib.NewCurrencyFromStore(amount, sdb.currencyCode)
-		transferRows = append(transferRows, row)
+		record.Amount = lib.NewCurrencyFromStore(amount, sdb.currencyCode)
+		records = append(records, record)
 	}
 
-	if len(transferRows) == 0 {
-		return transferRows, fmt.Errorf("no data found")
+	if len(records) == 0 {
+		return records, fmt.Errorf("no data found")
 	}
 
-	return transferRows, nil
+	return records, nil
 }

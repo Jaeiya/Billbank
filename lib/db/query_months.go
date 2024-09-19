@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-type MonthInfo struct {
+type MonthRecord struct {
 	ID    int
 	Year  int
 	Month int
@@ -30,21 +30,25 @@ func (sdb SqliteDb) CreateMonth(t time.Time) error {
 	return nil
 }
 
-func (sdb SqliteDb) QueryMonths(qm QueryMap) ([]MonthInfo, error) {
+func (sdb SqliteDb) QueryMonths(qm QueryMap) ([]MonthRecord, error) {
 	rows := sdb.query(MONTHS, qm)
-	var monthRows []MonthInfo
+	var records []MonthRecord
 
 	for rows.Next() {
-		var row MonthInfo
-		if err := rows.Scan(&row.ID, &row.Year, &row.Month); err != nil {
+		var record MonthRecord
+		if err := rows.Scan(
+			&record.ID,
+			&record.Year,
+			&record.Month,
+		); err != nil {
 			panic(err)
 		}
-		monthRows = append(monthRows, row)
+		records = append(records, record)
 	}
 
-	if len(monthRows) == 0 {
-		return []MonthInfo{}, fmt.Errorf("empty month table")
+	if len(records) == 0 {
+		return []MonthRecord{}, fmt.Errorf("empty month table")
 	}
 
-	return monthRows, nil
+	return records, nil
 }
