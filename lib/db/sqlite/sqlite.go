@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	_ "embed"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -19,8 +21,13 @@ type SqliteDb struct {
 //go:embed sql/init_db.sqlite
 var initBankSQL string
 
-func NewSqliteDb(name string, cc lib.CurrencyCode) *SqliteDb {
-	db, err := sql.Open("sqlite", name+".db")
+func NewSqliteDb(filePath string, cc lib.CurrencyCode) *SqliteDb {
+	_, err := os.ReadDir(filepath.Dir(filePath))
+	if err != nil {
+		panic(fmt.Errorf("cannot load database: %w", err))
+	}
+
+	db, err := sql.Open("sqlite", filePath)
 	if err != nil {
 		panic(err)
 	}
