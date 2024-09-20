@@ -59,15 +59,6 @@ type TransferRecord struct {
 }
 
 func (sdb SqliteDb) CreateBankAccount(config BankAccountConfig) {
-	if config.Password == nil || (config.AccountNumber == nil && config.Notes == nil) {
-		if _, err := sdb.handle.Exec(
-			sdb.InsertInto(BANK_ACCOUNTS, config.Name, nil, nil),
-		); err != nil {
-			panic(err)
-		}
-		return
-	}
-
 	if _, err := sdb.handle.Exec(
 		sdb.InsertInto(
 			BANK_ACCOUNTS,
