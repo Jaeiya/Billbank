@@ -16,7 +16,7 @@ func TestCreateBankAccount(t *testing.T) {
 		should   string
 		actual   []BankAccountConfig
 		expected []BankRecord
-		decrypt  bool
+		password *string
 	}
 
 	table := []MockTable{
@@ -24,7 +24,7 @@ func TestCreateBankAccount(t *testing.T) {
 			should:   "save without account number or notes",
 			actual:   []BankAccountConfig{{Name: "test"}},
 			expected: []BankRecord{{ID: 1, Name: "test"}},
-			decrypt:  false,
+			password: nil,
 		},
 		{
 			should: "save a bunch of records",
@@ -44,72 +44,72 @@ func TestCreateBankAccount(t *testing.T) {
 				{ID: 5, Name: "test4"},
 				{ID: 6, Name: "test5"},
 			},
-			decrypt: false,
+			password: nil,
 		},
 		{
 			should: "save account number and notes",
 			actual: []BankAccountConfig{
 				{
 					Name:          "test",
-					Password:      lib.GetPointer("test"),
-					AccountNumber: lib.GetPointer("282841"),
-					Notes:         lib.GetPointer("some notes"),
+					Password:      lib.NewPointer("test"),
+					AccountNumber: lib.NewPointer("282841"),
+					Notes:         lib.NewPointer("some notes"),
 				},
 			},
 			expected: []BankRecord{
 				{
 					ID:            1,
 					Name:          "test",
-					AccountNumber: lib.GetPointer("282841"),
-					Notes:         lib.GetPointer("some notes"),
+					AccountNumber: lib.NewPointer("282841"),
+					Notes:         lib.NewPointer("some notes"),
 				},
 			},
-			decrypt: true,
+			password: lib.NewPointer("test"),
 		},
 		{
 			should: "save just account number",
 			actual: []BankAccountConfig{
 				{
 					Name:          "test",
-					Password:      lib.GetPointer("test"),
-					AccountNumber: lib.GetPointer("1337420"),
+					Password:      lib.NewPointer("test"),
+					AccountNumber: lib.NewPointer("1337420"),
 				},
 			},
 			expected: []BankRecord{
 				{
 					ID:            1,
 					Name:          "test",
-					AccountNumber: lib.GetPointer("1337420"),
+					AccountNumber: lib.NewPointer("1337420"),
 				},
 			},
-			decrypt: true,
+			password: lib.NewPointer("test"),
 		},
 		{
 			should: "save just notes",
 			actual: []BankAccountConfig{
 				{
 					Name:     "test",
-					Password: lib.GetPointer("test"),
-					Notes:    lib.GetPointer("some notes"),
+					Password: lib.NewPointer("test"),
+					Notes:    lib.NewPointer("some notes"),
 				},
 			},
 			expected: []BankRecord{
 				{
 					ID:    1,
 					Name:  "test",
-					Notes: lib.GetPointer("some notes"),
+					Notes: lib.NewPointer("some notes"),
 				},
 			},
-			decrypt: true,
+			password: lib.NewPointer("test"),
 		},
 		{
 			should: "get encoded versions of protected fields",
 			actual: []BankAccountConfig{
 				{
 					Name:          "test",
-					Password:      lib.GetPointer("test"),
-					AccountNumber: lib.GetPointer("1337420"),
-					Notes:         lib.GetPointer("sevenCh"),
+					Password:      lib.NewPointer("test"),
+					AccountNumber: lib.NewPointer("1337420"),
+					Notes:         lib.NewPointer("sevenCh"),
 				},
 			},
 			expected: []BankRecord{
@@ -135,33 +135,23 @@ func TestCreateBankAccount(t *testing.T) {
 				db.CreateBankAccount(acct)
 			}
 
-			var res []BankRecord
-			var err error
-			if mock.decrypt {
-				res, err = db.QueryDecryptedBankAccount(
-					mock.expected[0].ID,
-					*mock.actual[0].Password,
-				)
-			} else {
-				res, err = db.QueryBankAccounts(QueryMap{})
-			}
+			res, err := db.QueryBankAccounts(QueryMap{}, mock.password)
 			r.NoError(err)
 			r.Len(res, len(mock.expected))
-
-			if !mock.decrypt {
-				for i, m := range mock.expected {
-					a.Equal(m.ID, res[i].ID)
-					a.Equal(m.Name, res[i].Name)
-					if res[i].AccountNumber != nil {
-						a.True(isProbablyBase64(*res[i].AccountNumber))
+			for i, r := range res {
+				if mock.password == nil {
+					a.Equal(r.ID, mock.expected[i].ID)
+					a.Equal(r.Name, mock.expected[i].Name)
+					if r.AccountNumber != nil {
+						a.True(isProbablyBase64(*res[0].AccountNumber))
 					}
-					if res[i].Notes != nil {
-						a.True(isProbablyBase64(*res[i].Notes))
+					if r.Notes != nil {
+						a.True(isProbablyBase64(*res[0].Notes))
 					}
+					return
 				}
-				return
+				a.Equal(mock.expected, res)
 			}
-			a.Equal(mock.expected, res)
 		})
 	}
 }
