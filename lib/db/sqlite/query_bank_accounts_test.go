@@ -154,6 +154,22 @@ func TestCreateBankAccount(t *testing.T) {
 			}
 		})
 	}
+
+	t.Run("should error when passing nil password & sensitive data", func(t *testing.T) {
+		t.Parallel()
+		a := assert.New(t)
+		dir := t.TempDir()
+
+		db := NewSqliteDb(filepath.Join(dir, "mock.db"), lib.USD)
+		defer db.Close()
+
+		a.PanicsWithValue(lib.ErrEncryptWithoutPassword, func() {
+			db.CreateBankAccount(BankAccountConfig{
+				Name:          "Test",
+				AccountNumber: lib.NewPointer("1823842"),
+			})
+		})
+	})
 }
 
 func isProbablyBase64(s string) bool {
