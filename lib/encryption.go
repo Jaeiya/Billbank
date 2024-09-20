@@ -7,6 +7,7 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
+	"fmt"
 	"io"
 
 	"golang.org/x/crypto/argon2"
@@ -20,6 +21,8 @@ const (
 	saltLength uint32 = 16
 	hashLength uint32 = 32
 )
+
+var ErrEncryptWithoutPassword = fmt.Errorf("tried to encrypt data without password")
 
 func HashPassword(password string) (string, error) {
 	salt := make([]byte, saltLength)
@@ -82,7 +85,7 @@ func EncryptNonNil(data *string, password *string) any /* nil|string */ {
 		return nil
 	}
 	if password == nil {
-		panic("cannot encrypt data without password")
+		panic(ErrEncryptWithoutPassword)
 	}
 	return EncryptData(*data, *password)
 }
