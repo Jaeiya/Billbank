@@ -42,12 +42,12 @@ type BankHistoryConfig struct {
 }
 
 type TransferConfig struct {
-	BankAccountID int
-	MonthID       int
-	Name          string
-	Amount        lib.Currency
-	Date          string
-	TransferType  TransferType
+	HistoryID    int
+	MonthID      int
+	Name         string
+	Amount       lib.Currency
+	DueDay       int
+	TransferType TransferType
 
 	ToWhom   *string
 	FromWhom *string
@@ -151,20 +151,19 @@ func (sdb SqliteDb) QueryBankAccountHistory(qm QueryMap) ([]BankHistoryRecord, e
 }
 
 func (sdb SqliteDb) CreateTransfer(td TransferConfig) {
-	if _, err := sdb.handle.Exec(
-		sdb.InsertInto(
-			TRANSFERS,
-			td.BankAccountID,
-			td.MonthID,
-			td.Name,
-			td.Amount.GetStoredValue(),
-			td.Date,
-			td.TransferType,
-			lib.TryDeref(td.ToWhom),
-			lib.TryDeref(td.FromWhom),
-		),
-	); err != nil {
-		panic(err)
+	execStr := sdb.InsertInto(
+		TRANSFERS,
+		td.HistoryID,
+		td.MonthID,
+		td.Name,
+		td.Amount.GetStoredValue(),
+		td.DueDay,
+		td.TransferType,
+		lib.TryDeref(td.ToWhom),
+		lib.TryDeref(td.FromWhom),
+	)
+	if _, err := sdb.handle.Exec(execStr); err != nil {
+		panicOnExecErr(err)
 	}
 }
 
@@ -177,11 +176,11 @@ func (sdb SqliteDb) QueryTransfers(qm QueryMap) ([]TransferRecord, error) {
 		var record TransferRecord
 		if err := rows.Scan(
 			&record.ID,
-			&record.BankAccountID,
+			&record.HistoryID,
 			&record.MonthID,
 			&record.Name,
 			&amount,
-			&record.Date,
+			&record.DueDay,
 			&record.TransferType,
 			&record.ToWhom,
 			&record.FromWhom,

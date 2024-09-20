@@ -318,6 +318,172 @@ func TestBankAccountHistory(t *testing.T) {
 	}
 }
 
+func TestBankTransfers(t *testing.T) {
+	type MockTable struct {
+		should      string
+		accounts    []BankAccountConfig
+		history     []BankHistoryConfig
+		actual      []TransferConfig
+		expected    []TransferRecord
+		expectError error
+	}
+
+	table := []MockTable{
+		{
+			should:   "record a transfer to a specific bank history",
+			accounts: []BankAccountConfig{{Name: "Test"}},
+			history: []BankHistoryConfig{
+				{MonthID: 1, BankAccountID: 1},
+			},
+			actual: []TransferConfig{
+				{
+					HistoryID:    1,
+					MonthID:      1,
+					Name:         "test",
+					Amount:       lib.NewCurrency("72.28", lib.USD),
+					DueDay:       5,
+					TransferType: DEPOSIT,
+					ToWhom:       lib.NewPointer("johnny"),
+					FromWhom:     lib.NewPointer("bank of america"),
+				},
+			},
+			expected: []TransferRecord{
+				{
+					ID: 1,
+					TransferConfig: TransferConfig{
+						HistoryID:    1,
+						MonthID:      1,
+						Name:         "test",
+						Amount:       lib.NewCurrency("72.28", lib.USD),
+						DueDay:       5,
+						TransferType: DEPOSIT,
+						ToWhom:       lib.NewPointer("johnny"),
+						FromWhom:     lib.NewPointer("bank of america"),
+					},
+				},
+			},
+		},
+		{
+			should:   "allow nullable fields to be nil",
+			accounts: []BankAccountConfig{{Name: "Test"}},
+			history: []BankHistoryConfig{
+				{MonthID: 1, BankAccountID: 1},
+			},
+			actual: []TransferConfig{
+				{
+					HistoryID:    1,
+					MonthID:      1,
+					Name:         "test",
+					Amount:       lib.NewCurrency("72.28", lib.USD),
+					DueDay:       5,
+					TransferType: DEPOSIT,
+				},
+			},
+			expected: []TransferRecord{
+				{
+					ID: 1,
+					TransferConfig: TransferConfig{
+						HistoryID:    1,
+						MonthID:      1,
+						Name:         "test",
+						Amount:       lib.NewCurrency("72.28", lib.USD),
+						DueDay:       5,
+						TransferType: DEPOSIT,
+					},
+				},
+			},
+		},
+		{
+			should:   "panic on foreign key constraint violations",
+			accounts: []BankAccountConfig{{Name: "Test"}},
+			history: []BankHistoryConfig{
+				{MonthID: 1, BankAccountID: 1},
+			},
+			actual: []TransferConfig{
+				{
+					HistoryID:    1,
+					MonthID:      2,
+					DueDay:       5,
+					TransferType: DEPOSIT,
+				},
+				{
+					HistoryID:    2,
+					MonthID:      1,
+					DueDay:       5,
+					TransferType: DEPOSIT,
+				},
+			},
+			expectError: ErrForeignKey,
+		},
+		{
+			should:   "panic on due date constraint violations",
+			accounts: []BankAccountConfig{{Name: "Test"}},
+			history: []BankHistoryConfig{
+				{MonthID: 1, BankAccountID: 1},
+			},
+			actual: []TransferConfig{
+				{DueDay: 32},
+				{DueDay: 0},
+			},
+			expectError: ErrDueDayInvalid,
+		},
+		{
+			should:   "panic on transfer type constraint violations",
+			accounts: []BankAccountConfig{{Name: "Test"}},
+			history: []BankHistoryConfig{
+				{MonthID: 1, BankAccountID: 1},
+			},
+			actual: []TransferConfig{
+				{DueDay: 1, TransferType: "not a good type"},
+				{DueDay: 1, TransferType: "withdrawals"},
+			},
+			expectError: ErrTransferTypeInvalid,
+		},
+	}
+
+	for _, mock := range table {
+		t.Run("should "+mock.should, func(t *testing.T) {
+			t.Parallel()
+			a := assert.New(t)
+			r := assert.New(t)
+			dir := t.TempDir()
+
+			db := NewSqliteDb(filepath.Join(dir, "mock.db"), lib.USD)
+			defer db.Close()
+
+			db.CreateMonth(time.Date(2024, 1, 1, 0, 0, 0, 0, time.Local))
+
+			for _, acct := range mock.accounts {
+				db.CreateBankAccount(acct)
+			}
+
+			for _, history := range mock.history {
+				db.CreateBankAccountHistory(history)
+			}
+
+			for _, transfer := range mock.actual {
+				if mock.expectError != nil {
+					a.PanicsWithValue(mock.expectError, func() {
+						db.CreateTransfer(transfer)
+					})
+				} else {
+					db.CreateTransfer(transfer)
+				}
+			}
+
+			// Error tests have no expected values
+			if mock.expectError != nil {
+				return
+			}
+
+			res, err := db.QueryTransfers(QueryMap{})
+			r.NoError(err)
+
+			a.Equal(mock.expected, res)
+		})
+	}
+}
+
 func isProbablyBase64(s string) bool {
 	re := regexp.MustCompile(`^[A-Za-z0-9+/]+={0,2}$`)
 	if !re.MatchString(s) {

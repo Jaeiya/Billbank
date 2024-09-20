@@ -66,20 +66,20 @@ CREATE TABLE IF NOT EXISTS bank_account_history (
 
 
 CREATE TABLE IF NOT EXISTS transfers (
-    id         INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    account_id INTEGER NOT NULL,
-    month_id   INTEGER NOT NULL,
-    name       VARCHAR(50) NOT NULL,
-    amount     INTEGER NOT NULL,
-    date       VARCHAR(50) NOT NULL,
-    type       VARCHAR(20) NOT NULL CHECK (
-        type = 'withdrawal' OR
-        type = 'deposit' OR
-        type = 'move'
+    id            INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    history_id    INTEGER NOT NULL,
+    month_id      INTEGER NOT NULL,
+    name          VARCHAR(50) NOT NULL,
+    amount        INTEGER NOT NULL,
+    due_day       INTEGER NOT NULL CHECK (due_day > 0 AND due_day < 32),
+    transfer_type VARCHAR(20) NOT NULL CHECK (
+        transfer_type = 'withdrawal' OR
+        transfer_type = 'deposit' OR
+        transfer_type = 'move'
     ),
     to_whom    VARCHAR(100),
     from_whom  VARCHAR(100),
-    FOREIGN KEY (account_id) REFERENCES bank_accounts (id),
+    FOREIGN KEY (history_id) REFERENCES bank_account_history (id),
     FOREIGN KEY (month_id) REFERENCES months (id)
 );
 

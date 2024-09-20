@@ -21,7 +21,11 @@ type SqliteDb struct {
 //go:embed sql/init_db.sqlite
 var initBankSQL string
 
-var ErrForeignKey = fmt.Errorf("foreign key failed validation")
+var (
+	ErrForeignKey          = fmt.Errorf("foreign key failed validation")
+	ErrDueDayInvalid       = fmt.Errorf("failed to validate due_day constraint")
+	ErrTransferTypeInvalid = fmt.Errorf("failed to valid transfer_type constraint")
+)
 
 func NewSqliteDb(filePath string, cc lib.CurrencyCode) *SqliteDb {
 	_, err := os.ReadDir(filepath.Dir(filePath))
@@ -72,7 +76,7 @@ func (sdb SqliteDb) InsertInto(t Table, values ...any) string {
 		realCols = append(realCols, col)
 
 		switch v := values[i].(type) {
-		case string, Period:
+		case string, Period, TransferType:
 			realValues = append(realValues, fmt.Sprintf("'%v'", v))
 		case time.Month:
 			realValues = append(realValues, fmt.Sprintf("%d", v))
@@ -190,6 +194,12 @@ func buildQueryStr(t Table, fm FieldMap) string {
 func panicOnExecErr(err error) {
 	if strings.Contains(err.Error(), "FOREIGN KEY constraint failed") {
 		panic(ErrForeignKey)
+	}
+	if strings.Contains(err.Error(), "CHECK constraint failed: due_day") {
+		panic(ErrDueDayInvalid)
+	}
+	if strings.Contains(err.Error(), "CHECK constraint failed: transfer_type") {
+		panic(ErrTransferTypeInvalid)
 	}
 	panic(err)
 }
