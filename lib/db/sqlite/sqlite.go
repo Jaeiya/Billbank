@@ -21,6 +21,8 @@ type SqliteDb struct {
 //go:embed sql/init_db.sqlite
 var initBankSQL string
 
+var ErrForeignKey = fmt.Errorf("foreign key failed validation")
+
 func NewSqliteDb(filePath string, cc lib.CurrencyCode) *SqliteDb {
 	_, err := os.ReadDir(filepath.Dir(filePath))
 	if err != nil {
@@ -183,4 +185,11 @@ func buildQueryStr(t Table, fm FieldMap) string {
 	}
 
 	return fmt.Sprintf("SELECT * FROM %s WHERE %s", t, strings.Join(conditions, " AND "))
+}
+
+func panicOnExecErr(err error) {
+	if strings.Contains(err.Error(), "FOREIGN KEY constraint failed") {
+		panic(ErrForeignKey)
+	}
+	panic(err)
 }

@@ -67,7 +67,7 @@ func (sdb SqliteDb) CreateBankAccount(config BankAccountConfig) {
 			lib.EncryptNonNil(config.Notes, config.Password),
 		),
 	); err != nil {
-		panic(err)
+		panicOnExecErr(err)
 	}
 }
 
@@ -119,7 +119,7 @@ func (sdb SqliteDb) CreateBankAccountHistory(config BankHistoryConfig) {
 			config.Balance.GetStoredValue(),
 		),
 	); err != nil {
-		panic(err)
+		panicOnExecErr(err)
 	}
 }
 

@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"testing"
+	"time"
 
 	"github.com/jaeiya/billbank/lib"
 	"github.com/stretchr/testify/assert"
@@ -170,6 +171,151 @@ func TestCreateBankAccount(t *testing.T) {
 			})
 		})
 	})
+}
+
+func TestBankAccountHistory(t *testing.T) {
+	type MockTable struct {
+		should      string
+		accounts    []BankAccountConfig
+		actual      []BankHistoryConfig
+		expected    []BankHistoryRecord
+		expectError error
+	}
+
+	table := []MockTable{
+		{
+			should: "create bank account history",
+			accounts: []BankAccountConfig{
+				{Name: "TestBank"},
+			},
+
+			actual: []BankHistoryConfig{
+				{MonthID: 1, BankAccountID: 1, Balance: lib.NewCurrency("133.7", lib.USD)},
+			},
+			expected: []BankHistoryRecord{
+				{
+					ID:            1,
+					MonthID:       1,
+					BankAccountID: 1,
+					Balance:       lib.NewCurrency("133.7", lib.USD),
+				},
+			},
+		},
+		{
+			should: "create multiple bank histories",
+			accounts: []BankAccountConfig{
+				{Name: "TestBank"},
+				{Name: "DaddyBank"},
+				{Name: "BigBank"},
+				{Name: "1337Bank"},
+			},
+
+			actual: []BankHistoryConfig{
+				{MonthID: 1, BankAccountID: 3, Balance: lib.NewCurrency("7242.31", lib.USD)},
+				{MonthID: 1, BankAccountID: 1, Balance: lib.NewCurrency("13.37", lib.USD)},
+				{MonthID: 1, BankAccountID: 4, Balance: lib.NewCurrency("1337.69", lib.USD)},
+				{MonthID: 1, BankAccountID: 2, Balance: lib.NewCurrency("80.08", lib.USD)},
+			},
+			expected: []BankHistoryRecord{
+				{
+					ID:            1,
+					MonthID:       1,
+					BankAccountID: 3,
+					Balance:       lib.NewCurrency("7242.31", lib.USD),
+				},
+				{
+					ID:            2,
+					MonthID:       1,
+					BankAccountID: 1,
+					Balance:       lib.NewCurrency("13.37", lib.USD),
+				},
+				{
+					ID:            3,
+					MonthID:       1,
+					BankAccountID: 4,
+					Balance:       lib.NewCurrency("1337.69", lib.USD),
+				},
+				{
+					ID:            4,
+					MonthID:       1,
+					BankAccountID: 2,
+					Balance:       lib.NewCurrency("80.08", lib.USD),
+				},
+			},
+		},
+		{
+			should: "fail month constraint",
+			accounts: []BankAccountConfig{
+				{Name: "TestBank"},
+			},
+
+			actual: []BankHistoryConfig{
+				{MonthID: 2, BankAccountID: 1, Balance: lib.NewCurrency("133.7", lib.USD)},
+			},
+			expectError: ErrForeignKey,
+		},
+		{
+			should: "fail account constraint",
+			accounts: []BankAccountConfig{
+				{Name: "TestBank"},
+			},
+
+			actual: []BankHistoryConfig{
+				{MonthID: 1, BankAccountID: 2, Balance: lib.NewCurrency("133.7", lib.USD)},
+			},
+			expectError: ErrForeignKey,
+		},
+		{
+			should: "default balance to 0",
+			accounts: []BankAccountConfig{
+				{Name: "TestBank"},
+			},
+			actual: []BankHistoryConfig{
+				{MonthID: 1, BankAccountID: 1},
+			},
+			expected: []BankHistoryRecord{
+				{
+					ID:            1,
+					MonthID:       1,
+					BankAccountID: 1,
+					Balance:       lib.NewCurrency("0", lib.USD),
+				},
+			},
+		},
+	}
+
+	for _, mock := range table {
+		t.Run("should "+mock.should, func(t *testing.T) {
+			t.Parallel()
+			a := assert.New(t)
+			r := require.New(t)
+			dir := t.TempDir()
+
+			db := NewSqliteDb(filepath.Join(dir, "mock.db"), lib.USD)
+			defer db.Close()
+
+			err := db.CreateMonth(time.Date(2024, 1, 1, 0, 0, 0, 0, time.Local))
+			r.NoError(err)
+
+			for _, acct := range mock.accounts {
+				db.CreateBankAccount(acct)
+			}
+
+			for _, history := range mock.actual {
+				if mock.expectError != nil {
+					a.PanicsWithValue(ErrForeignKey, func() {
+						db.CreateBankAccountHistory(history)
+					})
+					return
+				}
+				db.CreateBankAccountHistory(history)
+			}
+
+			res, err := db.QueryBankAccountHistory(QueryMap{})
+			r.NoError(err)
+			a.Equal(mock.expected, res)
+		})
+	}
 }
 
 func isProbablyBase64(s string) bool {
