@@ -71,36 +71,8 @@ func (sdb SqliteDb) CreateBankAccount(config BankAccountConfig) {
 	}
 }
 
-func (sdb SqliteDb) QueryBankAccounts(qm QueryMap) ([]BankRecord, error) {
+func (sdb SqliteDb) QueryBankAccounts(qm QueryMap, password *string) ([]BankRecord, error) {
 	rows := sdb.query(BANK_ACCOUNTS, qm)
-	var records []BankRecord
-
-	for rows.Next() {
-		var record BankRecord
-		if err := rows.Scan(
-			&record.ID,
-			&record.Name,
-			&record.AccountNumber,
-			&record.Notes,
-		); err != nil {
-			panic(err)
-		}
-		records = append(records, record)
-	}
-
-	if len(records) == 0 {
-		return []BankRecord{}, fmt.Errorf("no bank accounts")
-	}
-
-	return records, nil
-}
-
-func (sdb SqliteDb) QueryDecryptedBankAccount(
-	accountID int,
-	password string,
-) ([]BankRecord, error) {
-	rows := sdb.query(BANK_ACCOUNTS, QueryMap{WHERE_ID: accountID})
-	var encAcctNum, encNotes *string
 	var records []BankRecord
 
 	for rows.Next() {
@@ -110,25 +82,29 @@ func (sdb SqliteDb) QueryDecryptedBankAccount(
 		if err = rows.Scan(
 			&record.ID,
 			&record.Name,
-			&encAcctNum,
-			&encNotes,
+			&record.AccountNumber,
+			&record.Notes,
 		); err != nil {
 			panic(err)
 		}
 
-		if record.AccountNumber, err = lib.DecryptNonNil(encAcctNum, password); err != nil {
-			panic(err)
+		if password != nil && record.AccountNumber != nil {
+			if record.AccountNumber, err = lib.DecryptNonNil(record.AccountNumber, *password); err != nil {
+				panic(err)
+			}
 		}
 
-		if record.Notes, err = lib.DecryptNonNil(encNotes, password); err != nil {
-			panic(err)
+		if password != nil && record.Notes != nil {
+			if record.Notes, err = lib.DecryptNonNil(record.Notes, *password); err != nil {
+				panic(err)
+			}
 		}
 
 		records = append(records, record)
 	}
 
 	if len(records) == 0 {
-		return []BankRecord{}, fmt.Errorf("no query results")
+		return []BankRecord{}, fmt.Errorf("no bank accounts")
 	}
 
 	return records, nil

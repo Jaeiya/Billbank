@@ -108,13 +108,17 @@ func (sdb SqliteDb) CreateCreditCard(config CreditCardConfig) {
 	}
 }
 
-func (sdb SqliteDb) QueryCreditCards(qm QueryMap) ([]CreditCardRecord, error) {
+func (sdb SqliteDb) QueryCreditCards(
+	qm QueryMap,
+	password *string,
+) ([]CreditCardRecord, error) {
 	rows := sdb.query(CREDIT_CARDS, qm)
 	var creditLimit *int
 	var records []CreditCardRecord
 
 	for rows.Next() {
 		var record CreditCardRecord
+		var err error
 
 		if err := rows.Scan(
 			&record.ID,
@@ -133,52 +137,16 @@ func (sdb SqliteDb) QueryCreditCards(qm QueryMap) ([]CreditCardRecord, error) {
 			record.CreditLimit = &c
 		}
 
-		records = append(records, record)
-	}
-
-	if len(records) == 0 {
-		return []CreditCardRecord{}, fmt.Errorf("no results found")
-	}
-
-	return records, nil
-}
-
-func (sdb SqliteDb) QueryDecryptedCreditCard(
-	qm QueryMap,
-	password string,
-) ([]CreditCardRecord, error) {
-	rows := sdb.query(CREDIT_CARDS, qm)
-	var creditLimit *int
-	var encCardNum, encNotes *string
-	var records []CreditCardRecord
-
-	for rows.Next() {
-		var record CreditCardRecord
-		var err error
-
-		if err = rows.Scan(
-			&record.ID,
-			&record.Name,
-			&record.DueDay,
-			&creditLimit,
-			&encCardNum,
-			&record.LastFourDigits,
-			&encNotes,
-		); err != nil {
-			panic(err)
+		if password != nil && record.CardNumber != nil {
+			if record.CardNumber, err = lib.DecryptNonNil(record.CardNumber, *password); err != nil {
+				panic(err)
+			}
 		}
 
-		if record.CardNumber, err = lib.DecryptNonNil(encCardNum, password); err != nil {
-			panic(err)
-		}
-
-		if record.Notes, err = lib.DecryptNonNil(encNotes, password); err != nil {
-			panic(err)
-		}
-
-		if creditLimit != nil {
-			c := lib.NewCurrencyFromStore(*creditLimit, sdb.currencyCode)
-			record.CreditLimit = &c
+		if password != nil && record.Notes != nil {
+			if record.Notes, err = lib.DecryptNonNil(record.Notes, *password); err != nil {
+				panic(err)
+			}
 		}
 
 		records = append(records, record)
