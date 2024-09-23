@@ -34,11 +34,10 @@ type BillHistoryRecord struct {
 }
 
 func (sdb SqliteDb) CreateNewBill(cfg BillsConfig) {
-	_, err := sdb.handle.Exec(
+	if _, err := sdb.handle.Exec(
 		sdb.InsertInto(BILLS, cfg.Name, cfg.Amount.GetStoredValue(), cfg.DueDay, cfg.Period),
-	)
-	if err != nil {
-		panic(err)
+	); err != nil {
+		panicOnExecErr(err)
 	}
 }
 
@@ -87,7 +86,7 @@ func (sdb SqliteDb) CreateBillHistory(cfg BillHistoryConfig) {
 			lib.TryDeref(cfg.Notes),
 		),
 	); err != nil {
-		panic(err)
+		panicOnExecErr(err)
 	}
 }
 
