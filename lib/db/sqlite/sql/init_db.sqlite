@@ -132,4 +132,5 @@ CREATE TABLE IF NOT EXISTS bill_history (
     due_day     INTEGER NOT NULL CHECK (due_day > 0 AND due_day < 32),
     notes       VARCHAR(255),
     FOREIGN KEY (bill_id) REFERENCES bills (id)
+    FOREIGN KEY (month_id) REFERENCES months (id)
 );
