@@ -68,7 +68,7 @@ func TestCreateBankAccount(t *testing.T) {
 			password: lib.NewPointer("test"),
 		},
 		{
-			should: "save just account number",
+			should: "just save account number",
 			actual: []BankAccountConfig{
 				{
 					Name:          "test",
@@ -86,7 +86,7 @@ func TestCreateBankAccount(t *testing.T) {
 			password: lib.NewPointer("test"),
 		},
 		{
-			should: "save just notes",
+			should: "just save notes",
 			actual: []BankAccountConfig{
 				{
 					Name:     "test",
@@ -389,6 +389,8 @@ func TestBankTransfers(t *testing.T) {
 						Amount:       lib.NewCurrency("72.28", lib.USD),
 						DueDay:       5,
 						TransferType: DEPOSIT,
+						ToWhom:       nil,
+						FromWhom:     nil,
 					},
 				},
 			},

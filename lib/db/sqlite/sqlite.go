@@ -25,6 +25,7 @@ var (
 	ErrForeignKey          = fmt.Errorf("foreign key failed validation")
 	ErrDueDayInvalid       = fmt.Errorf("failed to validate due_day constraint")
 	ErrTransferTypeInvalid = fmt.Errorf("failed to valid transfer_type constraint")
+	ErrUniqueName          = fmt.Errorf("failed unique 'name' constraint requirement")
 )
 
 func NewSqliteDb(filePath string, cc lib.CurrencyCode) *SqliteDb {
@@ -200,6 +201,10 @@ func panicOnExecErr(err error) {
 	}
 	if strings.Contains(err.Error(), "CHECK constraint failed: transfer_type") {
 		panic(ErrTransferTypeInvalid)
+	}
+	if strings.Contains(err.Error(), "UNIQUE constraint failed") &&
+		strings.Contains(err.Error(), ".name (") {
+		panic(ErrUniqueName)
 	}
 	panic(err)
 }
