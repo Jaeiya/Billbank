@@ -16,7 +16,7 @@ const (
 	CC_BALANCE     = CCField("balance")
 	CC_LIMIT       = CCField("credit_limit")
 	CC_PAID_AMOUNT = CCField("paid_amount")
-	CC_PAID_DATE   = CCField("paid_date")
+	CC_PAID_DAY    = CCField("paid_day")
 	CC_DUE_DAY     = CCField("due_day")
 )
 
@@ -68,7 +68,7 @@ type CardHistoryRecord struct {
 	Balance      lib.Currency
 	CreditLimit  *lib.Currency
 	PaidAmount   lib.Currency
-	PaidDate     *string
+	PaidDay      *int
 	DueDay       int
 	Period       Period
 }
@@ -82,7 +82,7 @@ func (chr CardHistoryRecord) String() string {
 		chr.Balance.String(),
 		chr.CreditLimit,
 		chr.PaidAmount.String(),
-		lib.TryDeref(chr.PaidDate),
+		lib.TryDeref(chr.PaidDay),
 		chr.DueDay,
 	)
 }
@@ -104,7 +104,7 @@ func (sdb SqliteDb) CreateCreditCard(config CreditCardConfig) {
 			lib.EncryptNonNil(config.Notes, config.Password),
 		),
 	); err != nil {
-		panic(err)
+		panicOnExecErr(err)
 	}
 }
 
@@ -177,7 +177,7 @@ func (sdb SqliteDb) CreateCreditCardHistory(config CreditCardHistoryConfig) {
 			MONTHLY,
 		),
 	); err != nil {
-		panic(err)
+		panicOnExecErr(err)
 	}
 }
 
@@ -201,7 +201,7 @@ func (sdb SqliteDb) QueryCreditCardHistory(qm QueryMap) ([]CardHistoryRecord, er
 			&balance,
 			&creditLimit,
 			&paidAmount,
-			&record.PaidDate,
+			&record.PaidDay,
 			&record.DueDay,
 			&record.Period,
 		); err != nil {
@@ -225,7 +225,7 @@ func (sdb SqliteDb) QueryCreditCardHistory(qm QueryMap) ([]CardHistoryRecord, er
 	return records, nil
 }
 
-func (sdb SqliteDb) SetCreditCardHistory(historyID int, fieldMap CCFieldMap) {
+func (sdb SqliteDb) SetCreditCardHistory(historyID int, fieldMap CCFieldMap) error {
 	conditions := make([]string, 0, len(fieldMap))
 	for field, value := range fieldMap {
 		switch field {
@@ -233,24 +233,18 @@ func (sdb SqliteDb) SetCreditCardHistory(historyID int, fieldMap CCFieldMap) {
 		case CC_BALANCE, CC_LIMIT, CC_PAID_AMOUNT:
 			c, err := lib.ToCurrency(value)
 			if err != nil {
-				panic(fmt.Sprintf("%s should be of type: lib.Currency", field))
+				return fmt.Errorf("%s should be of type: lib.Currency", field)
 			}
 			conditions = append(conditions, fmt.Sprintf("%s=%d", field, c.GetStoredValue()))
 
-		case CC_DUE_DAY:
+		case CC_DUE_DAY, CC_PAID_DAY:
 			if !lib.IsInt(value) {
-				panic(fmt.Sprintf("%s should of of type: int", field))
+				return fmt.Errorf("%s should of of type: int", field)
 			}
-			conditions = append(conditions, fmt.Sprintf("due_day=%d", value))
-
-		case CC_PAID_DATE:
-			if !lib.IsString(value) {
-				panic(fmt.Sprintf("%s should be of type: string", field))
-			}
-			conditions = append(conditions, fmt.Sprintf("paid_date='%s'", value))
+			conditions = append(conditions, fmt.Sprintf("%s=%d", field, value))
 
 		default:
-			panic(fmt.Sprintf("unsupported credit card history field: %s", field))
+			return fmt.Errorf("unsupported credit card history field: %s", field)
 		}
 	}
 
@@ -264,4 +258,5 @@ func (sdb SqliteDb) SetCreditCardHistory(historyID int, fieldMap CCFieldMap) {
 	if _, err := sdb.handle.Exec(query); err != nil {
 		panic(err)
 	}
+	return nil
 }
