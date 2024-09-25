@@ -5,13 +5,15 @@ import (
 	"time"
 )
 
+var ErrDirtyDate = fmt.Errorf("not a clean date")
+
 type MonthRecord struct {
 	ID    int
 	Year  int
 	Month int
 }
 
-func (sdb SqliteDb) CreateMonth(t time.Time) error {
+func (sdb SqliteDb) CreateMonth(t time.Time) {
 	// Make sure any prior date arithmetic, used a clean date
 	isClean := t.Day() == 1 &&
 		t.Hour() == 0 &&
@@ -20,14 +22,13 @@ func (sdb SqliteDb) CreateMonth(t time.Time) error {
 		t.Nanosecond() == 0
 
 	if !isClean {
-		return fmt.Errorf("not a clean date")
+		panic(ErrDirtyDate)
 	}
 	if _, err := sdb.handle.Exec(
 		sdb.InsertInto(MONTHS, t.Year(), t.Month()),
 	); err != nil {
-		return err
+		panicOnExecErr(err)
 	}
-	return nil
 }
 
 func (sdb SqliteDb) QueryMonths(qm QueryMap) ([]MonthRecord, error) {

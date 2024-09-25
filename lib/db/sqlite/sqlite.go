@@ -26,6 +26,7 @@ var (
 	ErrDueDayInvalid       = fmt.Errorf("failed to validate due_day constraint")
 	ErrTransferTypeInvalid = fmt.Errorf("failed to valid transfer_type constraint")
 	ErrAmountInvalid       = fmt.Errorf("failed to validate amount constraint")
+	ErrMonthInvalid        = fmt.Errorf("failed to validate month constraint")
 	ErrUniqueName          = fmt.Errorf("failed unique 'name' constraint requirement")
 )
 
@@ -205,6 +206,9 @@ func panicOnExecErr(err error) {
 	}
 	if strings.Contains(err.Error(), "CHECK constraint failed: amount") {
 		panic(ErrAmountInvalid)
+	}
+	if strings.Contains(err.Error(), "CHECK constraint failed: month") {
+		panic(ErrMonthInvalid)
 	}
 	if strings.Contains(err.Error(), "UNIQUE constraint failed") &&
 		strings.Contains(err.Error(), ".name (") {

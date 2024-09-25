@@ -294,8 +294,7 @@ func TestBankAccountHistory(t *testing.T) {
 			db := NewSqliteDb(filepath.Join(dir, "mock.db"), lib.USD)
 			defer db.Close()
 
-			err := db.CreateMonth(time.Date(2024, 1, 1, 0, 0, 0, 0, time.Local))
-			r.NoError(err)
+			db.CreateMonth(time.Date(2024, 1, 1, 0, 0, 0, 0, time.Local))
 
 			for _, acct := range mock.accounts {
 				db.CreateBankAccount(acct)
