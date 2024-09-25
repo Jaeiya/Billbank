@@ -6,18 +6,26 @@ import (
 	"github.com/jaeiya/billbank/lib"
 )
 
-type IncomeRecord struct {
-	ID     int
+type IncomeConfig struct {
 	Name   string
 	Amount lib.Currency
 	Period Period
 }
 
-type IncomeHistoryRecord struct {
-	ID       int
+type IncomeRecord struct {
+	ID int
+	IncomeConfig
+}
+
+type IncomeHistoryConfig struct {
 	IncomeID int
 	MonthID  int
 	Amount   lib.Currency
+}
+
+type IncomeHistoryRecord struct {
+	ID int
+	IncomeHistoryConfig
 }
 
 func (ih IncomeHistoryRecord) String() string {
@@ -38,10 +46,12 @@ type AffixIncomeRecord struct {
 	Amount          lib.Currency
 }
 
-func (sdb SqliteDb) CreateIncome(name string, amount lib.Currency, p Period) int64 {
-	res, err := sdb.handle.Exec(sdb.InsertInto(INCOME, name, amount.GetStoredValue(), p))
+func (sdb SqliteDb) CreateIncome(config IncomeConfig) int64 {
+	res, err := sdb.handle.Exec(
+		sdb.InsertInto(INCOME, config.Name, config.Amount.GetStoredValue(), config.Period),
+	)
 	if err != nil {
-		panic(err)
+		panicOnExecErr(err)
 	}
 
 	id, err := res.LastInsertId()
@@ -87,11 +97,11 @@ func (sdb SqliteDb) QueryIncome(qm QueryMap) ([]IncomeRecord, error) {
 	return records, nil
 }
 
-func (sdb SqliteDb) CreateIncomeHistory(incomeID int, monthID int, amount lib.Currency) {
+func (sdb SqliteDb) CreateIncomeHistory(config IncomeHistoryConfig) {
 	if _, err := sdb.handle.Exec(
-		sdb.InsertInto(INCOME_HISTORY, incomeID, monthID, amount.GetStoredValue()),
+		sdb.InsertInto(INCOME_HISTORY, config.IncomeID, config.MonthID, config.Amount.GetStoredValue()),
 	); err != nil {
-		panic(err)
+		panicOnExecErr(err)
 	}
 }
 
