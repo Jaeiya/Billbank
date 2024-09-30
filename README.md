@@ -4,5 +4,5 @@
 
 # The Beginning of BillBank
 
-If you want to track the progress of this project, check out the roadmap below:
+If you want to track the progress of this project, check out the roadmap:
 https://open.codecks.io/billbank
