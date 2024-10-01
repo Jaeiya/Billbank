@@ -54,14 +54,14 @@ func (cb *CommandBase) ParseCommand(cmd string) CommandResult {
 	for stage, cmds := range cb.stages {
 		if stage == len(cmdFields) || !isCommand(cmds, cmdFields[stage]) {
 			var isCommand bool
-			var suggestions []string
+			suggestions := cb.stages[0]
 			if stage > 0 {
 				isCommand = true
 				suggestions = cb.stages[stage]
 			}
 			return CommandResult{
 				IsCommand:   isCommand,
-				Suggestions: suggestions,
+				Suggestions: cb.normalizeSuggestions(cmd, suggestions),
 				Error:       ErrCommandNotFound,
 			}
 		}
@@ -88,7 +88,7 @@ func (cb *CommandBase) ParseCommand(cmd string) CommandResult {
 		}
 
 		isComplete := stage+1 == len(cb.stages)
-		var suggestions []string
+		suggestions := cb.stages[0]
 		f := func() { cb.exec(cmdFields...) }
 		if !isComplete {
 			suggestions = cb.stages[stage+1]
@@ -97,7 +97,7 @@ func (cb *CommandBase) ParseCommand(cmd string) CommandResult {
 		return CommandResult{
 			IsCommand:   true,
 			IsComplete:  isComplete,
-			Suggestions: suggestions,
+			Suggestions: cb.normalizeSuggestions(cmd, suggestions),
 			Func:        f,
 		}
 	}
@@ -105,6 +105,25 @@ func (cb *CommandBase) ParseCommand(cmd string) CommandResult {
 	return CommandResult{
 		Error: getFatalCommandErr(cmd),
 	}
+}
+
+/*
+normalizeSuggestions prepends the previous command string to the suggestions.
+This is necessary because the input box needs the whole phrase as a
+completion.
+*/
+func (cb *CommandBase) normalizeSuggestions(cmd string, suggestions []string) []string {
+	normSuggestions := make([]string, len(suggestions))
+	copy(normSuggestions, suggestions)
+
+	if spcIndex := strings.LastIndex(cmd, " "); spcIndex != -1 {
+		prefix := cmd[:spcIndex+1]
+		for i, s := range normSuggestions {
+			normSuggestions[i] = prefix + s
+		}
+	}
+
+	return normSuggestions
 }
 
 func isCommand(cmds []string, cmd string) bool {
