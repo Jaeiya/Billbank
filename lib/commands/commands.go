@@ -53,6 +53,13 @@ func NewCommandBase(config CommandConfig) CommandBase {
 	}
 }
 
+func (cb *CommandBase) GetStage(stage int) []string {
+	if stage >= len(cb.stages) || stage < 0 {
+		panic("stage does not exist")
+	}
+	return cb.stages[stage]
+}
+
 func (cb *CommandBase) ParseCommand(cmd string) CommandResult {
 	cmdFields := strings.Fields(cmd)
 
@@ -126,9 +133,9 @@ func (cb *CommandBase) normalizeSuggestions(cmd string, suggestions []string) []
 	copy(normSuggestions, suggestions)
 
 	if spcIndex := strings.LastIndex(cmd, " "); spcIndex != -1 {
-		prefix := cmd[:spcIndex+1]
+		prefix := strings.TrimSpace(cmd[:spcIndex])
 		for i, s := range normSuggestions {
-			normSuggestions[i] = prefix + s
+			normSuggestions[i] = prefix + " " + s
 		}
 	}
 
