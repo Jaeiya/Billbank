@@ -44,6 +44,15 @@ type CommandBase struct {
 	exec           CommandFunc
 }
 
+func NewCommandBase(config CommandConfig) CommandBase {
+	return CommandBase{
+		stages:         config.stages,
+		validationFunc: config.validationFunc,
+		hasArg:         config.hasArg,
+		exec:           config.exec,
+	}
+}
+
 func (cb *CommandBase) ParseCommand(cmd string) CommandResult {
 	cmdFields := strings.Fields(cmd)
 
@@ -128,13 +137,4 @@ func (cb *CommandBase) normalizeSuggestions(cmd string, suggestions []string) []
 
 func isCommand(cmds []string, cmd string) bool {
 	return lib.StrSliceContains(cmds, cmd)
-}
-
-func NewCommandBase(config CommandConfig) CommandBase {
-	return CommandBase{
-		stages:         config.stages,
-		validationFunc: config.validationFunc,
-		hasArg:         config.hasArg,
-		exec:           config.exec,
-	}
 }
