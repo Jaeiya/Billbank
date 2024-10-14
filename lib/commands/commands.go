@@ -13,7 +13,8 @@ var (
 	ErrFatalCommand = CommandError(
 		fmt.Errorf("command parsing failed; this should not happen"),
 	)
-	ErrCommandNotFound = CommandError(fmt.Errorf("command not found"))
+	ErrNotCommand      = CommandError(fmt.Errorf("unrecognized command"))
+	ErrInvalidCommand  = CommandError(fmt.Errorf("command is formatted incorrectly"))
 	ErrMissingArgument = CommandError(fmt.Errorf("missing argument"))
 )
 
@@ -29,6 +30,7 @@ type CommandResult struct {
 	IsCommand   bool
 	IsComplete  bool
 	Suggestions []string
+	Stage       int
 	Error       error
 	Func        func()
 }
@@ -45,6 +47,9 @@ type CommandBase struct {
 }
 
 func NewCommandBase(config CommandConfig) CommandBase {
+	if config.hasArg && config.validationFunc == nil {
+		panic("command arguments need a validation function")
+	}
 	return CommandBase{
 		stages:         config.stages,
 		validationFunc: config.validationFunc,
@@ -62,64 +67,50 @@ func (cb *CommandBase) GetStage(stage int) []string {
 
 func (cb *CommandBase) ParseCommand(cmd string) CommandResult {
 	cmdFields := strings.Fields(cmd)
-
-	if len(cmdFields) > len(cb.stages) && !cb.hasArg {
-		return CommandResult{Error: ErrCommandNotFound}
-	}
+	var finalStage int = 0
+	var isCommand, isComplete bool
 
 	for stage, cmds := range cb.stages {
-		if stage == len(cmdFields) || !isCommand(cmds, cmdFields[stage]) {
-			var isCommand bool
-			suggestions := cb.stages[0]
-			if stage > 0 {
-				isCommand = true
-				suggestions = cb.stages[stage]
-			}
-			return CommandResult{
-				IsCommand:   isCommand,
-				Suggestions: cb.normalizeSuggestions(cmd, suggestions),
-				Error:       ErrCommandNotFound,
-			}
+		if len(cmdFields) == stage || !lib.StrSliceContains(cmds, cmdFields[stage]) {
+			break
 		}
+		finalStage = stage + 1
+	}
 
-		if cb.hasArg {
-			if len(cmdFields) == len(cb.stages) {
-				return CommandResult{
-					IsCommand: true,
-					Error:     ErrMissingArgument,
-				}
-			}
-			if stage+1 == len(cb.stages) {
-				return CommandResult{
-					IsCommand:  true,
-					IsComplete: stage+1 == len(cb.stages),
-					Func:       func() { cb.exec(cmdFields...) },
-					Error:      cb.validationFunc(cmdFields[stage+1]),
-				}
-			}
-		}
+	isCommand = finalStage > 0
 
-		if stage+1 < len(cmdFields) {
-			continue
-		}
-
-		isComplete := stage+1 == len(cb.stages)
-		suggestions := cb.stages[0]
-		f := func() { cb.exec(cmdFields...) }
-		if !isComplete {
-			suggestions = cb.stages[stage+1]
-			f = nil
-		}
+	if isCommand && cb.hasArg && finalStage == len(cb.stages) {
 		return CommandResult{
-			IsCommand:   true,
-			IsComplete:  isComplete,
-			Suggestions: cb.normalizeSuggestions(cmd, suggestions),
-			Func:        f,
+			IsCommand:  true,
+			IsComplete: true,
+			Func:       func() { cb.exec(cmdFields...) },
+			Error:      cb.validationFunc(cmdFields[len(cmdFields)-1]),
+			Stage:      finalStage,
 		}
+	}
+
+	isComplete = len(cmdFields) == finalStage && !cb.hasArg
+
+	suggestions := cb.normalizeSuggestions(cmd, finalStage, []string{})
+	if finalStage < len(cb.stages) {
+		suggestions = cb.normalizeSuggestions(cmd, finalStage, cb.stages[finalStage])
+	}
+
+	var err error
+	if isCommand && !isComplete {
+		err = ErrInvalidCommand
+	}
+
+	if !isCommand {
+		err = ErrNotCommand
 	}
 
 	return CommandResult{
-		Error: getFatalCommandErr(cmd),
+		IsCommand:   isCommand,
+		IsComplete:  isComplete,
+		Suggestions: suggestions,
+		Stage:       finalStage,
+		Error:       err,
 	}
 }
 
@@ -128,20 +119,24 @@ normalizeSuggestions prepends the previous command string to the suggestions.
 This is necessary because the input box needs the whole phrase as a
 completion.
 */
-func (cb *CommandBase) normalizeSuggestions(cmd string, suggestions []string) []string {
+func (cb *CommandBase) normalizeSuggestions(
+	cmd string,
+	stage int,
+	suggestions []string,
+) []string {
 	normSuggestions := make([]string, len(suggestions))
 	copy(normSuggestions, suggestions)
 
-	if spcIndex := strings.LastIndex(cmd, " "); spcIndex != -1 {
-		prefix := strings.TrimSpace(cmd[:spcIndex])
-		for i, s := range normSuggestions {
-			normSuggestions[i] = prefix + " " + s
-		}
+	cmd = strings.TrimSpace(cmd)
+	cmdParts := strings.Split(cmd, " ")
+
+	cmdPrefix := ""
+	if stage > 0 && stage <= len(cmdParts) {
+		cmdPrefix = strings.Join(cmdParts[:stage], " ") + " "
 	}
 
+	for i, s := range normSuggestions {
+		normSuggestions[i] = cmdPrefix + s
+	}
 	return normSuggestions
-}
-
-func isCommand(cmds []string, cmd string) bool {
-	return lib.StrSliceContains(cmds, cmd)
 }
