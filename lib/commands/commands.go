@@ -135,8 +135,15 @@ func (cb *CommandBase) normalizeSuggestions(
 		cmdPrefix = strings.Join(cmdParts[:stage], " ") + " "
 	}
 
+	// Prevents repeated suggestions and only allows
+	// suggestions for partially entered commands.
+	if len(cmdParts) == stage {
+		return []string{strings.TrimSpace(cmdPrefix)}
+	}
+
 	for i, s := range normSuggestions {
 		normSuggestions[i] = cmdPrefix + s
 	}
+
 	return normSuggestions
 }
