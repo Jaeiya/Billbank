@@ -108,15 +108,6 @@ func (m CommanderModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					status:      res,
 					CommandBase: c,
 				}
-				if len(msg.String()) == 1 {
-					if res.IsComplete {
-						// c.ValidateKey(msg.String()[0])
-						if !c.ValidateKey(rune(msg.String()[0])) {
-							m.CommandInput, cmd = m.CommandInput.Update(nil)
-							return m, cmd
-						}
-					}
-				}
 				if res.IsCommand {
 					if !res.IsComplete {
 						m.CommandInput.SetSuggestions(res.Suggestions)
