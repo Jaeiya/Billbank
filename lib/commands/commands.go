@@ -44,6 +44,7 @@ type CommandBase struct {
 	validationFunc func(arg string) error
 	hasArg         bool
 	exec           CommandFunc
+	validateKey    func(key rune) bool
 }
 
 func NewCommandBase(config CommandConfig) CommandBase {
@@ -55,6 +56,7 @@ func NewCommandBase(config CommandConfig) CommandBase {
 		validationFunc: config.validationFunc,
 		hasArg:         config.hasArg,
 		exec:           config.exec,
+		validateKey:    config.validateKey,
 	}
 }
 
@@ -112,6 +114,13 @@ func (cb *CommandBase) ParseCommand(cmd string) CommandResult {
 		Stage:       finalStage,
 		Error:       err,
 	}
+}
+
+func (cb *CommandBase) ValidateKey(key rune) bool {
+	if cb.validateKey != nil && cb.hasArg {
+		return cb.validateKey(key)
+	}
+	return true
 }
 
 /*
