@@ -93,9 +93,11 @@ func (cb *Command) ParseCommand(cmd string) CommandResult {
 
 	isComplete = len(cmdFields) == finalPos && !cb.hasArg
 
-	suggestions := cb.normalizeSuggestions(cmd, finalPos, []string{})
+	var suggestions []string
 	if finalPos < len(cb.tree) {
 		suggestions = cb.normalizeSuggestions(cmd, finalPos, cb.tree[finalPos])
+	} else {
+		suggestions = cb.normalizeSuggestions(cmd, finalPos, []string{})
 	}
 
 	var err error
