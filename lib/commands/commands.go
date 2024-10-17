@@ -23,6 +23,15 @@ type CommandStatus struct {
 	IsCommand   bool
 	IsComplete  bool
 	Suggestions []string
+	// The command tree position of the input.
+	// A command can be in an incomplete state, which means the input is
+	// correct, but it's in a lower position within the command tree
+	// hierarchy.
+	//
+	// Example:
+	//		set              // TreePos 0
+	// 		set bills        // TreePos 1
+	//		set bills amount // TreePos 2
 	TreePos int
 	Error   error
 }
