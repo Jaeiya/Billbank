@@ -18,19 +18,11 @@ var (
 	ErrMissingArgument = CommandError(fmt.Errorf("missing argument"))
 )
 
-func getFatalCommandErr(cmd string) CommandError {
-	return CommandError(fmt.Errorf("'%s' caused a fatal command parsing error", cmd))
-}
-
-type (
-	CommandFunc func(args ...string)
-)
-
 type CommandResult struct {
 	IsCommand   bool
 	IsComplete  bool
 	Suggestions []string
-	Stage       int
+	Pos         int
 	Error       error
 	Func        func()
 }
@@ -40,62 +32,62 @@ type CommandConfig struct {
 }
 
 type Command struct {
-	stages         [][]string
-	validationFunc func(arg string) error
-	hasArg         bool
-	exec           CommandFunc
-	validateKey    func(key rune) bool
+	tree                [][]string
+	hasArg              bool
+	exec                func(args ...string)
+	inputValidationFunc func(arg string) error
+	keyValidationFunc   func(key rune) bool
 }
 
 func NewCommand(config CommandConfig) Command {
-	if config.hasArg && config.validationFunc == nil {
+	if config.hasArg && config.inputValidationFunc == nil {
 		panic("command arguments need a validation function")
 	}
 	return Command{
-		stages:         config.stages,
-		validationFunc: config.validationFunc,
-		hasArg:         config.hasArg,
-		exec:           config.exec,
-		validateKey:    config.validateKey,
+		tree:                config.tree,
+		inputValidationFunc: config.inputValidationFunc,
+		hasArg:              config.hasArg,
+		exec:                config.exec,
+		keyValidationFunc:   config.keyValidationFunc,
 	}
 }
 
-func (cb *Command) GetStage(stage int) []string {
-	if stage >= len(cb.stages) || stage < 0 {
+func (cb *Command) GetPosition(pos int) []string {
+	if pos >= len(cb.tree) || pos < 0 {
 		panic("stage does not exist")
 	}
-	return cb.stages[stage]
+	return cb.tree[pos]
 }
 
 func (cb *Command) ParseCommand(cmd string) CommandResult {
 	cmdFields := strings.Fields(cmd)
-	var finalStage int = 0
+	var finalPos int = 0
 	var isCommand, isComplete bool
 
-	for stage, cmds := range cb.stages {
-		if len(cmdFields) == stage || !lib.StrSliceContains(cmds, cmdFields[stage]) {
+	for pos, cmds := range cb.tree {
+		if len(cmdFields) == pos || !lib.StrSliceContains(cmds, cmdFields[pos]) {
 			break
 		}
-		finalStage = stage + 1
+		finalPos = pos + 1
 	}
 
-	isCommand = finalStage > 0
+	isCommand = finalPos > 0
 
-	if isCommand && cb.hasArg && finalStage == len(cb.stages) {
+	if isCommand && cb.hasArg && finalPos == len(cb.tree) {
 		return CommandResult{
 			IsCommand:  true,
 			IsComplete: true,
 			Func:       func() { cb.exec(cmdFields...) },
-			Error:      cb.validationFunc(cmdFields[len(cmdFields)-1]),
-			Stage:      finalStage,
+			Error:      cb.inputValidationFunc(cmdFields[len(cmdFields)-1]),
+			Pos:        finalPos,
 		}
 	}
 
-	isComplete = len(cmdFields) == finalStage && !cb.hasArg
+	isComplete = len(cmdFields) == finalPos && !cb.hasArg
 
-	suggestions := cb.normalizeSuggestions(cmd, finalStage, []string{})
-	if finalStage < len(cb.stages) {
-		suggestions = cb.normalizeSuggestions(cmd, finalStage, cb.stages[finalStage])
+	suggestions := cb.normalizeSuggestions(cmd, finalPos, []string{})
+	if finalPos < len(cb.tree) {
+		suggestions = cb.normalizeSuggestions(cmd, finalPos, cb.tree[finalPos])
 	}
 
 	var err error
@@ -111,14 +103,14 @@ func (cb *Command) ParseCommand(cmd string) CommandResult {
 		IsCommand:   isCommand,
 		IsComplete:  isComplete,
 		Suggestions: suggestions,
-		Stage:       finalStage,
+		Pos:         finalPos,
 		Error:       err,
 	}
 }
 
 func (cb *Command) ValidateKey(key rune) bool {
-	if cb.validateKey != nil && cb.hasArg {
-		return cb.validateKey(key)
+	if cb.keyValidationFunc != nil && cb.hasArg {
+		return cb.keyValidationFunc(key)
 	}
 	return true
 }

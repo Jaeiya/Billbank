@@ -44,7 +44,7 @@ func WithCommands(cmds ...commands.Command) CommanderOption {
 		aliasStore := map[string]bool{}
 		aliases := make([]string, 0, len(aliasStore))
 		for _, c := range cmds {
-			for _, a := range c.GetStage(0) {
+			for _, a := range c.GetPosition(0) {
 				if _, ok := aliasStore[a]; ok {
 					panic("command alias already exists")
 				}
