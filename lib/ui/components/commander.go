@@ -11,7 +11,7 @@ import (
 
 type CommanderModel struct {
 	CommandInput textinput.Model
-	commands     []commands.CommandBase
+	commands     []commands.Command
 	lastCmd      LastCommand
 	aliases      []string
 	testText     string
@@ -20,7 +20,7 @@ type CommanderModel struct {
 
 type LastCommand struct {
 	status commands.CommandResult
-	commands.CommandBase
+	commands.Command
 }
 
 type CommanderOption func(*CommanderModel)
@@ -39,7 +39,7 @@ func NewCommander(options ...CommanderOption) CommanderModel {
 	return model
 }
 
-func WithCommands(cmds ...commands.CommandBase) CommanderOption {
+func WithCommands(cmds ...commands.Command) CommanderOption {
 	return func(m *CommanderModel) {
 		aliasStore := map[string]bool{}
 		aliases := make([]string, 0, len(aliasStore))
@@ -93,6 +93,7 @@ func (m CommanderModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		default:
+			// Use command key validation to restrict user input
 			if len(msg.String()) == 1 {
 				char := rune(msg.String()[0])
 				if m.lastCmd.status.IsComplete {
@@ -101,12 +102,13 @@ func (m CommanderModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 				}
 			}
+
 			m.CommandInput, cmd = m.CommandInput.Update(msg)
 			for _, c := range m.commands {
 				res := c.ParseCommand(m.CommandInput.Value())
 				m.lastCmd = LastCommand{
-					status:      res,
-					CommandBase: c,
+					status:  res,
+					Command: c,
 				}
 				if res.IsCommand {
 					if !res.IsComplete {

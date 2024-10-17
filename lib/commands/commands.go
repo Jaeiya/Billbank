@@ -36,10 +36,10 @@ type CommandResult struct {
 }
 
 type CommandConfig struct {
-	CommandBase
+	Command
 }
 
-type CommandBase struct {
+type Command struct {
 	stages         [][]string
 	validationFunc func(arg string) error
 	hasArg         bool
@@ -47,11 +47,11 @@ type CommandBase struct {
 	validateKey    func(key rune) bool
 }
 
-func NewCommandBase(config CommandConfig) CommandBase {
+func NewCommand(config CommandConfig) Command {
 	if config.hasArg && config.validationFunc == nil {
 		panic("command arguments need a validation function")
 	}
-	return CommandBase{
+	return Command{
 		stages:         config.stages,
 		validationFunc: config.validationFunc,
 		hasArg:         config.hasArg,
@@ -60,14 +60,14 @@ func NewCommandBase(config CommandConfig) CommandBase {
 	}
 }
 
-func (cb *CommandBase) GetStage(stage int) []string {
+func (cb *Command) GetStage(stage int) []string {
 	if stage >= len(cb.stages) || stage < 0 {
 		panic("stage does not exist")
 	}
 	return cb.stages[stage]
 }
 
-func (cb *CommandBase) ParseCommand(cmd string) CommandResult {
+func (cb *Command) ParseCommand(cmd string) CommandResult {
 	cmdFields := strings.Fields(cmd)
 	var finalStage int = 0
 	var isCommand, isComplete bool
@@ -116,7 +116,7 @@ func (cb *CommandBase) ParseCommand(cmd string) CommandResult {
 	}
 }
 
-func (cb *CommandBase) ValidateKey(key rune) bool {
+func (cb *Command) ValidateKey(key rune) bool {
 	if cb.validateKey != nil && cb.hasArg {
 		return cb.validateKey(key)
 	}
@@ -128,7 +128,7 @@ normalizeSuggestions prepends the previous command string to the suggestions.
 This is necessary because the input box needs the whole phrase as a
 completion.
 */
-func (cb *CommandBase) normalizeSuggestions(
+func (cb *Command) normalizeSuggestions(
 	cmd string,
 	stage int,
 	suggestions []string,
