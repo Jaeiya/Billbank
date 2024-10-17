@@ -134,23 +134,23 @@ completion.
 */
 func (cb *Command) normalizeSuggestions(
 	cmd string,
-	stage int,
+	treePos int,
 	suggestions []string,
 ) []string {
 	normSuggestions := make([]string, len(suggestions))
 	copy(normSuggestions, suggestions)
 
 	cmd = strings.TrimSpace(cmd)
-	cmdParts := strings.Split(cmd, " ")
+	cmdParts := strings.Fields(cmd)
 
 	cmdPrefix := ""
-	if stage > 0 && stage <= len(cmdParts) {
-		cmdPrefix = strings.Join(cmdParts[:stage], " ") + " "
+	if treePos > 0 && treePos <= len(cmdParts) {
+		cmdPrefix = strings.Join(cmdParts[:treePos], " ") + " "
 	}
 
 	// Prevents repeated suggestions and only allows
 	// suggestions for partially entered commands.
-	if len(cmdParts) == stage {
+	if len(cmdParts) == treePos {
 		return []string{strings.TrimSpace(cmdPrefix)}
 	}
 
