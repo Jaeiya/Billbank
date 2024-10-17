@@ -19,7 +19,7 @@ type CommanderModel struct {
 }
 
 type LastCommand struct {
-	status commands.CommandResult
+	status commands.CommandStatus
 	commands.Command
 }
 

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/jaeiya/billbank/lib"
 )
 
@@ -18,12 +19,12 @@ var (
 	ErrMissingArgument = CommandError(fmt.Errorf("missing argument"))
 )
 
-type CommandResult struct {
+type CommandStatus struct {
 	IsCommand   bool
 	IsComplete  bool
 	Suggestions []string
-	Pos         int
-	Error       error
+	TreePos int
+	Error   error
 }
 
 type CommandConfig struct {
@@ -43,7 +44,7 @@ type Command struct {
 	//		[][]string{{"set"}, {"bill", "stat"}, {"amount", "name"}}
 	tree                [][]string
 	hasArg              bool
-	execFunc            func(args ...string)
+	execFunc            func(args ...string) tea.Model
 	inputValidationFunc func(arg string) error
 	keyValidationFunc   func(key rune) bool
 }
@@ -68,7 +69,7 @@ func (cb *Command) GetPosition(pos int) []string {
 	return cb.tree[pos]
 }
 
-func (cb *Command) ParseCommand(cmd string) CommandResult {
+func (cb *Command) ParseCommand(cmd string) CommandStatus {
 	cmdFields := strings.Fields(cmd)
 	var finalPos int = 0
 	var isCommand, isComplete bool
@@ -83,11 +84,11 @@ func (cb *Command) ParseCommand(cmd string) CommandResult {
 	isCommand = finalPos > 0
 
 	if isCommand && cb.hasArg && finalPos == len(cb.tree) {
-		return CommandResult{
+		return CommandStatus{
 			IsCommand:  true,
 			IsComplete: true,
 			Error:      cb.inputValidationFunc(cmdFields[len(cmdFields)-1]),
-			Pos:        finalPos,
+			TreePos:    finalPos,
 		}
 	}
 
@@ -109,11 +110,11 @@ func (cb *Command) ParseCommand(cmd string) CommandResult {
 		err = ErrNotCommand
 	}
 
-	return CommandResult{
+	return CommandStatus{
 		IsCommand:   isCommand,
 		IsComplete:  isComplete,
 		Suggestions: suggestions,
-		Pos:         finalPos,
+		TreePos:     finalPos,
 		Error:       err,
 	}
 }
