@@ -32,12 +32,15 @@ type CommandConfig struct {
 }
 
 type Command struct {
-	// Command structure including alias hierarchy. Example:
+	// Represents the way a command is hierarchically constructed
+	// including aliases.
+	//
+	// Commands Example:
 	//		set bill amount
 	//		set bill name
 	//		set stat amount
 	// 		set stat name
-	// Command Structure:
+	// Commands Structure:
 	//		[][]string{{"set"}, {"bill", "stat"}, {"amount", "name"}}
 	tree                [][]string
 	hasArg              bool
