@@ -24,7 +24,6 @@ type CommandResult struct {
 	Suggestions []string
 	Pos         int
 	Error       error
-	Func        func()
 }
 
 type CommandConfig struct {
@@ -87,7 +86,6 @@ func (cb *Command) ParseCommand(cmd string) CommandResult {
 		return CommandResult{
 			IsCommand:  true,
 			IsComplete: true,
-			Func:       func() { cb.execFunc(cmdFields...) },
 			Error:      cb.inputValidationFunc(cmdFields[len(cmdFields)-1]),
 			Pos:        finalPos,
 		}
@@ -123,6 +121,10 @@ func (cb *Command) ValidateKey(key rune) bool {
 		return cb.keyValidationFunc(key)
 	}
 	return true
+}
+
+func (cb Command) Execute() {
+	cb.execFunc()
 }
 
 /*
