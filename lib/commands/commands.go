@@ -32,9 +32,16 @@ type CommandConfig struct {
 }
 
 type Command struct {
+	// Command structure including alias hierarchy. Example:
+	//		set bill amount
+	//		set bill name
+	//		set stat amount
+	// 		set stat name
+	// Command Structure:
+	//		[][]string{{"set"}, {"bill", "stat"}, {"amount", "name"}}
 	tree                [][]string
 	hasArg              bool
-	exec                func(args ...string)
+	execFunc            func(args ...string)
 	inputValidationFunc func(arg string) error
 	keyValidationFunc   func(key rune) bool
 }
@@ -47,7 +54,7 @@ func NewCommand(config CommandConfig) Command {
 		tree:                config.tree,
 		inputValidationFunc: config.inputValidationFunc,
 		hasArg:              config.hasArg,
-		exec:                config.exec,
+		execFunc:            config.execFunc,
 		keyValidationFunc:   config.keyValidationFunc,
 	}
 }
@@ -77,7 +84,7 @@ func (cb *Command) ParseCommand(cmd string) CommandResult {
 		return CommandResult{
 			IsCommand:  true,
 			IsComplete: true,
-			Func:       func() { cb.exec(cmdFields...) },
+			Func:       func() { cb.execFunc(cmdFields...) },
 			Error:      cb.inputValidationFunc(cmdFields[len(cmdFields)-1]),
 			Pos:        finalPos,
 		}
