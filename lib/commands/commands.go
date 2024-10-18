@@ -71,9 +71,11 @@ func NewCommand(config CommandConfig) Command {
 	}
 }
 
+// GetPosition returns the slice of commands at the specified command
+// tree position.
 func (cb *Command) GetPosition(pos int) []string {
 	if pos >= len(cb.tree) || pos < 0 {
-		panic("stage does not exist")
+		panic(fmt.Sprintf("tree position '%d' does not exist", pos))
 	}
 	return cb.tree[pos]
 }
