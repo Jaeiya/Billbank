@@ -135,6 +135,10 @@ func (c *Currency) SetCurrency(c2 Currency) {
 	c.amount = c2.amount
 }
 
+func (c Currency) GetCode() CurrencyCode {
+	return c.code
+}
+
 func (c Currency) GetPercentage(p int) int {
 	return int(math.Round(float64(c.amount*p) / 100))
 }
@@ -168,6 +172,26 @@ func ToCurrency(v any) (Currency, error) {
 		return v.(Currency), nil
 	}
 	return Currency{}, fmt.Errorf("not a currency")
+}
+
+func CalcAvg(currencies ...Currency) Currency {
+	expectedCode := currencies[0].GetCode()
+	total := NewCurrency("0", expectedCode)
+	avg := NewCurrency("0", expectedCode)
+
+	for _, c := range currencies {
+		if expectedCode != c.GetCode() {
+			panic("currency codes are not consistent")
+		}
+		total.AddCurrency(c)
+	}
+
+	// All but two countries have a 100 to 1 conversion rate between
+	// the lowest and highest denomination of their currencies.
+	avg.Set(
+		fmt.Sprintf("%.2f", float64(total.amount)/float64(len(currencies))/100),
+	)
+	return avg
 }
 
 func verifyUSDAmount(amount string) error {
