@@ -9,24 +9,24 @@ import (
 	"github.com/jaeiya/billbank/lib/commands"
 )
 
-type CommanderModel struct {
+type CmdInputModel struct {
 	CommandInput textinput.Model
 	commands     []commands.Command
-	lastCmd      LastCommand
+	lastCmd      ParsedCmd
 	aliases      []string
 	testText     string
 	testCount    int
 }
 
-type LastCommand struct {
+type ParsedCmd struct {
 	status commands.CommandStatus
 	commands.Command
 }
 
-type CommanderOption func(*CommanderModel)
+type CmdInputOption func(*CmdInputModel)
 
-func NewCommander(options ...CommanderOption) CommanderModel {
-	model := CommanderModel{}
+func NewCmdInput(options ...CmdInputOption) CmdInputModel {
+	model := CmdInputModel{}
 	for _, o := range options {
 		o(&model)
 	}
@@ -39,8 +39,8 @@ func NewCommander(options ...CommanderOption) CommanderModel {
 	return model
 }
 
-func WithCommands(cmds ...commands.Command) CommanderOption {
-	return func(m *CommanderModel) {
+func WithCommands(cmds ...commands.Command) CmdInputOption {
+	return func(m *CmdInputModel) {
 		aliasStore := map[string]bool{}
 		var aliases []string
 
@@ -59,11 +59,11 @@ func WithCommands(cmds ...commands.Command) CommanderOption {
 	}
 }
 
-func (m CommanderModel) Init() tea.Cmd {
+func (m CmdInputModel) Init() tea.Cmd {
 	return textinput.Blink
 }
 
-func (m CommanderModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m CmdInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
@@ -108,7 +108,7 @@ func (m CommanderModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.CommandInput, cmd = m.CommandInput.Update(msg)
 			for _, c := range m.commands {
 				res := c.ParseCommand(m.CommandInput.Value())
-				m.lastCmd = LastCommand{
+				m.lastCmd = ParsedCmd{
 					status:  res,
 					Command: c,
 				}
@@ -129,7 +129,7 @@ func (m CommanderModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m CommanderModel) View() string {
+func (m CmdInputModel) View() string {
 	s := fmt.Sprintf("%s\n%s", m.testText, m.CommandInput.View())
 	return s
 }
