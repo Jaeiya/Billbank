@@ -89,6 +89,7 @@ func (m CmdInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				} else {
 					m.testText = fmt.Sprintf("Executing Command %d", n)
 					m.CommandInput.Reset()
+					m.lastCmd = ParsedCmd{}
 				}
 			} else {
 				m.testText = fmt.Sprintf("%v", m.lastCmd)
@@ -117,10 +118,8 @@ func (m CmdInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						m.CommandInput.SetSuggestions(res.Suggestions)
 					}
 					break
-				} else {
-					m.CommandInput.SetSuggestions(m.aliases)
 				}
-
+				m.CommandInput.SetSuggestions(m.aliases)
 			}
 			return m, cmd
 		}
