@@ -44,13 +44,13 @@ type Command struct {
 	// Represents the way a command is hierarchically constructed
 	// including aliases.
 	//
-	// Commands Example:
+	// Example:
+	//		[][]string{{"set"}, {"bill", "stat"}, {"amount", "name"}}
+	// Resulting Commands:
 	//		set bill amount
 	//		set bill name
 	//		set stat amount
 	// 		set stat name
-	// Commands Structure:
-	//		[][]string{{"set"}, {"bill", "stat"}, {"amount", "name"}}
 	tree                [][]string
 	hasArg              bool
 	execFunc            func(args ...string) tea.Model
