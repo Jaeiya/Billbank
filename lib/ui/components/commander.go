@@ -42,16 +42,18 @@ func NewCommander(options ...CommanderOption) CommanderModel {
 func WithCommands(cmds ...commands.Command) CommanderOption {
 	return func(m *CommanderModel) {
 		aliasStore := map[string]bool{}
-		aliases := make([]string, 0, len(aliasStore))
-		for _, c := range cmds {
-			for _, a := range c.GetPosition(0) {
-				if _, ok := aliasStore[a]; ok {
+		var aliases []string
+
+		for _, cmd := range cmds {
+			for _, a := range cmd.GetAliases() {
+				if aliasStore[a] {
 					panic("command alias already exists")
 				}
 				aliasStore[a] = true
 				aliases = append(aliases, a)
 			}
 		}
+
 		m.aliases = aliases
 		m.commands = cmds
 	}
