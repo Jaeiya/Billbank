@@ -78,63 +78,16 @@ func (m CmdInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 
 		case " ":
-			if len(m.CommandInput.Value()) > 0 {
-				lastChar := m.CommandInput.Value()[len(m.CommandInput.Value())-1]
-				// Prevent accidental spaces (no valid input will accept consecutive spaces)
-				if lastChar == ' ' {
-					return m, nil
-				}
+			// Prevent accidental spaces
+			if isDoubleSpace(m) {
+				return m, nil
 			}
 
 		case "enter":
-			if m.lastCmd.status.IsComplete {
-				n := rand.Intn(1000) + 1
-				if m.lastCmd.status.Error != nil {
-					m.testText = m.lastCmd.status.Error.Error()
-				} else {
-					m.testText = fmt.Sprintf("Executing Command %d", n)
-					m.CommandInput.Reset()
-					m.lastCmd = ParsedCmd{}
-				}
-				break
-			}
-
-			if m.lastCmd.status.IsCommand && !m.lastCmd.status.IsComplete {
-				statusStyle = statusStyle.Foreground(lipgloss.Color("#FFA200"))
-				m.testText = "Incomplete Command"
-				break
-			}
-			statusStyle = statusStyle.Foreground(lipgloss.Color("#FF5FC5"))
-			m.testText = "Invalid Command"
+			m = tryEnterCmd(m)
 
 		default:
-			m.testText = ""
-			// Use command key validation to restrict user input
-			if len(msg.String()) == 1 {
-				char := rune(msg.String()[0])
-				if m.lastCmd.status.IsComplete {
-					if !m.lastCmd.ValidateKey(char) {
-						return m, nil
-					}
-				}
-			}
-
-			m.CommandInput, cmd = m.CommandInput.Update(msg)
-			for _, c := range m.commands {
-				res := c.ParseCommand(m.CommandInput.Value())
-				m.lastCmd = ParsedCmd{
-					status:  res,
-					Command: c,
-				}
-				if res.IsCommand {
-					if !res.IsComplete {
-						m.CommandInput.SetSuggestions(res.Suggestions)
-					}
-					break
-				}
-				m.CommandInput.SetSuggestions(m.aliases)
-			}
-			return m, cmd
+			return onAnyKey(m, msg)
 		}
 	}
 	m.CommandInput, cmd = m.CommandInput.Update(msg)
@@ -144,4 +97,69 @@ func (m CmdInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m CmdInputModel) View() string {
 	s := fmt.Sprintf("%s\n%s", statusStyle.Render(m.testText), m.CommandInput.View())
 	return s
+}
+
+func tryEnterCmd(m CmdInputModel) CmdInputModel {
+	if m.lastCmd.status.IsComplete {
+		n := rand.Intn(1000) + 1
+		if m.lastCmd.status.Error != nil {
+			m.testText = m.lastCmd.status.Error.Error()
+		} else {
+			m.testText = fmt.Sprintf("Executing Command %d", n)
+			m.CommandInput.Reset()
+			m.lastCmd = ParsedCmd{}
+		}
+		return m
+	}
+
+	if m.lastCmd.status.IsCommand && !m.lastCmd.status.IsComplete {
+		statusStyle = statusStyle.Foreground(lipgloss.Color("#FFA200"))
+		m.testText = "Incomplete Command"
+		return m
+	}
+
+	statusStyle = statusStyle.Foreground(lipgloss.Color("#FF5FC5"))
+	m.testText = "Invalid Command"
+	return m
+}
+
+func onAnyKey(m CmdInputModel, msg tea.KeyMsg) (CmdInputModel, tea.Cmd) {
+	var cmd tea.Cmd
+	m.testText = ""
+	// Use command key validation to restrict user input
+	if len(msg.String()) == 1 {
+		char := rune(msg.String()[0])
+		if m.lastCmd.status.IsComplete {
+			if !m.lastCmd.ValidateKey(char) {
+				return m, nil
+			}
+		}
+	}
+
+	m.CommandInput, cmd = m.CommandInput.Update(msg)
+	for _, c := range m.commands {
+		res := c.ParseCommand(m.CommandInput.Value())
+		m.lastCmd = ParsedCmd{
+			status:  res,
+			Command: c,
+		}
+		if res.IsCommand {
+			if !res.IsComplete {
+				m.CommandInput.SetSuggestions(res.Suggestions)
+			}
+			break
+		}
+		m.CommandInput.SetSuggestions(m.aliases)
+	}
+	return m, cmd
+}
+
+func isDoubleSpace(m CmdInputModel) bool {
+	if len(m.CommandInput.Value()) > 0 {
+		lastChar := m.CommandInput.Value()[len(m.CommandInput.Value())-1]
+		if lastChar == ' ' {
+			return true
+		}
+	}
+	return false
 }
