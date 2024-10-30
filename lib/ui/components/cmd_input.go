@@ -6,6 +6,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/jaeiya/billbank/lib/commands"
 )
 
@@ -15,7 +16,6 @@ type CmdInputModel struct {
 	lastCmd      ParsedCmd
 	aliases      []string
 	testText     string
-	testCount    int
 }
 
 type ParsedCmd struct {
@@ -24,6 +24,11 @@ type ParsedCmd struct {
 }
 
 type CmdInputOption func(*CmdInputModel)
+
+var statusStyle = lipgloss.NewStyle().
+	Width(100).
+	Background(lipgloss.Color("#151718")).
+	Foreground(lipgloss.Color("#FFA200"))
 
 func NewCmdInput(options ...CmdInputOption) CmdInputModel {
 	model := CmdInputModel{}
@@ -91,11 +96,19 @@ func (m CmdInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.CommandInput.Reset()
 					m.lastCmd = ParsedCmd{}
 				}
-			} else {
-				m.testText = fmt.Sprintf("%v", m.lastCmd)
+				break
 			}
 
+			if m.lastCmd.status.IsCommand && !m.lastCmd.status.IsComplete {
+				statusStyle = statusStyle.Foreground(lipgloss.Color("#FFA200"))
+				m.testText = "Incomplete Command"
+				break
+			}
+			statusStyle = statusStyle.Foreground(lipgloss.Color("#FF5FC5"))
+			m.testText = "Invalid Command"
+
 		default:
+			m.testText = ""
 			// Use command key validation to restrict user input
 			if len(msg.String()) == 1 {
 				char := rune(msg.String()[0])
@@ -129,6 +142,6 @@ func (m CmdInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m CmdInputModel) View() string {
-	s := fmt.Sprintf("%s\n%s", m.testText, m.CommandInput.View())
+	s := fmt.Sprintf("%s\n%s", statusStyle.Render(m.testText), m.CommandInput.View())
 	return s
 }
