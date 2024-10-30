@@ -72,6 +72,10 @@ func (m CmdInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		statusStyle = statusStyle.Width(msg.Width)
+		m.CommandInput.Width = msg.Width
+
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c", "esc":
@@ -95,7 +99,8 @@ func (m CmdInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m CmdInputModel) View() string {
-	s := fmt.Sprintf("%s\n%s", statusStyle.Render(m.testText), m.CommandInput.View())
+	// Double newline prevents resize artifacts
+	s := fmt.Sprintf("%s\n%s\n\n", statusStyle.Render(m.testText), m.CommandInput.View())
 	return s
 }
 
