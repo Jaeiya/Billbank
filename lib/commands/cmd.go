@@ -89,12 +89,17 @@ func (cb *Command) ParseCommand(cmd string) CommandStatus {
 	isCommand = finalPos > 0
 
 	if isCommand && cb.hasArg && finalPos == len(cb.tree) {
-		return CommandStatus{
+		cs := CommandStatus{
 			IsCommand:  true,
 			IsComplete: true,
-			Error:      cb.inputValidationFunc(cmdFields[len(cmdFields)-1]),
 			TreePos:    finalPos,
 		}
+		if len(cmdFields) == finalPos {
+			cs.Error = fmt.Errorf("expected a value after '%s'", cmdFields[len(cmdFields)-1])
+		} else {
+			cs.Error = cb.inputValidationFunc(cmdFields[len(cmdFields)-1])
+		}
+		return cs
 	}
 
 	isComplete = len(cmdFields) == finalPos && !cb.hasArg
