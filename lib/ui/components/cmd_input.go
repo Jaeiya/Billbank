@@ -15,7 +15,7 @@ type CmdInputModel struct {
 	commands     []commands.Command
 	lastCmd      ParsedCmd
 	aliases      []string
-	testText     string
+	statusText   string
 }
 
 type ParsedCmd struct {
@@ -27,8 +27,15 @@ type CmdInputOption func(*CmdInputModel)
 
 var statusStyle = lipgloss.NewStyle().
 	Width(100).
+	PaddingLeft(1).
 	Background(lipgloss.Color("#151718")).
 	Foreground(lipgloss.Color("#FFA200"))
+
+var (
+	okColor   = lipgloss.Color("#00FFA2")
+	warnColor = lipgloss.Color("#FFA200")
+	errColor  = lipgloss.Color("#FF5FC5")
+)
 
 func NewCmdInput(options ...CmdInputOption) CmdInputModel {
 	model := CmdInputModel{}
@@ -100,7 +107,7 @@ func (m CmdInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m CmdInputModel) View() string {
 	// Double newline prevents resize artifacts
-	s := fmt.Sprintf("%s\n%s\n\n", statusStyle.Render(m.testText), m.CommandInput.View())
+	s := fmt.Sprintf("%s\n%s\n\n", statusStyle.Render(m.statusText), m.CommandInput.View())
 	return s
 }
 
@@ -108,9 +115,10 @@ func tryEnterCmd(m CmdInputModel) CmdInputModel {
 	if m.lastCmd.status.IsComplete {
 		n := rand.Intn(1000) + 1
 		if m.lastCmd.status.Error != nil {
-			m.testText = m.lastCmd.status.Error.Error()
+			m.statusText = m.lastCmd.status.Error.Error()
 		} else {
-			m.testText = fmt.Sprintf("Executing Command %d", n)
+			statusStyle = statusStyle.Foreground(okColor)
+			m.statusText = fmt.Sprintf("Executing Command %d", n)
 			m.CommandInput.Reset()
 			m.lastCmd = ParsedCmd{}
 		}
@@ -118,19 +126,19 @@ func tryEnterCmd(m CmdInputModel) CmdInputModel {
 	}
 
 	if m.lastCmd.status.IsCommand && !m.lastCmd.status.IsComplete {
-		statusStyle = statusStyle.Foreground(lipgloss.Color("#FFA200"))
-		m.testText = "Incomplete Command"
+		statusStyle = statusStyle.Foreground(warnColor)
+		m.statusText = "Incomplete Command"
 		return m
 	}
 
-	statusStyle = statusStyle.Foreground(lipgloss.Color("#FF5FC5"))
-	m.testText = "Invalid Command"
+	statusStyle = statusStyle.Foreground(errColor)
+	m.statusText = "Invalid Command"
 	return m
 }
 
 func onAnyKey(m CmdInputModel, msg tea.KeyMsg) (CmdInputModel, tea.Cmd) {
 	var cmd tea.Cmd
-	m.testText = ""
+	m.statusText = ""
 	// Use command key validation to restrict user input
 	if len(msg.String()) == 1 {
 		char := rune(msg.String()[0])
