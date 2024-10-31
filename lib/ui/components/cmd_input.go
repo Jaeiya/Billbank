@@ -11,11 +11,13 @@ import (
 )
 
 type CmdInputModel struct {
-	CommandInput textinput.Model
-	commands     []commands.Command
-	lastCmd      ParsedCmd
-	aliases      []string
-	statusText   string
+	CommandInput  textinput.Model
+	commands      []commands.Command
+	lastCmd       ParsedCmd
+	aliases       []string
+	statusText    string
+	cmdHistory    []string
+	cmdHistoryPos int
 }
 
 type ParsedCmd struct {
@@ -47,6 +49,7 @@ func NewCmdInput(options ...CmdInputOption) CmdInputModel {
 		panic("commander requires at least one command")
 	}
 
+	model.cmdHistoryPos = -1
 	model.CommandInput = NewCommanderInput()
 	return model
 }
@@ -88,6 +91,9 @@ func (m CmdInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+c", "esc":
 			return m, tea.Quit
 
+		case "up", "down", "alt+j", "alt+k":
+			return handleCmdHistory(m, msg.String()), nil
+
 		case " ":
 			// Prevent accidental spaces
 			if isDoubleSpace(m) {
@@ -119,6 +125,7 @@ func tryEnterCmd(m CmdInputModel) CmdInputModel {
 		} else {
 			statusStyle = statusStyle.Foreground(okColor)
 			m.statusText = fmt.Sprintf("Executing Command %d", n)
+			m.cmdHistory = append([]string{m.CommandInput.Value()}, m.cmdHistory...)
 			m.CommandInput.Reset()
 			m.lastCmd = ParsedCmd{}
 		}
@@ -139,7 +146,7 @@ func tryEnterCmd(m CmdInputModel) CmdInputModel {
 func onAnyKey(m CmdInputModel, msg tea.KeyMsg) (CmdInputModel, tea.Cmd) {
 	var cmd tea.Cmd
 	m.statusText = ""
-	// Use command key validation to restrict user input
+	// Restrict user input to "valid" keys
 	if len(msg.String()) == 1 {
 		char := rune(msg.String()[0])
 		if m.lastCmd.status.IsComplete {
@@ -175,4 +182,31 @@ func isDoubleSpace(m CmdInputModel) bool {
 		}
 	}
 	return false
+}
+
+func handleCmdHistory(m CmdInputModel, key string) CmdInputModel {
+	if len(m.cmdHistory) == 0 {
+		return m
+	}
+
+	switch key {
+	case "up", "alt+k":
+		if m.cmdHistoryPos+1 < len(m.cmdHistory) {
+			m.cmdHistoryPos++
+			m.CommandInput.SetValue(m.cmdHistory[m.cmdHistoryPos])
+			m.CommandInput.CursorEnd()
+		}
+
+	case "down", "alt+j":
+		if m.cmdHistoryPos > 0 {
+			m.cmdHistoryPos--
+			m.CommandInput.SetValue(m.cmdHistory[m.cmdHistoryPos])
+			m.CommandInput.CursorEnd()
+		} else {
+			m.cmdHistoryPos = -1
+			m.CommandInput.Reset()
+		}
+	}
+
+	return m
 }
