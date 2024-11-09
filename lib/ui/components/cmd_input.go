@@ -11,13 +11,12 @@ import (
 )
 
 type CmdInputModel struct {
-	CommandInput  textinput.Model
-	commands      []commands.Command
-	lastCmd       ParsedCmd
-	aliases       []string
-	statusText    string
-	cmdHistory    []string
-	cmdHistoryPos int
+	CommandInput textinput.Model
+	CmdHistory   *CmdHistory
+	commands     []commands.Command
+	lastCmd      ParsedCmd
+	aliases      []string
+	statusText   string
 }
 
 type ParsedCmd struct {
@@ -49,7 +48,7 @@ func NewCmdInput(options ...CmdInputOption) CmdInputModel {
 		panic("commander requires at least one command")
 	}
 
-	model.cmdHistoryPos = -1
+	model.CmdHistory = NewCmdHistory()
 	model.CommandInput = NewCommanderInput()
 	return model
 }
@@ -92,7 +91,7 @@ func (m CmdInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 
 		case "up", "down", "alt+j", "alt+k":
-			return handleCmdHistory(m, msg)
+			return m.CmdHistory.Get(m, msg)
 
 		case " ":
 			// Prevent accidental spaces
@@ -126,10 +125,9 @@ func tryEnterCmd(m CmdInputModel) CmdInputModel {
 		}
 		statusStyle = statusStyle.Foreground(okColor)
 		m.statusText = fmt.Sprintf("Executing Command %d", n)
-		m.cmdHistory = append([]string{m.CommandInput.Value()}, m.cmdHistory...)
+		m.CmdHistory.Set(m)
 		m.CommandInput.Reset()
 		m.lastCmd = ParsedCmd{}
-		m.cmdHistoryPos = -1
 		return m
 	}
 
@@ -187,31 +185,4 @@ func isDoubleSpace(m CmdInputModel) bool {
 		}
 	}
 	return false
-}
-
-func handleCmdHistory(m CmdInputModel, msg tea.KeyMsg) (CmdInputModel, tea.Cmd) {
-	if len(m.cmdHistory) == 0 {
-		return m, nil
-	}
-
-	switch msg.String() {
-	case "up", "alt+k":
-		if m.cmdHistoryPos+1 < len(m.cmdHistory) {
-			m.cmdHistoryPos++
-			m.CommandInput.SetValue(m.cmdHistory[m.cmdHistoryPos])
-			m.CommandInput.CursorEnd()
-		}
-
-	case "down", "alt+j":
-		if m.cmdHistoryPos > 0 {
-			m.cmdHistoryPos--
-			m.CommandInput.SetValue(m.cmdHistory[m.cmdHistoryPos])
-			m.CommandInput.CursorEnd()
-		} else {
-			m.cmdHistoryPos = -1
-			m.CommandInput.Reset()
-		}
-	}
-
-	return tryParseCmd(m, msg)
 }
