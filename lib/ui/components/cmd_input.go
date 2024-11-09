@@ -122,14 +122,14 @@ func tryEnterCmd(m CmdInputModel) CmdInputModel {
 		n := rand.Intn(1000) + 1
 		if m.lastCmd.status.Error != nil {
 			m.statusText = m.lastCmd.status.Error.Error()
-		} else {
-			statusStyle = statusStyle.Foreground(okColor)
-			m.statusText = fmt.Sprintf("Executing Command %d", n)
-			m.cmdHistory = append([]string{m.CommandInput.Value()}, m.cmdHistory...)
-			m.CommandInput.Reset()
-			m.lastCmd = ParsedCmd{}
-			m.cmdHistoryPos = -1
+			return m
 		}
+		statusStyle = statusStyle.Foreground(okColor)
+		m.statusText = fmt.Sprintf("Executing Command %d", n)
+		m.cmdHistory = append([]string{m.CommandInput.Value()}, m.cmdHistory...)
+		m.CommandInput.Reset()
+		m.lastCmd = ParsedCmd{}
+		m.cmdHistoryPos = -1
 		return m
 	}
 
