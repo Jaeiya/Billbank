@@ -128,6 +128,7 @@ func tryEnterCmd(m CmdInputModel) CmdInputModel {
 			m.cmdHistory = append([]string{m.CommandInput.Value()}, m.cmdHistory...)
 			m.CommandInput.Reset()
 			m.lastCmd = ParsedCmd{}
+			m.cmdHistoryPos = -1
 		}
 		return m
 	}
