@@ -17,6 +17,7 @@ func NewCmdHistory() *CmdHistory {
 
 func (h *CmdHistory) Set(m CmdInputModel) {
 	h.cmds = append([]string{m.CommandInput.Value()}, h.cmds...)
+	// Retain expected order when command is entered using history
 	h.pos = -1
 }
 
