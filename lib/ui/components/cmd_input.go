@@ -92,7 +92,7 @@ func (m CmdInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 
 		case "up", "down", "alt+j", "alt+k":
-			return handleCmdHistory(m, msg.String()), nil
+			return handleCmdHistory(m, msg)
 
 		case " ":
 			// Prevent accidental spaces
@@ -144,7 +144,6 @@ func tryEnterCmd(m CmdInputModel) CmdInputModel {
 }
 
 func onAnyKey(m CmdInputModel, msg tea.KeyMsg) (CmdInputModel, tea.Cmd) {
-	var cmd tea.Cmd
 	m.statusText = ""
 	// Restrict user input to "valid" keys
 	if len(msg.String()) == 1 {
@@ -156,6 +155,11 @@ func onAnyKey(m CmdInputModel, msg tea.KeyMsg) (CmdInputModel, tea.Cmd) {
 		}
 	}
 
+	return tryParseCmd(m, msg)
+}
+
+func tryParseCmd(m CmdInputModel, msg tea.KeyMsg) (CmdInputModel, tea.Cmd) {
+	var cmd tea.Cmd
 	m.CommandInput, cmd = m.CommandInput.Update(msg)
 	for _, c := range m.commands {
 		res := c.ParseCommand(m.CommandInput.Value())
@@ -184,12 +188,12 @@ func isDoubleSpace(m CmdInputModel) bool {
 	return false
 }
 
-func handleCmdHistory(m CmdInputModel, key string) CmdInputModel {
+func handleCmdHistory(m CmdInputModel, msg tea.KeyMsg) (CmdInputModel, tea.Cmd) {
 	if len(m.cmdHistory) == 0 {
-		return m
+		return m, nil
 	}
 
-	switch key {
+	switch msg.String() {
 	case "up", "alt+k":
 		if m.cmdHistoryPos+1 < len(m.cmdHistory) {
 			m.cmdHistoryPos++
@@ -208,5 +212,5 @@ func handleCmdHistory(m CmdInputModel, key string) CmdInputModel {
 		}
 	}
 
-	return m
+	return tryParseCmd(m, msg)
 }
