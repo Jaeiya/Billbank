@@ -15,13 +15,13 @@ func NewCmdHistory() *CmdHistory {
 	}
 }
 
-func (h *CmdHistory) Set(m CmdInputModel) {
+func (h *CmdHistory) Enter(m CmdInputModel) {
 	h.cmds = append([]string{m.CommandInput.Value()}, h.cmds...)
 	// Retain expected order when command is entered using history
 	h.pos = -1
 }
 
-func (h *CmdHistory) Get(m CmdInputModel, msg tea.KeyMsg) (CmdInputModel, tea.Cmd) {
+func (h *CmdHistory) Cycle(m CmdInputModel, msg tea.KeyMsg) (CmdInputModel, tea.Cmd) {
 	if len(h.cmds) == 0 {
 		return m, nil
 	}

@@ -91,7 +91,7 @@ func (m CmdInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 
 		case "up", "down", "alt+j", "alt+k":
-			return m.CmdHistory.Get(m, msg)
+			return m.CmdHistory.Cycle(m, msg)
 
 		case " ":
 			// Prevent accidental spaces
@@ -125,7 +125,7 @@ func tryEnterCmd(m CmdInputModel) CmdInputModel {
 		}
 		statusStyle = statusStyle.Foreground(okColor)
 		m.statusText = fmt.Sprintf("Executing Command %d", n)
-		m.CmdHistory.Set(m)
+		m.CmdHistory.Enter(m)
 		m.CommandInput.Reset()
 		m.lastCmd = ParsedCmd{}
 		return m
