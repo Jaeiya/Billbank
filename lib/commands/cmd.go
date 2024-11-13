@@ -138,8 +138,8 @@ func (cb *Command) ValidateKey(key rune) bool {
 	return true
 }
 
-func (cb Command) Execute() {
-	cb.execFunc()
+func (cb Command) Execute(args ...string) {
+	cb.execFunc(args...)
 }
 
 /*
