@@ -138,8 +138,8 @@ func (cb *Command) ValidateKey(key rune) bool {
 	return true
 }
 
-func (cb Command) Execute(args ...string) {
-	cb.execFunc(args...)
+func (cb Command) Execute(args ...string) (tea.Model, tea.Cmd) {
+	return cb.execFunc(args...)
 }
 
 /*
