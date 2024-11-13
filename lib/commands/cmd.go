@@ -53,7 +53,7 @@ type Command struct {
 	// 		set stat name
 	tree                [][]string
 	hasArg              bool
-	execFunc            func(args ...string) tea.Model
+	execFunc            func(args ...string) (tea.Model, tea.Cmd)
 	inputValidationFunc func(arg string) error
 	keyValidationFunc   func(key rune) bool
 }
