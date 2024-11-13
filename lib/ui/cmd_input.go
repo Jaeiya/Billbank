@@ -9,9 +9,12 @@ import (
 	"github.com/jaeiya/billbank/lib/commands"
 )
 
+type TestMsg bool
+
 type CmdInputModel struct {
 	CommandInput textinput.Model
 	CmdHistory   *CmdHistory
+	yes          TestMsg
 	commands     []commands.Command
 	lastCmd      ParsedCmd
 	aliases      []string
@@ -47,6 +50,7 @@ func NewCmdInput(options ...CmdInputOption) CmdInputModel {
 		panic("commander requires at least one command")
 	}
 
+	model.yes = TestMsg(false)
 	model.CmdHistory = NewCmdHistory()
 	model.CommandInput = NewCommanderInput()
 	return model
@@ -76,8 +80,9 @@ func (m CmdInputModel) Init() tea.Cmd {
 	return textinput.Blink
 }
 
-func (m CmdInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m CmdInputModel) Update(msg tea.Msg) (CmdInputModel, tea.Cmd) {
 	var cmd tea.Cmd
+	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
@@ -99,14 +104,15 @@ func (m CmdInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case "enter":
-			m = tryEnterCmd(m)
-
+			m, cmd = tryEnterCmd(m)
+			cmds = append(cmds, cmd)
 		default:
 			return onAnyKey(m, msg)
 		}
 	}
 	m.CommandInput, cmd = m.CommandInput.Update(msg)
-	return m, cmd
+	cmds = append(cmds, cmd)
+	return m, tea.Sequence(cmds...)
 }
 
 func (m CmdInputModel) View() string {
@@ -115,29 +121,29 @@ func (m CmdInputModel) View() string {
 	return s
 }
 
-func tryEnterCmd(m CmdInputModel) CmdInputModel {
+func tryEnterCmd(m CmdInputModel) (CmdInputModel, tea.Cmd) {
 	if m.lastCmd.status.IsComplete {
 		if m.lastCmd.status.Error != nil {
 			m.statusText = m.lastCmd.status.Error.Error()
-			return m
+			return m, nil
 		}
 		statusStyle = statusStyle.Foreground(okColor)
 		m.statusText = fmt.Sprintf("Executing Command %s", m.lastCmd.status.Arg)
 		m.CmdHistory.Enter(m)
 		m.CommandInput.Reset()
 		m.lastCmd = ParsedCmd{}
-		return m
+		return m, func() tea.Msg { return TestMsg(true) }
 	}
 
 	if m.lastCmd.status.IsCommand && !m.lastCmd.status.IsComplete {
 		statusStyle = statusStyle.Foreground(warnColor)
 		m.statusText = "Incomplete Command"
-		return m
+		return m, nil
 	}
 
 	statusStyle = statusStyle.Foreground(errColor)
 	m.statusText = "Invalid Command"
-	return m
+	return m, nil
 }
 
 func onAnyKey(m CmdInputModel, msg tea.KeyMsg) (CmdInputModel, tea.Cmd) {
