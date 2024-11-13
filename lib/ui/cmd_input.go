@@ -178,11 +178,9 @@ func tryParseCmd(m CmdInputModel, msg tea.KeyMsg) (CmdInputModel, tea.Cmd) {
 }
 
 func isLastCharSpace(m CmdInputModel) bool {
-	if len(m.CommandInput.Value()) > 0 {
-		lastChar := m.CommandInput.Value()[len(m.CommandInput.Value())-1]
-		if lastChar == ' ' {
-			return true
-		}
+	if len(m.CommandInput.Value()) == 0 {
+		return false
 	}
-	return false
+	lastChar := m.CommandInput.Value()[len(m.CommandInput.Value())-1]
+	return lastChar == ' '
 }
