@@ -95,7 +95,7 @@ func (m CmdInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case " ":
 			// Prevent accidental spaces
-			if isDoubleSpace(m) {
+			if isLastCharSpace(m) {
 				return m, nil
 			}
 
@@ -177,7 +177,7 @@ func tryParseCmd(m CmdInputModel, msg tea.KeyMsg) (CmdInputModel, tea.Cmd) {
 	return m, cmd
 }
 
-func isDoubleSpace(m CmdInputModel) bool {
+func isLastCharSpace(m CmdInputModel) bool {
 	if len(m.CommandInput.Value()) > 0 {
 		lastChar := m.CommandInput.Value()[len(m.CommandInput.Value())-1]
 		if lastChar == ' ' {
