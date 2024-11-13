@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"math/rand"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
@@ -118,13 +117,12 @@ func (m CmdInputModel) View() string {
 
 func tryEnterCmd(m CmdInputModel) CmdInputModel {
 	if m.lastCmd.status.IsComplete {
-		n := rand.Intn(1000) + 1
 		if m.lastCmd.status.Error != nil {
 			m.statusText = m.lastCmd.status.Error.Error()
 			return m
 		}
 		statusStyle = statusStyle.Foreground(okColor)
-		m.statusText = fmt.Sprintf("Executing Command %d", n)
+		m.statusText = fmt.Sprintf("Executing Command %s", m.lastCmd.status.Arg)
 		m.CmdHistory.Enter(m)
 		m.CommandInput.Reset()
 		m.lastCmd = ParsedCmd{}
