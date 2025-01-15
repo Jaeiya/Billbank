@@ -112,7 +112,7 @@ func (m CmdInputModel) Update(msg tea.Msg) (CmdInputModel, tea.Cmd) {
 	}
 	m.CommandInput, cmd = m.CommandInput.Update(msg)
 	cmds = append(cmds, cmd)
-	return m, tea.Sequence(cmds...)
+	return m, tea.Batch(cmds...)
 }
 
 func (m CmdInputModel) View() string {
