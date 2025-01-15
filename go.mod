@@ -6,17 +6,17 @@ toolchain go1.22.9
 
 require (
 	github.com/charmbracelet/bubbles v0.20.0
-	github.com/charmbracelet/bubbletea v1.2.2
+	github.com/charmbracelet/bubbletea v1.2.4
 	github.com/charmbracelet/lipgloss v1.0.0
 	github.com/stretchr/testify v1.9.0
-	golang.org/x/crypto v0.29.0
-	modernc.org/sqlite v1.33.1
+	golang.org/x/crypto v0.32.0
+	modernc.org/sqlite v1.34.4
 )
 
 require (
 	github.com/atotto/clipboard v0.1.4 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
-	github.com/charmbracelet/x/ansi v0.4.5 // indirect
+	github.com/charmbracelet/x/ansi v0.7.0 // indirect
 	github.com/charmbracelet/x/term v0.2.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
@@ -34,15 +34,15 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
-	golang.org/x/exp v0.0.0-20241108190413-2d47ceb2692f // indirect
-	golang.org/x/sync v0.9.0 // indirect
-	golang.org/x/sys v0.27.0 // indirect
-	golang.org/x/text v0.20.0 // indirect
+	golang.org/x/exp v0.0.0-20250106191152-7588d65b2ba8 // indirect
+	golang.org/x/sync v0.10.0 // indirect
+	golang.org/x/sys v0.29.0 // indirect
+	golang.org/x/text v0.21.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	modernc.org/gc/v3 v3.0.0-20241004144649-1aea3fae8852 // indirect
-	modernc.org/libc v1.61.0 // indirect
-	modernc.org/mathutil v1.6.0 // indirect
-	modernc.org/memory v1.8.0 // indirect
-	modernc.org/strutil v1.2.0 // indirect
+	modernc.org/gc/v3 v3.0.0-20250105121824-520be1a3aee6 // indirect
+	modernc.org/libc v1.61.8 // indirect
+	modernc.org/mathutil v1.7.1 // indirect
+	modernc.org/memory v1.8.2 // indirect
+	modernc.org/strutil v1.2.1 // indirect
 	modernc.org/token v1.1.0 // indirect
 )
