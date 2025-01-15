@@ -45,5 +45,5 @@ func (h *CmdHistory) Cycle(m CmdInputModel, msg tea.KeyMsg) (CmdInputModel, tea.
 		}
 	}
 
-	return tryParseCmd(m, msg)
+	return tryParseCmd(m, tea.KeyMsg{})
 }
