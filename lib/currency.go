@@ -140,6 +140,9 @@ func (c Currency) GetCode() CurrencyCode {
 }
 
 func (c Currency) GetPercentage(p int) int {
+	if p < 1 || p > 99 {
+		panic("invalid percentage; can only be 1 to 99 inclusive")
+	}
 	return int(math.Round(float64(c.amount*p) / 100))
 }
 
