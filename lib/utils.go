@@ -21,15 +21,6 @@ func IsInt(v any) bool {
 	return false
 }
 
-func StrSliceContains(slice []string, target string) bool {
-	for _, value := range slice {
-		if target == value {
-			return true
-		}
-	}
-	return false
-}
-
 func NewPointer[T any](v T) *T {
 	return &v
 }

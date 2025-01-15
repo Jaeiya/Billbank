@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
@@ -174,7 +175,7 @@ func buildQueryStr(t Table, fm FieldMap) string {
 		// id's are not part of the table data because they are created
 		// automatically by SQL.
 		if field != "id" {
-			if !lib.StrSliceContains(td, field) {
+			if !slices.Contains(td, field) {
 				panic(fmt.Sprintf("%s is an unsupported field for the table: %s", field, t))
 			}
 		}

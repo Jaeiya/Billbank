@@ -2,10 +2,10 @@ package commands
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/jaeiya/billbank/lib"
 )
 
 type CommandError error
@@ -81,7 +81,7 @@ func (cb *Command) ParseCommand(cmd string) CommandStatus {
 	var isCommand, isComplete bool
 
 	for pos, cmds := range cb.tree {
-		if len(cmdFields) == pos || !lib.StrSliceContains(cmds, cmdFields[pos]) {
+		if len(cmdFields) == pos || !slices.Contains(cmds, cmdFields[pos]) {
 			break
 		}
 		finalPos = pos + 1
