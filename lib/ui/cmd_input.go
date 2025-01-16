@@ -129,7 +129,7 @@ func tryEnterCmd(m CmdInputModel) (CmdInputModel, tea.Cmd) {
 		}
 		statusStyle = statusStyle.Foreground(okColor)
 		m.statusText = fmt.Sprintf("Executing Command %s", m.lastCmd.status.Arg)
-		m.CmdHistory.Enter(m)
+		m.CmdHistory.Add(m.CommandInput.Value())
 		m.CommandInput.Reset()
 		m.lastCmd = ParsedCmd{}
 		return m, func() tea.Msg { return TestMsg(true) }

@@ -15,8 +15,8 @@ func NewCmdHistory() *CmdHistory {
 	}
 }
 
-func (h *CmdHistory) Add(m CmdInputModel) {
-	h.cmds = append([]string{m.CommandInput.Value()}, h.cmds...)
+func (h *CmdHistory) Add(v string) {
+	h.cmds = append([]string{v}, h.cmds...)
 	// Retain expected order when command is entered using history
 	h.pos = -1
 }
@@ -30,20 +30,20 @@ func (h *CmdHistory) Cycle(m CmdInputModel, msg tea.KeyMsg) (CmdInputModel, tea.
 	case "up", "alt+k":
 		if h.pos+1 < len(h.cmds) {
 			h.pos++
-			m.CommandInput.SetValue(h.cmds[h.pos])
-			m.CommandInput.CursorEnd()
 		}
 
 	case "down", "alt+j":
 		if h.pos < 1 {
 			h.pos = -1
 			m.CommandInput.Reset()
-		} else {
-			h.pos--
-			m.CommandInput.SetValue(h.cmds[h.pos])
-			m.CommandInput.CursorEnd()
+			m.lastCmd = ParsedCmd{}
+			return m, nil
 		}
+		h.pos--
 	}
+
+	m.CommandInput.SetValue(h.cmds[h.pos])
+	m.CommandInput.CursorEnd()
 
 	return tryParseCmd(m, tea.KeyMsg{})
 }
