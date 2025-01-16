@@ -35,13 +35,13 @@ func (h *CmdHistory) Cycle(m CmdInputModel, msg tea.KeyMsg) (CmdInputModel, tea.
 		}
 
 	case "down", "alt+j":
-		if h.pos > 0 {
+		if h.pos < 1 {
+			h.pos = -1
+			m.CommandInput.Reset()
+		} else {
 			h.pos--
 			m.CommandInput.SetValue(h.cmds[h.pos])
 			m.CommandInput.CursorEnd()
-		} else {
-			h.pos = -1
-			m.CommandInput.Reset()
 		}
 	}
 
