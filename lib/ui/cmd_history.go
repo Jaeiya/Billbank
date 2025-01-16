@@ -16,7 +16,9 @@ func NewCmdHistory() *CmdHistory {
 }
 
 func (h *CmdHistory) Add(v string) {
-	h.cmds = append([]string{v}, h.cmds...)
+	if len(h.cmds) == 0 || h.cmds[0] != v {
+		h.cmds = append([]string{v}, h.cmds...)
+	}
 	// Retain expected order when command is entered using history
 	h.pos = -1
 }
