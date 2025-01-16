@@ -1,5 +1,9 @@
-package lib
+package utils
 
+/*
+TryDeref tries to dereference a pointer to type T. If it cannot,
+then it returns nil.
+*/
 func TryDeref[T any](p *T) any /*nil|T*/ {
 	if p == nil {
 		return nil

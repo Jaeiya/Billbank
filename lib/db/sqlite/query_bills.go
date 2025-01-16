@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/jaeiya/billbank/lib"
+	"github.com/jaeiya/billbank/lib/utils"
 )
 
 type BillsConfig struct {
@@ -69,7 +70,7 @@ func (sdb SqliteDb) QueryBills(qm QueryMap) ([]BillRecord, error) {
 }
 
 func (sdb SqliteDb) CreateBillHistory(cfg BillHistoryConfig) {
-	paidAmount := lib.TryDeref(cfg.PaidAmount)
+	paidAmount := utils.TryDeref(cfg.PaidAmount)
 	if paidAmount != nil {
 		paidAmount = cfg.PaidAmount.GetStoredValue()
 	}
@@ -81,9 +82,9 @@ func (sdb SqliteDb) CreateBillHistory(cfg BillHistoryConfig) {
 			cfg.MonthID,
 			cfg.Amount.GetStoredValue(),
 			paidAmount,
-			lib.TryDeref(cfg.PaidDate),
+			utils.TryDeref(cfg.PaidDate),
 			cfg.DueDay,
-			lib.TryDeref(cfg.Notes),
+			utils.TryDeref(cfg.Notes),
 		),
 	); err != nil {
 		panicOnExecErr(err)

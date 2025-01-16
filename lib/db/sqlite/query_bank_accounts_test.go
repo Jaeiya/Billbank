@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/jaeiya/billbank/lib"
+	"github.com/jaeiya/billbank/lib/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -52,65 +53,65 @@ func TestCreateBankAccount(t *testing.T) {
 			actual: []BankAccountConfig{
 				{
 					Name:          "test",
-					Password:      lib.NewPointer("test"),
-					AccountNumber: lib.NewPointer("282841"),
-					Notes:         lib.NewPointer("some notes"),
+					Password:      utils.NewPointer("test"),
+					AccountNumber: utils.NewPointer("282841"),
+					Notes:         utils.NewPointer("some notes"),
 				},
 			},
 			expected: []BankRecord{
 				{
 					ID:            1,
 					Name:          "test",
-					AccountNumber: lib.NewPointer("282841"),
-					Notes:         lib.NewPointer("some notes"),
+					AccountNumber: utils.NewPointer("282841"),
+					Notes:         utils.NewPointer("some notes"),
 				},
 			},
-			password: lib.NewPointer("test"),
+			password: utils.NewPointer("test"),
 		},
 		{
 			should: "just save account number",
 			actual: []BankAccountConfig{
 				{
 					Name:          "test",
-					Password:      lib.NewPointer("test"),
-					AccountNumber: lib.NewPointer("1337420"),
+					Password:      utils.NewPointer("test"),
+					AccountNumber: utils.NewPointer("1337420"),
 				},
 			},
 			expected: []BankRecord{
 				{
 					ID:            1,
 					Name:          "test",
-					AccountNumber: lib.NewPointer("1337420"),
+					AccountNumber: utils.NewPointer("1337420"),
 				},
 			},
-			password: lib.NewPointer("test"),
+			password: utils.NewPointer("test"),
 		},
 		{
 			should: "just save notes",
 			actual: []BankAccountConfig{
 				{
 					Name:     "test",
-					Password: lib.NewPointer("test"),
-					Notes:    lib.NewPointer("some notes"),
+					Password: utils.NewPointer("test"),
+					Notes:    utils.NewPointer("some notes"),
 				},
 			},
 			expected: []BankRecord{
 				{
 					ID:    1,
 					Name:  "test",
-					Notes: lib.NewPointer("some notes"),
+					Notes: utils.NewPointer("some notes"),
 				},
 			},
-			password: lib.NewPointer("test"),
+			password: utils.NewPointer("test"),
 		},
 		{
 			should: "get encoded versions of protected fields",
 			actual: []BankAccountConfig{
 				{
 					Name:          "test",
-					Password:      lib.NewPointer("test"),
-					AccountNumber: lib.NewPointer("1337420"),
-					Notes:         lib.NewPointer("sevenCh"),
+					Password:      utils.NewPointer("test"),
+					AccountNumber: utils.NewPointer("1337420"),
+					Notes:         utils.NewPointer("sevenCh"),
 				},
 			},
 			expected: []BankRecord{
@@ -167,7 +168,7 @@ func TestCreateBankAccount(t *testing.T) {
 		a.PanicsWithValue(lib.ErrEncryptWithoutPassword, func() {
 			db.CreateBankAccount(BankAccountConfig{
 				Name:          "Test",
-				AccountNumber: lib.NewPointer("1823842"),
+				AccountNumber: utils.NewPointer("1823842"),
 			})
 		})
 	})
@@ -342,8 +343,8 @@ func TestBankTransfers(t *testing.T) {
 					Amount:       lib.NewCurrency("72.28", lib.USD),
 					DueDay:       5,
 					TransferType: DEPOSIT,
-					ToWhom:       lib.NewPointer("johnny"),
-					FromWhom:     lib.NewPointer("bank of america"),
+					ToWhom:       utils.NewPointer("johnny"),
+					FromWhom:     utils.NewPointer("bank of america"),
 				},
 			},
 			expected: []TransferRecord{
@@ -356,8 +357,8 @@ func TestBankTransfers(t *testing.T) {
 						Amount:       lib.NewCurrency("72.28", lib.USD),
 						DueDay:       5,
 						TransferType: DEPOSIT,
-						ToWhom:       lib.NewPointer("johnny"),
-						FromWhom:     lib.NewPointer("bank of america"),
+						ToWhom:       utils.NewPointer("johnny"),
+						FromWhom:     utils.NewPointer("bank of america"),
 					},
 				},
 			},

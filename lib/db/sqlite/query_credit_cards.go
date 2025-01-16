@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/jaeiya/billbank/lib"
+	"github.com/jaeiya/billbank/lib/utils"
 )
 
 type (
@@ -55,9 +56,9 @@ func (cr CreditCardRecord) String() string {
 		cr.Name,
 		cr.DueDay,
 		cr.CreditLimit,
-		lib.TryDeref(cr.CardNumber),
+		utils.TryDeref(cr.CardNumber),
 		cr.LastFourDigits,
-		lib.TryDeref(cr.Notes),
+		utils.TryDeref(cr.Notes),
 	)
 }
 
@@ -82,13 +83,13 @@ func (chr CardHistoryRecord) String() string {
 		chr.Balance.String(),
 		chr.CreditLimit,
 		chr.PaidAmount.String(),
-		lib.TryDeref(chr.PaidDay),
+		utils.TryDeref(chr.PaidDay),
 		chr.DueDay,
 	)
 }
 
 func (sdb SqliteDb) CreateCreditCard(config CreditCardConfig) {
-	creditLimit := lib.TryDeref(config.CreditLimit)
+	creditLimit := utils.TryDeref(config.CreditLimit)
 	if creditLimit != nil {
 		creditLimit = config.CreditLimit.GetStoredValue()
 	}
@@ -160,7 +161,7 @@ func (sdb SqliteDb) QueryCreditCards(
 }
 
 func (sdb SqliteDb) CreateCreditCardHistory(config CreditCardHistoryConfig) {
-	creditLimit := lib.TryDeref(config.CreditLimit)
+	creditLimit := utils.TryDeref(config.CreditLimit)
 	if creditLimit != nil {
 		creditLimit = config.CreditLimit.GetStoredValue()
 	}
@@ -238,7 +239,7 @@ func (sdb SqliteDb) SetCreditCardHistory(historyID int, fieldMap CCFieldMap) err
 			conditions = append(conditions, fmt.Sprintf("%s=%d", field, c.GetStoredValue()))
 
 		case CC_DUE_DAY, CC_PAID_DAY:
-			if !lib.IsInt(value) {
+			if !utils.IsInt(value) {
 				return fmt.Errorf("%s should of of type: int", field)
 			}
 			conditions = append(conditions, fmt.Sprintf("%s=%d", field, value))

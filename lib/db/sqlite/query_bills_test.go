@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/jaeiya/billbank/lib"
+	"github.com/jaeiya/billbank/lib/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -186,7 +187,7 @@ func TestCreateBillHistory(t *testing.T) {
 					MonthID:    1,
 					Amount:     lib.NewCurrency("13.37", lib.USD),
 					DueDay:     3,
-					PaidAmount: lib.NewPointer(lib.NewCurrency("5", lib.USD)),
+					PaidAmount: utils.NewPointer(lib.NewCurrency("5", lib.USD)),
 				},
 			},
 			expected: []BillHistoryRecord{
@@ -197,7 +198,7 @@ func TestCreateBillHistory(t *testing.T) {
 						MonthID:    1,
 						Amount:     lib.NewCurrency("13.37", lib.USD),
 						DueDay:     3,
-						PaidAmount: lib.NewPointer(lib.NewCurrency("5", lib.USD)),
+						PaidAmount: utils.NewPointer(lib.NewCurrency("5", lib.USD)),
 					},
 				},
 			},
@@ -228,7 +229,7 @@ func TestCreateBillHistory(t *testing.T) {
 						MonthID:    1,
 						Amount:     lib.NewCurrency("1337", lib.USD),
 						DueDay:     3,
-						PaidAmount: lib.NewPointer(lib.NewCurrency("0", lib.USD)),
+						PaidAmount: utils.NewPointer(lib.NewCurrency("0", lib.USD)),
 					},
 				},
 			},
@@ -259,7 +260,7 @@ func TestCreateBillHistory(t *testing.T) {
 						MonthID:    1,
 						Amount:     lib.NewCurrency("1337", lib.USD),
 						DueDay:     3,
-						PaidAmount: lib.NewPointer(lib.NewCurrency("0", lib.USD)),
+						PaidAmount: utils.NewPointer(lib.NewCurrency("0", lib.USD)),
 						PaidDate:   nil,
 						Notes:      nil,
 					},

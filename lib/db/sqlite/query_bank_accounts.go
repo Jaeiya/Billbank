@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/jaeiya/billbank/lib"
+	"github.com/jaeiya/billbank/lib/utils"
 )
 
 type TransferType string
@@ -159,8 +160,8 @@ func (sdb SqliteDb) CreateTransfer(td TransferConfig) {
 		td.Amount.GetStoredValue(),
 		td.DueDay,
 		td.TransferType,
-		lib.TryDeref(td.ToWhom),
-		lib.TryDeref(td.FromWhom),
+		utils.TryDeref(td.ToWhom),
+		utils.TryDeref(td.FromWhom),
 	)
 	if _, err := sdb.handle.Exec(execStr); err != nil {
 		panicOnExecErr(err)
