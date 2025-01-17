@@ -14,7 +14,6 @@ type TestMsg bool
 type CmdInputModel struct {
 	CommandInput textinput.Model
 	CmdHistory   *CmdHistory
-	yes          TestMsg
 	commands     []commands.Command
 	lastCmd      ParsedCmd
 	aliases      []string
@@ -50,7 +49,6 @@ func NewCmdInput(options ...CmdInputOption) CmdInputModel {
 		panic("commander requires at least one command")
 	}
 
-	model.yes = TestMsg(false)
 	model.CmdHistory = NewCmdHistory()
 	model.CommandInput = NewCommanderInput()
 	return model
