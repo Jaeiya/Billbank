@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"fmt"
+
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -48,4 +50,8 @@ func (h *CmdHistory) Cycle(m CmdInputModel, msg tea.KeyMsg) (CmdInputModel, tea.
 	m.CommandInput.CursorEnd()
 
 	return tryParseCmd(m, tea.KeyMsg{})
+}
+
+func (h *CmdHistory) View() string {
+	return fmt.Sprintf("%v", h.cmds)
 }
