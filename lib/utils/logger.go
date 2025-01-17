@@ -16,8 +16,6 @@ const (
 	Error
 )
 
-const isReady = false
-
 type LogMsg struct {
 	msg   any
 	level LogLevel
@@ -26,11 +24,15 @@ type LogMsg struct {
 }
 
 var (
+	isReady = false
 	logger  *log.Logger
 	logChan = make(chan LogMsg, 50)
 )
 
 func Log(ll LogLevel, msg any) {
+	if !isReady {
+		panic("log not initialized")
+	}
 	_, file, line, _ := runtime.Caller(1)
 	logChan <- LogMsg{msg, ll, file, line}
 }
@@ -58,6 +60,8 @@ func CreateLog() bool {
 
 	logger = log.New(file, "", 0)
 	go logMessages()
+	isReady = true
+
 	return true
 }
 
