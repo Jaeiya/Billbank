@@ -93,7 +93,17 @@ func (m CmdInputModel) Update(msg tea.Msg) (CmdInputModel, tea.Cmd) {
 			return m, tea.Quit
 
 		case "up", "down", "alt+j", "alt+k":
-			return m.CmdHistory.Cycle(m, msg)
+			val, reset := m.CmdHistory.Cycle(msg)
+			if reset {
+				m.CommandInput.Reset()
+				m.lastCmd = ParsedCmd{}
+			} else if len(val) > 0 {
+				m.CommandInput.SetValue(val)
+				m.CommandInput.CursorEnd()
+				return tryParseCmd(m, tea.KeyMsg{})
+			}
+
+			return m, nil
 
 		case " ":
 			// Prevent accidental spaces
@@ -103,7 +113,7 @@ func (m CmdInputModel) Update(msg tea.Msg) (CmdInputModel, tea.Cmd) {
 
 		case "enter":
 			m, cmd = tryEnterCmd(m)
-			cmds = append(cmds, cmd)
+			// cmds = append(cmds, cmd)
 		default:
 			return onAnyKey(m, msg)
 		}

@@ -25,9 +25,14 @@ func (h *CmdHistory) Add(v string) {
 	h.pos = -1
 }
 
-func (h *CmdHistory) Cycle(m CmdInputModel, msg tea.KeyMsg) (CmdInputModel, tea.Cmd) {
+/*
+Cycle moves either up or down through the history of commands
+that have been added. Returns a string containing the command
+text if it exists, and true if history cycles back to present.
+*/
+func (h *CmdHistory) Cycle(msg tea.KeyMsg) (string, bool) {
 	if len(h.cmds) == 0 {
-		return m, nil
+		return "", false
 	}
 
 	switch msg.String() {
@@ -39,17 +44,12 @@ func (h *CmdHistory) Cycle(m CmdInputModel, msg tea.KeyMsg) (CmdInputModel, tea.
 	case "down", "alt+j":
 		if h.pos < 1 {
 			h.pos = -1
-			m.CommandInput.Reset()
-			m.lastCmd = ParsedCmd{}
-			return m, nil
+			return "", true
 		}
 		h.pos--
 	}
 
-	m.CommandInput.SetValue(h.cmds[h.pos])
-	m.CommandInput.CursorEnd()
-
-	return tryParseCmd(m, tea.KeyMsg{})
+	return h.cmds[h.pos], false
 }
 
 func (h *CmdHistory) View() string {
