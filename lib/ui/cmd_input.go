@@ -10,8 +10,6 @@ import (
 	"github.com/jaeiya/billbank/lib/utils"
 )
 
-type TestMsg bool
-
 type CmdInputModel struct {
 	CommandInput textinput.Model
 	CmdHistory   *utils.CmdHistory
