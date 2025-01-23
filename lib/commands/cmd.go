@@ -40,7 +40,15 @@ type CommandConfig struct {
 	Command
 }
 
+type CommandModelMsg interface {
+	Init() tea.Cmd
+	Update(tea.Msg) (CommandModelMsg, tea.Cmd)
+	View() string
+	IsStatic() bool
+}
+
 type Command struct {
+	ModelMsg CommandModelMsg
 	// Represents the way a command is hierarchically constructed
 	// including aliases.
 	//
@@ -53,7 +61,6 @@ type Command struct {
 	// 		set stat name
 	tree                [][]string
 	hasArg              bool
-	execFunc            func(args ...string) (tea.Model, tea.Cmd)
 	inputValidationFunc func(arg string) error
 	keyValidationFunc   func(key rune) bool
 }
@@ -66,7 +73,7 @@ func NewCommand(config CommandConfig) Command {
 		tree:                config.tree,
 		inputValidationFunc: config.inputValidationFunc,
 		hasArg:              config.hasArg,
-		execFunc:            config.execFunc,
+		ModelMsg:            config.ModelMsg,
 		keyValidationFunc:   config.keyValidationFunc,
 	}
 }
@@ -136,10 +143,6 @@ func (cb *Command) ValidateKey(key rune) bool {
 		return cb.keyValidationFunc(key)
 	}
 	return true
-}
-
-func (cb Command) Execute(args ...string) (tea.Model, tea.Cmd) {
-	return cb.execFunc(args...)
 }
 
 /*

@@ -1,10 +1,9 @@
 package ui
 
 import (
-	"strings"
-
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/jaeiya/billbank/lib/commands"
 )
 
 type CurrentCmd struct {
@@ -13,10 +12,11 @@ type CurrentCmd struct {
 }
 
 type ViewPort struct {
-	Commander  CmdInputModel
-	CurrentCmd *CurrentCmd
-	height     int
-	status     string
+	Commander       CmdInputModel
+	CurrentCmdModel commands.CommandModelMsg
+	height          int
+	width           int
+	status          string
 }
 
 func (vp ViewPort) Init() tea.Cmd {
@@ -28,23 +28,29 @@ func (vp ViewPort) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case TestMsg:
 		vp.status = "I executed because of a command!!"
+	case commands.CommandModelMsg:
+		vp.CurrentCmdModel = msg
 	case tea.WindowSizeMsg:
 		vp.height = msg.Height
+		vp.width = msg.Width
+	}
+	if vp.CurrentCmdModel != nil {
+		vp.CurrentCmdModel, _ = vp.CurrentCmdModel.Update(msg)
 	}
 	vp.Commander, cmd = vp.Commander.Update(msg)
 	return vp, cmd
 }
 
-func (vp ViewPort) View() string {
-	if vp.status != "" {
-		return vp.status
-	}
-
+func (vp ViewPort) View() string { // Define a style with a fixed height and bottom alignment
 	cmdrStr := vp.Commander.View()
 	h := lipgloss.Height(cmdrStr)
-	padding := ""
-	if vp.height > 0 {
-		padding = strings.Repeat("\n", vp.height-h)
+	cmdView := ""
+	if vp.CurrentCmdModel != nil {
+		cmdView = vp.CurrentCmdModel.View()
 	}
-	return padding + cmdrStr
+	block := lipgloss.Place(vp.width, vp.height-h, lipgloss.Center, lipgloss.Center, cmdView)
+
+	content := lipgloss.JoinVertical(lipgloss.Top, block, cmdrStr)
+
+	return content
 }

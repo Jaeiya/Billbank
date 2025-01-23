@@ -1,14 +1,20 @@
-package ui
+package utils
 
 import (
 	"fmt"
+	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
+var viewStyle = lipgloss.NewStyle().Width(30)
+
 type CmdHistory struct {
-	cmds []string
-	pos  int
+	cmds          []string
+	pos           int
+	lastView      string
+	lastViewedLen int
 }
 
 func NewCmdHistory() *CmdHistory {
@@ -53,5 +59,18 @@ func (h *CmdHistory) Cycle(msg tea.KeyMsg) (string, bool) {
 }
 
 func (h *CmdHistory) View() string {
-	return fmt.Sprintf("%v", h.cmds)
+	if h.lastViewedLen == len(h.cmds) {
+		return h.lastView
+	}
+	var sb strings.Builder
+	for i, cmd := range h.cmds {
+		if i == 0 {
+			sb.WriteString(cmd)
+			continue
+		}
+		sb.WriteString(fmt.Sprintf("\n%s", cmd))
+	}
+	h.lastViewedLen = len(h.cmds)
+	h.lastView = viewStyle.Render(sb.String())
+	return h.lastView
 }

@@ -7,13 +7,14 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/jaeiya/billbank/lib/commands"
+	"github.com/jaeiya/billbank/lib/utils"
 )
 
 type TestMsg bool
 
 type CmdInputModel struct {
 	CommandInput textinput.Model
-	CmdHistory   *CmdHistory
+	CmdHistory   *utils.CmdHistory
 	commands     []commands.Command
 	lastCmd      ParsedCmd
 	aliases      []string
@@ -40,24 +41,23 @@ var (
 )
 
 func NewCmdInput(options ...CmdInputOption) CmdInputModel {
-	model := CmdInputModel{}
+	model := CmdInputModel{
+		aliases: []string{},
+	}
+	model.CmdHistory = utils.NewCmdHistory()
+	model.CommandInput = NewCommanderInput()
+
+	options = append(options, WithCommands(commands.NewDebugHistoryCmd(model.CmdHistory)))
 	for _, o := range options {
 		o(&model)
 	}
 
-	if len(model.commands) == 0 {
-		panic("commander requires at least one command")
-	}
-
-	model.CmdHistory = NewCmdHistory()
-	model.CommandInput = NewCommanderInput()
 	return model
 }
 
 func WithCommands(cmds ...commands.Command) CmdInputOption {
 	return func(m *CmdInputModel) {
 		aliasStore := map[string]bool{}
-		var aliases []string
 
 		for _, cmd := range cmds {
 			for _, a := range cmd.GetAliases() {
@@ -65,12 +65,11 @@ func WithCommands(cmds ...commands.Command) CmdInputOption {
 					panic("command alias already exists")
 				}
 				aliasStore[a] = true
-				aliases = append(aliases, a)
+				m.aliases = append(m.aliases, a)
 			}
 		}
 
-		m.aliases = aliases
-		m.commands = cmds
+		m.commands = append(m.commands, cmds...)
 	}
 }
 
@@ -112,8 +111,9 @@ func (m CmdInputModel) Update(msg tea.Msg) (CmdInputModel, tea.Cmd) {
 			}
 
 		case "enter":
+			utils.Log(utils.Info, fmt.Sprintf("Executing Command: %v", m.lastCmd.GetAliases()))
 			m, cmd = tryEnterCmd(m)
-			// cmds = append(cmds, cmd)
+			cmds = append(cmds, cmd)
 		default:
 			return onAnyKey(m, msg)
 		}
@@ -138,9 +138,10 @@ func tryEnterCmd(m CmdInputModel) (CmdInputModel, tea.Cmd) {
 		statusStyle = statusStyle.Foreground(okColor)
 		m.statusText = fmt.Sprintf("Executing Command %s", m.lastCmd.status.Arg)
 		m.CmdHistory.Add(m.CommandInput.Value())
+		msg := m.lastCmd.Command.ModelMsg
 		m.CommandInput.Reset()
 		m.lastCmd = ParsedCmd{}
-		return m, func() tea.Msg { return TestMsg(true) }
+		return m, func() tea.Msg { return msg }
 	}
 
 	if m.lastCmd.status.IsCommand && !m.lastCmd.status.IsComplete {
