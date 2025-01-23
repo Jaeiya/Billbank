@@ -101,7 +101,7 @@ func (cb *Command) ParseCommand(cmd string) CommandStatus {
 			IsCommand:  true,
 			IsComplete: true,
 			Arg:        cmdFields[len(cmdFields)-1],
-			TreePos:    finalPos,
+			TreePos:    finalPos - 1,
 		}
 		if len(cmdFields) == finalPos {
 			cs.Error = fmt.Errorf("expected a value after '%s'", cmdFields[len(cmdFields)-1])
@@ -133,7 +133,7 @@ func (cb *Command) ParseCommand(cmd string) CommandStatus {
 		IsCommand:   isCommand,
 		IsComplete:  isComplete,
 		Suggestions: suggestions,
-		TreePos:     finalPos,
+		TreePos:     finalPos - 1,
 		Error:       err,
 	}
 }
