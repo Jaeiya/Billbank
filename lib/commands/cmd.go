@@ -50,7 +50,7 @@ type CommandModelMsg interface {
 }
 
 type Command struct {
-	ModelMsg CommandModelMsg
+	GetModel func(CommandStatus) CommandModelMsg
 	// Represents the way a command is hierarchically constructed
 	// including aliases.
 	//
@@ -75,7 +75,7 @@ func NewCommand(config CommandConfig) Command {
 		tree:                config.tree,
 		inputValidationFunc: config.inputValidationFunc,
 		hasArg:              config.hasArg,
-		ModelMsg:            config.ModelMsg,
+		GetModel:            config.GetModel,
 		keyValidationFunc:   config.keyValidationFunc,
 	}
 }

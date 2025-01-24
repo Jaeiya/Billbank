@@ -112,6 +112,7 @@ func (m CmdInputModel) Update(msg tea.Msg) (CmdInputModel, tea.Cmd) {
 			utils.Log(utils.Info, fmt.Sprintf("Executing Command: %v", m.lastCmd.GetAliases()))
 			m, cmd = tryEnterCmd(m)
 			cmds = append(cmds, cmd)
+
 		default:
 			return onAnyKey(m, msg)
 		}
@@ -134,9 +135,9 @@ func tryEnterCmd(m CmdInputModel) (CmdInputModel, tea.Cmd) {
 			return m, nil
 		}
 		statusStyle = statusStyle.Foreground(okColor)
-		m.statusText = fmt.Sprintf("Executing Command %s", m.lastCmd.status.Arg)
+		m.statusText = fmt.Sprintf("Executing Command: %s", m.lastCmd.status.TreeStr)
 		m.CmdHistory.Add(m.CommandInput.Value())
-		msg := m.lastCmd.Command.ModelMsg
+		msg := m.lastCmd.Command.GetModel(m.lastCmd.status)
 		m.CommandInput.Reset()
 		m.lastCmd = ParsedCmd{}
 		return m, func() tea.Msg { return msg }
