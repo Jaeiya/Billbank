@@ -24,6 +24,8 @@ type CommandStatus struct {
 	IsComplete  bool
 	Suggestions []string
 	Arg         string
+	CommandStr  string
+	TreeStr     string
 	// The command tree position of the input. A command can be in an incomplete state,
 	// which means the input is correct, but it's in a lower position within the
 	// command tree hierarchy.
@@ -86,12 +88,14 @@ func (cb *Command) ParseCommand(cmd string) CommandStatus {
 	cmdFields := strings.Fields(cmd)
 	var finalPos int = 0
 	var isCommand, isComplete bool
+	var cmdStr string
 
 	for pos, cmds := range cb.tree {
 		if len(cmdFields) == pos || !slices.Contains(cmds, cmdFields[pos]) {
 			break
 		}
 		finalPos = pos + 1
+		cmdStr = cmdFields[pos]
 	}
 
 	isCommand = finalPos > 0
@@ -102,6 +106,8 @@ func (cb *Command) ParseCommand(cmd string) CommandStatus {
 			IsComplete: true,
 			Arg:        cmdFields[len(cmdFields)-1],
 			TreePos:    finalPos - 1,
+			CommandStr: cmdStr,
+			TreeStr:    cmd,
 		}
 		if len(cmdFields) == finalPos {
 			cs.Error = fmt.Errorf("expected a value after '%s'", cmdFields[len(cmdFields)-1])
@@ -134,6 +140,8 @@ func (cb *Command) ParseCommand(cmd string) CommandStatus {
 		IsComplete:  isComplete,
 		Suggestions: suggestions,
 		TreePos:     finalPos - 1,
+		CommandStr:  cmdStr,
+		TreeStr:     cmd,
 		Error:       err,
 	}
 }
