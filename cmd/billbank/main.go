@@ -4,6 +4,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/jaeiya/billbank/lib/commands"
 	"github.com/jaeiya/billbank/lib/ui"
+	"github.com/jaeiya/billbank/lib/utils"
 )
 
 func main() {
@@ -22,6 +23,8 @@ func main() {
 	// db := sqlite.NewSqliteDb(filePath, lib.USD)
 	// defer db.Close()
 	// ti := components.NewCommanderInput()
+	utils.CreateLog()
+	utils.Log(utils.Info, "Starting BillBank")
 
 	vp := ui.ViewPort{}
 
