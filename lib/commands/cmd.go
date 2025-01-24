@@ -15,7 +15,7 @@ var (
 		fmt.Errorf("command parsing failed; this should not happen"),
 	)
 	ErrNotCommand      = CommandError(fmt.Errorf("unrecognized command"))
-	ErrInvalidCommand  = CommandError(fmt.Errorf("command is formatted incorrectly"))
+	ErrInvalidCommand  = CommandError(fmt.Errorf("incomplete command"))
 	ErrMissingArgument = CommandError(fmt.Errorf("missing argument"))
 )
 
