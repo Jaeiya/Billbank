@@ -4,10 +4,17 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/jaeiya/billbank/lib/utils"
+)
+
+var (
+	infoLogStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#33B0FF"))
+	attnLogStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#FFDE00"))
 )
 
 var cmdMap = map[string]func(DebugCmd) string{
@@ -91,7 +98,19 @@ func getSLog(DebugCmd) string {
 
 	var sb strings.Builder
 	for _, line := range lines {
-		sb.WriteString(line[16:] + "\n")
+		parts := strings.Split(line, " ")
+		tag := parts[3:4]
+		msg := parts[5:]
+
+		if tag[0] == "[INFO]" {
+			tag[0] = infoLogStyle.Render(tag[0])
+		} else if tag[0] == "[ATTN]" {
+			tag[0] = attnLogStyle.Render(tag[0])
+		}
+
+		line = strings.Join(slices.Concat(tag, msg), " ")
+		sb.WriteString(line)
+		sb.WriteString("\n")
 	}
 	return sb.String()
 }
