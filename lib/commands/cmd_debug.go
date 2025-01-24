@@ -15,6 +15,7 @@ import (
 var (
 	infoLogStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#33B0FF"))
 	attnLogStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#FFDE00"))
+	errLogStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF51CC"))
 )
 
 var cmdMap = map[string]func(DebugCmd) string{
@@ -106,6 +107,8 @@ func getSLog(DebugCmd) string {
 			tag[0] = infoLogStyle.Render(tag[0])
 		} else if tag[0] == "[ATTN]" {
 			tag[0] = attnLogStyle.Render(tag[0])
+		} else if tag[0] == "[ERROR]" {
+			tag[0] = errLogStyle.Render(tag[0])
 		}
 
 		line = strings.Join(slices.Concat(tag, msg), " ")
