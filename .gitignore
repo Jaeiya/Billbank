@@ -2,3 +2,4 @@ bin/
 dist/
 tmp/
 examples/
+log.txt
