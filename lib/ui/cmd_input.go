@@ -10,6 +10,19 @@ import (
 	"github.com/jaeiya/billbank/lib/utils"
 )
 
+type UpdateStatusMsg struct {
+	String   string
+	Severity StatusSeverity
+}
+
+type StatusSeverity int
+
+const (
+	LOW = StatusSeverity(iota)
+	MED
+	HIGH
+)
+
 type CmdInputModel struct {
 	CommandInput textinput.Model
 	CmdHistory   *utils.CmdHistory
@@ -83,6 +96,16 @@ func (m CmdInputModel) Update(msg tea.Msg) (CmdInputModel, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		statusStyle = statusStyle.Width(msg.Width)
 		m.CommandInput.Width = msg.Width
+
+	case UpdateStatusMsg:
+		color := okColor
+		if msg.Severity == MED {
+			color = warnColor
+		} else if msg.Severity == HIGH {
+			color = errColor
+		}
+		style := statusStyle.Foreground(color)
+		m.statusText = style.Render(msg.String)
 
 	case tea.KeyMsg:
 		switch msg.String() {
