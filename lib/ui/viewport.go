@@ -7,6 +7,11 @@ import (
 	"github.com/jaeiya/billbank/lib/utils"
 )
 
+type ViewportSizeMsg struct {
+	width  int
+	height int
+}
+
 type CurrentCmd struct {
 	Model tea.Model
 	Cmd   tea.Cmd
@@ -34,13 +39,20 @@ func (vp ViewPort) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return vp, vp.sendStatusMsg("Command Not Implemented", HIGH)
 		}
 		vp.CurrentCmdModel = msg
+		cmds = append(cmds, vp.sendViewportSize)
+
 	case tea.WindowSizeMsg:
 		vp.height = msg.Height
 		vp.width = msg.Width
+		cmds = append(cmds, vp.sendViewportSize)
+
 	}
+
 	if vp.CurrentCmdModel != nil {
-		vp.CurrentCmdModel, _ = vp.CurrentCmdModel.Update(msg)
+		vp.CurrentCmdModel, cmd = vp.CurrentCmdModel.Update(msg)
+		cmds = append(cmds, cmd)
 	}
+
 	vp.Commander, cmd = vp.Commander.Update(msg)
 	cmds = append(cmds, cmd)
 
@@ -59,6 +71,13 @@ func (vp ViewPort) View() string { // Define a style with a fixed height and bot
 	content := lipgloss.JoinVertical(lipgloss.Top, block, cmdrStr)
 
 	return content
+}
+
+func (vp ViewPort) sendViewportSize() tea.Msg {
+	return ViewportSizeMsg{
+		height: vp.height - len(vp.Commander.View()),
+		width:  vp.width,
+	}
 }
 
 func (vp ViewPort) sendStatusMsg(msg string, s StatusSeverity) func() tea.Msg {
