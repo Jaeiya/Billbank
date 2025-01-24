@@ -46,7 +46,7 @@ func (vp ViewPort) View() string { // Define a style with a fixed height and bot
 	if vp.CurrentCmdModel != nil {
 		cmdView = vp.CurrentCmdModel.View()
 	}
-	block := lipgloss.Place(vp.width, vp.height-h, lipgloss.Center, lipgloss.Center, cmdView)
+	block := lipgloss.Place(vp.width, vp.height-h, lipgloss.Left, lipgloss.Top, cmdView)
 
 	content := lipgloss.JoinVertical(lipgloss.Top, block, cmdrStr)
 
