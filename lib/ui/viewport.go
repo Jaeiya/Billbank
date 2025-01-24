@@ -4,6 +4,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/jaeiya/billbank/lib/commands"
+	"github.com/jaeiya/billbank/lib/utils"
 )
 
 type CurrentCmd struct {
@@ -16,7 +17,6 @@ type ViewPort struct {
 	CurrentCmdModel commands.CommandModelMsg
 	height          int
 	width           int
-	status          string
 }
 
 func (vp ViewPort) Init() tea.Cmd {
@@ -24,9 +24,15 @@ func (vp ViewPort) Init() tea.Cmd {
 }
 
 func (vp ViewPort) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmds []tea.Cmd
 	var cmd tea.Cmd
+
 	switch msg := msg.(type) {
 	case commands.CommandModelMsg:
+		if !msg.IsImplemented() {
+			utils.Log(utils.Error, "CommandError: command not implemented")
+			return vp, vp.sendStatusMsg("Command Not Implemented", HIGH)
+		}
 		vp.CurrentCmdModel = msg
 	case tea.WindowSizeMsg:
 		vp.height = msg.Height
@@ -36,7 +42,9 @@ func (vp ViewPort) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		vp.CurrentCmdModel, _ = vp.CurrentCmdModel.Update(msg)
 	}
 	vp.Commander, cmd = vp.Commander.Update(msg)
-	return vp, cmd
+	cmds = append(cmds, cmd)
+
+	return vp, tea.Batch(cmds...)
 }
 
 func (vp ViewPort) View() string { // Define a style with a fixed height and bottom alignment
@@ -51,4 +59,13 @@ func (vp ViewPort) View() string { // Define a style with a fixed height and bot
 	content := lipgloss.JoinVertical(lipgloss.Top, block, cmdrStr)
 
 	return content
+}
+
+func (vp ViewPort) sendStatusMsg(msg string, s StatusSeverity) func() tea.Msg {
+	return func() tea.Msg {
+		return UpdateStatusMsg{
+			msg,
+			s,
+		}
+	}
 }
