@@ -26,8 +26,6 @@ func (vp ViewPort) Init() tea.Cmd {
 func (vp ViewPort) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
-	case TestMsg:
-		vp.status = "I executed because of a command!!"
 	case commands.CommandModelMsg:
 		vp.CurrentCmdModel = msg
 	case tea.WindowSizeMsg:
