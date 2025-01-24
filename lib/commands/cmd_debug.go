@@ -1,7 +1,6 @@
 package commands
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"slices"
@@ -59,11 +58,12 @@ func (m DebugCmd) View() string {
 		return exec(m)
 	}
 
-	panic(fmt.Sprintf("missing view for '%s'", m.CommandStr))
+	panic("missing view; use IsImplemented to check for this error")
 }
 
-func (DebugCmd) IsStatic() bool {
-	return true
+func (m DebugCmd) IsImplemented() bool {
+	_, ok := cmdMap[m.CommandStatus.CommandStr]
+	return ok
 }
 
 func getHistory(m DebugCmd) string {

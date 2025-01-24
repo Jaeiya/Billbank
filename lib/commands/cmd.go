@@ -46,7 +46,7 @@ type CommandModelMsg interface {
 	Init() tea.Cmd
 	Update(tea.Msg) (CommandModelMsg, tea.Cmd)
 	View() string
-	IsStatic() bool
+	IsImplemented() bool
 }
 
 type Command struct {
