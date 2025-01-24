@@ -1,9 +1,9 @@
 package commands
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
-	"slices"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -14,7 +14,8 @@ import (
 var (
 	infoLogStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#33B0FF"))
 	attnLogStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#FFDE00"))
-	errLogStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF51CC"))
+	errLogStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF82E9"))
+	msgStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("#96F1D4"))
 )
 
 var cmdMap = map[string]func(DebugCmd) string{
@@ -100,20 +101,28 @@ func getSLog(DebugCmd) string {
 	var sb strings.Builder
 	for _, line := range lines {
 		parts := strings.Split(line, " ")
-		tag := parts[3:4]
-		msg := parts[5:]
+		tag := parts[3]
+		words := parts[5:]
 
-		if tag[0] == "[INFO]" {
-			tag[0] = infoLogStyle.Render(tag[0])
-		} else if tag[0] == "[ATTN]" {
-			tag[0] = attnLogStyle.Render(tag[0])
-		} else if tag[0] == "[ERROR]" {
-			tag[0] = errLogStyle.Render(tag[0])
+		var msg string
+		if strings.Contains(words[0], ":") {
+			words[1] = msgStyle.Render(strings.Join(words[1:], " "))
+			msg = fmt.Sprintf("%s %s", words[0], words[1])
+		} else {
+			msg = msgStyle.Render(strings.Join(words, " "))
 		}
 
-		line = strings.Join(slices.Concat(tag, msg), " ")
-		sb.WriteString(line)
-		sb.WriteString("\n")
+		if tag == "[NFO]" {
+			tag = infoLogStyle.Render(tag)
+		} else if tag == "[ATN]" {
+			tag = attnLogStyle.Render(tag)
+			msg = attnLogStyle.Render(msg)
+		} else if tag == "[ERR]" {
+			tag = errLogStyle.Render(tag)
+			msg = errLogStyle.Render(msg)
+		}
+
+		sb.WriteString(fmt.Sprintf("%s %s\n", tag, msg))
 	}
 	return sb.String()
 }

@@ -80,11 +80,11 @@ func logMessages() {
 func getLogLevelStr(ll LogLevel) string {
 	switch ll {
 	case Info:
-		return "INFO"
+		return "NFO"
 	case Attention:
-		return "ATTN"
+		return "ATN"
 	case Error:
-		return "ERROR"
+		return "ERR"
 	default:
 		panic("invalid log level")
 	}
