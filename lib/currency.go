@@ -161,7 +161,7 @@ denomination for that currency. If the currency code is USD
 then it would return the total Cents.
 
 🟠 As the name suggests, it should only be used when needing
-to store the value.
+the raw value.
 */
 func (c *Currency) GetStoredValue() int {
 	return c.amount
