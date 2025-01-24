@@ -117,7 +117,7 @@ func (cb *Command) ParseCommand(cmd string) CommandStatus {
 		return cs
 	}
 
-	isComplete = len(cmdFields) == finalPos && !cb.hasArg
+	isComplete = finalPos == len(cb.tree) && !cb.hasArg
 
 	var suggestions []string
 	if finalPos < len(cb.tree) {
