@@ -109,8 +109,11 @@ func (m CmdInputModel) Update(msg tea.Msg) (CmdInputModel, tea.Cmd) {
 			}
 
 		case "enter":
-			utils.Log(utils.Info, fmt.Sprintf("Executing Command: [%s]", m.lastCmd.status.TreeStr))
+			utils.Log(utils.Info, fmt.Sprintf("ExecCommand: [%s]", m.lastCmd.status.TreeStr))
 			m, cmd = tryEnterCmd(m)
+			if m.lastCmd.status.Error != nil {
+				utils.Log(utils.Attention, fmt.Sprintf("CommandError: %s", m.lastCmd.status.Error.Error()))
+			}
 			cmds = append(cmds, cmd)
 
 		default:
