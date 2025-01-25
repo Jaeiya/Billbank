@@ -10,20 +10,20 @@ import (
 
 var viewStyle = lipgloss.NewStyle().Width(30)
 
-type CmdHistory struct {
+type InputHistory struct {
 	cmds          []string
 	pos           int
 	lastView      string
 	lastViewedLen int
 }
 
-func NewCmdHistory() *CmdHistory {
-	return &CmdHistory{
+func NewCmdHistory() *InputHistory {
+	return &InputHistory{
 		pos: -1,
 	}
 }
 
-func (h *CmdHistory) Add(v string) {
+func (h *InputHistory) Add(v string) {
 	if len(h.cmds) == 0 || h.cmds[0] != v {
 		h.cmds = append([]string{v}, h.cmds...)
 	}
@@ -36,7 +36,7 @@ Cycle moves either up or down through the history of commands
 that have been added. Returns a string containing the command
 text if it exists, and true if history cycles back to present.
 */
-func (h *CmdHistory) Cycle(msg tea.KeyMsg) (string, bool) {
+func (h *InputHistory) Cycle(msg tea.KeyMsg) (string, bool) {
 	if len(h.cmds) == 0 {
 		return "", false
 	}
@@ -58,7 +58,7 @@ func (h *CmdHistory) Cycle(msg tea.KeyMsg) (string, bool) {
 	return h.cmds[h.pos], false
 }
 
-func (h *CmdHistory) View() string {
+func (h *InputHistory) View() string {
 	if h.lastViewedLen == len(h.cmds) {
 		return h.lastView
 	}

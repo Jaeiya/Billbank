@@ -25,7 +25,7 @@ const (
 
 type CmdInputModel struct {
 	CommandInput textinput.Model
-	CmdHistory   *utils.CmdHistory
+	CmdHistory   *utils.InputHistory
 	commands     []commands.Command
 	lastCmd      ParsedCmd
 	aliases      []string

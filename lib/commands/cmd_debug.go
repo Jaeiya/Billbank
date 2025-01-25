@@ -24,7 +24,7 @@ var cmdMap = map[string]func(DebugCmd) string{
 	"slog":    getSLog,
 }
 
-func NewDebugCmd(h *utils.CmdHistory) Command {
+func NewDebugCmd(h *utils.InputHistory) Command {
 	return NewCommand(
 		CommandConfig{
 			Command: Command{
