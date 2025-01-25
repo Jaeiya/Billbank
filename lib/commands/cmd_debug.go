@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -33,7 +34,7 @@ func NewDebugCmd(h *utils.InputHistory) Command {
 					listCommands(),
 				},
 				GetModel: func(status CommandStatus) CommandModelMsg {
-					return DebugCmd{CommandStatus: status, history: h}
+					return DebugCmd{CommandStatus: status, history: h, state: &DebugCmdState{}}
 				},
 				hasArg: false,
 			},
@@ -41,9 +42,16 @@ func NewDebugCmd(h *utils.InputHistory) Command {
 	)
 }
 
+type DebugCmdState struct {
+	lastSlogRender     string
+	lastLineCount      int
+	lastSlogRenderTook time.Duration
+}
+
 type DebugCmd struct {
 	CommandStatus
-	history *utils.CmdHistory
+	history *utils.InputHistory
+	state   *DebugCmdState
 }
 
 func (DebugCmd) Init() tea.Cmd {
@@ -84,7 +92,8 @@ func getLog(DebugCmd) string {
 	return string(bytes)
 }
 
-func getSLog(DebugCmd) string {
+func getSLog(m DebugCmd) string {
+	now := time.Now()
 	dir, err := os.Getwd()
 	if err != nil {
 		panic(err)
@@ -97,6 +106,16 @@ func getSLog(DebugCmd) string {
 
 	str := strings.TrimSpace(string(bytes))
 	lines := strings.Split(str, "\n")
+
+	if len(lines) == m.state.lastLineCount {
+		return fmt.Sprintf(
+			"%s Took: %s",
+			m.state.lastSlogRender,
+			m.state.lastSlogRenderTook,
+		)
+	}
+
+	m.state.lastLineCount = len(lines)
 
 	var sb strings.Builder
 	for _, line := range lines {
@@ -124,6 +143,9 @@ func getSLog(DebugCmd) string {
 
 		sb.WriteString(fmt.Sprintf("%s %s\n", tag, msg))
 	}
+
+	m.state.lastSlogRender = sb.String()
+	m.state.lastSlogRenderTook = time.Since(now)
 	return sb.String()
 }
 
