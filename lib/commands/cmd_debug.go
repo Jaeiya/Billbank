@@ -26,6 +26,8 @@ var cmdMap = map[string]func(DebugCmd) string{
 }
 
 func NewDebugCmd(h *utils.InputHistory) Command {
+	dc := DebugCmd{history: h, state: &DebugCmdState{}}
+
 	return NewCommand(
 		CommandConfig{
 			Command: Command{
@@ -34,7 +36,8 @@ func NewDebugCmd(h *utils.InputHistory) Command {
 					listCommands(),
 				},
 				GetModel: func(status CommandStatus) CommandModelMsg {
-					return DebugCmd{CommandStatus: status, history: h, state: &DebugCmdState{}}
+					dc.CommandStatus = status
+					return dc
 				},
 				hasArg: false,
 			},
