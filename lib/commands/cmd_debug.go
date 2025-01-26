@@ -32,12 +32,17 @@ func NewDebugCmd(h *utils.InputHistory) Command {
 		state:   &DebugCmdState{slog: &DebugSlog{}, inputHistory: &DebugInputHistory{}},
 	}
 
+	cmds := make([]string, 0, len(cmdMap))
+	for k := range cmdMap {
+		cmds = append(cmds, k)
+	}
+
 	return NewCommand(
 		CommandConfig{
 			Command: Command{
 				tree: [][]string{
 					{"/"},
-					listCommands(),
+					cmds,
 				},
 				GetModel: func(status CommandStatus) CommandModelMsg {
 					dc.CommandStatus = status
@@ -186,12 +191,4 @@ func getSLog(m DebugCmd) string {
 	}
 
 	return slog.text.String()
-}
-
-func listCommands() []string {
-	list := make([]string, 0, len(cmdMap))
-	for k := range cmdMap {
-		list = append(list, k)
-	}
-	return list
 }
