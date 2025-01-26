@@ -26,7 +26,7 @@ var cmdMap = map[string]func(DebugCmd) string{
 }
 
 func NewDebugCmd(h *utils.InputHistory) Command {
-	dc := DebugCmd{history: h, state: &DebugCmdState{}}
+	dc := DebugCmd{history: h, state: &DebugCmdState{slog: &Slog{}}}
 
 	return NewCommand(
 		CommandConfig{
@@ -46,9 +46,13 @@ func NewDebugCmd(h *utils.InputHistory) Command {
 }
 
 type DebugCmdState struct {
-	lastSlogRender     strings.Builder
-	lastSlogLineCount  int
-	lastSlogRenderTook time.Duration
+	slog *Slog
+}
+
+type Slog struct {
+	text       strings.Builder
+	lineCount  int
+	renderTime time.Duration
 }
 
 type DebugCmd struct {
@@ -105,28 +109,29 @@ func getSLog(m DebugCmd) string {
 	if err != nil {
 		return err.Error()
 	}
-
-	now := time.Now()
-	defer func() {
-		m.state.lastSlogRenderTook = time.Since(now)
-	}()
+	slog := m.state.slog
 
 	str := strings.TrimSpace(string(bytes))
 	lines := strings.Split(str, "\n")
-	lineLen := len(lines)
+	lineCount := len(lines)
 
-	if lineLen == m.state.lastSlogLineCount {
+	if lineCount == slog.lineCount {
 		return fmt.Sprintf(
 			"%s Took: %s",
-			m.state.lastSlogRender.String(),
-			m.state.lastSlogRenderTook,
+			slog.text.String(),
+			slog.renderTime,
 		)
 	}
 
-	if m.state.lastSlogLineCount > 0 {
-		lines = lines[m.state.lastSlogLineCount:]
+	now := time.Now()
+	defer func() {
+		slog.renderTime = time.Since(now)
+		slog.lineCount = lineCount
+	}()
+
+	if slog.lineCount > 0 {
+		lines = lines[slog.lineCount:]
 	}
-	m.state.lastSlogLineCount = lineLen
 
 	for _, line := range lines {
 		parts := strings.Split(line, " ")
@@ -151,10 +156,10 @@ func getSLog(m DebugCmd) string {
 			msg = errLogStyle.Render(msg)
 		}
 
-		m.state.lastSlogRender.WriteString(fmt.Sprintf("%s %s\n", tag, msg))
+		slog.text.WriteString(fmt.Sprintf("%s %s\n", tag, msg))
 	}
 
-	return m.state.lastSlogRender.String()
+	return slog.text.String()
 }
 
 func listCommands() []string {
