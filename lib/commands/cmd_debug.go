@@ -131,18 +131,8 @@ func getLog(DebugCmd) string {
 }
 
 func getSLog(m DebugCmd) string {
-	dir, err := os.Getwd()
-	if err != nil {
-		panic(err)
-	}
-	path := filepath.Join(dir, "log.txt")
-	bytes, err := os.ReadFile(path)
-	if err != nil {
-		return err.Error()
-	}
+	str := getLog(m)
 	slog := m.state.slog
-
-	str := strings.TrimSpace(string(bytes))
 	lines := strings.Split(str, "\n")
 	lineCount := len(lines)
 
@@ -177,12 +167,13 @@ func getSLog(m DebugCmd) string {
 			msg = msgStyle.Render(strings.Join(words, " "))
 		}
 
-		if tag == "[NFO]" {
+		switch tag {
+		case "[NFO]":
 			tag = infoLogStyle.Render(tag)
-		} else if tag == "[ATN]" {
+		case "[ATN]":
 			tag = attnLogStyle.Render(tag)
 			msg = attnLogStyle.Render(msg)
-		} else if tag == "[ERR]" {
+		case "[ERR]":
 			tag = errLogStyle.Render(tag)
 			msg = errLogStyle.Render(msg)
 		}
