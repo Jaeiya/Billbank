@@ -127,7 +127,7 @@ func getLog(DebugCmd) string {
 	if err != nil {
 		return err.Error()
 	}
-	return string(bytes)
+	return strings.TrimSpace(string(bytes))
 }
 
 func getSLog(m DebugCmd) string {
