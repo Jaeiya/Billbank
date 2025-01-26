@@ -28,8 +28,8 @@ var cmdMap = map[string]func(DebugCmd) string{
 
 func NewDebugCmd(h *utils.InputHistory) Command {
 	dc := DebugCmd{
-		history: h,
-		state:   &DebugCmdState{slog: &DebugSlog{}, inputHistory: &DebugInputHistory{}},
+		inputHistory: h,
+		state:        &DebugCmdState{},
 	}
 
 	cmds := make([]string, 0, len(cmdMap))
@@ -55,25 +55,17 @@ func NewDebugCmd(h *utils.InputHistory) Command {
 }
 
 type DebugCmdState struct {
-	slog         *DebugSlog
-	inputHistory *DebugInputHistory
-}
-
-type DebugSlog struct {
-	text       strings.Builder
-	lineCount  int
-	renderTime time.Duration
-}
-
-type DebugInputHistory struct {
-	view      string
-	itemCount int
+	slogText       strings.Builder
+	slogLineCount  int
+	slogRenderTime time.Duration
+	historyView    string
+	historyCount   int
 }
 
 type DebugCmd struct {
 	CommandStatus
-	history *utils.InputHistory
-	state   *DebugCmdState
+	inputHistory *utils.InputHistory
+	state        *DebugCmdState
 }
 
 func (DebugCmd) Init() tea.Cmd {
@@ -97,14 +89,13 @@ func (m DebugCmd) IsImplemented() bool {
 	return ok
 }
 
-func getInputHistory(m DebugCmd) string {
-	histState := m.state.inputHistory
-	if m.history.GetLen() == histState.itemCount {
-		return histState.view
+func getInputHistory(cmd DebugCmd) string {
+	if cmd.inputHistory.GetLen() == cmd.state.historyCount {
+		return cmd.state.historyView
 	}
 
 	var sb strings.Builder
-	items := m.history.GetInputs()
+	items := cmd.inputHistory.GetInputs()
 	for i, item := range items {
 		if i == 0 {
 			sb.WriteString(item)
@@ -112,9 +103,9 @@ func getInputHistory(m DebugCmd) string {
 		}
 		sb.WriteString(fmt.Sprintf("\n%s", item))
 	}
-	histState.itemCount = m.history.GetLen()
-	histState.view = histStyle.Render(sb.String())
-	return histState.view
+	cmd.state.historyCount = cmd.inputHistory.GetLen()
+	cmd.state.historyView = histStyle.Render(sb.String())
+	return cmd.state.historyView
 }
 
 func getLog(DebugCmd) string {
@@ -130,28 +121,27 @@ func getLog(DebugCmd) string {
 	return strings.TrimSpace(string(bytes))
 }
 
-func getSLog(m DebugCmd) string {
-	str := getLog(m)
-	slog := m.state.slog
+func getSLog(cmd DebugCmd) string {
+	str := getLog(cmd)
 	lines := strings.Split(str, "\n")
 	lineCount := len(lines)
 
-	if lineCount == slog.lineCount {
+	if lineCount == cmd.state.slogLineCount {
 		return fmt.Sprintf(
 			"%s Took: %s",
-			slog.text.String(),
-			slog.renderTime,
+			cmd.state.slogText.String(),
+			cmd.state.slogRenderTime,
 		)
 	}
 
 	now := time.Now()
 	defer func() {
-		slog.renderTime = time.Since(now)
-		slog.lineCount = lineCount
+		cmd.state.slogRenderTime = time.Since(now)
+		cmd.state.slogLineCount = lineCount
 	}()
 
-	if slog.lineCount > 0 {
-		lines = lines[slog.lineCount:]
+	if cmd.state.slogLineCount > 0 {
+		lines = lines[cmd.state.slogLineCount:]
 	}
 
 	for _, line := range lines {
@@ -178,8 +168,8 @@ func getSLog(m DebugCmd) string {
 			msg = errLogStyle.Render(msg)
 		}
 
-		slog.text.WriteString(fmt.Sprintf("%s %s\n", tag, msg))
+		cmd.state.slogText.WriteString(fmt.Sprintf("%s %s\n", tag, msg))
 	}
 
-	return slog.text.String()
+	return cmd.state.slogText.String()
 }
