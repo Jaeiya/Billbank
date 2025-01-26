@@ -17,16 +17,20 @@ var (
 	attnLogStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#FFDE00"))
 	errLogStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF82E9"))
 	msgStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("#96F1D4"))
+	histStyle    = lipgloss.NewStyle().Width(30)
 )
 
 var cmdMap = map[string]func(DebugCmd) string{
-	"history": getHistory,
+	"history": getInputHistory,
 	"log":     getLog,
 	"slog":    getSLog,
 }
 
 func NewDebugCmd(h *utils.InputHistory) Command {
-	dc := DebugCmd{history: h, state: &DebugCmdState{slog: &Slog{}}}
+	dc := DebugCmd{
+		history: h,
+		state:   &DebugCmdState{slog: &DebugSlog{}, inputHistory: &DebugInputHistory{}},
+	}
 
 	return NewCommand(
 		CommandConfig{
@@ -46,13 +50,19 @@ func NewDebugCmd(h *utils.InputHistory) Command {
 }
 
 type DebugCmdState struct {
-	slog *Slog
+	slog         *DebugSlog
+	inputHistory *DebugInputHistory
 }
 
-type Slog struct {
+type DebugSlog struct {
 	text       strings.Builder
 	lineCount  int
 	renderTime time.Duration
+}
+
+type DebugInputHistory struct {
+	view      string
+	itemCount int
 }
 
 type DebugCmd struct {
@@ -82,8 +92,24 @@ func (m DebugCmd) IsImplemented() bool {
 	return ok
 }
 
-func getHistory(m DebugCmd) string {
-	return m.history.View()
+func getInputHistory(m DebugCmd) string {
+	histState := m.state.inputHistory
+	if m.history.GetLen() == histState.itemCount {
+		return histState.view
+	}
+
+	var sb strings.Builder
+	items := m.history.GetInputs()
+	for i, item := range items {
+		if i == 0 {
+			sb.WriteString(item)
+			continue
+		}
+		sb.WriteString(fmt.Sprintf("\n%s", item))
+	}
+	histState.itemCount = m.history.GetLen()
+	histState.view = histStyle.Render(sb.String())
+	return histState.view
 }
 
 func getLog(DebugCmd) string {

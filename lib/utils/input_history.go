@@ -1,14 +1,8 @@
 package utils
 
 import (
-	"fmt"
-	"strings"
-
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 )
-
-var viewStyle = lipgloss.NewStyle().Width(30)
 
 type InputHistory struct {
 	cmds          []string
@@ -58,19 +52,12 @@ func (h *InputHistory) Cycle(msg tea.KeyMsg) (string, bool) {
 	return h.cmds[h.pos], false
 }
 
-func (h *InputHistory) View() string {
-	if h.lastViewedLen == len(h.cmds) {
-		return h.lastView
-	}
-	var sb strings.Builder
-	for i, cmd := range h.cmds {
-		if i == 0 {
-			sb.WriteString(cmd)
-			continue
-		}
-		sb.WriteString(fmt.Sprintf("\n%s", cmd))
-	}
-	h.lastViewedLen = len(h.cmds)
-	h.lastView = viewStyle.Render(sb.String())
-	return h.lastView
+func (h InputHistory) GetInputs() []string {
+	newList := make([]string, len(h.cmds))
+	copy(newList, h.cmds)
+	return newList
+}
+
+func (h InputHistory) GetLen() int {
+	return len(h.cmds)
 }
