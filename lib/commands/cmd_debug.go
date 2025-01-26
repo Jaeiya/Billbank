@@ -44,7 +44,7 @@ func NewDebugCmd(h *utils.InputHistory) Command {
 					{"/"},
 					cmds,
 				},
-				GetModel: func(status CommandStatus) CommandModelMsg {
+				GetModel: func(status CommandStatus) utils.CommandModelMsg {
 					dc.CommandStatus = status
 					return dc
 				},
@@ -72,7 +72,7 @@ func (DebugCmd) Init() tea.Cmd {
 	return nil
 }
 
-func (x DebugCmd) Update(tea.Msg) (CommandModelMsg, tea.Cmd) {
+func (x DebugCmd) Update(msg tea.Msg) (utils.CommandModelMsg, tea.Cmd) {
 	return x, nil
 }
 

@@ -5,7 +5,7 @@ import (
 	"slices"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
+	"github.com/jaeiya/billbank/lib/utils"
 )
 
 type CommandError error
@@ -42,15 +42,8 @@ type CommandConfig struct {
 	Command
 }
 
-type CommandModelMsg interface {
-	Init() tea.Cmd
-	Update(tea.Msg) (CommandModelMsg, tea.Cmd)
-	View() string
-	IsImplemented() bool
-}
-
 type Command struct {
-	GetModel func(CommandStatus) CommandModelMsg
+	GetModel func(CommandStatus) utils.CommandModelMsg
 	// Represents the way a command is hierarchically constructed
 	// including aliases.
 	//

@@ -3,7 +3,6 @@ package ui
 import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/jaeiya/billbank/lib/commands"
 	"github.com/jaeiya/billbank/lib/utils"
 )
 
@@ -19,7 +18,7 @@ type CurrentCmd struct {
 
 type ViewPort struct {
 	Commander       CmdInputModel
-	CurrentCmdModel commands.CommandModelMsg
+	CurrentCmdModel utils.CommandModelMsg
 	height          int
 	width           int
 }
@@ -33,7 +32,7 @@ func (vp ViewPort) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
-	case commands.CommandModelMsg:
+	case utils.CommandModelMsg:
 		if !msg.IsImplemented() {
 			utils.Log(utils.Error, "CommandError: command not implemented")
 			return vp, vp.sendStatusMsg("Command Not Implemented", HIGH)
