@@ -6,11 +6,6 @@ import (
 	"github.com/jaeiya/billbank/lib/utils"
 )
 
-type ViewportSizeMsg struct {
-	width  int
-	height int
-}
-
 type CurrentCmd struct {
 	Model tea.Model
 	Cmd   tea.Cmd
@@ -58,24 +53,24 @@ func (vp ViewPort) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return vp, tea.Batch(cmds...)
 }
 
-func (vp ViewPort) View() string { // Define a style with a fixed height and bottom alignment
+func (vp ViewPort) View() string {
 	cmdrStr := vp.Commander.View()
 	h := lipgloss.Height(cmdrStr)
 	cmdView := ""
 	if vp.CurrentCmdModel != nil {
 		cmdView = vp.CurrentCmdModel.View()
 	}
-	block := lipgloss.Place(vp.width, vp.height-h, lipgloss.Left, lipgloss.Top, cmdView)
 
+	block := lipgloss.Place(vp.width, vp.height-h, lipgloss.Left, lipgloss.Top, cmdView)
 	content := lipgloss.JoinVertical(lipgloss.Top, block, cmdrStr)
 
 	return content
 }
 
 func (vp ViewPort) sendViewportSize() tea.Msg {
-	return ViewportSizeMsg{
-		height: vp.height - len(vp.Commander.View()),
-		width:  vp.width,
+	return utils.ViewportSizeMsg{
+		Height: vp.height - lipgloss.Height(vp.Commander.View()),
+		Width:  vp.width,
 	}
 }
 
