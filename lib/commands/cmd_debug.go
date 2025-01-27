@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/jaeiya/billbank/lib/utils"
@@ -16,8 +17,9 @@ var (
 	infoLogStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#33B0FF"))
 	attnLogStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#FFDE00"))
 	errLogStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF82E9"))
+	logStyle     = lipgloss.NewStyle().MarginLeft(1).MarginTop(1)
 	msgStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("#96F1D4"))
-	histStyle    = lipgloss.NewStyle().Width(30)
+	histStyle    = lipgloss.NewStyle().Padding(1)
 )
 
 var cmdMap = map[string]func(DebugCmd) string{
@@ -27,9 +29,11 @@ var cmdMap = map[string]func(DebugCmd) string{
 }
 
 func NewDebugCmd(h *utils.InputHistory) Command {
+	vp := viewport.New(0, 0)
 	dc := DebugCmd{
 		inputHistory: h,
 		state:        &DebugCmdState{},
+		viewPort:     &vp,
 	}
 
 	cmds := make([]string, 0, len(cmdMap))
@@ -64,16 +68,43 @@ type DebugCmdState struct {
 
 type DebugCmd struct {
 	CommandStatus
-	inputHistory *utils.InputHistory
-	state        *DebugCmdState
+	inputHistory   *utils.InputHistory
+	state          *DebugCmdState
+	viewPortWidth  int
+	viewPortHeight int
+	viewPort       *viewport.Model
 }
 
 func (DebugCmd) Init() tea.Cmd {
 	return nil
 }
 
-func (x DebugCmd) Update(msg tea.Msg) (utils.CommandModelMsg, tea.Cmd) {
-	return x, nil
+func (cmd DebugCmd) Update(msg tea.Msg) (utils.CommandModelMsg, tea.Cmd) {
+	var c tea.Cmd
+	var cmds []tea.Cmd
+
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		if msg.String() == "ctrl+j" {
+			cmd.viewPort.LineDown(5)
+		}
+		if msg.String() == "ctrl+k" {
+			cmd.viewPort.LineUp(5)
+		}
+
+	case utils.ViewportSizeMsg:
+		cmd.viewPortWidth = msg.Width
+		cmd.viewPortHeight = msg.Height
+		cmd.viewPort.Width = cmd.viewPortWidth
+		cmd.viewPort.Height = cmd.viewPortHeight - 1
+		cmd.viewPort.YPosition = 1
+		utils.Log(utils.Info, msg.Height)
+	}
+
+	_, c = cmd.viewPort.Update(msg)
+	cmds = append(cmds, c)
+
+	return cmd, tea.Batch(cmds...)
 }
 
 func (m DebugCmd) View() string {
@@ -91,7 +122,7 @@ func (m DebugCmd) IsImplemented() bool {
 
 func getInputHistory(cmd DebugCmd) string {
 	if cmd.inputHistory.GetLen() == cmd.state.historyCount {
-		return cmd.state.historyView
+		return histStyle.Render(cmd.state.historyView)
 	}
 
 	var sb strings.Builder
@@ -104,8 +135,9 @@ func getInputHistory(cmd DebugCmd) string {
 		sb.WriteString(fmt.Sprintf("\n%s", item))
 	}
 	cmd.state.historyCount = cmd.inputHistory.GetLen()
-	cmd.state.historyView = histStyle.Render(sb.String())
-	return cmd.state.historyView
+	cmd.state.historyView = sb.String()
+
+	return histStyle.Render(cmd.state.historyView)
 }
 
 func getLog(DebugCmd) string {
@@ -127,11 +159,12 @@ func getSLog(cmd DebugCmd) string {
 	lineCount := len(lines)
 
 	if lineCount == cmd.state.slogLineCount {
-		return fmt.Sprintf(
+		content := fmt.Sprintf(
 			"%s Took: %s",
-			cmd.state.slogText.String(),
+			cmd.viewPort.View(),
 			cmd.state.slogRenderTime,
 		)
+		return logStyle.Render(content)
 	}
 
 	now := time.Now()
@@ -171,5 +204,7 @@ func getSLog(cmd DebugCmd) string {
 		cmd.state.slogText.WriteString(fmt.Sprintf("%s %s\n", tag, msg))
 	}
 
-	return cmd.state.slogText.String()
+	cmd.viewPort.SetContent(cmd.state.slogText.String())
+	cmd.viewPort.GotoBottom()
+	return logStyle.Render(cmd.viewPort.View())
 }
