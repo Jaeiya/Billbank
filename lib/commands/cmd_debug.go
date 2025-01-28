@@ -22,32 +22,19 @@ var (
 	histStyle    = lipgloss.NewStyle().Padding(1)
 )
 
-var cmdMap = map[string]func(DebugCmd) string{
-	"history": getInputHistory,
-	"log":     getLog,
-	"slog":    getSLog,
-}
-
 func NewDebugCmd(h *utils.InputHistory) Command {
 	vp := viewport.New(0, 0)
-	dc := DebugCmd{
+	vp.YPosition = 1
+	dc := DebugCmdModel{
 		inputHistory: h,
 		state:        &DebugCmdState{},
-		viewPort:     &vp,
-	}
-
-	cmds := make([]string, 0, len(cmdMap))
-	for k := range cmdMap {
-		cmds = append(cmds, k)
+		viewPort:     vp,
 	}
 
 	return NewCommand(
 		CommandConfig{
 			Command: Command{
-				tree: [][]string{
-					{"/"},
-					cmds,
-				},
+				tree: dc.GetCmdTree(),
 				GetModel: func(status CommandStatus) utils.CommandModelMsg {
 					dc.CommandStatus = status
 					return dc
@@ -64,69 +51,98 @@ type DebugCmdState struct {
 	slogRenderTime time.Duration
 	historyView    string
 	historyCount   int
+	lastLogStr     string
 }
 
-type DebugCmd struct {
+type DebugCmdModel struct {
 	CommandStatus
 	inputHistory   *utils.InputHistory
 	state          *DebugCmdState
 	viewPortWidth  int
 	viewPortHeight int
-	viewPort       *viewport.Model
+	viewPort       viewport.Model
 }
 
-func (DebugCmd) Init() tea.Cmd {
+func (DebugCmdModel) Init() tea.Cmd {
 	return nil
 }
 
-func (cmd DebugCmd) Update(msg tea.Msg) (utils.CommandModelMsg, tea.Cmd) {
-	var c tea.Cmd
+func (m DebugCmdModel) Update(msg tea.Msg) (utils.CommandModelMsg, tea.Cmd) {
+	var cmd tea.Cmd
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		if msg.String() == "ctrl+j" {
-			cmd.viewPort.LineDown(5)
+			m.viewPort.LineDown(5)
 		}
 		if msg.String() == "ctrl+k" {
-			cmd.viewPort.LineUp(5)
+			m.viewPort.LineUp(5)
 		}
 
 	case utils.ViewportSizeMsg:
-		cmd.viewPortWidth = msg.Width
-		cmd.viewPortHeight = msg.Height
-		cmd.viewPort.Width = cmd.viewPortWidth
-		cmd.viewPort.Height = cmd.viewPortHeight - 1
-		cmd.viewPort.YPosition = 1
-		utils.Log(utils.Info, msg.Height)
+		m.viewPortWidth = msg.Width
+		m.viewPortHeight = msg.Height
+		m.viewPort.Width = m.viewPortWidth
+		m.viewPort.Height = m.viewPortHeight - 2
 	}
 
-	_, c = cmd.viewPort.Update(msg)
-	cmds = append(cmds, c)
+	switch m.CommandStr {
+	case "log":
+		m, _ = m.cacheLog()
 
-	return cmd, tea.Batch(cmds...)
-}
+	case "history":
+		m, _ = m.getInputHistory()
 
-func (m DebugCmd) View() string {
-	if exec, ok := cmdMap[m.CommandStr]; ok {
-		return exec(m)
+	case "slog":
+		m, _ = m.cacheSlog()
+
 	}
 
-	panic("missing view; use IsImplemented to check for this error")
+	_, cmd = m.viewPort.Update(msg)
+	cmds = append(cmds, cmd)
+
+	return m, tea.Batch(cmds...)
 }
 
-func (m DebugCmd) IsImplemented() bool {
-	_, ok := cmdMap[m.CommandStatus.CommandStr]
-	return ok
+func (m DebugCmdModel) View() string {
+	switch m.CommandStr {
+	case "history":
+		return histStyle.Render(m.state.historyView)
+	case "log":
+		return m.state.lastLogStr
+	case "slog":
+		content := fmt.Sprintf(
+			"%s\nTook: %s",
+			m.viewPort.View(),
+			m.state.slogRenderTime,
+		)
+		return logStyle.Render(content)
+	default:
+		return "command has no view"
+	}
+
+	// panic("missing view; use IsImplemented to check for this error")
 }
 
-func getInputHistory(cmd DebugCmd) string {
-	if cmd.inputHistory.GetLen() == cmd.state.historyCount {
-		return histStyle.Render(cmd.state.historyView)
+func (m DebugCmdModel) IsImplemented() bool {
+	return true
+}
+
+func (DebugCmdModel) GetCmdTree() [][]string {
+	return [][]string{
+		{"/"},
+		{"history", "log", "slog"},
+	}
+}
+
+func (m DebugCmdModel) getInputHistory() (DebugCmdModel, tea.Cmd) {
+	if m.inputHistory.GetLen() == m.state.historyCount {
+		return m, nil
 	}
 
 	var sb strings.Builder
-	items := cmd.inputHistory.GetInputs()
+	items := m.inputHistory.GetInputs()
 	for i, item := range items {
 		if i == 0 {
 			sb.WriteString(item)
@@ -134,47 +150,54 @@ func getInputHistory(cmd DebugCmd) string {
 		}
 		sb.WriteString(fmt.Sprintf("\n%s", item))
 	}
-	cmd.state.historyCount = cmd.inputHistory.GetLen()
-	cmd.state.historyView = sb.String()
+	m.state.historyCount = m.inputHistory.GetLen()
+	m.state.historyView = sb.String()
 
-	return histStyle.Render(cmd.state.historyView)
+	return m, nil
 }
 
-func getLog(DebugCmd) string {
+func (m DebugCmdModel) cacheLog() (DebugCmdModel, tea.Cmd) {
+	// TODO - refactor this into utils so we can cache result
 	dir, err := os.Getwd()
 	if err != nil {
 		panic(err)
 	}
 	path := filepath.Join(dir, "log.txt")
+	fileInfo, err := os.Stat(path)
+	if err != nil {
+		panic(err)
+	}
+	state := m.state
+	if fileInfo.Size() == int64(len(state.lastLogStr)+1) {
+		return m, nil
+	}
 	bytes, err := os.ReadFile(path)
 	if err != nil {
-		return err.Error()
+		state.lastLogStr = err.Error()
+		return m, nil
 	}
-	return strings.TrimSpace(string(bytes))
+	state.lastLogStr = strings.TrimSpace(string(bytes))
+	return m, nil
 }
 
-func getSLog(cmd DebugCmd) string {
-	str := getLog(cmd)
-	lines := strings.Split(str, "\n")
+func (m DebugCmdModel) cacheSlog() (DebugCmdModel, tea.Cmd) {
+	m.cacheLog()
+	state := m.state
+	lines := strings.Split(state.lastLogStr, "\n")
 	lineCount := len(lines)
 
-	if lineCount == cmd.state.slogLineCount {
-		content := fmt.Sprintf(
-			"%s Took: %s",
-			cmd.viewPort.View(),
-			cmd.state.slogRenderTime,
-		)
-		return logStyle.Render(content)
+	if lineCount == m.state.slogLineCount {
+		return m, nil
 	}
 
 	now := time.Now()
 	defer func() {
-		cmd.state.slogRenderTime = time.Since(now)
-		cmd.state.slogLineCount = lineCount
+		m.state.slogRenderTime = time.Since(now)
+		m.state.slogLineCount = lineCount
 	}()
 
-	if cmd.state.slogLineCount > 0 {
-		lines = lines[cmd.state.slogLineCount:]
+	if m.state.slogLineCount > 0 {
+		lines = lines[m.state.slogLineCount:]
 	}
 
 	for _, line := range lines {
@@ -201,10 +224,10 @@ func getSLog(cmd DebugCmd) string {
 			msg = errLogStyle.Render(msg)
 		}
 
-		cmd.state.slogText.WriteString(fmt.Sprintf("%s %s\n", tag, msg))
+		m.state.slogText.WriteString(fmt.Sprintf("%s %s\n", tag, msg))
 	}
 
-	cmd.viewPort.SetContent(cmd.state.slogText.String())
-	cmd.viewPort.GotoBottom()
-	return logStyle.Render(cmd.viewPort.View())
+	m.viewPort.SetContent(m.state.slogText.String())
+	m.viewPort.GotoBottom()
+	return m, nil
 }
