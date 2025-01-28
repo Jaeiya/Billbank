@@ -13,7 +13,7 @@ type CurrentCmd struct {
 
 type ViewPort struct {
 	Commander       CmdInputModel
-	CurrentCmdModel utils.CommandModelMsg
+	CurrentCmdModel utils.CommandModel
 	height          int
 	width           int
 }

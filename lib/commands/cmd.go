@@ -19,6 +19,8 @@ var (
 	ErrMissingArgument = CommandError(fmt.Errorf("missing argument"))
 )
 
+var cmdId = 0
+
 type CommandStatus struct {
 	IsCommand   bool
 	IsComplete  bool
@@ -43,7 +45,7 @@ type CommandConfig struct {
 }
 
 type Command struct {
-	GetModel func(CommandStatus) utils.CommandModelMsg
+	GetModel func(CommandStatus) utils.CommandModel
 	// Represents the way a command is hierarchically constructed
 	// including aliases.
 	//
@@ -54,6 +56,7 @@ type Command struct {
 	//		set bill name
 	//		set stat amount
 	// 		set stat name
+	id                  int
 	tree                [][]string
 	hasArg              bool
 	inputValidationFunc func(arg string) error
@@ -64,17 +67,24 @@ func NewCommand(config CommandConfig) Command {
 	if config.hasArg && config.inputValidationFunc == nil {
 		panic("command arguments need a validation function")
 	}
-	return Command{
+	cmdId += 1
+	cmd := Command{
 		tree:                config.tree,
 		inputValidationFunc: config.inputValidationFunc,
 		hasArg:              config.hasArg,
 		GetModel:            config.GetModel,
+		id:                  cmdId,
 		keyValidationFunc:   config.keyValidationFunc,
 	}
+	return cmd
 }
 
-func (cb *Command) GetAliases() []string {
+func (cb Command) GetAliases() []string {
 	return cb.tree[0]
+}
+
+func (cb Command) GetId() int {
+	return cb.id
 }
 
 func (cb *Command) ParseCommand(cmd string) CommandStatus {
