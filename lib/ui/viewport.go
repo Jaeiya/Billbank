@@ -28,12 +28,13 @@ func (vp ViewPort) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case utils.CommandModelMsg:
-		if !msg.IsImplemented() {
+		if !msg.Model.IsImplemented() {
 			utils.Log(utils.Error, "CommandError: command not implemented")
 			return vp, vp.sendStatusMsg("Command Not Implemented", HIGH)
 		}
-		vp.CurrentCmdModel = msg
-		cmds = append(cmds, vp.sendViewportSize)
+		vp.CurrentCmdModel = msg.Model
+		// Immediately send viewport size
+		vp.CurrentCmdModel, _ = vp.CurrentCmdModel.Update(vp.sendViewportSize())
 
 	case tea.WindowSizeMsg:
 		vp.height = msg.Height
