@@ -6,7 +6,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/jaeiya/billbank/lib/commands"
+	commands "github.com/jaeiya/billbank/lib/ui/commands"
 	"github.com/jaeiya/billbank/lib/utils"
 )
 
@@ -177,7 +177,7 @@ func tryEnterCmd(m CmdInputModel) (CmdInputModel, tea.Cmd) {
 		m.lastCmd = m.currentCmd
 		m.currentCmd = ParsedCmd{}
 		m.CommandInput.Reset()
-		return m, func() tea.Msg { return utils.CommandModelMsg{ID: currCmd.GetId(), Model: cmdModel} }
+		return m, func() tea.Msg { return commands.CommandModelMsg{ID: currCmd.GetId(), Model: cmdModel} }
 	}
 
 	if m.currentCmd.status.IsCommand && !m.currentCmd.status.IsComplete {

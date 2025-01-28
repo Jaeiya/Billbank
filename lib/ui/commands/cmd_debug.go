@@ -1,4 +1,4 @@
-package commands
+package ui
 
 import (
 	"fmt"
@@ -34,7 +34,7 @@ func NewDebugCmd(h *utils.InputHistory) Command {
 		CommandConfig{
 			Command: Command{
 				tree: dc.GetCmdTree(),
-				GetModel: func(status CommandStatus) utils.CommandModel {
+				GetModel: func(status CommandStatus) CommandModel {
 					dc.CommandStatus = status
 					return dc
 				},
@@ -60,7 +60,7 @@ func (DebugCmdModel) Init() tea.Cmd {
 	return nil
 }
 
-func (m DebugCmdModel) Update(msg tea.Msg) (utils.CommandModel, tea.Cmd) {
+func (m DebugCmdModel) Update(msg tea.Msg) (CommandModel, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
 

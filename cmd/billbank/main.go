@@ -2,8 +2,8 @@ package main
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/jaeiya/billbank/lib/commands"
 	"github.com/jaeiya/billbank/lib/ui"
+	commands "github.com/jaeiya/billbank/lib/ui/commands"
 	"github.com/jaeiya/billbank/lib/utils"
 )
 
