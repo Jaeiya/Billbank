@@ -27,8 +27,7 @@ func NewDebugCmd(h *utils.InputHistory) Command {
 	vp.YPosition = 1
 	dc := DebugCmdModel{
 		inputHistory: h,
-		state:        &DebugCmdState{},
-		viewPort:     vp,
+		slogViewPort: vp,
 	}
 
 	return NewCommand(
@@ -45,22 +44,16 @@ func NewDebugCmd(h *utils.InputHistory) Command {
 	)
 }
 
-type DebugCmdState struct {
-	slogText       strings.Builder
-	slogLineCount  int
-	slogRenderTime time.Duration
-	historyView    string
-	historyCount   int
-	lastLogStr     string
-}
-
 type DebugCmdModel struct {
 	CommandStatus
 	inputHistory   *utils.InputHistory
-	state          *DebugCmdState
-	viewPortWidth  int
-	viewPortHeight int
-	viewPort       viewport.Model
+	historyLen     int
+	historyView    string
+	lastLogStr     string
+	lastSlogStr    string
+	slogViewPort   viewport.Model
+	slogLineCount  int
+	slogRenderTime time.Duration
 }
 
 func (DebugCmdModel) Init() tea.Cmd {
@@ -74,32 +67,33 @@ func (m DebugCmdModel) Update(msg tea.Msg) (utils.CommandModel, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		if msg.String() == "ctrl+j" {
-			m.viewPort.LineDown(5)
+			m.slogViewPort.LineDown(5)
 		}
 		if msg.String() == "ctrl+k" {
-			m.viewPort.LineUp(5)
+			m.slogViewPort.LineUp(5)
 		}
 
 	case utils.ViewportSizeMsg:
-		m.viewPortWidth = msg.Width
-		m.viewPortHeight = msg.Height
-		m.viewPort.Width = m.viewPortWidth
-		m.viewPort.Height = m.viewPortHeight - 2
+		m.slogViewPort.Width = msg.Width
+		m.slogViewPort.Height = msg.Height - 2
+
+	case utils.CommandStrMsg:
+		m.CommandStr = string(msg)
 	}
 
 	switch m.CommandStr {
 	case "log":
-		m, _ = m.cacheLog()
+		m.loadLog()
 
 	case "history":
-		m, _ = m.getInputHistory()
+		m.loadInputHistory()
 
 	case "slog":
-		m, _ = m.cacheSlog()
+		m.loadSlog()
 
 	}
 
-	_, cmd = m.viewPort.Update(msg)
+	_, cmd = m.slogViewPort.Update(msg)
 	cmds = append(cmds, cmd)
 
 	return m, tea.Batch(cmds...)
@@ -108,21 +102,22 @@ func (m DebugCmdModel) Update(msg tea.Msg) (utils.CommandModel, tea.Cmd) {
 func (m DebugCmdModel) View() string {
 	switch m.CommandStr {
 	case "history":
-		return histStyle.Render(m.state.historyView)
+		return histStyle.Render(m.historyView)
+
 	case "log":
-		return m.state.lastLogStr
+		return m.lastLogStr
+
 	case "slog":
 		content := fmt.Sprintf(
 			"%s\nTook: %s",
-			m.viewPort.View(),
-			m.state.slogRenderTime,
+			m.slogViewPort.View(),
+			m.slogRenderTime,
 		)
 		return logStyle.Render(content)
+
 	default:
 		return "command has no view"
 	}
-
-	// panic("missing view; use IsImplemented to check for this error")
 }
 
 func (m DebugCmdModel) IsImplemented() bool {
@@ -136,9 +131,9 @@ func (DebugCmdModel) GetCmdTree() [][]string {
 	}
 }
 
-func (m DebugCmdModel) getInputHistory() (DebugCmdModel, tea.Cmd) {
-	if m.inputHistory.GetLen() == m.state.historyCount {
-		return m, nil
+func (m *DebugCmdModel) loadInputHistory() {
+	if m.inputHistory.GetLen() == m.historyLen {
+		return
 	}
 
 	var sb strings.Builder
@@ -150,13 +145,11 @@ func (m DebugCmdModel) getInputHistory() (DebugCmdModel, tea.Cmd) {
 		}
 		sb.WriteString(fmt.Sprintf("\n%s", item))
 	}
-	m.state.historyCount = m.inputHistory.GetLen()
-	m.state.historyView = sb.String()
-
-	return m, nil
+	m.historyLen = m.inputHistory.GetLen()
+	m.historyView = sb.String()
 }
 
-func (m DebugCmdModel) cacheLog() (DebugCmdModel, tea.Cmd) {
+func (m *DebugCmdModel) loadLog() {
 	// TODO - refactor this into utils so we can cache result
 	dir, err := os.Getwd()
 	if err != nil {
@@ -167,37 +160,36 @@ func (m DebugCmdModel) cacheLog() (DebugCmdModel, tea.Cmd) {
 	if err != nil {
 		panic(err)
 	}
-	state := m.state
-	if fileInfo.Size() == int64(len(state.lastLogStr)+1) {
-		return m, nil
+	if fileInfo.Size() == int64(len(m.lastLogStr)+1) {
+		return
 	}
 	bytes, err := os.ReadFile(path)
 	if err != nil {
-		state.lastLogStr = err.Error()
-		return m, nil
+		m.lastLogStr = err.Error()
+		return
 	}
-	state.lastLogStr = strings.TrimSpace(string(bytes))
-	return m, nil
+	m.lastLogStr = strings.TrimSpace(string(bytes))
 }
 
-func (m DebugCmdModel) cacheSlog() (DebugCmdModel, tea.Cmd) {
-	m.cacheLog()
-	state := m.state
-	lines := strings.Split(state.lastLogStr, "\n")
+func (m *DebugCmdModel) loadSlog() {
+	m.loadLog()
+	lines := strings.Split(m.lastLogStr, "\n")
 	lineCount := len(lines)
 
-	if lineCount == m.state.slogLineCount {
-		return m, nil
+	if lineCount == m.slogLineCount {
+		return
 	}
 
 	now := time.Now()
 	defer func() {
-		m.state.slogRenderTime = time.Since(now)
-		m.state.slogLineCount = lineCount
+		m.slogRenderTime = time.Since(now)
+		m.slogLineCount = lineCount
 	}()
 
-	if m.state.slogLineCount > 0 {
-		lines = lines[m.state.slogLineCount:]
+	var sb strings.Builder
+	if m.slogLineCount > 0 {
+		sb.WriteString(strings.TrimSpace(m.lastSlogStr) + "\n")
+		lines = lines[m.slogLineCount:]
 	}
 
 	for _, line := range lines {
@@ -224,10 +216,10 @@ func (m DebugCmdModel) cacheSlog() (DebugCmdModel, tea.Cmd) {
 			msg = errLogStyle.Render(msg)
 		}
 
-		m.state.slogText.WriteString(fmt.Sprintf("%s %s\n", tag, msg))
+		sb.WriteString(fmt.Sprintf("%s %s\n", tag, msg))
 	}
 
-	m.viewPort.SetContent(m.state.slogText.String())
-	m.viewPort.GotoBottom()
-	return m, nil
+	m.lastSlogStr = sb.String()
+	m.slogViewPort.SetContent(sb.String())
+	m.slogViewPort.GotoBottom()
 }
