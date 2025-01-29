@@ -1,4 +1,4 @@
-package ui
+package commands
 
 import (
 	"fmt"
@@ -10,6 +10,7 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/jaeiya/billbank/lib/ui"
 	"github.com/jaeiya/billbank/lib/utils"
 )
 
@@ -22,7 +23,9 @@ var (
 	histStyle    = lipgloss.NewStyle().Padding(1)
 )
 
-func NewDebugCmd(h *utils.InputHistory) Command {
+var cmdMap = map[string]func(){}
+
+func NewDebugCmd(h *utils.InputHistory) ui.Command {
 	vp := viewport.New(0, 0)
 	vp.YPosition = 1
 	dc := DebugCmdModel{
@@ -30,22 +33,19 @@ func NewDebugCmd(h *utils.InputHistory) Command {
 		slogViewPort: vp,
 	}
 
-	return NewCommand(
-		CommandConfig{
-			Command: Command{
-				tree: dc.GetCmdTree(),
-				GetModel: func(status CommandStatus) CommandModel {
-					dc.CommandStatus = status
-					return dc
-				},
-				hasArg: false,
-			},
+	return ui.NewCommand(
+		ui.CommandConfig{
+			Tree:                dc.GetCmdTree(),
+			Model:               dc,
+			InputValidationFunc: func(arg string) error { return nil },
+			KeyValidationFunc:   func(key rune) bool { return false },
+			HasArg:              false,
 		},
 	)
 }
 
 type DebugCmdModel struct {
-	CommandStatus
+	activeCmdStr   string
 	inputHistory   *utils.InputHistory
 	historyLen     int
 	historyView    string
@@ -56,11 +56,7 @@ type DebugCmdModel struct {
 	slogRenderTime time.Duration
 }
 
-func (DebugCmdModel) Init() tea.Cmd {
-	return nil
-}
-
-func (m DebugCmdModel) Update(msg tea.Msg) (CommandModel, tea.Cmd) {
+func (m DebugCmdModel) Update(msg tea.Msg) (ui.CommandModel, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
 
@@ -73,24 +69,23 @@ func (m DebugCmdModel) Update(msg tea.Msg) (CommandModel, tea.Cmd) {
 			m.slogViewPort.LineUp(5)
 		}
 
-	case utils.ViewportSizeMsg:
+	case ui.ViewportSizeMsg:
 		m.slogViewPort.Width = msg.Width
 		m.slogViewPort.Height = msg.Height - 2
 
-	case utils.CommandStrMsg:
-		m.CommandStr = string(msg)
+	case ui.ActiveCmdMsg:
+		m.activeCmdStr = string(msg)
 	}
 
-	switch m.CommandStr {
+	switch m.activeCmdStr {
 	case "log":
 		m.loadLog()
-
-	case "history":
-		m.loadInputHistory()
 
 	case "slog":
 		m.loadSlog()
 
+	case "history":
+		m.loadInputHistory()
 	}
 
 	_, cmd = m.slogViewPort.Update(msg)
@@ -100,7 +95,7 @@ func (m DebugCmdModel) Update(msg tea.Msg) (CommandModel, tea.Cmd) {
 }
 
 func (m DebugCmdModel) View() string {
-	switch m.CommandStr {
+	switch m.activeCmdStr {
 	case "history":
 		return histStyle.Render(m.historyView)
 

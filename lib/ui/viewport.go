@@ -3,9 +3,15 @@ package ui
 import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	commands "github.com/jaeiya/billbank/lib/ui/commands"
 	"github.com/jaeiya/billbank/lib/utils"
 )
+
+type ActiveCmdMsg string
+
+type ViewportSizeMsg struct {
+	Width  int
+	Height int
+}
 
 type CurrentCmd struct {
 	Model tea.Model
@@ -14,7 +20,8 @@ type CurrentCmd struct {
 
 type ViewPort struct {
 	Commander       CmdInputModel
-	CurrentCmdModel commands.CommandModel
+	CurrentCmdModel CommandModel
+	CommandStatus   CommandStatus
 	height          int
 	width           int
 }
@@ -28,14 +35,20 @@ func (vp ViewPort) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
-	case commands.CommandModelMsg:
-		if !msg.Model.IsImplemented() {
+	case CommandMsg:
+		// FIXME - find a better way to gracefully error if a command
+		// 		   is not fully implemented, because this is not it.
+		if !msg.IsImplemented() {
 			utils.Log(utils.Error, "CommandError: command not implemented")
+			vp.CurrentCmdModel = nil
 			return vp, vp.sendStatusMsg("Command Not Implemented", HIGH)
 		}
-		vp.CurrentCmdModel = msg.Model
-		// Immediately send viewport size
+		vp.CurrentCmdModel = msg
 		vp.CurrentCmdModel, _ = vp.CurrentCmdModel.Update(vp.sendViewportSize())
+		vp.CurrentCmdModel, _ = vp.CurrentCmdModel.Update(vp.sendActiveCmd(msg.status.CommandStr))
+
+	case ActiveCmdMsg:
+		vp.CurrentCmdModel, _ = vp.CurrentCmdModel.Update(vp.sendActiveCmd(string(msg)))
 
 	case tea.WindowSizeMsg:
 		vp.height = msg.Height
@@ -70,7 +83,7 @@ func (vp ViewPort) View() string {
 }
 
 func (vp ViewPort) sendViewportSize() tea.Msg {
-	return utils.ViewportSizeMsg{
+	return ViewportSizeMsg{
 		Height: vp.height - lipgloss.Height(vp.Commander.View()),
 		Width:  vp.width,
 	}
@@ -83,4 +96,8 @@ func (vp ViewPort) sendStatusMsg(msg string, s StatusSeverity) func() tea.Msg {
 			s,
 		}
 	}
+}
+
+func (vp ViewPort) sendActiveCmd(cmd string) tea.Msg {
+	return ActiveCmdMsg(cmd)
 }

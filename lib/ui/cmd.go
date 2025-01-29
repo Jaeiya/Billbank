@@ -41,23 +41,23 @@ type CommandStatus struct {
 }
 
 type CommandConfig struct {
-	Command
+	Model               CommandModel
+	Tree                [][]string
+	HasArg              bool
+	InputValidationFunc func(arg string) error
+	KeyValidationFunc   func(key rune) bool
 }
 
 type CommandModel interface {
-	Init() tea.Cmd
 	Update(tea.Msg) (CommandModel, tea.Cmd)
 	View() string
 	IsImplemented() bool
 }
 
-type CommandModelMsg struct {
-	ID    int
-	Model CommandModel
-}
+type CommandMsg Command
 
 type Command struct {
-	GetModel func(CommandStatus) CommandModel
+	CommandModel
 	// Represents the way a command is hierarchically constructed
 	// including aliases.
 	//
@@ -71,23 +71,26 @@ type Command struct {
 	id                  int
 	tree                [][]string
 	hasArg              bool
+	status              CommandStatus
 	inputValidationFunc func(arg string) error
 	keyValidationFunc   func(key rune) bool
 }
 
 func NewCommand(config CommandConfig) Command {
-	if config.hasArg && config.inputValidationFunc == nil {
+	if config.HasArg && config.InputValidationFunc == nil {
 		panic("command arguments need a validation function")
 	}
 	cmdId += 1
 	cmd := Command{
-		tree:                config.tree,
-		inputValidationFunc: config.inputValidationFunc,
-		hasArg:              config.hasArg,
-		GetModel:            config.GetModel,
+		CommandModel:        config.Model,
+		status:              CommandStatus{},
+		tree:                config.Tree,
+		inputValidationFunc: config.InputValidationFunc,
+		hasArg:              config.HasArg,
 		id:                  cmdId,
-		keyValidationFunc:   config.keyValidationFunc,
+		keyValidationFunc:   config.KeyValidationFunc,
 	}
+
 	return cmd
 }
 

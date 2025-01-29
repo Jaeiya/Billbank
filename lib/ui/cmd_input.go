@@ -6,7 +6,6 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	commands "github.com/jaeiya/billbank/lib/ui/commands"
 	"github.com/jaeiya/billbank/lib/utils"
 )
 
@@ -26,16 +25,11 @@ const (
 type CmdInputModel struct {
 	CommandInput textinput.Model
 	CmdHistory   *utils.InputHistory
-	commands     []commands.Command
-	currentCmd   ParsedCmd
-	lastCmd      ParsedCmd
+	commands     []Command
+	currentCmd   Command
+	lastCmd      Command
 	aliases      []string
 	statusText   string
-}
-
-type ParsedCmd struct {
-	status commands.CommandStatus
-	commands.Command
 }
 
 type CmdInputOption func(*CmdInputModel)
@@ -52,14 +46,14 @@ var (
 	errColor  = lipgloss.Color("#FF5FC5")
 )
 
-func NewCmdInput(options ...CmdInputOption) CmdInputModel {
+func NewCmdInput(h *utils.InputHistory, options ...CmdInputOption) CmdInputModel {
 	model := CmdInputModel{
 		aliases: []string{},
 	}
-	model.CmdHistory = utils.NewCmdHistory()
+	model.CmdHistory = h
 	model.CommandInput = NewCommanderInput()
 
-	options = append(options, WithCommands(commands.NewDebugCmd(model.CmdHistory)))
+	// options = append(options, WithCommands(NewDebugCmd(model.CmdHistory)))
 	for _, addCmd := range options {
 		addCmd(&model)
 	}
@@ -67,7 +61,7 @@ func NewCmdInput(options ...CmdInputOption) CmdInputModel {
 	return model
 }
 
-func WithCommands(cmds ...commands.Command) CmdInputOption {
+func WithCommands(cmds ...Command) CmdInputOption {
 	return func(m *CmdInputModel) {
 		aliasStore := map[string]bool{}
 
@@ -117,7 +111,7 @@ func (m CmdInputModel) Update(msg tea.Msg) (CmdInputModel, tea.Cmd) {
 			val, reset := m.CmdHistory.Cycle(msg)
 			if reset {
 				m.CommandInput.Reset()
-				m.currentCmd = ParsedCmd{}
+				m.currentCmd = Command{}
 			} else if len(val) > 0 {
 				m.CommandInput.SetValue(val)
 				m.CommandInput.CursorEnd()
@@ -165,19 +159,17 @@ func tryEnterCmd(m CmdInputModel) (CmdInputModel, tea.Cmd) {
 		m.statusText = fmt.Sprintf("Executing Command: %s", m.currentCmd.status.TreeStr)
 
 		m.CmdHistory.Add(m.CommandInput.Value())
-		cmdModel := m.currentCmd.Command.GetModel(m.currentCmd.status)
 		currCmd := m.currentCmd
 
 		if m.lastCmd.GetId() == currCmd.GetId() {
-			m.currentCmd = ParsedCmd{}
+			m.currentCmd = Command{}
 			m.CommandInput.Reset()
-			return m, func() tea.Msg { return utils.CommandStrMsg(currCmd.status.CommandStr) }
+			return m, func() tea.Msg { return ActiveCmdMsg(currCmd.status.CommandStr) }
 		}
-
 		m.lastCmd = m.currentCmd
-		m.currentCmd = ParsedCmd{}
+		m.currentCmd = Command{}
 		m.CommandInput.Reset()
-		return m, func() tea.Msg { return commands.CommandModelMsg{ID: currCmd.GetId(), Model: cmdModel} }
+		return m, func() tea.Msg { return CommandMsg(currCmd) }
 	}
 
 	if m.currentCmd.status.IsCommand && !m.currentCmd.status.IsComplete {
@@ -211,10 +203,8 @@ func tryParseCmd(m CmdInputModel, msg tea.KeyMsg) (CmdInputModel, tea.Cmd) {
 	m.CommandInput, cmd = m.CommandInput.Update(msg)
 	for _, c := range m.commands {
 		res := c.ParseCommand(m.CommandInput.Value())
-		m.currentCmd = ParsedCmd{
-			status:  res,
-			Command: c,
-		}
+		m.currentCmd = c
+		m.currentCmd.status = res
 		if res.IsCommand {
 			if !res.IsComplete {
 				m.CommandInput.SetSuggestions(res.Suggestions)
