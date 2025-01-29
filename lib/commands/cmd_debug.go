@@ -23,20 +23,19 @@ var (
 	histStyle    = lipgloss.NewStyle().Padding(1)
 )
 
-var cmdMap = map[string]func(){}
-
 func NewDebugCmd(h *utils.InputHistory) ui.Command {
 	vp := viewport.New(0, 0)
 	vp.YPosition = 1
-	dc := DebugCmdModel{
+
+	m := DebugCmdModel{
 		inputHistory: h,
 		slogViewPort: vp,
 	}
 
 	return ui.NewCommand(
 		ui.CommandConfig{
-			Tree:                dc.GetCmdTree(),
-			Model:               dc,
+			Tree:                m.GetCmdTree(),
+			Model:               m,
 			InputValidationFunc: func(arg string) error { return nil },
 			KeyValidationFunc:   func(key rune) bool { return false },
 			HasArg:              false,
@@ -86,6 +85,7 @@ func (m DebugCmdModel) Update(msg tea.Msg) (ui.CommandModel, tea.Cmd) {
 
 	case "history":
 		m.loadInputHistory()
+
 	}
 
 	_, cmd = m.slogViewPort.Update(msg)
@@ -97,26 +97,17 @@ func (m DebugCmdModel) Update(msg tea.Msg) (ui.CommandModel, tea.Cmd) {
 func (m DebugCmdModel) View() string {
 	switch m.activeCmdStr {
 	case "history":
-		return histStyle.Render(m.historyView)
+		return m.viewHistory()
 
 	case "log":
 		return m.lastLogStr
 
 	case "slog":
-		content := fmt.Sprintf(
-			"%s\nTook: %s",
-			m.slogViewPort.View(),
-			m.slogRenderTime,
-		)
-		return logStyle.Render(content)
+		return m.viewSlog()
 
 	default:
-		return "command has no view"
+		return "missing command view"
 	}
-}
-
-func (m DebugCmdModel) IsImplemented() bool {
-	return true
 }
 
 func (DebugCmdModel) GetCmdTree() [][]string {
@@ -144,6 +135,10 @@ func (m *DebugCmdModel) loadInputHistory() {
 	m.historyView = sb.String()
 }
 
+func (m DebugCmdModel) viewHistory() string {
+	return histStyle.Render(m.historyView)
+}
+
 func (m *DebugCmdModel) loadLog() {
 	// TODO - refactor this into utils so we can cache result
 	dir, err := os.Getwd()
@@ -164,6 +159,10 @@ func (m *DebugCmdModel) loadLog() {
 		return
 	}
 	m.lastLogStr = strings.TrimSpace(string(bytes))
+}
+
+func (m DebugCmdModel) viewLog() string {
+	return m.lastLogStr
 }
 
 func (m *DebugCmdModel) loadSlog() {
@@ -217,4 +216,13 @@ func (m *DebugCmdModel) loadSlog() {
 	m.lastSlogStr = sb.String()
 	m.slogViewPort.SetContent(sb.String())
 	m.slogViewPort.GotoBottom()
+}
+
+func (m DebugCmdModel) viewSlog() string {
+	content := fmt.Sprintf(
+		"%s\nTook: %s",
+		m.slogViewPort.View(),
+		m.slogRenderTime,
+	)
+	return logStyle.Render(content)
 }
