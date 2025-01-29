@@ -36,13 +36,6 @@ func (vp ViewPort) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case CommandMsg:
-		// FIXME - find a better way to gracefully error if a command
-		// 		   is not fully implemented, because this is not it.
-		if !msg.IsImplemented() {
-			utils.Log(utils.Error, "CommandError: command not implemented")
-			vp.CurrentCmdModel = nil
-			return vp, vp.sendStatusMsg("Command Not Implemented", HIGH)
-		}
 		vp.CurrentCmdModel = msg
 		vp.CurrentCmdModel, _ = vp.CurrentCmdModel.Update(vp.sendViewportSize())
 		vp.CurrentCmdModel, _ = vp.CurrentCmdModel.Update(vp.sendActiveCmd(msg.status.CommandStr))
