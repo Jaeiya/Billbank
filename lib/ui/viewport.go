@@ -2,19 +2,11 @@ package ui
 
 import (
 	"fmt"
-	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/jaeiya/billbank/lib/utils"
 )
-
-var errLogStyle = lipgloss.NewStyle().
-	Foreground(lipgloss.Color("#EEE")).
-	Background(lipgloss.Color("#111")).
-	PaddingLeft(1).
-	PaddingRight(1).
-	PaddingBottom(1)
 
 type (
 	ActiveCmdMsg string
@@ -91,33 +83,11 @@ func (vp ViewPort) View() string {
 	}
 
 	if vp.lastCmdError != nil {
-		alignX = lipgloss.Center
-		alignY = lipgloss.Center
-		header := lipgloss.NewStyle().
-			Align(lipgloss.Center, lipgloss.Top).
-			Foreground(lipgloss.Color("#faa")).
-			Background(lipgloss.Color("#111")).
-			PaddingTop(1).
-			Width(vp.width / 2).
-			Render("Error")
-
-		border := lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#1E1E2E")).
-			Background(lipgloss.Color("#111")).
-			Render(strings.Repeat("-", vp.width/2))
-
-		view := errLogStyle.Width(vp.width / 2).
-			Render(vp.lastCmdError.Error())
-
-		cmdView = lipgloss.Place(
-			vp.width,
-			vp.height-h,
-			alignX,
-			alignY,
-			lipgloss.JoinVertical(lipgloss.Top, header, border, view),
-			lipgloss.WithWhitespaceBackground(lipgloss.Color("#1E1E2E")),
+		return lipgloss.JoinVertical(
+			lipgloss.Left,
+			NewErrorMsg("Command Error", vp.lastCmdError.Error(), vp.width, vp.height-h),
+			cmdrStr,
 		)
-		return lipgloss.JoinVertical(lipgloss.Left, cmdView, cmdrStr)
 	}
 
 	block := lipgloss.Place(
