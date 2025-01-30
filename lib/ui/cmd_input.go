@@ -39,12 +39,7 @@ var statusStyle = lipgloss.NewStyle().
 	Width(100).
 	PaddingLeft(1).
 	Background(lib.BgDarkColor).
-	Foreground(lipgloss.Color("#FFA200"))
-
-var (
-	okColor   = lipgloss.Color("#00FFA2")
-	warnColor = lipgloss.Color("#FFA200")
-)
+	Foreground(lib.FgColor)
 
 // TODO - Use an interface to define input history methods
 func NewCmdInput(h *utils.InputHistory, options ...CmdInputOption) CmdInputModel {
@@ -94,9 +89,9 @@ func (m CmdInputModel) Update(msg tea.Msg) (CmdInputModel, tea.Cmd) {
 		m.CommandInput.Width = msg.Width
 
 	case UpdateStatusMsg:
-		color := okColor
+		color := lib.FgSuccessColor
 		if msg.Severity == MED {
-			color = warnColor
+			color = lib.FgWarnColor
 		} else if msg.Severity == HIGH {
 			color = lib.FgErrColor
 		}
@@ -156,7 +151,7 @@ func tryEnterCmd(m CmdInputModel) (CmdInputModel, tea.Cmd) {
 			m.statusText = m.currentCmd.status.Error.Error()
 			return m, nil
 		}
-		statusStyle = statusStyle.Foreground(okColor)
+		statusStyle = statusStyle.Foreground(lib.FgSuccessColor)
 		m.statusText = fmt.Sprintf("Executing Command: %s", m.currentCmd.status.TreeStr)
 
 		m.CmdHistory.Add(m.CommandInput.Value())
@@ -174,7 +169,7 @@ func tryEnterCmd(m CmdInputModel) (CmdInputModel, tea.Cmd) {
 	}
 
 	if m.currentCmd.status.IsCommand && !m.currentCmd.status.IsComplete {
-		statusStyle = statusStyle.Foreground(warnColor)
+		statusStyle = statusStyle.Foreground(lib.FgWarnColor)
 		m.statusText = "Incomplete Command"
 		return m, nil
 	}
