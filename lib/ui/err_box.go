@@ -4,13 +4,14 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
+	"github.com/jaeiya/billbank/lib"
 )
 
 var (
-	errBgColor     = bgDarkColor
-	errHeaderColor = fgErrColor
+	errBgColor     = lib.BgDarkColor
+	errHeaderColor = lib.FgErrColor
 	errMsgColor    = lipgloss.Color("#eee")
-	errSeparatorFg = bgColor
+	errSeparatorFg = lib.BgColor
 	errSepChar     = "━"
 
 	baseErrStyle = lipgloss.NewStyle().Background(errBgColor)

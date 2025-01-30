@@ -6,6 +6,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/jaeiya/billbank/lib"
 	"github.com/jaeiya/billbank/lib/utils"
 )
 
@@ -37,15 +38,15 @@ type CmdInputOption func(*CmdInputModel)
 var statusStyle = lipgloss.NewStyle().
 	Width(100).
 	PaddingLeft(1).
-	Background(bgDarkColor).
+	Background(lib.BgDarkColor).
 	Foreground(lipgloss.Color("#FFA200"))
 
 var (
 	okColor   = lipgloss.Color("#00FFA2")
 	warnColor = lipgloss.Color("#FFA200")
-	errColor  = lipgloss.Color("#FF5FC5")
 )
 
+// TODO - Use an interface to define input history methods
 func NewCmdInput(h *utils.InputHistory, options ...CmdInputOption) CmdInputModel {
 	model := CmdInputModel{
 		aliases: []string{},
@@ -97,7 +98,7 @@ func (m CmdInputModel) Update(msg tea.Msg) (CmdInputModel, tea.Cmd) {
 		if msg.Severity == MED {
 			color = warnColor
 		} else if msg.Severity == HIGH {
-			color = fgErrColor
+			color = lib.FgErrColor
 		}
 		style := statusStyle.Foreground(color)
 		m.statusText = style.Render(msg.String)
@@ -178,7 +179,7 @@ func tryEnterCmd(m CmdInputModel) (CmdInputModel, tea.Cmd) {
 		return m, nil
 	}
 
-	statusStyle = statusStyle.Foreground(fgErrColor)
+	statusStyle = statusStyle.Foreground(lib.FgErrColor)
 	m.statusText = "Invalid Command"
 	return m, nil
 }
