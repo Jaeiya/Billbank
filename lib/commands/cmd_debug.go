@@ -10,17 +10,18 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/jaeiya/billbank/lib"
 	"github.com/jaeiya/billbank/lib/ui"
 	"github.com/jaeiya/billbank/lib/utils"
 )
 
 var (
-	infoLogStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#33B0FF"))
-	attnLogStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#FFDE00"))
-	errLogStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF82E9"))
-	logStyle     = lipgloss.NewStyle().MarginLeft(1).MarginTop(1)
-	msgStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("#96F1D4"))
-	histStyle    = lipgloss.NewStyle().Padding(1)
+	infoLogStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("#29DEFF"))
+	attnLogStyle  = lipgloss.NewStyle().Foreground(lib.FgWarnColor)
+	errLogStyle   = lipgloss.NewStyle().Foreground(lib.FgErrLightColor)
+	logStyle      = lipgloss.NewStyle().MarginLeft(1).MarginTop(1)
+	slogWordStyle = lipgloss.NewStyle().Foreground(lib.FgColor)
+	histStyle     = lipgloss.NewStyle().Foreground(lib.FgColor).Padding(1)
 )
 
 func NewDebugCmd(h *utils.InputHistory) ui.Command {
@@ -201,23 +202,27 @@ func (m *debugCmdModel) loadSlog() {
 		tag := parts[3]
 		words := parts[5:]
 
-		var msg string
-		if strings.Contains(words[0], ":") {
-			words[1] = msgStyle.Render(strings.Join(words[1:], " "))
-			msg = fmt.Sprintf("%s %s", words[0], words[1])
-		} else {
-			msg = msgStyle.Render(strings.Join(words, " "))
-		}
+		var subjectStyle lipgloss.Style
 
 		switch tag {
 		case "[NFO]":
 			tag = infoLogStyle.Render(tag)
+			subjectStyle = infoLogStyle
 		case "[ATN]":
 			tag = attnLogStyle.Render(tag)
-			msg = attnLogStyle.Render(msg)
+			subjectStyle = attnLogStyle
 		case "[ERR]":
 			tag = errLogStyle.Render(tag)
-			msg = errLogStyle.Render(msg)
+			subjectStyle = errLogStyle
+		}
+
+		var msg string
+		if strings.Contains(words[0], ":") {
+			words[0] = subjectStyle.Render(words[0])
+			words[1] = slogWordStyle.Render(strings.Join(words[1:], " "))
+			msg = fmt.Sprintf("%s %s", words[0], words[1])
+		} else {
+			msg = slogWordStyle.Render(strings.Join(words, " "))
 		}
 
 		sb.WriteString(fmt.Sprintf("%s %s\n", tag, msg))
