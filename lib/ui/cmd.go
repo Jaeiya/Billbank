@@ -51,6 +51,7 @@ type CommandConfig struct {
 type CommandModel interface {
 	Update(tea.Msg) (CommandModel, tea.Cmd)
 	View() string
+	GetLastError() error
 }
 
 type CommandMsg Command

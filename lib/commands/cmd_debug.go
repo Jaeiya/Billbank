@@ -44,6 +44,7 @@ func NewDebugCmd(h *utils.InputHistory) ui.Command {
 }
 
 type DebugCmdModel struct {
+	lastError      error
 	activeCmdStr   string
 	inputHistory   *utils.InputHistory
 	historyLen     int
@@ -58,6 +59,10 @@ type DebugCmdModel struct {
 func (m DebugCmdModel) Update(msg tea.Msg) (ui.CommandModel, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
+
+	if m.lastError != nil {
+		m.lastError = nil
+	}
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -86,6 +91,11 @@ func (m DebugCmdModel) Update(msg tea.Msg) (ui.CommandModel, tea.Cmd) {
 	case "history":
 		m.loadInputHistory()
 
+	case "": // Ignore first update
+		break
+
+	default:
+		m.lastError = fmt.Errorf("'%s' not implemented", m.activeCmdStr)
 	}
 
 	_, cmd = m.slogViewPort.Update(msg)
@@ -106,7 +116,7 @@ func (m DebugCmdModel) View() string {
 		return m.viewSlog()
 
 	default:
-		return "missing command view"
+		return "Empty Command View"
 	}
 }
 
@@ -115,6 +125,10 @@ func (DebugCmdModel) GetCmdTree() [][]string {
 		{"/"},
 		{"history", "log", "slog"},
 	}
+}
+
+func (m DebugCmdModel) GetLastError() error {
+	return m.lastError
 }
 
 func (m *DebugCmdModel) loadInputHistory() {

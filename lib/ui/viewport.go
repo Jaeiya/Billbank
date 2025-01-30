@@ -1,12 +1,28 @@
 package ui
 
 import (
+	"fmt"
+	"strings"
+
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/jaeiya/billbank/lib/utils"
 )
 
-type ActiveCmdMsg string
+var errLogStyle = lipgloss.NewStyle().
+	Foreground(lipgloss.Color("#EEE")).
+	Background(lipgloss.Color("#111")).
+	PaddingLeft(1).
+	PaddingRight(1).
+	PaddingBottom(1)
+
+type (
+	ActiveCmdMsg string
+	CmdStatusMsg struct {
+		String   string
+		Severity StatusSeverity
+	}
+)
 
 type ViewportSizeMsg struct {
 	Width  int
@@ -22,6 +38,7 @@ type ViewPort struct {
 	Commander       CmdInputModel
 	CurrentCmdModel CommandModel
 	CommandStatus   CommandStatus
+	lastCmdError    error
 	height          int
 	width           int
 }
@@ -36,6 +53,7 @@ func (vp ViewPort) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case CommandMsg:
+		utils.Log(utils.Info, "ViewPort: setting up command")
 		vp.CurrentCmdModel = msg
 		vp.CurrentCmdModel, _ = vp.CurrentCmdModel.Update(vp.sendViewportSize())
 		vp.CurrentCmdModel, _ = vp.CurrentCmdModel.Update(vp.sendActiveCmd(msg.status.CommandStr))
@@ -45,11 +63,14 @@ func (vp ViewPort) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		vp.width = msg.Width
 		cmds = append(cmds, vp.sendViewportSize)
 
+	case CmdStatusMsg:
+		cmds = append(cmds, vp.sendStatusMsg(msg.String, msg.Severity))
+
 	}
 
 	if vp.CurrentCmdModel != nil {
 		vp.CurrentCmdModel, cmd = vp.CurrentCmdModel.Update(msg)
-		cmds = append(cmds, cmd)
+		cmds = append(cmds, cmd, vp.catchCmdErrors())
 	}
 
 	vp.Commander, cmd = vp.Commander.Update(msg)
@@ -62,14 +83,81 @@ func (vp ViewPort) View() string {
 	cmdrStr := vp.Commander.View()
 	h := lipgloss.Height(cmdrStr)
 	cmdView := ""
+	alignX := lipgloss.Left
+	alignY := lipgloss.Top
+
 	if vp.CurrentCmdModel != nil {
 		cmdView = vp.CurrentCmdModel.View()
 	}
 
-	block := lipgloss.Place(vp.width, vp.height-h, lipgloss.Left, lipgloss.Top, cmdView)
-	content := lipgloss.JoinVertical(lipgloss.Top, block, cmdrStr)
+	if vp.lastCmdError != nil {
+		alignX = lipgloss.Center
+		alignY = lipgloss.Center
+		header := lipgloss.NewStyle().
+			Align(lipgloss.Center, lipgloss.Top).
+			Foreground(lipgloss.Color("#faa")).
+			Background(lipgloss.Color("#111")).
+			PaddingTop(1).
+			Width(vp.width / 2).
+			Render("Error")
+
+		border := lipgloss.NewStyle().
+			Foreground(lipgloss.Color("#1E1E2E")).
+			Background(lipgloss.Color("#111")).
+			Render(strings.Repeat("-", vp.width/2))
+
+		view := errLogStyle.Width(vp.width / 2).
+			Render(vp.lastCmdError.Error())
+
+		cmdView = lipgloss.Place(
+			vp.width,
+			vp.height-h,
+			alignX,
+			alignY,
+			lipgloss.JoinVertical(lipgloss.Top, header, border, view),
+			lipgloss.WithWhitespaceBackground(lipgloss.Color("#1E1E2E")),
+		)
+		return lipgloss.JoinVertical(lipgloss.Left, cmdView, cmdrStr)
+	}
+
+	block := lipgloss.Place(
+		vp.width,
+		vp.height-h,
+		alignX,
+		alignY,
+		cmdView,
+	)
+	content := lipgloss.JoinVertical(
+		lipgloss.Top,
+		lipgloss.NewStyle().Foreground(lipgloss.Color("#EEE")).Render(block),
+		cmdrStr,
+	)
 
 	return content
+}
+
+func (vp *ViewPort) catchCmdErrors() tea.Cmd {
+	err := vp.CurrentCmdModel.GetLastError()
+
+	if err == vp.lastCmdError {
+		return nil
+	}
+
+	if err != nil && vp.lastCmdError != nil {
+		if err.Error() == vp.lastCmdError.Error() {
+			return nil
+		}
+	}
+
+	if err != nil {
+		utils.Log(utils.Info, fmt.Sprintf("CommandError: %s", err))
+		vp.lastCmdError = err
+		return vp.sendStatusMsg("Command Implementation Error", HIGH)
+	}
+
+	vp.lastCmdError = nil
+
+	return nil
 }
 
 func (vp ViewPort) sendViewportSize() tea.Msg {
