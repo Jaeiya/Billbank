@@ -27,7 +27,7 @@ func NewDebugCmd(h *utils.InputHistory) ui.Command {
 	vp := viewport.New(0, 0)
 	vp.YPosition = 1
 
-	m := DebugCmdModel{
+	m := debugCmdModel{
 		inputHistory: h,
 		slogViewPort: vp,
 	}
@@ -43,7 +43,7 @@ func NewDebugCmd(h *utils.InputHistory) ui.Command {
 	)
 }
 
-type DebugCmdModel struct {
+type debugCmdModel struct {
 	lastError      error
 	activeCmdStr   string
 	inputHistory   *utils.InputHistory
@@ -56,7 +56,7 @@ type DebugCmdModel struct {
 	slogRenderTime time.Duration
 }
 
-func (m DebugCmdModel) Update(msg tea.Msg) (ui.CommandModel, tea.Cmd) {
+func (m debugCmdModel) Update(msg tea.Msg) (ui.CommandModel, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
 
@@ -104,7 +104,7 @@ func (m DebugCmdModel) Update(msg tea.Msg) (ui.CommandModel, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m DebugCmdModel) View() string {
+func (m debugCmdModel) View() string {
 	switch m.activeCmdStr {
 	case "history":
 		return m.viewHistory()
@@ -120,18 +120,18 @@ func (m DebugCmdModel) View() string {
 	}
 }
 
-func (DebugCmdModel) GetCmdTree() [][]string {
+func (debugCmdModel) GetCmdTree() [][]string {
 	return [][]string{
 		{"/"},
 		{"history", "log", "slog"},
 	}
 }
 
-func (m DebugCmdModel) GetLastError() error {
+func (m debugCmdModel) GetLastError() error {
 	return m.lastError
 }
 
-func (m *DebugCmdModel) loadInputHistory() {
+func (m *debugCmdModel) loadInputHistory() {
 	if m.inputHistory.GetLen() == m.historyLen {
 		return
 	}
@@ -149,11 +149,11 @@ func (m *DebugCmdModel) loadInputHistory() {
 	m.historyView = sb.String()
 }
 
-func (m DebugCmdModel) viewHistory() string {
+func (m debugCmdModel) viewHistory() string {
 	return histStyle.Render(m.historyView)
 }
 
-func (m *DebugCmdModel) loadLog() {
+func (m *debugCmdModel) loadLog() {
 	// TODO - refactor this into utils so we can cache result
 	dir, err := os.Getwd()
 	if err != nil {
@@ -175,11 +175,7 @@ func (m *DebugCmdModel) loadLog() {
 	m.lastLogStr = strings.TrimSpace(string(bytes))
 }
 
-func (m DebugCmdModel) viewLog() string {
-	return m.lastLogStr
-}
-
-func (m *DebugCmdModel) loadSlog() {
+func (m *debugCmdModel) loadSlog() {
 	m.loadLog()
 	lines := strings.Split(m.lastLogStr, "\n")
 	lineCount := len(lines)
@@ -232,7 +228,7 @@ func (m *DebugCmdModel) loadSlog() {
 	m.slogViewPort.GotoBottom()
 }
 
-func (m DebugCmdModel) viewSlog() string {
+func (m debugCmdModel) viewSlog() string {
 	content := fmt.Sprintf(
 		"%s\nTook: %s",
 		m.slogViewPort.View(),
