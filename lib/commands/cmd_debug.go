@@ -21,6 +21,7 @@ var (
 	errLogStyle   = lipgloss.NewStyle().Foreground(lib.FgErrLightColor)
 	logStyle      = lipgloss.NewStyle().MarginLeft(1).MarginTop(1)
 	slogWordStyle = lipgloss.NewStyle().Foreground(lib.FgColor)
+	slogPathStyle = lipgloss.NewStyle().Align(lipgloss.Right).Foreground(lib.FgDimColor)
 	histStyle     = lipgloss.NewStyle().Foreground(lib.FgColor).Padding(1)
 )
 
@@ -191,15 +192,19 @@ func (m *debugCmdModel) loadSlog() {
 		m.slogLineCount = lineCount
 	}()
 
-	var sb strings.Builder
+	var tagBuilder strings.Builder
+	var pathBuilder strings.Builder
+	var wordBuilder strings.Builder
+	var lastLog string
 	if m.slogLineCount > 0 {
-		sb.WriteString(strings.TrimSpace(m.lastSlogStr) + "\n")
+		lastLog = strings.TrimSpace(m.lastSlogStr) + "\n"
 		lines = lines[m.slogLineCount:]
 	}
 
 	for _, line := range lines {
 		parts := strings.Split(line, " ")
 		tag := parts[3]
+		pathBuilder.WriteString(fmt.Sprintf("%s \n", strings.Split(parts[4], ".")[0]+"]"))
 		words := parts[5:]
 
 		var subjectStyle lipgloss.Style
@@ -216,6 +221,8 @@ func (m *debugCmdModel) loadSlog() {
 			subjectStyle = errLogStyle
 		}
 
+		tagBuilder.WriteString(fmt.Sprintf("%s \n", tag))
+
 		var msg string
 		if strings.Contains(words[0], ":") {
 			words[0] = subjectStyle.Render(words[0])
@@ -225,11 +232,28 @@ func (m *debugCmdModel) loadSlog() {
 			msg = slogWordStyle.Render(strings.Join(words, " "))
 		}
 
-		sb.WriteString(fmt.Sprintf("%s %s\n", tag, msg))
+		wordBuilder.WriteString(fmt.Sprintf("%s\n", msg))
 	}
 
-	m.lastSlogStr = sb.String()
-	m.slogViewPort.SetContent(sb.String())
+	lastLog = strings.TrimSpace(lastLog)
+	content := strings.TrimSpace(lipgloss.JoinHorizontal(
+		lipgloss.Left,
+		tagBuilder.String(),
+		slogPathStyle.Render(pathBuilder.String()),
+		wordBuilder.String(),
+	))
+
+	// lipgloss applies a special formatting to align content.
+	formattingOffset := 46
+	if len(lastLog) > 0 {
+		content = lipgloss.JoinVertical(
+			lipgloss.Top,
+			lastLog[:len(lastLog)-formattingOffset],
+			content,
+		)
+	}
+	m.lastSlogStr = content
+	m.slogViewPort.SetContent(m.lastSlogStr)
 	m.slogViewPort.GotoBottom()
 }
 
