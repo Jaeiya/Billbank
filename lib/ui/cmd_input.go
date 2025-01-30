@@ -37,7 +37,7 @@ type CmdInputOption func(*CmdInputModel)
 var statusStyle = lipgloss.NewStyle().
 	Width(100).
 	PaddingLeft(1).
-	Background(lipgloss.Color("#151718")).
+	Background(bgDarkColor).
 	Foreground(lipgloss.Color("#FFA200"))
 
 var (
@@ -97,7 +97,7 @@ func (m CmdInputModel) Update(msg tea.Msg) (CmdInputModel, tea.Cmd) {
 		if msg.Severity == MED {
 			color = warnColor
 		} else if msg.Severity == HIGH {
-			color = errColor
+			color = fgErrColor
 		}
 		style := statusStyle.Foreground(color)
 		m.statusText = style.Render(msg.String)
@@ -178,7 +178,7 @@ func tryEnterCmd(m CmdInputModel) (CmdInputModel, tea.Cmd) {
 		return m, nil
 	}
 
-	statusStyle = statusStyle.Foreground(errColor)
+	statusStyle = statusStyle.Foreground(fgErrColor)
 	m.statusText = "Invalid Command"
 	return m, nil
 }
