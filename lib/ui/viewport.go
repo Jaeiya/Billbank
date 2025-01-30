@@ -120,7 +120,7 @@ func (vp *ViewPort) catchCmdErrors() tea.Cmd {
 	}
 
 	if err != nil {
-		utils.Log(utils.Info, fmt.Sprintf("CommandError: %s", err))
+		utils.Log(utils.Error, fmt.Sprintf("CommandError: %s", err))
 		vp.lastCmdError = err
 		return vp.sendStatusMsg("Command Implementation Error", HIGH)
 	}
