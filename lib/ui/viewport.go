@@ -5,6 +5,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/jaeiya/billbank/lib"
 	"github.com/jaeiya/billbank/lib/utils"
 )
 
@@ -75,8 +76,6 @@ func (vp ViewPort) View() string {
 	cmdrStr := vp.Commander.View()
 	h := lipgloss.Height(cmdrStr)
 	cmdView := ""
-	alignX := lipgloss.Left
-	alignY := lipgloss.Top
 
 	if vp.CurrentCmdModel != nil {
 		cmdView = vp.CurrentCmdModel.View()
@@ -90,20 +89,19 @@ func (vp ViewPort) View() string {
 		)
 	}
 
-	block := lipgloss.Place(
-		vp.width,
-		vp.height-h,
-		alignX,
-		alignY,
-		cmdView,
-	)
-	content := lipgloss.JoinVertical(
+	return lipgloss.JoinVertical(
 		lipgloss.Top,
-		lipgloss.NewStyle().Foreground(lipgloss.Color("#EEE")).Render(block),
+		lipgloss.NewStyle().Foreground(lib.FgColor).Render(
+			lipgloss.Place(
+				vp.width,
+				vp.height-h,
+				lipgloss.Left,
+				lipgloss.Top,
+				cmdView,
+			),
+		),
 		cmdrStr,
 	)
-
-	return content
 }
 
 func (vp *ViewPort) catchCmdErrors() tea.Cmd {
