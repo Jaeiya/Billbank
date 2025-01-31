@@ -15,6 +15,14 @@ import (
 	"github.com/jaeiya/billbank/lib/utils"
 )
 
+type debugCmdTree string
+
+const (
+	DebugHistory = debugCmdTree("/ history")
+	DebugLog     = debugCmdTree("/ log")
+	DebugSlog    = debugCmdTree("/ slog")
+)
+
 var (
 	infoLogStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("#29DEFF"))
 	attnLogStyle  = lipgloss.NewStyle().Foreground(lib.FgWarnColor)
@@ -26,8 +34,8 @@ var (
 )
 
 type (
-	debugCmdMap     map[string]func(debugCmdModel) debugCmdModel
-	debugCmdViewMap map[string]func(debugCmdModel) string
+	debugCmdMap     map[debugCmdTree]func(debugCmdModel) debugCmdModel
+	debugCmdViewMap map[debugCmdTree]func(debugCmdModel) string
 )
 
 func NewDebugCmd(h *utils.InputHistory) ui.Command {
@@ -40,15 +48,15 @@ func NewDebugCmd(h *utils.InputHistory) ui.Command {
 	}
 
 	m.cmdMap = debugCmdMap{
-		"/ history": func(dcm debugCmdModel) debugCmdModel { return dcm.loadInputHistory() },
-		"/ log":     func(dcm debugCmdModel) debugCmdModel { return dcm.loadLog() },
-		"/ slog":    func(dcm debugCmdModel) debugCmdModel { return dcm.loadSlog() },
+		DebugHistory: func(dcm debugCmdModel) debugCmdModel { return dcm.loadInputHistory() },
+		DebugLog:     func(dcm debugCmdModel) debugCmdModel { return dcm.loadLog() },
+		DebugSlog:    func(dcm debugCmdModel) debugCmdModel { return dcm.loadSlog() },
 	}
 
 	m.cmdViewMap = debugCmdViewMap{
-		"/ history": func(dcm debugCmdModel) string { return dcm.viewHistory() },
-		"/ log":     func(dcm debugCmdModel) string { return dcm.lastLogStr },
-		"/ slog":    func(dcm debugCmdModel) string { return dcm.viewSlog() },
+		DebugHistory: func(dcm debugCmdModel) string { return dcm.viewHistory() },
+		DebugLog:     func(dcm debugCmdModel) string { return dcm.lastLogStr },
+		DebugSlog:    func(dcm debugCmdModel) string { return dcm.viewSlog() },
 	}
 
 	return ui.NewCommand(
@@ -100,7 +108,7 @@ func (m debugCmdModel) Update(msg tea.Msg) (ui.CommandModel, tea.Cmd) {
 
 	}
 
-	exec, hasCmd := m.cmdMap[m.cmdStatus.TreeStr]
+	exec, hasCmd := m.cmdMap[debugCmdTree(m.cmdStatus.TreeStr)]
 	if hasCmd {
 		m = exec(m)
 	} else {
@@ -114,7 +122,7 @@ func (m debugCmdModel) Update(msg tea.Msg) (ui.CommandModel, tea.Cmd) {
 }
 
 func (m debugCmdModel) View() string {
-	viewFunc, hasView := m.cmdViewMap[m.cmdStatus.TreeStr]
+	viewFunc, hasView := m.cmdViewMap[debugCmdTree(m.cmdStatus.TreeStr)]
 	if hasView {
 		return viewFunc(m)
 	}
@@ -127,8 +135,8 @@ func (m debugCmdModel) SetStatus(status ui.CommandStatus) ui.CommandModel {
 }
 
 func (m debugCmdModel) IsTreeSupported(treeStr string) bool {
-	switch treeStr {
-	case "/ history", "/ slog", "/ log":
+	switch debugCmdTree(treeStr) {
+	case DebugHistory, DebugLog, DebugSlog:
 		return true
 	}
 	return false
