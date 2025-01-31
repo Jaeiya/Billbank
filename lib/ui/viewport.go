@@ -22,11 +22,6 @@ type ViewportSizeMsg struct {
 	Height int
 }
 
-type CurrentCmd struct {
-	Model tea.Model
-	Cmd   tea.Cmd
-}
-
 type ViewPort struct {
 	Commander       CmdInputModel
 	CurrentCmdModel CommandModel
