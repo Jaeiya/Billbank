@@ -194,21 +194,16 @@ func (m debugCmdModel) loadSlog() debugCmdModel {
 
 	now := time.Now()
 
-	var tagBuilder strings.Builder
-	var pathBuilder strings.Builder
-	var wordBuilder strings.Builder
 	var lastLog string
 	if m.slogLineCount > 0 {
 		lastLog = strings.TrimSpace(m.lastSlogStr) + "\n"
 		lines = lines[m.slogLineCount:]
 	}
 
+	var tagBuilder, pathBuilder, wordBuilder strings.Builder
 	for _, line := range lines {
-		parts := strings.Split(line, " ")
-		tag := parts[3]
-		pathBuilder.WriteString(fmt.Sprintf("%s \n", strings.Split(parts[4], ".")[0]+"]"))
-		words := parts[5:]
-
+		var parts []string = strings.Split(line, " ")
+		var tag string = parts[3]
 		var subjectStyle lipgloss.Style
 
 		switch tag {
@@ -226,6 +221,7 @@ func (m debugCmdModel) loadSlog() debugCmdModel {
 		tagBuilder.WriteString(fmt.Sprintf("%s \n", tag))
 
 		var msg string
+		var words []string = parts[5:]
 		if strings.Contains(words[0], ":") {
 			words[0] = subjectStyle.Render(words[0])
 			words[1] = slogWordStyle.Render(strings.Join(words[1:], " "))
@@ -234,6 +230,7 @@ func (m debugCmdModel) loadSlog() debugCmdModel {
 			msg = slogWordStyle.Render(strings.Join(words, " "))
 		}
 
+		pathBuilder.WriteString(fmt.Sprintf("%s] \n", strings.Split(parts[4], ".")[0]))
 		wordBuilder.WriteString(fmt.Sprintf("%s\n", msg))
 	}
 
