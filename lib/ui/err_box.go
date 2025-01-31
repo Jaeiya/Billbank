@@ -10,7 +10,7 @@ import (
 var (
 	errBgColor     = lib.BgDarkColor
 	errHeaderColor = lib.FgErrColor
-	errMsgColor    = lipgloss.Color("#eee")
+	errMsgColor    = lib.FgWarnColor
 	errSeparatorFg = lib.BgColor
 	errSepChar     = "━"
 
