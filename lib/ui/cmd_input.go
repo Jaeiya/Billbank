@@ -146,11 +146,24 @@ func (m CmdInputModel) View() string {
 }
 
 func tryEnterCmd(m CmdInputModel) (CmdInputModel, tea.Cmd) {
+	if m.currentCmd.status.IsCommand {
+		if !m.currentCmd.status.IsSupported {
+			statusStyle = statusStyle.Foreground(lib.FgErrColor)
+			m.statusText = "Unsupported Command Chain"
+			return m, nil
+		} else if !m.currentCmd.status.IsComplete {
+			statusStyle = statusStyle.Foreground(lib.FgWarnColor)
+			m.statusText = "Incomplete Command"
+			return m, nil
+		}
+	}
+
 	if m.currentCmd.status.IsComplete {
 		if m.currentCmd.status.Error != nil {
 			m.statusText = m.currentCmd.status.Error.Error()
 			return m, nil
 		}
+
 		statusStyle = statusStyle.Foreground(lib.FgSuccessColor)
 		m.statusText = fmt.Sprintf("Executing Command: %s", m.currentCmd.status.TreeStr)
 
@@ -166,12 +179,6 @@ func tryEnterCmd(m CmdInputModel) (CmdInputModel, tea.Cmd) {
 		m.currentCmd = Command{}
 		m.CommandInput.Reset()
 		return m, func() tea.Msg { return currCmd.model.SetStatus(currCmd.status) }
-	}
-
-	if m.currentCmd.status.IsCommand && !m.currentCmd.status.IsComplete {
-		statusStyle = statusStyle.Foreground(lib.FgWarnColor)
-		m.statusText = "Incomplete Command"
-		return m, nil
 	}
 
 	statusStyle = statusStyle.Foreground(lib.FgErrColor)

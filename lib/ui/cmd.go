@@ -11,9 +11,10 @@ import (
 var (
 	ErrFatalCommand    = fmt.Errorf("command parsing failed; this should not happen")
 	ErrNotCommand      = fmt.Errorf("unrecognized command")
-	ErrInvalidCommand  = fmt.Errorf("incomplete command")
+	ErrIncompleteCmd   = fmt.Errorf("incomplete command")
 	ErrMissingArgument = fmt.Errorf("missing argument")
 	ErrEmptyCommand    = fmt.Errorf("empty command")
+	ErrUnsupportedCmd  = fmt.Errorf("unsupported command chain")
 )
 
 var cmdId = 0
@@ -21,6 +22,7 @@ var cmdId = 0
 type CommandStatus struct {
 	IsCommand   bool
 	IsComplete  bool
+	IsSupported bool
 	Suggestions []string
 	Arg         string
 	CommandStr  string
@@ -50,6 +52,7 @@ type CommandModel interface {
 	View() string
 	GetLastError() error
 	SetStatus(CommandStatus) CommandModel
+	IsTreeSupported(treeStr string) bool
 }
 
 type Command struct {
@@ -131,7 +134,7 @@ func (cb *Command) ParseCommand(cmd string) CommandStatus {
 		return cs
 	}
 
-	isComplete = finalPos == len(cb.tree) && !cb.hasArg
+	isComplete = finalPos == len(cmdFields) && !cb.hasArg
 
 	var suggestions []string
 	if finalPos < len(cb.tree) {
@@ -142,7 +145,11 @@ func (cb *Command) ParseCommand(cmd string) CommandStatus {
 
 	var err error
 	if isCommand && !isComplete {
-		err = ErrInvalidCommand
+		err = ErrIncompleteCmd
+	}
+
+	if isCommand && !cb.model.IsTreeSupported(cmd) {
+		err = ErrUnsupportedCmd
 	}
 
 	if !isCommand {
@@ -156,6 +163,7 @@ func (cb *Command) ParseCommand(cmd string) CommandStatus {
 	return CommandStatus{
 		IsCommand:   isCommand,
 		IsComplete:  isComplete,
+		IsSupported: cb.model.IsTreeSupported(cmd),
 		Suggestions: suggestions,
 		TreePos:     finalPos - 1,
 		CommandStr:  cmdStr,

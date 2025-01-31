@@ -126,6 +126,14 @@ func (m debugCmdModel) SetStatus(status ui.CommandStatus) ui.CommandModel {
 	return m
 }
 
+func (m debugCmdModel) IsTreeSupported(treeStr string) bool {
+	switch treeStr {
+	case "/ history", "/ slog", "/ log":
+		return true
+	}
+	return false
+}
+
 func (debugCmdModel) GetCmdTree() [][]string {
 	return [][]string{
 		{"/"},
