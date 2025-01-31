@@ -80,8 +80,6 @@ func (m debugCmdModel) Update(msg tea.Msg) (ui.CommandModel, tea.Cmd) {
 		m.slogViewPort.Width = msg.Width
 		m.slogViewPort.Height = msg.Height - 2
 
-	case ui.ActiveCmdMsg:
-		m.activeCmdStr = string(msg)
 	}
 
 	switch m.cmdStatus.TreeStr {
