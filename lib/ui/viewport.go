@@ -40,21 +40,20 @@ func (vp ViewPort) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
-	case CommandModel:
-		vp.CurrentCmdModel = msg
-		vp.CurrentCmdModel, _ = vp.CurrentCmdModel.Update(vp.sendViewportSize())
-
 	case tea.WindowSizeMsg:
 		vp.height = msg.Height
 		vp.width = msg.Width
 		cmds = append(cmds, vp.sendViewportSize)
 
-	case CommanderStatusMsg:
-		cmds = append(cmds, vp.sendStatusMsg(msg.String, msg.Severity))
+	case CommandModel:
+		vp.CurrentCmdModel = msg
+		vp.CurrentCmdModel, _ = vp.CurrentCmdModel.Update(vp.sendViewportSize())
 
 	case CommandStatus:
 		vp.CurrentCmdModel = vp.CurrentCmdModel.SetStatus(msg)
 
+	case CommanderStatusMsg:
+		cmds = append(cmds, vp.sendStatusMsg(msg.String, msg.Severity))
 	}
 
 	if vp.CurrentCmdModel != nil {
