@@ -46,6 +46,7 @@ func NewDebugCmd(h *utils.InputHistory) ui.Command {
 }
 
 type debugCmdModel struct {
+	cmdStatus      ui.CommandStatus
 	lastError      error
 	activeCmdStr   string
 	inputHistory   *utils.InputHistory
@@ -83,14 +84,14 @@ func (m debugCmdModel) Update(msg tea.Msg) (ui.CommandModel, tea.Cmd) {
 		m.activeCmdStr = string(msg)
 	}
 
-	switch m.activeCmdStr {
-	case "log":
+	switch m.cmdStatus.TreeStr {
+	case "/ log":
 		m.loadLog()
 
-	case "slog":
+	case "/ slog":
 		m.loadSlog()
 
-	case "history":
+	case "/ history":
 		m.loadInputHistory()
 
 	case "": // Ignore first update
@@ -107,19 +108,24 @@ func (m debugCmdModel) Update(msg tea.Msg) (ui.CommandModel, tea.Cmd) {
 }
 
 func (m debugCmdModel) View() string {
-	switch m.activeCmdStr {
-	case "history":
+	switch m.cmdStatus.TreeStr {
+	case "/ history":
 		return m.viewHistory()
 
-	case "log":
+	case "/ log":
 		return m.lastLogStr
 
-	case "slog":
+	case "/ slog":
 		return m.viewSlog()
 
 	default:
 		return "Empty Command View"
 	}
+}
+
+func (m debugCmdModel) SetStatus(status ui.CommandStatus) ui.CommandModel {
+	m.cmdStatus = status
+	return m
 }
 
 func (debugCmdModel) GetCmdTree() [][]string {

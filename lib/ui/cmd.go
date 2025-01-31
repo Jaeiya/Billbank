@@ -49,12 +49,11 @@ type CommandModel interface {
 	Update(tea.Msg) (CommandModel, tea.Cmd)
 	View() string
 	GetLastError() error
+	SetStatus(CommandStatus) CommandModel
 }
 
-type CommandMsg Command
-
 type Command struct {
-	CommandModel
+	model CommandModel
 	// Represents the way a command is hierarchically constructed
 	// including aliases.
 	//
@@ -79,7 +78,7 @@ func NewCommand(config CommandConfig) Command {
 	}
 	cmdId += 1
 	cmd := Command{
-		CommandModel:        config.Model,
+		model:               config.Model,
 		status:              CommandStatus{},
 		tree:                config.Tree,
 		inputValidationFunc: config.InputValidationFunc,

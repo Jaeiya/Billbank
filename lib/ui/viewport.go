@@ -10,8 +10,8 @@ import (
 )
 
 type (
-	ActiveCmdMsg string
-	CmdStatusMsg struct {
+	ActiveCmdMsg       string
+	CommanderStatusMsg struct {
 		String   string
 		Severity StatusSeverity
 	}
@@ -40,18 +40,20 @@ func (vp ViewPort) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
-	case CommandMsg:
+	case CommandModel:
 		vp.CurrentCmdModel = msg
 		vp.CurrentCmdModel, _ = vp.CurrentCmdModel.Update(vp.sendViewportSize())
-		vp.CurrentCmdModel, _ = vp.CurrentCmdModel.Update(vp.sendActiveCmd(msg.status.CommandStr))
 
 	case tea.WindowSizeMsg:
 		vp.height = msg.Height
 		vp.width = msg.Width
 		cmds = append(cmds, vp.sendViewportSize)
 
-	case CmdStatusMsg:
+	case CommanderStatusMsg:
 		cmds = append(cmds, vp.sendStatusMsg(msg.String, msg.Severity))
+
+	case CommandStatus:
+		vp.CurrentCmdModel = vp.CurrentCmdModel.SetStatus(msg)
 
 	}
 

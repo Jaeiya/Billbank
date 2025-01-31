@@ -160,12 +160,12 @@ func tryEnterCmd(m CmdInputModel) (CmdInputModel, tea.Cmd) {
 		if m.lastCmd.GetId() == currCmd.GetId() {
 			m.currentCmd = Command{}
 			m.CommandInput.Reset()
-			return m, func() tea.Msg { return ActiveCmdMsg(currCmd.status.CommandStr) }
+			return m, func() tea.Msg { return currCmd.status }
 		}
 		m.lastCmd = m.currentCmd
 		m.currentCmd = Command{}
 		m.CommandInput.Reset()
-		return m, func() tea.Msg { return CommandMsg(currCmd) }
+		return m, func() tea.Msg { return currCmd.model.SetStatus(currCmd.status) }
 	}
 
 	if m.currentCmd.status.IsCommand && !m.currentCmd.status.IsComplete {
