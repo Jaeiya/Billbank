@@ -13,7 +13,7 @@ var (
 	ErrNotCommand      = fmt.Errorf("unrecognized command")
 	ErrInvalidCommand  = fmt.Errorf("incomplete command")
 	ErrMissingArgument = fmt.Errorf("missing argument")
-	ErrEmptyCommand    = fmt.Errorf("entered empty command")
+	ErrEmptyCommand    = fmt.Errorf("empty command")
 )
 
 var cmdId = 0
