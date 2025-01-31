@@ -25,6 +25,11 @@ var (
 	histStyle     = lipgloss.NewStyle().Foreground(lib.FgColor).Padding(1)
 )
 
+type (
+	debugCmdMap     map[string]func(debugCmdModel) debugCmdModel
+	debugCmdViewMap map[string]func(debugCmdModel) string
+)
+
 func NewDebugCmd(h *utils.InputHistory) ui.Command {
 	vp := viewport.New(0, 0)
 	vp.YPosition = 1
@@ -32,6 +37,18 @@ func NewDebugCmd(h *utils.InputHistory) ui.Command {
 	m := debugCmdModel{
 		inputHistory: h,
 		slogViewPort: vp,
+	}
+
+	m.cmdMap = debugCmdMap{
+		"/ history": func(dcm debugCmdModel) debugCmdModel { return dcm.loadInputHistory() },
+		"/ log":     func(dcm debugCmdModel) debugCmdModel { return dcm.loadLog() },
+		"/ slog":    func(dcm debugCmdModel) debugCmdModel { return dcm.loadSlog() },
+	}
+
+	m.cmdViewMap = debugCmdViewMap{
+		"/ history": func(dcm debugCmdModel) string { return dcm.viewHistory() },
+		"/ log":     func(dcm debugCmdModel) string { return dcm.lastLogStr },
+		"/ slog":    func(dcm debugCmdModel) string { return dcm.viewSlog() },
 	}
 
 	return ui.NewCommand(
@@ -47,8 +64,9 @@ func NewDebugCmd(h *utils.InputHistory) ui.Command {
 
 type debugCmdModel struct {
 	cmdStatus      ui.CommandStatus
+	cmdMap         debugCmdMap
+	cmdViewMap     debugCmdViewMap
 	lastError      error
-	activeCmdStr   string
 	inputHistory   *utils.InputHistory
 	historyLen     int
 	historyView    string
@@ -82,21 +100,11 @@ func (m debugCmdModel) Update(msg tea.Msg) (ui.CommandModel, tea.Cmd) {
 
 	}
 
-	switch m.cmdStatus.TreeStr {
-	case "/ log":
-		m.loadLog()
-
-	case "/ slog":
-		m.loadSlog()
-
-	case "/ history":
-		m.loadInputHistory()
-
-	case "": // Ignore first update
-		break
-
-	default:
-		m.lastError = fmt.Errorf("'%s' not implemented", m.activeCmdStr)
+	exec, hasCmd := m.cmdMap[m.cmdStatus.TreeStr]
+	if hasCmd {
+		m = exec(m)
+	} else {
+		m.lastError = fmt.Errorf("'%s' not implemented", m.cmdStatus.TreeStr)
 	}
 
 	_, cmd = m.slogViewPort.Update(msg)
@@ -106,19 +114,11 @@ func (m debugCmdModel) Update(msg tea.Msg) (ui.CommandModel, tea.Cmd) {
 }
 
 func (m debugCmdModel) View() string {
-	switch m.cmdStatus.TreeStr {
-	case "/ history":
-		return m.viewHistory()
-
-	case "/ log":
-		return m.lastLogStr
-
-	case "/ slog":
-		return m.viewSlog()
-
-	default:
-		return "Empty Command View"
+	viewFunc, hasView := m.cmdViewMap[m.cmdStatus.TreeStr]
+	if hasView {
+		return viewFunc(m)
 	}
+	return fmt.Sprintf("Missing View for Command::%s", m.cmdStatus.TreeStr)
 }
 
 func (m debugCmdModel) SetStatus(status ui.CommandStatus) ui.CommandModel {
@@ -137,9 +137,9 @@ func (m debugCmdModel) GetLastError() error {
 	return m.lastError
 }
 
-func (m *debugCmdModel) loadInputHistory() {
+func (m debugCmdModel) loadInputHistory() debugCmdModel {
 	if m.inputHistory.GetLen() == m.historyLen {
-		return
+		return m
 	}
 
 	var sb strings.Builder
@@ -153,13 +153,14 @@ func (m *debugCmdModel) loadInputHistory() {
 	}
 	m.historyLen = m.inputHistory.GetLen()
 	m.historyView = sb.String()
+	return m
 }
 
 func (m debugCmdModel) viewHistory() string {
 	return histStyle.Render(m.historyView)
 }
 
-func (m *debugCmdModel) loadLog() {
+func (m debugCmdModel) loadLog() debugCmdModel {
 	// TODO - refactor this into utils so we can cache result
 	dir, err := os.Getwd()
 	if err != nil {
@@ -171,30 +172,27 @@ func (m *debugCmdModel) loadLog() {
 		panic(err)
 	}
 	if fileInfo.Size() == int64(len(m.lastLogStr)+1) {
-		return
+		return m
 	}
 	bytes, err := os.ReadFile(path)
 	if err != nil {
 		m.lastLogStr = err.Error()
-		return
+		return m
 	}
 	m.lastLogStr = strings.TrimSpace(string(bytes))
+	return m
 }
 
-func (m *debugCmdModel) loadSlog() {
-	m.loadLog()
+func (m debugCmdModel) loadSlog() debugCmdModel {
+	m = m.loadLog()
 	lines := strings.Split(m.lastLogStr, "\n")
 	lineCount := len(lines)
 
 	if lineCount == m.slogLineCount {
-		return
+		return m
 	}
 
 	now := time.Now()
-	defer func() {
-		m.slogRenderTime = time.Since(now)
-		m.slogLineCount = lineCount
-	}()
 
 	var tagBuilder strings.Builder
 	var pathBuilder strings.Builder
@@ -257,9 +255,12 @@ func (m *debugCmdModel) loadSlog() {
 			content,
 		)
 	}
+	m.slogRenderTime = time.Since(now)
+	m.slogLineCount = lineCount
 	m.lastSlogStr = content
 	m.slogViewPort.SetContent(m.lastSlogStr)
 	m.slogViewPort.GotoBottom()
+	return m
 }
 
 func (m debugCmdModel) viewSlog() string {
