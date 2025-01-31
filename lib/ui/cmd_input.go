@@ -175,6 +175,12 @@ func tryEnterCmd(m CmdInputModel) (CmdInputModel, tea.Cmd) {
 	}
 
 	statusStyle = statusStyle.Foreground(lib.FgErrColor)
+
+	// Force cmd to set error state if user enters an empty
+	// command. Parser only activates when the user types.
+	if m.CommandInput.Value() == "" {
+		m, _ = tryParseCmd(m, tea.KeyMsg{})
+	}
 	m.statusText = "Invalid Command"
 	return m, nil
 }

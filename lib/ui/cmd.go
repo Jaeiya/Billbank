@@ -8,15 +8,12 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-type CommandError error
-
 var (
-	ErrFatalCommand = CommandError(
-		fmt.Errorf("command parsing failed; this should not happen"),
-	)
-	ErrNotCommand      = CommandError(fmt.Errorf("unrecognized command"))
-	ErrInvalidCommand  = CommandError(fmt.Errorf("incomplete command"))
-	ErrMissingArgument = CommandError(fmt.Errorf("missing argument"))
+	ErrFatalCommand    = fmt.Errorf("command parsing failed; this should not happen")
+	ErrNotCommand      = fmt.Errorf("unrecognized command")
+	ErrInvalidCommand  = fmt.Errorf("incomplete command")
+	ErrMissingArgument = fmt.Errorf("missing argument")
+	ErrEmptyCommand    = fmt.Errorf("entered empty command")
 )
 
 var cmdId = 0
@@ -150,7 +147,11 @@ func (cb *Command) ParseCommand(cmd string) CommandStatus {
 	}
 
 	if !isCommand {
-		err = ErrNotCommand
+		if cmd == "" {
+			err = ErrEmptyCommand
+		} else {
+			err = ErrNotCommand
+		}
 	}
 
 	return CommandStatus{
