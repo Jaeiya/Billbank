@@ -46,7 +46,6 @@ func (vp ViewPort) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case CommandMsg:
-		utils.Log(utils.Info, "ViewPort: setting up command")
 		vp.CurrentCmdModel = msg
 		vp.CurrentCmdModel, _ = vp.CurrentCmdModel.Update(vp.sendViewportSize())
 		vp.CurrentCmdModel, _ = vp.CurrentCmdModel.Update(vp.sendActiveCmd(msg.status.CommandStr))
