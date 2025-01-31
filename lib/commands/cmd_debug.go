@@ -243,9 +243,10 @@ func (m *debugCmdModel) loadSlog() {
 		wordBuilder.String(),
 	))
 
-	// lipgloss applies a special formatting to align content.
-	formattingOffset := 46
 	if len(lastLog) > 0 {
+		// We need to remove the special formatting that
+		// lipgloss applies when aligning.
+		formattingOffset := 46
 		content = lipgloss.JoinVertical(
 			lipgloss.Top,
 			lastLog[:len(lastLog)-formattingOffset],
