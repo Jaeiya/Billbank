@@ -104,7 +104,7 @@ func (m debugCmdModel) Update(msg tea.Msg) (ui.CommandModel, tea.Cmd) {
 
 	case ui.ViewportSizeMsg:
 		m.slogViewPort.Width = msg.Width
-		m.slogViewPort.Height = msg.Height - 2
+		m.slogViewPort.Height = msg.Height
 
 	}
 
