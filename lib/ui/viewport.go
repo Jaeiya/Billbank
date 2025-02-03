@@ -138,7 +138,3 @@ func (vp ViewPort) sendStatusMsg(msg string, s StatusSeverity) func() tea.Msg {
 		}
 	}
 }
-
-func (vp ViewPort) sendActiveCmd(cmd string) tea.Msg {
-	return ActiveCmdMsg(cmd)
-}
