@@ -126,7 +126,8 @@ func (m CmdInputModel) Update(msg tea.Msg) (CmdInputModel, tea.Cmd) {
 			utils.Log(utils.Info, fmt.Sprintf("ExecCommand: [%s]", m.currentCmd.status.TreeStr))
 			m, cmd = tryEnterCmd(m)
 			if m.currentCmd.status.Error != nil {
-				utils.Log(utils.Attention, fmt.Sprintf("CommandError: %s", m.currentCmd.status.Error.Error()))
+				msg := fmt.Sprintf("%s::[%s]", m.currentCmd.status.Error.Error(), m.currentCmd.status.TreeStr)
+				utils.Log(utils.Attention, fmt.Sprintf("CommandError: %s", msg))
 			}
 			cmds = append(cmds, cmd)
 
