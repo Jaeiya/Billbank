@@ -253,6 +253,9 @@ func (m debugCmdModel) loadSlog() debugCmdModel {
 
 	var tagBuilder, pathBuilder, wordBuilder strings.Builder
 	for _, line := range lines {
+		if line == "" {
+			continue
+		}
 		var parts []string = strings.Split(line, " ")
 		var tag string = parts[3]
 		var subjectStyle lipgloss.Style
