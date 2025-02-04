@@ -6,7 +6,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/jaeiya/billbank/lib"
-	"github.com/jaeiya/billbank/lib/utils"
+	"github.com/jaeiya/billbank/lib/utils/logger"
 )
 
 type (
@@ -43,7 +43,7 @@ func (vp ViewPort) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		vp.height = msg.Height
 		vp.width = msg.Width
-		utils.Log(utils.Debug, fmt.Sprintf("ViewPortSize: %dx%d", vp.width, vp.height))
+		logger.Log(logger.Debug, fmt.Sprintf("ViewPortSize: %dx%d", vp.width, vp.height))
 		cmds = append(cmds, vp.sendViewportSize)
 
 	case CommandModel:
@@ -114,7 +114,7 @@ func (vp *ViewPort) catchCmdErrors() tea.Cmd {
 	}
 
 	if err != nil {
-		utils.Log(utils.Error, fmt.Sprintf("CommandError: %s", err))
+		logger.Log(logger.Error, fmt.Sprintf("CommandError: %s", err))
 		vp.lastCmdError = err
 		return vp.sendStatusMsg("Command Implementation Error", HIGH)
 	}

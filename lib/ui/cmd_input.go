@@ -8,6 +8,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/jaeiya/billbank/lib"
 	"github.com/jaeiya/billbank/lib/utils"
+	"github.com/jaeiya/billbank/lib/utils/logger"
 )
 
 type UpdateStatusMsg struct {
@@ -123,11 +124,11 @@ func (m CmdInputModel) Update(msg tea.Msg) (CmdInputModel, tea.Cmd) {
 			}
 
 		case "enter":
-			utils.Log(utils.Info, fmt.Sprintf("ExecCommand: [%s]", m.currentCmd.status.TreeStr))
+			logger.Log(logger.Info, fmt.Sprintf("ExecCommand: [%s]", m.currentCmd.status.TreeStr))
 			m, cmd = tryEnterCmd(m)
 			if m.currentCmd.status.Error != nil {
 				msg := fmt.Sprintf("%s::[%s]", m.currentCmd.status.Error.Error(), m.currentCmd.status.TreeStr)
-				utils.Log(utils.Attention, fmt.Sprintf("CommandError: %s", msg))
+				logger.Log(logger.Attention, fmt.Sprintf("CommandError: %s", msg))
 			}
 			cmds = append(cmds, cmd)
 
