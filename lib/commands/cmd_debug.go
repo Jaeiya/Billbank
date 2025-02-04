@@ -91,7 +91,7 @@ type debugCmdModel struct {
 	cmdViewMap     debugCmdViewMap
 	lastError      error
 	inputHistory   *utils.InputHistory
-	historyLen     int
+	lastHistoryLen int
 	historyView    string
 	lastLogStr     string
 	lastSlogStr    string
@@ -167,7 +167,7 @@ func (m debugCmdModel) GetLastError() error {
 }
 
 func (m debugCmdModel) loadInputHistory() debugCmdModel {
-	if m.inputHistory.GetLen() == m.historyLen {
+	if m.inputHistory.GetLen() == m.lastHistoryLen {
 		return m
 	}
 
@@ -180,7 +180,7 @@ func (m debugCmdModel) loadInputHistory() debugCmdModel {
 		}
 		sb.WriteString(fmt.Sprintf("\n%s", item))
 	}
-	m.historyLen = m.inputHistory.GetLen()
+	m.lastHistoryLen = m.inputHistory.GetLen()
 	m.historyView = sb.String()
 	return m
 }
