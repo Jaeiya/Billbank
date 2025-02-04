@@ -79,7 +79,7 @@ func (vp ViewPort) View() string {
 	if vp.lastCmdError != nil {
 		return lipgloss.JoinVertical(
 			lipgloss.Left,
-			NewErrorMsg("Command Error", vp.lastCmdError.Error(), vp.width, vp.height-h),
+			NewErrorBox("Command Error", vp.lastCmdError.Error(), vp.width, vp.height-h),
 			cmdrStr,
 		)
 	}
