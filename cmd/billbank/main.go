@@ -18,7 +18,7 @@ func main() {
 	// db := sqlite.NewSqliteDb(filePath, lib.USD)
 	// defer db.Close()
 
-	utils.CreateLog()
+	utils.CreateLog(utils.Debug)
 	utils.Log(utils.Info, "Starting BillBank")
 
 	vp := ui.ViewPort{}

@@ -11,8 +11,8 @@ import (
 type LogLevel int
 
 const (
-	Debug = -1
-	Info  = LogLevel(iota)
+	Debug = LogLevel(iota)
+	Info
 	Attention
 	Error
 )
@@ -25,15 +25,21 @@ type LogMsg struct {
 }
 
 var (
-	isReady = false
-	logger  *log.Logger
-	logChan = make(chan LogMsg, 50)
+	isReady  = false
+	logger   *log.Logger
+	logChan  = make(chan LogMsg, 50)
+	logLevel LogLevel
 )
 
 func Log(ll LogLevel, msg any) {
+	if ll < logLevel {
+		return
+	}
+
 	if !isReady {
 		panic("log not initialized")
 	}
+
 	_, file, line, _ := runtime.Caller(1)
 	logChan <- LogMsg{msg, ll, file, line}
 }
@@ -42,7 +48,7 @@ func CloseLog() {
 	close(logChan)
 }
 
-func CreateLog() bool {
+func CreateLog(ll LogLevel) bool {
 	if isReady {
 		return true
 	}
@@ -59,6 +65,7 @@ func CreateLog() bool {
 		panic(err)
 	}
 
+	logLevel = ll
 	logger = log.New(file, "", 0)
 	go logMessages()
 	isReady = true
