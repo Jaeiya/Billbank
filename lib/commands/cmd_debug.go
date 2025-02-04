@@ -71,6 +71,8 @@ func NewDebugCmd(h *utils.InputHistory) ui.Command {
 }
 
 type debugCmdModel struct {
+	viewportWidth  int
+	viewportHeight int
 	cmdStatus      ui.CommandStatus
 	cmdMap         debugCmdMap
 	cmdViewMap     debugCmdViewMap
@@ -103,9 +105,11 @@ func (m debugCmdModel) Update(msg tea.Msg) (ui.CommandModel, tea.Cmd) {
 		}
 
 	case ui.ViewportSizeMsg:
+		m.viewportWidth = msg.Width
+		m.viewportHeight = msg.Height
 		m.slogViewPort.Width = msg.Width
-		m.slogViewPort.Height = msg.Height
 
+		m.slogViewPort.Height = msg.Height - 2
 	}
 
 	exec, hasCmd := m.cmdMap[debugCmdTree(m.cmdStatus.TreeStr)]
