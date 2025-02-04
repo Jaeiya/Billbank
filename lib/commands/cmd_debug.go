@@ -27,6 +27,7 @@ var (
 	infoLogStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("#29DEFF"))
 	attnLogStyle  = lipgloss.NewStyle().Foreground(lib.FgWarnColor)
 	errLogStyle   = lipgloss.NewStyle().Foreground(lib.FgErrLightColor)
+	debugLogStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#D283FF"))
 	logStyle      = lipgloss.NewStyle().MarginLeft(1).MarginTop(1)
 	slogWordStyle = lipgloss.NewStyle().Foreground(lib.FgColor)
 	slogPathStyle = lipgloss.NewStyle().Align(lipgloss.Right).Foreground(lib.FgDimColor)
@@ -236,6 +237,9 @@ func (m debugCmdModel) loadSlog() debugCmdModel {
 		case "[ERR]":
 			tag = errLogStyle.Render(tag)
 			subjectStyle = errLogStyle
+		case "[DBG]":
+			tag = debugLogStyle.Render(tag)
+			subjectStyle = debugLogStyle
 		}
 
 		tagBuilder.WriteString(fmt.Sprintf("%s \n", tag))
