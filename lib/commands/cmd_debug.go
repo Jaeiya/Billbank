@@ -18,10 +18,17 @@ import (
 type debugCmdTree string
 
 const (
-	DebugHistory = debugCmdTree("/ history")
-	DebugLog     = debugCmdTree("/ log")
-	DebugSlog    = debugCmdTree("/ slog")
+	DebugHistory  = debugCmdTree("/ history")
+	DebugLog      = debugCmdTree("/ log")
+	DebugSlog     = debugCmdTree("/ slog")
+	DebugClearLog = debugCmdTree("/ log clear")
 )
+
+var cmdTree = [][]string{
+	{"/"},
+	{"history", "log", "slog"},
+	{"clear"},
+}
 
 var (
 	infoLogStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("#29DEFF"))
@@ -49,15 +56,17 @@ func NewDebugCmd(h *utils.InputHistory) ui.Command {
 	}
 
 	m.cmdMap = debugCmdMap{
-		DebugHistory: func(dcm debugCmdModel) debugCmdModel { return dcm.loadInputHistory() },
-		DebugLog:     func(dcm debugCmdModel) debugCmdModel { return dcm.loadLog() },
-		DebugSlog:    func(dcm debugCmdModel) debugCmdModel { return dcm.loadSlog() },
+		DebugHistory:  func(dcm debugCmdModel) debugCmdModel { return dcm.loadInputHistory() },
+		DebugLog:      func(dcm debugCmdModel) debugCmdModel { return dcm.loadLog() },
+		DebugSlog:     func(dcm debugCmdModel) debugCmdModel { return dcm.loadSlog() },
+		DebugClearLog: func(dcm debugCmdModel) debugCmdModel { return dcm.clearLog() },
 	}
 
 	m.cmdViewMap = debugCmdViewMap{
-		DebugHistory: func(dcm debugCmdModel) string { return dcm.viewHistory() },
-		DebugLog:     func(dcm debugCmdModel) string { return dcm.lastLogStr },
-		DebugSlog:    func(dcm debugCmdModel) string { return dcm.viewSlog() },
+		DebugHistory:  func(dcm debugCmdModel) string { return dcm.viewHistory() },
+		DebugLog:      func(dcm debugCmdModel) string { return dcm.lastLogStr },
+		DebugSlog:     func(dcm debugCmdModel) string { return dcm.viewSlog() },
+		DebugClearLog: func(dcm debugCmdModel) string { return dcm.clearLogView() },
 	}
 
 	return ui.NewCommand(
@@ -109,7 +118,6 @@ func (m debugCmdModel) Update(msg tea.Msg) (ui.CommandModel, tea.Cmd) {
 		m.viewportWidth = msg.Width
 		m.viewportHeight = msg.Height
 		m.slogViewPort.Width = msg.Width
-
 		m.slogViewPort.Height = msg.Height - 2
 	}
 
@@ -141,17 +149,14 @@ func (m debugCmdModel) SetStatus(status ui.CommandStatus) ui.CommandModel {
 
 func (m debugCmdModel) IsTreeSupported(treeStr string) bool {
 	switch debugCmdTree(treeStr) {
-	case DebugHistory, DebugLog, DebugSlog:
+	case DebugHistory, DebugLog, DebugSlog, DebugClearLog:
 		return true
 	}
 	return false
 }
 
 func (debugCmdModel) GetCmdTree() [][]string {
-	return [][]string{
-		{"/"},
-		{"history", "log", "slog"},
-	}
+	return cmdTree
 }
 
 func (m debugCmdModel) GetLastError() error {
@@ -202,6 +207,31 @@ func (m debugCmdModel) loadLog() debugCmdModel {
 	}
 	m.lastLogStr = strings.TrimSpace(string(bytes))
 	return m
+}
+
+func (m debugCmdModel) clearLog() debugCmdModel {
+	dir, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
+	path := filepath.Join(dir, "log.txt")
+	err = os.Truncate(path, 0)
+	if err != nil {
+		panic(err)
+	}
+	m.lastLogStr = ""
+	m.lastSlogStr = ""
+	m.slogLineCount = 0
+	return m
+}
+
+func (m debugCmdModel) clearLogView() string {
+	return ui.NewInfoBox(
+		"Clear Log Completed",
+		"The log has been cleared successfully",
+		m.viewportWidth,
+		m.viewportHeight,
+	)
 }
 
 func (m debugCmdModel) loadSlog() debugCmdModel {
