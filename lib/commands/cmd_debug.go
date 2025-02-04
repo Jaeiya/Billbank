@@ -18,10 +18,11 @@ import (
 type debugCmdTree string
 
 const (
-	DebugHistory  = debugCmdTree("/ history")
-	DebugLog      = debugCmdTree("/ log")
-	DebugSlog     = debugCmdTree("/ slog")
-	DebugClearLog = debugCmdTree("/ log clear")
+	DebugHistory   = debugCmdTree("/ history")
+	DebugLog       = debugCmdTree("/ log")
+	DebugSlog      = debugCmdTree("/ slog")
+	DebugClearLog  = debugCmdTree("/ log clear")
+	DebugClearSlog = debugCmdTree("/ slog clear")
 )
 
 var cmdTree = [][]string{
@@ -56,17 +57,19 @@ func NewDebugCmd(h *utils.InputHistory) ui.Command {
 	}
 
 	m.cmdMap = debugCmdMap{
-		DebugHistory:  func(dcm debugCmdModel) debugCmdModel { return dcm.loadInputHistory() },
-		DebugLog:      func(dcm debugCmdModel) debugCmdModel { return dcm.loadLog() },
-		DebugSlog:     func(dcm debugCmdModel) debugCmdModel { return dcm.loadSlog() },
-		DebugClearLog: func(dcm debugCmdModel) debugCmdModel { return dcm.clearLog() },
+		DebugHistory:   func(dcm debugCmdModel) debugCmdModel { return dcm.loadInputHistory() },
+		DebugLog:       func(dcm debugCmdModel) debugCmdModel { return dcm.loadLog() },
+		DebugSlog:      func(dcm debugCmdModel) debugCmdModel { return dcm.loadSlog() },
+		DebugClearLog:  func(dcm debugCmdModel) debugCmdModel { return dcm.clearLog() },
+		DebugClearSlog: func(dcm debugCmdModel) debugCmdModel { return dcm.clearSlog() },
 	}
 
 	m.cmdViewMap = debugCmdViewMap{
-		DebugHistory:  func(dcm debugCmdModel) string { return dcm.viewHistory() },
-		DebugLog:      func(dcm debugCmdModel) string { return dcm.lastLogStr },
-		DebugSlog:     func(dcm debugCmdModel) string { return dcm.viewSlog() },
-		DebugClearLog: func(dcm debugCmdModel) string { return dcm.clearLogView() },
+		DebugHistory:   func(dcm debugCmdModel) string { return dcm.viewHistory() },
+		DebugLog:       func(dcm debugCmdModel) string { return dcm.lastLogStr },
+		DebugSlog:      func(dcm debugCmdModel) string { return dcm.viewSlog() },
+		DebugClearLog:  func(dcm debugCmdModel) string { return dcm.clearLogView() },
+		DebugClearSlog: func(dcm debugCmdModel) string { return dcm.clearSlogView() },
 	}
 
 	return ui.NewCommand(
@@ -149,7 +152,7 @@ func (m debugCmdModel) SetStatus(status ui.CommandStatus) ui.CommandModel {
 
 func (m debugCmdModel) IsTreeSupported(treeStr string) bool {
 	switch debugCmdTree(treeStr) {
-	case DebugHistory, DebugLog, DebugSlog, DebugClearLog:
+	case DebugHistory, DebugLog, DebugSlog, DebugClearLog, DebugClearSlog:
 		return true
 	}
 	return false
@@ -315,6 +318,21 @@ func (m debugCmdModel) loadSlog() debugCmdModel {
 	m.slogViewPort.SetContent(m.lastSlogStr)
 	m.slogViewPort.GotoBottom()
 	return m
+}
+
+func (m debugCmdModel) clearSlog() debugCmdModel {
+	m.slogLineCount = 0
+	m.lastSlogStr = ""
+	return m
+}
+
+func (m debugCmdModel) clearSlogView() string {
+	return ui.NewInfoBox(
+		"Clear Slog",
+		"Slog has been reset and will be re-rendered on execution.",
+		m.viewportWidth,
+		m.viewportHeight,
+	)
 }
 
 func (m debugCmdModel) viewSlog() string {
