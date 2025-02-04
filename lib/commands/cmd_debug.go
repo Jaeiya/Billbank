@@ -227,8 +227,8 @@ func (m debugCmdModel) clearLog() debugCmdModel {
 
 func (m debugCmdModel) clearLogView() string {
 	return ui.NewInfoBox(
-		"Clear Log Completed",
-		"The log has been cleared successfully",
+		"Clear Log",
+		"The log has been successfully cleared!",
 		m.viewportWidth,
 		m.viewportHeight,
 	)
