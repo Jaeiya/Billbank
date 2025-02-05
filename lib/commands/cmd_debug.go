@@ -283,12 +283,6 @@ func (m debugCmdModel) loadSlog() debugCmdModel {
 
 	now := time.Now()
 
-	var lastLog string
-	if m.slogLineCount > 0 {
-		lastLog = strings.TrimSpace(m.lastSlogStr) + "\n"
-		lines = lines[m.slogLineCount:]
-	}
-
 	var tagBuilder, pathBuilder, wordBuilder strings.Builder
 	for _, line := range lines {
 		if line == "" {
@@ -329,7 +323,6 @@ func (m debugCmdModel) loadSlog() debugCmdModel {
 		wordBuilder.WriteString(fmt.Sprintf("%s\n", msg))
 	}
 
-	lastLog = strings.TrimSpace(lastLog)
 	content := strings.TrimSpace(lipgloss.JoinHorizontal(
 		lipgloss.Left,
 		tagBuilder.String(),
@@ -337,16 +330,6 @@ func (m debugCmdModel) loadSlog() debugCmdModel {
 		wordBuilder.String(),
 	))
 
-	if len(lastLog) > 0 {
-		// We need to remove the special formatting that
-		// lipgloss applies when aligning.
-		formattingOffset := 46
-		content = lipgloss.JoinVertical(
-			lipgloss.Top,
-			lastLog[:len(lastLog)-formattingOffset],
-			content,
-		)
-	}
 	m.slogRenderTime = time.Since(now)
 	m.slogLineCount = m.logLineCount
 	m.lastSlogStr = content
