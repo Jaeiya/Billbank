@@ -17,6 +17,7 @@
     "goreleaser",
     "gotest",
     "Gotestsum",
+    "Inuse",
     "junitfile",
     "lipgloss",
     "mikepenz",
