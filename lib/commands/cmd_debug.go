@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
+	"strconv"
 	"strings"
 	"time"
 
@@ -23,11 +25,12 @@ const (
 	DebugSlog      = debugCmdTree("/ slog")
 	DebugClearLog  = debugCmdTree("/ log clear")
 	DebugClearSlog = debugCmdTree("/ slog clear")
+	DebugStats     = debugCmdTree("/ stats")
 )
 
 var cmdTree = [][]string{
 	{"/"},
-	{"history", "log", "slog"},
+	{"history", "log", "slog", "stats"},
 	{"clear"},
 }
 
@@ -40,6 +43,22 @@ var (
 	slogWordStyle = lipgloss.NewStyle().Foreground(lib.FgColor)
 	slogPathStyle = lipgloss.NewStyle().Align(lipgloss.Right).Foreground(lib.FgDimColor)
 	histStyle     = lipgloss.NewStyle().Foreground(lib.FgColor).Padding(1)
+
+	// Stats Styles
+	statHeader = lipgloss.NewStyle().
+			Width(30).
+			Align(lipgloss.Center).
+			Background(lib.BgDimColor).
+			Foreground(lib.FgWarnColor).
+			PaddingTop(1)
+
+	statBox = lipgloss.NewStyle().
+		Background(lib.BgDimColor).
+		Foreground(lib.FgColor).
+		Align(lipgloss.Left).
+		Padding(1).
+		PaddingLeft(2).
+		Width(30)
 )
 
 type (
@@ -62,6 +81,7 @@ func NewDebugCmd(h *utils.InputHistory) ui.Command {
 		DebugSlog:      func(dcm debugCmdModel) debugCmdModel { return dcm.loadSlog() },
 		DebugClearLog:  func(dcm debugCmdModel) debugCmdModel { return dcm.clearLog() },
 		DebugClearSlog: func(dcm debugCmdModel) debugCmdModel { return dcm.clearSlog() },
+		DebugStats:     func(dcm debugCmdModel) debugCmdModel { return dcm.loadStats() },
 	}
 
 	m.cmdViewMap = debugCmdViewMap{
@@ -70,6 +90,7 @@ func NewDebugCmd(h *utils.InputHistory) ui.Command {
 		DebugSlog:      func(dcm debugCmdModel) string { return dcm.viewSlog() },
 		DebugClearLog:  func(dcm debugCmdModel) string { return dcm.clearLogView() },
 		DebugClearSlog: func(dcm debugCmdModel) string { return dcm.clearSlogView() },
+		DebugStats:     func(dcm debugCmdModel) string { return dcm.viewStats() },
 	}
 
 	return ui.NewCommand(
@@ -83,21 +104,35 @@ func NewDebugCmd(h *utils.InputHistory) ui.Command {
 	)
 }
 
+type debugStats struct {
+	historySize     uint64
+	renderedLogSize uint64
+	logSize         uint64
+	slogSize        uint64
+	memAlloc        uint64
+	memTotal        uint64
+	memWorking      uint64
+	memGcCount      uint64
+}
+
 type debugCmdModel struct {
-	viewportWidth  int
-	viewportHeight int
-	cmdStatus      ui.CommandStatus
-	cmdMap         debugCmdMap
-	cmdViewMap     debugCmdViewMap
-	lastError      error
-	inputHistory   *utils.InputHistory
-	lastHistoryLen int
-	historyView    string
-	lastLogStr     string
-	lastSlogStr    string
-	slogViewPort   viewport.Model
-	slogLineCount  int
-	slogRenderTime time.Duration
+	viewportWidth      int
+	viewportHeight     int
+	cmdStatus          ui.CommandStatus
+	cmdMap             debugCmdMap
+	cmdViewMap         debugCmdViewMap
+	lastError          error
+	inputHistory       *utils.InputHistory
+	lastHistoryLen     int
+	historyView        string
+	lastLogStr         string
+	logLineCount       int
+	lastSlogStr        string
+	slogViewPort       viewport.Model
+	slogLineCount      int
+	slogRenderTime     time.Duration
+	stats              debugStats
+	lastStatRenderTime time.Time
 }
 
 func (m debugCmdModel) Update(msg tea.Msg) (ui.CommandModel, tea.Cmd) {
@@ -152,7 +187,7 @@ func (m debugCmdModel) SetStatus(status ui.CommandStatus) ui.CommandModel {
 
 func (m debugCmdModel) IsTreeSupported(treeStr string) bool {
 	switch debugCmdTree(treeStr) {
-	case DebugHistory, DebugLog, DebugSlog, DebugClearLog, DebugClearSlog:
+	case DebugHistory, DebugLog, DebugSlog, DebugClearLog, DebugClearSlog, DebugStats:
 		return true
 	}
 	return false
@@ -209,6 +244,7 @@ func (m debugCmdModel) loadLog() debugCmdModel {
 		return m
 	}
 	m.lastLogStr = strings.TrimSpace(string(bytes))
+	m.logLineCount = strings.Count(m.lastLogStr, "\n")
 	return m
 }
 
@@ -240,9 +276,8 @@ func (m debugCmdModel) clearLogView() string {
 func (m debugCmdModel) loadSlog() debugCmdModel {
 	m = m.loadLog()
 	lines := strings.Split(m.lastLogStr, "\n")
-	lineCount := len(lines)
 
-	if lineCount == m.slogLineCount {
+	if m.logLineCount == m.slogLineCount {
 		return m
 	}
 
@@ -313,7 +348,7 @@ func (m debugCmdModel) loadSlog() debugCmdModel {
 		)
 	}
 	m.slogRenderTime = time.Since(now)
-	m.slogLineCount = lineCount
+	m.slogLineCount = m.logLineCount
 	m.lastSlogStr = content
 	m.slogViewPort.SetContent(m.lastSlogStr)
 	m.slogViewPort.GotoBottom()
@@ -342,4 +377,129 @@ func (m debugCmdModel) viewSlog() string {
 		m.slogRenderTime,
 	)
 	return logStyle.Render(content)
+}
+
+func (m debugCmdModel) loadStats() debugCmdModel {
+	var err error
+	now := time.Now()
+	ms := now.Sub(m.lastStatRenderTime).Milliseconds()
+
+	if ms < 1000 {
+		return m
+	}
+
+	m.lastStatRenderTime = now
+
+	dir, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
+	path := filepath.Join(dir, "log.txt")
+	fileInfo, err := os.Stat(path)
+	if err != nil {
+		panic(err)
+	}
+
+	var historySize int
+	for _, item := range m.inputHistory.GetInputs() {
+		historySize += len(item)
+	}
+
+	var mem runtime.MemStats
+	runtime.ReadMemStats(&mem)
+
+	m.stats = debugStats{
+		historySize:     uint64(historySize),
+		renderedLogSize: uint64(len(m.lastLogStr)),
+		logSize:         uint64(fileInfo.Size()),
+		slogSize:        uint64(len(m.lastSlogStr)),
+		memGcCount:      uint64(mem.NumGC),
+		memAlloc:        mem.Alloc,
+		memTotal:        mem.Sys,
+		// Simulate what task manager provides as the working memory
+		memWorking: mem.HeapInuse + mem.StackInuse + mem.OtherSys,
+	}
+
+	return m
+}
+
+func (m debugCmdModel) viewStats() string {
+	debugHeader := statHeader.Render("Debug Stats")
+
+	debugTitles := lipgloss.JoinVertical(
+		lipgloss.Right,
+		"History: ",
+	)
+
+	debugValues := lipgloss.JoinVertical(
+		lipgloss.Left,
+		utils.FormatBytes(m.stats.historySize),
+	)
+
+	debugStats := statBox.PaddingBottom(0).Render(lipgloss.JoinHorizontal(
+		lipgloss.Left,
+		debugTitles,
+		debugValues,
+	))
+
+	logHeader := statHeader.Render("Log Stats")
+
+	logTitles := lipgloss.JoinVertical(
+		lipgloss.Right,
+		"Size: ",
+		"Cache: ",
+		"Lines: ",
+		"Slog: ",
+	)
+
+	logValues := lipgloss.JoinVertical(
+		lipgloss.Left,
+		utils.FormatBytes(m.stats.logSize),
+		utils.FormatBytes(m.stats.renderedLogSize),
+		strconv.Itoa(m.logLineCount),
+		utils.FormatBytes(m.stats.slogSize),
+	)
+
+	logStats := statBox.Render(lipgloss.JoinHorizontal(
+		lipgloss.Left,
+		logTitles,
+		logValues,
+	))
+
+	memHeader := statHeader.Render("Memory Stats")
+
+	memTitles := lipgloss.JoinVertical(
+		lipgloss.Right,
+		"Allocated: ",
+		"Working: ",
+		"Total: ",
+		"GC Count: ",
+	)
+
+	memValues := lipgloss.JoinVertical(
+		lipgloss.Left,
+		utils.FormatBytes(m.stats.memAlloc),
+		utils.FormatBytes(m.stats.memWorking),
+		utils.FormatBytes(m.stats.memTotal),
+		strconv.FormatUint(m.stats.memGcCount, 10),
+	)
+
+	memStats := statBox.Render(lipgloss.JoinHorizontal(
+		lipgloss.Left,
+		memTitles,
+		memValues,
+	))
+
+	return lipgloss.Place(
+		m.viewportWidth,
+		m.viewportHeight,
+		lipgloss.Center,
+		lipgloss.Center,
+		lipgloss.JoinHorizontal(
+			lipgloss.Left,
+			lipgloss.JoinVertical(lipgloss.Left, debugHeader, debugStats, logHeader, logStats),
+			" ",
+			lipgloss.JoinVertical(lipgloss.Left, memHeader, memStats),
+		),
+	)
 }
