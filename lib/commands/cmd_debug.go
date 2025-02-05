@@ -424,15 +424,17 @@ func (m debugCmdModel) loadStats() debugCmdModel {
 }
 
 func (m debugCmdModel) viewStats() string {
-	debugHeader := statHeader.Render("Debug Stats")
+	debugHeader := statHeader.Render("History Stats")
 
 	debugTitles := lipgloss.JoinVertical(
 		lipgloss.Right,
-		"History: ",
+		"Items: ",
+		"Size: ",
 	)
 
 	debugValues := lipgloss.JoinVertical(
 		lipgloss.Left,
+		strconv.Itoa(m.lastHistoryLen),
 		utils.FormatBytes(m.stats.historySize),
 	)
 
@@ -447,17 +449,17 @@ func (m debugCmdModel) viewStats() string {
 	logTitles := lipgloss.JoinVertical(
 		lipgloss.Right,
 		"Size: ",
-		"Cache: ",
-		"Lines: ",
 		"Slog: ",
+		"Lines: ",
+		"Cache: ",
 	)
 
 	logValues := lipgloss.JoinVertical(
 		lipgloss.Left,
 		utils.FormatBytes(m.stats.logSize),
-		utils.FormatBytes(m.stats.renderedLogSize),
-		strconv.Itoa(m.logLineCount),
 		utils.FormatBytes(m.stats.slogSize),
+		strconv.Itoa(m.logLineCount),
+		utils.FormatBytes(m.stats.renderedLogSize+m.stats.slogSize),
 	)
 
 	logStats := statBox.Render(lipgloss.JoinHorizontal(
