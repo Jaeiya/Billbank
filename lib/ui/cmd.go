@@ -79,6 +79,15 @@ func NewCommand(config CommandConfig) Command {
 	if config.HasArg && config.InputValidationFunc == nil {
 		panic("command arguments need a validation function")
 	}
+
+	if len(config.Tree) == 0 {
+		panic("empty command tree")
+	}
+
+	if config.Model == nil {
+		panic("missing command model")
+	}
+
 	cmdId += 1
 	cmd := Command{
 		model:               config.Model,
