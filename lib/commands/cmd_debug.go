@@ -417,7 +417,7 @@ func (m debugCmdModel) loadStats() debugCmdModel {
 		memAlloc:        mem.Alloc,
 		memTotal:        mem.Sys,
 		// Simulate what task manager provides as the working memory
-		memWorking: mem.HeapInuse + mem.StackInuse + mem.OtherSys,
+		memWorking: mem.OtherSys + mem.HeapSys,
 	}
 
 	return m
