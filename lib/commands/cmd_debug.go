@@ -17,23 +17,6 @@ import (
 	"github.com/jaeiya/billbank/lib/utils"
 )
 
-type debugCmdTree = string
-
-const (
-	DebugHistory   = debugCmdTree("/ history")
-	DebugLog       = debugCmdTree("/ log")
-	DebugSlog      = debugCmdTree("/ slog")
-	DebugClearLog  = debugCmdTree("/ log clear")
-	DebugClearSlog = debugCmdTree("/ slog clear")
-	DebugStats     = debugCmdTree("/ stats")
-)
-
-var cmdTree = [][]string{
-	{"/"},
-	{"history", "log", "slog", "stats"},
-	{"clear"},
-}
-
 var (
 	infoLogStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("#29DEFF"))
 	attnLogStyle  = lipgloss.NewStyle().Foreground(lib.FgWarnColor)
@@ -62,9 +45,6 @@ var (
 )
 
 func NewDebugCmd(h *utils.InputHistory) ui.Command {
-	vp := viewport.New(0, 0)
-	vp.YPosition = 1
-
 	m := debugCmdModel{
 		BaseCommand: NewBaseCommand[debugCmdModel]([][]string{
 			{"/"},
@@ -72,39 +52,39 @@ func NewDebugCmd(h *utils.InputHistory) ui.Command {
 			{"clear"},
 		}),
 		inputHistory: h,
-		slogViewPort: vp,
+		slogViewPort: viewport.New(0, 0),
 	}
 
 	m.AddCommands([]CommandEntry[debugCmdModel]{
 		{
-			DebugHistory,
+			"/ history",
 			func(dcm debugCmdModel) debugCmdModel { return dcm.loadInputHistory() },
 			func(dcm debugCmdModel) string { return dcm.viewHistory() },
 		},
 		{
-			DebugLog,
+			"/ log",
 			func(dcm debugCmdModel) debugCmdModel { return dcm.loadLog() },
 			func(dcm debugCmdModel) string { return dcm.lastLogStr },
 		},
 		{
-			DebugSlog,
+			"/ slog",
 			func(dcm debugCmdModel) debugCmdModel { return dcm.loadSlog() },
 			func(dcm debugCmdModel) string { return dcm.viewSlog() },
 		},
 		{
-			DebugStats,
+			"/ stats",
 			func(dcm debugCmdModel) debugCmdModel { return dcm.loadStats() },
 			func(dcm debugCmdModel) string { return dcm.viewStats() },
 		},
 		{
-			DebugClearLog,
+			"/ log clear",
 			func(dcm debugCmdModel) debugCmdModel { return dcm.clearLog() },
 			func(dcm debugCmdModel) string { return dcm.clearLogView() },
 		},
 		{
-			DebugClearSlog,
-			nil,
-			nil,
+			"/ slog clear",
+			func(dcm debugCmdModel) debugCmdModel { return dcm.clearSlog() },
+			func(dcm debugCmdModel) string { return dcm.clearSlogView() },
 		},
 	}...)
 
