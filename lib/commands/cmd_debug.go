@@ -119,7 +119,7 @@ type debugCmdModel struct {
 	lastSlogStr        string
 	slogViewPort       viewport.Model
 	slogLineCount      int
-	slogRenderTime     time.Duration
+	slogRenderDur      time.Duration
 	stats              debugStats
 	lastStatRenderTime time.Time
 }
@@ -295,7 +295,7 @@ func (m debugCmdModel) loadSlog() debugCmdModel {
 		wordBuilder.String(),
 	))
 
-	m.slogRenderTime = time.Since(now)
+	m.slogRenderDur = time.Since(now)
 	m.slogLineCount = m.logLineCount
 	m.lastSlogStr = content
 
@@ -328,7 +328,7 @@ func (m debugCmdModel) viewSlog() string {
 	content := fmt.Sprintf(
 		"%s\nTook: %s",
 		m.slogViewPort.View(),
-		m.slogRenderTime,
+		m.slogRenderDur,
 	)
 	return logStyle.Render(content)
 }
