@@ -409,7 +409,7 @@ func (m debugCmdModel) viewStats() string {
 
 	debugValues := lipgloss.JoinVertical(
 		lipgloss.Left,
-		strconv.Itoa(m.lastHistoryLen),
+		strconv.Itoa(m.inputHistory.GetLen()),
 		utils.FormatBytes(m.stats.historySize),
 	)
 
