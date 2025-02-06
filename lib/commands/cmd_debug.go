@@ -66,7 +66,11 @@ func NewDebugCmd(h *utils.InputHistory) ui.Command {
 	vp.YPosition = 1
 
 	m := debugCmdModel{
-		BaseCommand:  NewBaseCommand[debugCmdModel](),
+		BaseCommand: NewBaseCommand[debugCmdModel]([][]string{
+			{"/"},
+			{"history", "log", "slog", "stats"},
+			{"clear"},
+		}),
 		inputHistory: h,
 		slogViewPort: vp,
 	}
@@ -106,7 +110,6 @@ func NewDebugCmd(h *utils.InputHistory) ui.Command {
 
 	return ui.NewCommand(
 		ui.CommandConfig{
-			Tree:                m.GetCmdTree(),
 			Model:               m,
 			InputValidationFunc: func(arg string) error { return nil },
 			KeyValidationFunc:   func(key rune) bool { return false },
@@ -187,10 +190,6 @@ func (m debugCmdModel) View() string {
 func (m debugCmdModel) SetStatus(status ui.CommandStatus) ui.CommandModel {
 	m.BaseCommand.SetStatus(status)
 	return m
-}
-
-func (debugCmdModel) GetCmdTree() [][]string {
-	return cmdTree
 }
 
 func (m debugCmdModel) loadInputHistory() debugCmdModel {

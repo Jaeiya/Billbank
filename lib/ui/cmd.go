@@ -41,7 +41,6 @@ type CommandStatus struct {
 
 type CommandConfig struct {
 	Model               CommandModel
-	Tree                [][]string
 	HasArg              bool
 	InputValidationFunc func(arg string) error
 	KeyValidationFunc   func(key rune) bool
@@ -51,6 +50,7 @@ type CommandModel interface {
 	Update(tea.Msg) (CommandModel, tea.Cmd)
 	View() string
 	GetError() error
+	GetCmdTree() [][]string
 	SetStatus(CommandStatus) CommandModel
 	IsSupported(treeStr string) bool
 	ValidateCommand()
@@ -81,10 +81,6 @@ func NewCommand(config CommandConfig) Command {
 		panic("command arguments need a validation function")
 	}
 
-	if len(config.Tree) == 0 {
-		panic("empty command tree")
-	}
-
 	if config.Model == nil {
 		panic("missing command model")
 	}
@@ -95,7 +91,7 @@ func NewCommand(config CommandConfig) Command {
 	cmd := Command{
 		model:               config.Model,
 		status:              CommandStatus{},
-		tree:                config.Tree,
+		tree:                config.Model.GetCmdTree(),
 		inputValidationFunc: config.InputValidationFunc,
 		hasArg:              config.HasArg,
 		id:                  cmdId,

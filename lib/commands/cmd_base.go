@@ -23,10 +23,11 @@ type BaseCommand[T any] struct {
 	cmdViewCache string
 }
 
-func NewBaseCommand[T any]() BaseCommand[T] {
+func NewBaseCommand[T any](tree [][]string) BaseCommand[T] {
 	return BaseCommand[T]{
 		cmdMap:     map[string]func(T) T{},
 		cmdViewMap: map[string]func(T) string{},
+		cmdTree:    tree,
 	}
 }
 
@@ -59,6 +60,10 @@ func (bc *BaseCommand[T]) SetError(err error) {
 
 func (bc BaseCommand[T]) GetError() error {
 	return bc.cmdError
+}
+
+func (bc BaseCommand[T]) GetCmdTree() [][]string {
+	return bc.cmdTree
 }
 
 /*
