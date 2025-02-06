@@ -51,7 +51,6 @@ func NewCmdInput(h *utils.InputHistory, options ...CmdInputOption) CmdInputModel
 	model.CmdHistory = h
 	model.CommandInput = NewCommanderInput()
 
-	// options = append(options, WithCommands(NewDebugCmd(model.CmdHistory)))
 	for _, addCmd := range options {
 		addCmd(&model)
 	}
