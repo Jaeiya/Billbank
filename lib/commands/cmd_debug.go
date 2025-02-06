@@ -38,7 +38,7 @@ var (
 	infoLogStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("#29DEFF"))
 	attnLogStyle  = lipgloss.NewStyle().Foreground(lib.FgWarnColor)
 	errLogStyle   = lipgloss.NewStyle().Foreground(lib.FgErrLightColor)
-	debugLogStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#D283FF"))
+	debugLogStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#1BE697"))
 	logStyle      = lipgloss.NewStyle().MarginLeft(1).MarginTop(1)
 	slogWordStyle = lipgloss.NewStyle().Foreground(lib.FgColor)
 	slogPathStyle = lipgloss.NewStyle().Align(lipgloss.Right).Foreground(lib.FgDimColor)
