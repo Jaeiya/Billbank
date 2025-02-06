@@ -3,6 +3,7 @@ package commands
 import (
 	"fmt"
 
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/jaeiya/billbank/lib/ui"
 	"github.com/jaeiya/billbank/lib/utils/logger"
 )
@@ -20,6 +21,8 @@ type BaseCommand[T any] struct {
 	cmdTree    [][]string
 	cmdStatus  ui.CommandStatus
 	cmdError   error
+	viewWidth  int
+	viewHeight int
 }
 
 func NewBaseCommand[T any](tree [][]string) BaseCommand[T] {
@@ -27,6 +30,14 @@ func NewBaseCommand[T any](tree [][]string) BaseCommand[T] {
 		cmdMap:     map[string]func(T) T{},
 		cmdViewMap: map[string]func(T) string{},
 		cmdTree:    tree,
+	}
+}
+
+func (bc *BaseCommand[T]) Update(msg tea.Msg) {
+	switch msg := msg.(type) {
+	case ui.ViewportSizeMsg:
+		bc.viewHeight = msg.Height
+		bc.viewWidth = msg.Width
 	}
 }
 

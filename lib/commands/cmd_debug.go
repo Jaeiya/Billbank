@@ -111,8 +111,6 @@ type debugStats struct {
 
 type debugCmdModel struct {
 	BaseCommand[debugCmdModel]
-	viewportWidth      int
-	viewportHeight     int
 	inputHistory       *utils.InputHistory
 	lastHistoryLen     int
 	historyView        string
@@ -134,6 +132,8 @@ func (m debugCmdModel) Update(msg tea.Msg) (ui.CommandModel, tea.Cmd) {
 		m.SetError(nil)
 	}
 
+	m.BaseCommand.Update(msg)
+
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		if msg.String() == "ctrl+j" {
@@ -142,12 +142,6 @@ func (m debugCmdModel) Update(msg tea.Msg) (ui.CommandModel, tea.Cmd) {
 		if msg.String() == "ctrl+k" {
 			m.slogViewPort.LineUp(5)
 		}
-
-	case ui.ViewportSizeMsg:
-		m.viewportWidth = msg.Width
-		m.viewportHeight = msg.Height
-		m.slogViewPort.Width = msg.Width
-		m.slogViewPort.Height = msg.Height - 2
 	}
 
 	m, err := m.Exec(m)
@@ -239,8 +233,8 @@ func (m debugCmdModel) clearLogView() string {
 	return ui.NewInfoBox(
 		"Clear Log",
 		"The log has been successfully cleared!",
-		m.viewportWidth,
-		m.viewportHeight,
+		m.viewWidth,
+		m.viewHeight,
 	)
 }
 
@@ -304,6 +298,12 @@ func (m debugCmdModel) loadSlog() debugCmdModel {
 	m.slogRenderTime = time.Since(now)
 	m.slogLineCount = m.logLineCount
 	m.lastSlogStr = content
+
+	if m.slogViewPort.Width == 0 {
+		m.slogViewPort.Width = m.viewWidth
+		m.slogViewPort.Height = m.viewHeight - 2
+	}
+
 	m.slogViewPort.SetContent(m.lastSlogStr)
 	m.slogViewPort.GotoBottom()
 	return m
@@ -319,8 +319,8 @@ func (m debugCmdModel) clearSlogView() string {
 	return ui.NewInfoBox(
 		"Clear Slog",
 		"Slog has been reset and will be re-rendered on execution.",
-		m.viewportWidth,
-		m.viewportHeight,
+		m.viewWidth,
+		m.viewHeight,
 	)
 }
 
@@ -447,8 +447,8 @@ func (m debugCmdModel) viewStats() string {
 	))
 
 	return lipgloss.Place(
-		m.viewportWidth,
-		m.viewportHeight,
+		m.viewWidth,
+		m.viewHeight,
 		lipgloss.Center,
 		lipgloss.Center,
 		lipgloss.JoinHorizontal(
