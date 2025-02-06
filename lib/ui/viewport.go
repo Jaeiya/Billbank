@@ -101,7 +101,7 @@ func (vp ViewPort) View() string {
 }
 
 func (vp *ViewPort) catchCmdErrors() tea.Cmd {
-	err := vp.CurrentCmdModel.GetLastError()
+	err := vp.CurrentCmdModel.GetError()
 
 	if err == vp.lastCmdError {
 		return nil

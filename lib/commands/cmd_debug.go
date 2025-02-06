@@ -17,7 +17,7 @@ import (
 	"github.com/jaeiya/billbank/lib/utils"
 )
 
-type debugCmdTree string
+type debugCmdTree = string
 
 const (
 	DebugHistory   = debugCmdTree("/ history")
@@ -61,37 +61,48 @@ var (
 		Width(30)
 )
 
-type (
-	debugCmdMap     map[debugCmdTree]func(debugCmdModel) debugCmdModel
-	debugCmdViewMap map[debugCmdTree]func(debugCmdModel) string
-)
-
 func NewDebugCmd(h *utils.InputHistory) ui.Command {
 	vp := viewport.New(0, 0)
 	vp.YPosition = 1
 
 	m := debugCmdModel{
+		BaseCommand:  NewBaseCommand[debugCmdModel](),
 		inputHistory: h,
 		slogViewPort: vp,
 	}
 
-	m.cmdMap = debugCmdMap{
-		DebugHistory:   func(dcm debugCmdModel) debugCmdModel { return dcm.loadInputHistory() },
-		DebugLog:       func(dcm debugCmdModel) debugCmdModel { return dcm.loadLog() },
-		DebugSlog:      func(dcm debugCmdModel) debugCmdModel { return dcm.loadSlog() },
-		DebugClearLog:  func(dcm debugCmdModel) debugCmdModel { return dcm.clearLog() },
-		DebugClearSlog: func(dcm debugCmdModel) debugCmdModel { return dcm.clearSlog() },
-		DebugStats:     func(dcm debugCmdModel) debugCmdModel { return dcm.loadStats() },
-	}
-
-	m.cmdViewMap = debugCmdViewMap{
-		DebugHistory:   func(dcm debugCmdModel) string { return dcm.viewHistory() },
-		DebugLog:       func(dcm debugCmdModel) string { return dcm.lastLogStr },
-		DebugSlog:      func(dcm debugCmdModel) string { return dcm.viewSlog() },
-		DebugClearLog:  func(dcm debugCmdModel) string { return dcm.clearLogView() },
-		DebugClearSlog: func(dcm debugCmdModel) string { return dcm.clearSlogView() },
-		DebugStats:     func(dcm debugCmdModel) string { return dcm.viewStats() },
-	}
+	m.AddCommands([]CommandEntry[debugCmdModel]{
+		{
+			DebugHistory,
+			func(dcm debugCmdModel) debugCmdModel { return dcm.loadInputHistory() },
+			func(dcm debugCmdModel) string { return dcm.viewHistory() },
+		},
+		{
+			DebugLog,
+			func(dcm debugCmdModel) debugCmdModel { return dcm.loadLog() },
+			func(dcm debugCmdModel) string { return dcm.lastLogStr },
+		},
+		{
+			DebugSlog,
+			func(dcm debugCmdModel) debugCmdModel { return dcm.loadSlog() },
+			func(dcm debugCmdModel) string { return dcm.viewSlog() },
+		},
+		{
+			DebugStats,
+			func(dcm debugCmdModel) debugCmdModel { return dcm.loadStats() },
+			func(dcm debugCmdModel) string { return dcm.viewStats() },
+		},
+		{
+			DebugClearLog,
+			func(dcm debugCmdModel) debugCmdModel { return dcm.clearLog() },
+			func(dcm debugCmdModel) string { return dcm.clearLogView() },
+		},
+		{
+			DebugClearSlog,
+			nil,
+			nil,
+		},
+	}...)
 
 	return ui.NewCommand(
 		ui.CommandConfig{
@@ -116,12 +127,9 @@ type debugStats struct {
 }
 
 type debugCmdModel struct {
+	BaseCommand[debugCmdModel]
 	viewportWidth      int
 	viewportHeight     int
-	cmdStatus          ui.CommandStatus
-	cmdMap             debugCmdMap
-	cmdViewMap         debugCmdViewMap
-	lastError          error
 	inputHistory       *utils.InputHistory
 	lastHistoryLen     int
 	historyView        string
@@ -139,8 +147,8 @@ func (m debugCmdModel) Update(msg tea.Msg) (ui.CommandModel, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
 
-	if m.lastError != nil {
-		m.lastError = nil
+	if m.GetError() != nil {
+		m.SetError(nil)
 	}
 
 	switch msg := msg.(type) {
@@ -159,11 +167,11 @@ func (m debugCmdModel) Update(msg tea.Msg) (ui.CommandModel, tea.Cmd) {
 		m.slogViewPort.Height = msg.Height - 2
 	}
 
-	exec, hasCmd := m.cmdMap[debugCmdTree(m.cmdStatus.TreeStr)]
-	if hasCmd {
-		m = exec(m)
-	} else {
-		m.lastError = fmt.Errorf("'%s' not implemented", m.cmdStatus.TreeStr)
+	m, err := m.Exec(m)
+	if err != nil {
+		m.SetError(err)
+	} else if !m.HasView() {
+		m.SetError(fmt.Errorf("tried to display missing view from [%s]", m.cmdStatus.TreeStr))
 	}
 
 	_, cmd = m.slogViewPort.Update(msg)
@@ -173,32 +181,16 @@ func (m debugCmdModel) Update(msg tea.Msg) (ui.CommandModel, tea.Cmd) {
 }
 
 func (m debugCmdModel) View() string {
-	viewFunc, hasView := m.cmdViewMap[debugCmdTree(m.cmdStatus.TreeStr)]
-	if hasView {
-		return viewFunc(m)
-	}
-	return fmt.Sprintf("Missing View for Command::%s", m.cmdStatus.TreeStr)
+	return m.ExecView(m)
 }
 
 func (m debugCmdModel) SetStatus(status ui.CommandStatus) ui.CommandModel {
-	m.cmdStatus = status
+	m.BaseCommand.SetStatus(status)
 	return m
-}
-
-func (m debugCmdModel) IsTreeSupported(treeStr string) bool {
-	switch debugCmdTree(treeStr) {
-	case DebugHistory, DebugLog, DebugSlog, DebugClearLog, DebugClearSlog, DebugStats:
-		return true
-	}
-	return false
 }
 
 func (debugCmdModel) GetCmdTree() [][]string {
 	return cmdTree
-}
-
-func (m debugCmdModel) GetLastError() error {
-	return m.lastError
 }
 
 func (m debugCmdModel) loadInputHistory() debugCmdModel {

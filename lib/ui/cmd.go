@@ -50,9 +50,10 @@ type CommandConfig struct {
 type CommandModel interface {
 	Update(tea.Msg) (CommandModel, tea.Cmd)
 	View() string
-	GetLastError() error
+	GetError() error
 	SetStatus(CommandStatus) CommandModel
-	IsTreeSupported(treeStr string) bool
+	IsSupported(treeStr string) bool
+	ValidateCommand()
 }
 
 type Command struct {
@@ -87,6 +88,8 @@ func NewCommand(config CommandConfig) Command {
 	if config.Model == nil {
 		panic("missing command model")
 	}
+
+	config.Model.ValidateCommand()
 
 	cmdId += 1
 	cmd := Command{
@@ -157,7 +160,7 @@ func (cb *Command) ParseCommand(cmd string) CommandStatus {
 		err = ErrIncompleteCmd
 	}
 
-	if isCommand && !cb.model.IsTreeSupported(cmd) {
+	if isCommand && !cb.model.IsSupported(cmd) {
 		err = ErrUnsupportedCmd
 	}
 
@@ -172,7 +175,7 @@ func (cb *Command) ParseCommand(cmd string) CommandStatus {
 	return CommandStatus{
 		IsCommand:   isCommand,
 		IsComplete:  isComplete,
-		IsSupported: cb.model.IsTreeSupported(cmd),
+		IsSupported: cb.model.IsSupported(cmd),
 		Suggestions: suggestions,
 		TreePos:     finalPos - 1,
 		CommandStr:  cmdStr,
