@@ -14,13 +14,12 @@ type CommandEntry[T any] struct {
 }
 
 type BaseCommand[T any] struct {
-	cmdList      []string
-	cmdMap       map[string]func(T) T
-	cmdViewMap   map[string]func(T) string
-	cmdTree      [][]string
-	cmdStatus    ui.CommandStatus
-	cmdError     error
-	cmdViewCache string
+	cmdList    []string
+	cmdMap     map[string]func(T) T
+	cmdViewMap map[string]func(T) string
+	cmdTree    [][]string
+	cmdStatus  ui.CommandStatus
+	cmdError   error
 }
 
 func NewBaseCommand[T any](tree [][]string) BaseCommand[T] {
