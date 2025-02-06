@@ -25,13 +25,13 @@ const (
 )
 
 type CmdInputModel struct {
-	CommandInput textinput.Model
-	CmdHistory   *utils.InputHistory
-	commands     []Command
-	currentCmd   Command
-	lastCmd      Command
-	aliases      []string
-	statusText   string
+	CommandInput  textinput.Model
+	CmdHistory    *utils.InputHistory
+	commands      []Command
+	currentCmdPos int
+	lastCmdPos    int
+	aliases       []string
+	statusText    string
 }
 
 type CmdInputOption func(*CmdInputModel)
@@ -45,7 +45,8 @@ var statusStyle = lipgloss.NewStyle().
 // TODO - Use an interface to define input history methods
 func NewCmdInput(h *utils.InputHistory, options ...CmdInputOption) CmdInputModel {
 	model := CmdInputModel{
-		aliases: []string{},
+		aliases:    []string{},
+		lastCmdPos: -1,
 	}
 	model.CmdHistory = h
 	model.CommandInput = NewCommanderInput()
@@ -108,7 +109,6 @@ func (m CmdInputModel) Update(msg tea.Msg) (CmdInputModel, tea.Cmd) {
 			val, reset := m.CmdHistory.Cycle(msg)
 			if reset {
 				m.CommandInput.Reset()
-				m.currentCmd = Command{}
 			} else if len(val) > 0 {
 				m.CommandInput.SetValue(val)
 				m.CommandInput.CursorEnd()
@@ -124,11 +124,12 @@ func (m CmdInputModel) Update(msg tea.Msg) (CmdInputModel, tea.Cmd) {
 			}
 
 		case "enter":
-			logger.Log(logger.Info, fmt.Sprintf("ExecCommand: [%s]", m.currentCmd.status.TreeStr))
+			currCmd := m.GetCommand(m.currentCmdPos)
+			logger.Log(logger.Info, fmt.Sprintf("ExecCommand: [%s]", currCmd.status.TreeStr))
 			m, cmd = tryEnterCmd(m)
-			if m.currentCmd.status.Error != nil {
-				msg := fmt.Sprintf("%s::[%s]", m.currentCmd.status.Error.Error(), m.currentCmd.status.TreeStr)
-				logger.Log(logger.Attention, fmt.Sprintf("CommandError: %s", msg))
+			if currCmd.status.Error != nil {
+				msg := fmt.Sprintf("%s::[%s]", currCmd.status.Error.Error(), currCmd.status.TreeStr)
+				logger.Log(logger.Attention, fmt.Sprintf("CommandParser: %s", msg))
 			}
 			cmds = append(cmds, cmd)
 
@@ -147,38 +148,51 @@ func (m CmdInputModel) View() string {
 	return s
 }
 
+func (m CmdInputModel) GetCommand(pos int) Command {
+	if pos >= 0 && pos < len(m.commands) {
+		return m.commands[pos]
+	}
+	panic("tried to access non-existent command")
+}
+
 func tryEnterCmd(m CmdInputModel) (CmdInputModel, tea.Cmd) {
-	if m.currentCmd.status.IsCommand {
-		if !m.currentCmd.status.IsSupported {
+	var currCmd Command = m.GetCommand(m.currentCmdPos)
+
+	if currCmd.status.IsCommand {
+		if !currCmd.status.IsSupported {
 			statusStyle = statusStyle.Foreground(lib.FgErrColor)
 			m.statusText = "Unsupported Command Chain"
 			return m, nil
-		} else if !m.currentCmd.status.IsComplete {
+		} else if !currCmd.status.IsComplete {
 			statusStyle = statusStyle.Foreground(lib.FgWarnColor)
 			m.statusText = "Incomplete Command"
 			return m, nil
 		}
 	}
 
-	if m.currentCmd.status.IsComplete {
-		if m.currentCmd.status.Error != nil {
-			m.statusText = m.currentCmd.status.Error.Error()
+	if currCmd.status.IsComplete {
+		if currCmd.status.Error != nil {
+			m.statusText = currCmd.status.Error.Error()
 			return m, nil
 		}
 
 		statusStyle = statusStyle.Foreground(lib.FgSuccessColor)
-		m.statusText = fmt.Sprintf("Executing Command: %s", m.currentCmd.status.TreeStr)
+		m.statusText = fmt.Sprintf("Executing Command: %s", currCmd.status.TreeStr)
 
 		m.CmdHistory.Add(m.CommandInput.Value())
-		currCmd := m.currentCmd
 
-		if m.lastCmd.GetId() == currCmd.GetId() {
-			m.currentCmd = Command{}
+		var lastCmd Command
+		if m.lastCmdPos == -1 {
+			lastCmd = Command{}
+		} else {
+			lastCmd = m.GetCommand(m.lastCmdPos)
+		}
+
+		if lastCmd.GetId() == currCmd.GetId() {
 			m.CommandInput.Reset()
 			return m, func() tea.Msg { return currCmd.status }
 		}
-		m.lastCmd = m.currentCmd
-		m.currentCmd = Command{}
+		m.lastCmdPos = m.currentCmdPos
 		m.CommandInput.Reset()
 		return m, func() tea.Msg { return currCmd.model.SetStatus(currCmd.status) }
 	}
@@ -199,8 +213,9 @@ func onAnyKey(m CmdInputModel, msg tea.KeyMsg) (CmdInputModel, tea.Cmd) {
 	// Restrict user input to "valid" keys
 	if len(msg.String()) == 1 {
 		char := rune(msg.String()[0])
-		if m.currentCmd.status.IsComplete {
-			if !m.currentCmd.ValidateKey(char) {
+		currCmd := m.GetCommand(m.currentCmdPos)
+		if currCmd.status.IsComplete {
+			if !currCmd.ValidateKey(char) {
 				return m, nil
 			}
 		}
@@ -212,10 +227,10 @@ func onAnyKey(m CmdInputModel, msg tea.KeyMsg) (CmdInputModel, tea.Cmd) {
 func tryParseCmd(m CmdInputModel, msg tea.KeyMsg) (CmdInputModel, tea.Cmd) {
 	var cmd tea.Cmd
 	m.CommandInput, cmd = m.CommandInput.Update(msg)
-	for _, c := range m.commands {
+	for i, c := range m.commands {
 		res := c.ParseCommand(m.CommandInput.Value())
-		m.currentCmd = c
-		m.currentCmd.status = res
+		m.currentCmdPos = i
+		m.commands[i].status = res
 		if res.IsCommand {
 			if !res.IsComplete {
 				m.CommandInput.SetSuggestions(res.Suggestions)
