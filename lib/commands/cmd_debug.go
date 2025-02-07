@@ -133,6 +133,7 @@ type debugCmdModel struct {
 	slog    debugSlog
 	stats   struct {
 		data       debugStats
+		memStats   runtime.MemStats
 		renderTime time.Time
 	}
 }
@@ -358,22 +359,21 @@ func (m debugCmdModel) loadStats() (debugCmdModel, tea.Cmd) {
 		historySize += len(item)
 	}
 
-	var mem runtime.MemStats
-	runtime.ReadMemStats(&mem)
+	runtime.ReadMemStats(&m.stats.memStats)
 
 	m.stats.data = debugStats{
 		historySize:     uint64(historySize),
 		renderedLogSize: uint64(len(m.log.view)),
 		logSize:         uint64(fileInfo.Size()),
 		slogSize:        uint64(len(m.slog.view)),
-		memGcCount:      uint64(mem.NumGC),
-		memAlloc:        mem.Alloc,
-		memTotal:        mem.Sys,
+		memGcCount:      uint64(m.stats.data.memAlloc),
+		memAlloc:        m.stats.memStats.Alloc,
+		memTotal:        m.stats.memStats.Sys,
 		// Simulate what task manager provides as the working memory
-		memWorking: mem.OtherSys + mem.HeapSys,
+		memWorking: m.stats.memStats.OtherSys + m.stats.memStats.HeapSys,
 	}
 
-	return m, nil
+	return m, tea.Tick(time.Second, func(t time.Time) tea.Msg { return "" })
 }
 
 func (m debugCmdModel) viewStats() string {
