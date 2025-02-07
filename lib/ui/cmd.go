@@ -152,12 +152,13 @@ func (cb *Command) ParseCommand(cmd string) CommandStatus {
 	}
 
 	var err error
-	if isCommand && !isComplete {
-		err = ErrIncompleteCmd
-	}
 
 	if isCommand && !cb.model.IsSupported(cmd) {
 		err = ErrUnsupportedCmd
+	}
+
+	if isCommand && !isComplete {
+		err = ErrIncompleteCmd
 	}
 
 	if !isCommand {
