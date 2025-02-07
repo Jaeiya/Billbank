@@ -1,5 +1,21 @@
 package utils
 
+import "os"
+
+var workingDir string
+
+func GetWorkingDir() string {
+	if workingDir == "" {
+		wd, err := os.Getwd()
+		if err != nil {
+			panic(err)
+		}
+		workingDir = wd
+	}
+
+	return workingDir
+}
+
 /*
 TryDeref tries to dereference a pointer to type T. If it cannot,
 then it returns nil.

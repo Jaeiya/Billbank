@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"runtime"
 	"time"
+
+	"github.com/jaeiya/billbank/lib/utils"
 )
 
 type LogLevel int
@@ -53,12 +55,7 @@ func CreateLog(ll LogLevel) bool {
 		return true
 	}
 
-	wd, err := os.Getwd()
-	if err != nil {
-		panic(err)
-	}
-
-	path := filepath.Join(wd, "log.txt")
+	path := filepath.Join(utils.GetWorkingDir(), "log.txt")
 
 	file, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC|os.O_APPEND, 0o644)
 	if err != nil {

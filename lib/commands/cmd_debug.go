@@ -202,12 +202,7 @@ func (m debugCmdModel) viewHistory() string {
 }
 
 func (m debugCmdModel) loadLog() debugCmdModel {
-	// TODO - refactor this into utils so we can cache result
-	dir, err := os.Getwd()
-	if err != nil {
-		panic(err)
-	}
-	path := filepath.Join(dir, "log.txt")
+	path := filepath.Join(utils.GetWorkingDir(), "log.txt")
 	fileInfo, err := os.Stat(path)
 	if err != nil {
 		panic(err)
@@ -226,12 +221,8 @@ func (m debugCmdModel) loadLog() debugCmdModel {
 }
 
 func (m debugCmdModel) clearLog() debugCmdModel {
-	dir, err := os.Getwd()
-	if err != nil {
-		panic(err)
-	}
-	path := filepath.Join(dir, "log.txt")
-	err = os.Truncate(path, 0)
+	path := filepath.Join(utils.GetWorkingDir(), "log.txt")
+	err := os.Truncate(path, 0)
 	if err != nil {
 		panic(err)
 	}
@@ -354,11 +345,7 @@ func (m debugCmdModel) loadStats() debugCmdModel {
 
 	m.stats.renderTime = now
 
-	dir, err := os.Getwd()
-	if err != nil {
-		panic(err)
-	}
-	path := filepath.Join(dir, "log.txt")
+	path := filepath.Join(utils.GetWorkingDir(), "log.txt")
 	fileInfo, err := os.Stat(path)
 	if err != nil {
 		panic(err)
