@@ -8,15 +8,20 @@ import (
 	"github.com/jaeiya/billbank/lib/utils/logger"
 )
 
+type ExecResult[T any] struct {
+	model T
+	cmd   tea.Cmd
+}
+
 type CommandEntry[T any] struct {
 	String string
-	Fn     func(T) T
+	Fn     func(T) (T, tea.Cmd)
 	ViewFn func(T) string
 }
 
 type BaseCommand[T any] struct {
 	cmdList    []string
-	cmdMap     map[string]func(T) T
+	cmdMap     map[string]func(T) (T, tea.Cmd)
 	cmdViewMap map[string]func(T) string
 	cmdTree    [][]string
 	cmdStatus  ui.CommandStatus
@@ -27,7 +32,7 @@ type BaseCommand[T any] struct {
 
 func NewBaseCommand[T any](tree [][]string) BaseCommand[T] {
 	return BaseCommand[T]{
-		cmdMap:     map[string]func(T) T{},
+		cmdMap:     map[string]func(T) (T, tea.Cmd){},
 		cmdViewMap: map[string]func(T) string{},
 		cmdTree:    tree,
 	}
@@ -116,13 +121,14 @@ func (bc BaseCommand[T]) IsSupported(treeStr string) bool {
 	return ok
 }
 
-func (bc BaseCommand[T]) Exec(model T) (T, error) {
+func (bc BaseCommand[T]) Exec(model T) (ExecResult[T], error) {
 	cmd := bc.cmdStatus.TreeStr
 	fn, ok := bc.cmdMap[cmd]
 	if !ok {
-		return model, fmt.Errorf("command::[%s] not implemented", cmd)
+		return ExecResult[T]{}, fmt.Errorf("command::[%s] not implemented", cmd)
 	}
-	return fn(model), nil
+	m, teaCmd := fn(model)
+	return ExecResult[T]{m, teaCmd}, nil
 }
 
 func (bc BaseCommand[T]) ExecView(model T) string {

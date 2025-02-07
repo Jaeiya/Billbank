@@ -58,32 +58,32 @@ func NewDebugCmd(h *utils.InputHistory) ui.Command {
 	m.AddCommands([]CommandEntry[debugCmdModel]{
 		{
 			"/ history",
-			func(dcm debugCmdModel) debugCmdModel { return dcm.loadInputHistory() },
+			func(dcm debugCmdModel) (debugCmdModel, tea.Cmd) { return dcm.loadInputHistory(), nil },
 			func(dcm debugCmdModel) string { return dcm.viewHistory() },
 		},
 		{
 			"/ log",
-			func(dcm debugCmdModel) debugCmdModel { return dcm.loadLog() },
+			func(dcm debugCmdModel) (debugCmdModel, tea.Cmd) { return dcm.loadLog(), nil },
 			func(dcm debugCmdModel) string { return dcm.log.view },
 		},
 		{
 			"/ slog",
-			func(dcm debugCmdModel) debugCmdModel { return dcm.loadSlog() },
+			func(dcm debugCmdModel) (debugCmdModel, tea.Cmd) { return dcm.loadSlog(), nil },
 			func(dcm debugCmdModel) string { return dcm.viewSlog() },
 		},
 		{
 			"/ stats",
-			func(dcm debugCmdModel) debugCmdModel { return dcm.loadStats() },
+			func(dcm debugCmdModel) (debugCmdModel, tea.Cmd) { return dcm.loadStats() },
 			func(dcm debugCmdModel) string { return dcm.viewStats() },
 		},
 		{
 			"/ log clear",
-			func(dcm debugCmdModel) debugCmdModel { return dcm.clearLog() },
+			func(dcm debugCmdModel) (debugCmdModel, tea.Cmd) { return dcm.clearLog(), nil },
 			func(dcm debugCmdModel) string { return dcm.clearLogView() },
 		},
 		{
 			"/ slog clear",
-			func(dcm debugCmdModel) debugCmdModel { return dcm.clearSlog() },
+			func(dcm debugCmdModel) (debugCmdModel, tea.Cmd) { return dcm.clearSlog(), nil },
 			func(dcm debugCmdModel) string { return dcm.clearSlogView() },
 		},
 	}...)
@@ -156,12 +156,14 @@ func (m debugCmdModel) Update(msg tea.Msg) (ui.CommandModel, tea.Cmd) {
 		}
 	}
 
-	m, err := m.Exec(m)
+	res, err := m.Exec(m)
 	if err != nil {
 		m.SetError(err)
 	} else if !m.HasView() {
 		m.SetError(fmt.Errorf("tried to display missing view from [%s]", m.cmdStatus.TreeStr))
 	}
+	m = res.model
+	cmds = append(cmds, res.cmd)
 
 	_, cmd = m.slog.viewPort.Update(msg)
 	cmds = append(cmds, cmd)
@@ -334,13 +336,13 @@ func (m debugCmdModel) viewSlog() string {
 	return logStyle.Render(content)
 }
 
-func (m debugCmdModel) loadStats() debugCmdModel {
+func (m debugCmdModel) loadStats() (debugCmdModel, tea.Cmd) {
 	var err error
 	now := time.Now()
 	ms := now.Sub(m.stats.renderTime).Milliseconds()
 
 	if ms < 1000 {
-		return m
+		return m, nil
 	}
 
 	m.stats.renderTime = now
@@ -371,7 +373,7 @@ func (m debugCmdModel) loadStats() debugCmdModel {
 		memWorking: mem.OtherSys + mem.HeapSys,
 	}
 
-	return m
+	return m, nil
 }
 
 func (m debugCmdModel) viewStats() string {
