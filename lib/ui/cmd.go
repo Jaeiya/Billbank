@@ -51,7 +51,7 @@ type CommandModel interface {
 	View() string
 	GetError() error
 	GetCmdTree() [][]string
-	SetStatus(CommandStatus) CommandModel
+	SetStatus(CommandStatus) (CommandModel, tea.Cmd)
 	IsSupported(treeStr string) bool
 	ValidateCommand()
 }

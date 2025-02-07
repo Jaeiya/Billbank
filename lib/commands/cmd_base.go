@@ -2,26 +2,27 @@ package commands
 
 import (
 	"fmt"
+	"time"
+	"unsafe"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/jaeiya/billbank/lib/ui"
 	"github.com/jaeiya/billbank/lib/utils/logger"
 )
 
-type ExecResult[T any] struct {
-	model T
-	cmd   tea.Cmd
-}
+type ExecCmdMsg string
+
+type CommandFunc[T any] func(*T) tea.Cmd
 
 type CommandEntry[T any] struct {
 	String string
-	Fn     func(T) (T, tea.Cmd)
+	Fn     CommandFunc[T]
 	ViewFn func(T) string
 }
 
 type BaseCommand[T any] struct {
 	cmdList    []string
-	cmdMap     map[string]func(T) (T, tea.Cmd)
+	cmdMap     map[string]CommandFunc[T]
 	cmdViewMap map[string]func(T) string
 	cmdTree    [][]string
 	cmdStatus  ui.CommandStatus
@@ -32,19 +33,39 @@ type BaseCommand[T any] struct {
 
 func NewBaseCommand[T any](tree [][]string) BaseCommand[T] {
 	return BaseCommand[T]{
-		cmdMap:     map[string]func(T) (T, tea.Cmd){},
+		cmdMap:     map[string]CommandFunc[T]{},
 		cmdViewMap: map[string]func(T) string{},
 		cmdTree:    tree,
 	}
 }
 
-func (bc *BaseCommand[T]) Update(msg tea.Msg) {
+func (bc *BaseCommand[T]) Update(model *T, msg tea.Msg) (*T, tea.Cmd) {
+	basePtr := (*BaseCommand[T])(unsafe.Pointer(model))
+
+	if basePtr.GetError() != nil {
+		basePtr.SetError(nil)
+	}
+
 	switch msg := msg.(type) {
 	case ui.ViewportSizeMsg:
 		logger.Log(logger.Debug, fmt.Sprintf("ViewPortSize: %dx%d", msg.Width, msg.Height))
-		bc.viewHeight = msg.Height
-		bc.viewWidth = msg.Width
+		// Hack to get around type safety
+		basePtr.viewHeight = msg.Height
+		basePtr.viewWidth = msg.Width
+		return model, func() tea.Msg { return ExecCmdMsg(bc.cmdStatus.TreeStr) }
+
+	case ExecCmdMsg:
+		cmd, err := bc.Exec(model)
+		if err != nil {
+			basePtr.SetError(err)
+		} else if !bc.HasView() {
+			basePtr.SetError(fmt.Errorf("tried to display missing view from [%s]", bc.cmdStatus.TreeStr))
+		}
+		return model, cmd
+
 	}
+
+	return model, nil
 }
 
 func (bc *BaseCommand[T]) AddCommands(cmds ...CommandEntry[T]) {
@@ -59,8 +80,9 @@ func (bc *BaseCommand[T]) AddCommands(cmds ...CommandEntry[T]) {
 	}
 }
 
-func (bc *BaseCommand[T]) SetStatus(status ui.CommandStatus) {
+func (bc *BaseCommand[T]) SetStatus(status ui.CommandStatus) tea.Cmd {
 	bc.cmdStatus = status
+	return func() tea.Msg { return ExecCmdMsg(bc.cmdStatus.TreeStr) }
 }
 
 /*
@@ -121,14 +143,13 @@ func (bc BaseCommand[T]) IsSupported(treeStr string) bool {
 	return ok
 }
 
-func (bc BaseCommand[T]) Exec(model T) (ExecResult[T], error) {
+func (bc BaseCommand[T]) Exec(model *T) (tea.Cmd, error) {
 	cmd := bc.cmdStatus.TreeStr
 	fn, ok := bc.cmdMap[cmd]
 	if !ok {
-		return ExecResult[T]{}, fmt.Errorf("command::[%s] not implemented", cmd)
+		return nil, fmt.Errorf("command::[%s] not implemented", cmd)
 	}
-	m, teaCmd := fn(model)
-	return ExecResult[T]{m, teaCmd}, nil
+	return fn(model), nil
 }
 
 func (bc BaseCommand[T]) ExecView(model T) string {
@@ -138,4 +159,11 @@ func (bc BaseCommand[T]) ExecView(model T) string {
 		return fmt.Sprintf("command::[%s] missing view", cmd)
 	}
 	return fn(model)
+}
+
+func (bc BaseCommand[T]) poll(d time.Duration) tea.Cmd {
+	return func() tea.Msg {
+		time.Sleep(d)
+		return ExecCmdMsg(bc.cmdStatus.TreeStr)
+	}
 }

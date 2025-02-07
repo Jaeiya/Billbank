@@ -58,32 +58,32 @@ func NewDebugCmd(h *utils.InputHistory) ui.Command {
 	m.AddCommands([]CommandEntry[debugCmdModel]{
 		{
 			"/ history",
-			func(dcm debugCmdModel) (debugCmdModel, tea.Cmd) { return dcm.loadInputHistory(), nil },
+			func(dcm *debugCmdModel) tea.Cmd { return dcm.loadInputHistory() },
 			func(dcm debugCmdModel) string { return dcm.viewHistory() },
 		},
 		{
 			"/ log",
-			func(dcm debugCmdModel) (debugCmdModel, tea.Cmd) { return dcm.loadLog(), nil },
+			func(dcm *debugCmdModel) tea.Cmd { return dcm.loadLog() },
 			func(dcm debugCmdModel) string { return dcm.log.view },
 		},
 		{
 			"/ slog",
-			func(dcm debugCmdModel) (debugCmdModel, tea.Cmd) { return dcm.loadSlog(), nil },
+			func(dcm *debugCmdModel) tea.Cmd { return dcm.loadSlog() },
 			func(dcm debugCmdModel) string { return dcm.viewSlog() },
 		},
 		{
 			"/ stats",
-			func(dcm debugCmdModel) (debugCmdModel, tea.Cmd) { return dcm.loadStats() },
+			func(dcm *debugCmdModel) tea.Cmd { return dcm.loadStats() },
 			func(dcm debugCmdModel) string { return dcm.viewStats() },
 		},
 		{
 			"/ log clear",
-			func(dcm debugCmdModel) (debugCmdModel, tea.Cmd) { return dcm.clearLog(), nil },
+			func(dcm *debugCmdModel) tea.Cmd { return dcm.clearLog() },
 			func(dcm debugCmdModel) string { return dcm.clearLogView() },
 		},
 		{
 			"/ slog clear",
-			func(dcm debugCmdModel) (debugCmdModel, tea.Cmd) { return dcm.clearSlog(), nil },
+			func(dcm *debugCmdModel) tea.Cmd { return dcm.clearSlog() },
 			func(dcm debugCmdModel) string { return dcm.clearSlogView() },
 		},
 	}...)
@@ -141,11 +141,10 @@ type debugCmdModel struct {
 func (m debugCmdModel) Update(msg tea.Msg) (ui.CommandModel, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
-	m.BaseCommand.Update(msg)
 
-	if m.GetError() != nil {
-		m.SetError(nil)
-	}
+	model, cmd := m.BaseCommand.Update(&m, msg)
+	m = *model
+	cmds = append(cmds, cmd)
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -157,15 +156,6 @@ func (m debugCmdModel) Update(msg tea.Msg) (ui.CommandModel, tea.Cmd) {
 		}
 	}
 
-	res, err := m.Exec(m)
-	if err != nil {
-		m.SetError(err)
-	} else if !m.HasView() {
-		m.SetError(fmt.Errorf("tried to display missing view from [%s]", m.cmdStatus.TreeStr))
-	}
-	m = res.model
-	cmds = append(cmds, res.cmd)
-
 	_, cmd = m.slog.viewPort.Update(msg)
 	cmds = append(cmds, cmd)
 
@@ -176,14 +166,13 @@ func (m debugCmdModel) View() string {
 	return m.ExecView(m)
 }
 
-func (m debugCmdModel) SetStatus(status ui.CommandStatus) ui.CommandModel {
-	m.BaseCommand.SetStatus(status)
-	return m
+func (m debugCmdModel) SetStatus(status ui.CommandStatus) (ui.CommandModel, tea.Cmd) {
+	return m, m.BaseCommand.SetStatus(status)
 }
 
-func (m debugCmdModel) loadInputHistory() debugCmdModel {
+func (m *debugCmdModel) loadInputHistory() tea.Cmd {
 	if m.history.data.GetLen() == m.history.lastLen {
-		return m
+		return nil
 	}
 
 	var sb strings.Builder
@@ -197,42 +186,44 @@ func (m debugCmdModel) loadInputHistory() debugCmdModel {
 	}
 	m.history.lastLen = m.history.data.GetLen()
 	m.history.view = sb.String()
-	return m
+	return nil
 }
 
 func (m debugCmdModel) viewHistory() string {
 	return histStyle.Render(m.history.view)
 }
 
-func (m debugCmdModel) loadLog() debugCmdModel {
+func (m *debugCmdModel) loadLog() tea.Cmd {
 	path := filepath.Join(utils.GetWorkingDir(), "log.txt")
 	fileInfo, err := os.Stat(path)
 	if err != nil {
 		panic(err)
 	}
 	if fileInfo.Size() == int64(len(m.log.view)+1) {
-		return m
+		return nil
 	}
 	bytes, err := os.ReadFile(path)
 	if err != nil {
 		m.log.view = err.Error()
-		return m
+		return nil
 	}
 	m.log.view = strings.TrimSpace(string(bytes))
 	m.log.lineCount = strings.Count(m.log.view, "\n")
-	return m
+	return nil
 }
 
-func (m debugCmdModel) clearLog() debugCmdModel {
+func (m *debugCmdModel) clearLog() tea.Cmd {
 	path := filepath.Join(utils.GetWorkingDir(), "log.txt")
 	err := os.Truncate(path, 0)
 	if err != nil {
 		panic(err)
 	}
 	m.log.view = ""
+	m.log.lineCount = 0
+	// No reason to hold old slog info
 	m.slog.view = ""
 	m.slog.lineCount = 0
-	return m
+	return nil
 }
 
 func (m debugCmdModel) clearLogView() string {
@@ -244,10 +235,12 @@ func (m debugCmdModel) clearLogView() string {
 	)
 }
 
-func (m debugCmdModel) loadSlog() debugCmdModel {
-	m = m.loadLog()
+func (m *debugCmdModel) loadSlog() tea.Cmd {
+	m.loadLog()
+	pollCmd := m.poll(time.Millisecond * 250)
+
 	if m.log.lineCount == m.slog.lineCount {
-		return m
+		return pollCmd
 	}
 
 	var tagBuilder, pathBuilder, wordBuilder strings.Builder
@@ -308,15 +301,16 @@ func (m debugCmdModel) loadSlog() debugCmdModel {
 	m.slog.viewPort.Width = m.viewWidth
 	m.slog.viewPort.Height = m.viewHeight - 2
 
-	m.slog.viewPort.SetContent(lipgloss.NewStyle().Width(m.viewWidth - 1).Render(m.slog.view))
+	fixedWidthContent := lipgloss.NewStyle().Width(m.viewWidth - 1).Render(m.slog.view)
+	m.slog.viewPort.SetContent(fixedWidthContent)
 	m.slog.viewPort.GotoBottom()
-	return m
+	return pollCmd
 }
 
-func (m debugCmdModel) clearSlog() debugCmdModel {
+func (m *debugCmdModel) clearSlog() tea.Cmd {
 	m.slog.lineCount = 0
 	m.slog.view = ""
-	return m
+	return nil
 }
 
 func (m debugCmdModel) clearSlogView() string {
@@ -337,16 +331,9 @@ func (m debugCmdModel) viewSlog() string {
 	return logStyle.Render(content)
 }
 
-func (m debugCmdModel) loadStats() (debugCmdModel, tea.Cmd) {
+func (m *debugCmdModel) loadStats() tea.Cmd {
 	var err error
-	now := time.Now()
-	ms := now.Sub(m.stats.renderTime).Milliseconds()
-
-	if ms < 1000 {
-		return m, nil
-	}
-
-	m.stats.renderTime = now
+	pollCmd := m.poll(time.Millisecond * 250)
 
 	path := filepath.Join(utils.GetWorkingDir(), "log.txt")
 	fileInfo, err := os.Stat(path)
@@ -373,7 +360,7 @@ func (m debugCmdModel) loadStats() (debugCmdModel, tea.Cmd) {
 		memWorking: m.stats.memStats.OtherSys + m.stats.memStats.HeapSys,
 	}
 
-	return m, tea.Tick(time.Second, func(t time.Time) tea.Msg { return "" })
+	return pollCmd
 }
 
 func (m debugCmdModel) viewStats() string {
