@@ -76,7 +76,7 @@ func CreateLog(ll LogLevel) bool {
 func logMessages() {
 	for msg := range logChan {
 		logger.Printf(
-			"%s [%s] [%s:%d]: %v\n",
+			"%s [%s] [%s:%d]: %+v\n",
 			time.Now().Format("03:04:05.000 PM MST"),
 			getLogLevelStr(msg.level),
 			filepath.Base(msg.file), msg.line,
