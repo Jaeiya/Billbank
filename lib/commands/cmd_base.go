@@ -36,6 +36,7 @@ func NewBaseCommand[T any](tree [][]string) BaseCommand[T] {
 func (bc *BaseCommand[T]) Update(msg tea.Msg) {
 	switch msg := msg.(type) {
 	case ui.ViewportSizeMsg:
+		logger.Log(logger.Debug, fmt.Sprintf("ViewPortSize: %dx%d", msg.Width, msg.Height))
 		bc.viewHeight = msg.Height
 		bc.viewWidth = msg.Width
 	}
