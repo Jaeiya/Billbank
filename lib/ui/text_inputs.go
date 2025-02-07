@@ -7,7 +7,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-const blinkSpeed = time.Millisecond * 400
+const blinkSpeed = time.Millisecond * 500
 
 func NewDefaultInput(width int) textinput.Model {
 	m := textinput.New()
