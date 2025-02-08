@@ -42,10 +42,6 @@ func NewBaseCommand[T any](tree [][]string) BaseCommand[T] {
 func (bc *BaseCommand[T]) Update(model *T, msg tea.Msg) (*T, tea.Cmd) {
 	basePtr := (*BaseCommand[T])(unsafe.Pointer(model))
 
-	if basePtr.GetError() != nil {
-		basePtr.SetError(nil)
-	}
-
 	switch msg := msg.(type) {
 	case ui.ViewportSizeMsg:
 		logger.Log(logger.Debug, fmt.Sprintf("ViewPortSize: %dx%d", msg.Width, msg.Height))
@@ -55,12 +51,17 @@ func (bc *BaseCommand[T]) Update(model *T, msg tea.Msg) (*T, tea.Cmd) {
 		return model, func() tea.Msg { return ExecCmdMsg(bc.cmdStatus.TreeStr) }
 
 	case ExecCmdMsg:
+		// Do not propagate errors to new commands
+		if basePtr.cmdError != nil {
+			basePtr.SetError(nil)
+		}
 		cmd, err := bc.Exec(model)
 		if err != nil {
 			basePtr.SetError(err)
 		} else if !bc.HasView() {
 			basePtr.SetError(fmt.Errorf("tried to display missing view from [%s]", bc.cmdStatus.TreeStr))
 		}
+
 		return model, cmd
 
 	}
