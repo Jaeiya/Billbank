@@ -83,6 +83,7 @@ func NewCommand(config CommandConfig) Command {
 
 type Command struct {
 	model CommandModel
+	id    int
 	// Represents the way a command is hierarchically constructed
 	// including aliases.
 	//
@@ -93,7 +94,6 @@ type Command struct {
 	//		set bill name
 	//		set stat amount
 	// 		set stat name
-	id                  int
 	tree                [][]string
 	hasArg              bool
 	status              CommandStatus
