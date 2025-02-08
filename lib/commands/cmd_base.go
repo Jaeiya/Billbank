@@ -53,13 +53,13 @@ func (bc *BaseCommand[T]) Update(model *T, msg tea.Msg) (*T, tea.Cmd) {
 	case ExecCmdMsg:
 		// Do not propagate errors to new commands
 		if basePtr.cmdError != nil {
-			basePtr.SetError(nil)
+			basePtr.cmdError = nil
 		}
 		cmd, err := bc.Exec(model)
 		if err != nil {
-			basePtr.SetError(err)
+			basePtr.cmdError = err
 		} else if !bc.HasView() {
-			basePtr.SetError(fmt.Errorf("tried to display missing view from [%s]", bc.cmdStatus.TreeStr))
+			basePtr.cmdError = fmt.Errorf("tried to display missing view from [%s]", bc.cmdStatus.TreeStr)
 		}
 
 		return model, cmd
@@ -84,17 +84,6 @@ func (bc *BaseCommand[T]) AddCommands(cmds ...CommandEntry[T]) {
 func (bc *BaseCommand[T]) SetStatus(status ui.CommandStatus) tea.Cmd {
 	bc.cmdStatus = status
 	return func() tea.Msg { return ExecCmdMsg(bc.cmdStatus.TreeStr) }
-}
-
-/*
-SetError Assigns the specified error to the current commands
-error field.
-
-🟠 Can only be used in a function where the parent model is
-being returned, otherwise it will do nothing.
-*/
-func (bc *BaseCommand[T]) SetError(err error) {
-	bc.cmdError = err
 }
 
 func (bc BaseCommand[T]) GetError() error {
