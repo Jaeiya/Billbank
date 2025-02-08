@@ -51,7 +51,11 @@ func (bc *BaseCommand[T]) Update(model *T, msg tea.Msg) (*T, tea.Cmd) {
 		return model, func() tea.Msg { return ExecCmdMsg(bc.cmdStatus.TreeStr) }
 
 	case ExecCmdMsg:
-		// Do not propagate errors to new commands
+		// NOTE  Do not propagate errors to new branch commands; this
+		// is because it's possible that an exec msg is sent to execute
+		// a branch command on an already loaded command. Branch
+		// commands are treated as a separate command even if they're
+		// executed from the same command struct.
 		if basePtr.cmdError != nil {
 			basePtr.cmdError = nil
 		}
