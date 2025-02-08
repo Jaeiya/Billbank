@@ -19,6 +19,16 @@ var (
 
 var cmdId = 0
 
+type CommandModel interface {
+	Update(tea.Msg) (CommandModel, tea.Cmd)
+	View() string
+	GetError() error
+	GetCmdTree() [][]string
+	SetStatus(CommandStatus) (CommandModel, tea.Cmd)
+	IsSupported(branchStr string) bool
+	ValidateCommand()
+}
+
 type CommandStatus struct {
 	IsCommand   bool
 	IsComplete  bool
@@ -46,36 +56,6 @@ type CommandConfig struct {
 	KeyValidationFunc   func(key rune) bool
 }
 
-type CommandModel interface {
-	Update(tea.Msg) (CommandModel, tea.Cmd)
-	View() string
-	GetError() error
-	GetCmdTree() [][]string
-	SetStatus(CommandStatus) (CommandModel, tea.Cmd)
-	IsSupported(branchStr string) bool
-	ValidateCommand()
-}
-
-type Command struct {
-	model CommandModel
-	// Represents the way a command is hierarchically constructed
-	// including aliases.
-	//
-	// Example:
-	//		[][]string{{"set"}, {"bill", "stat"}, {"amount", "name"}}
-	// Resulting Commands:
-	//		set bill amount
-	//		set bill name
-	//		set stat amount
-	// 		set stat name
-	id                  int
-	tree                [][]string
-	hasArg              bool
-	status              CommandStatus
-	inputValidationFunc func(arg string) error
-	keyValidationFunc   func(key rune) bool
-}
-
 func NewCommand(config CommandConfig) Command {
 	if config.HasArg && config.InputValidationFunc == nil {
 		panic("command arguments need a validation function")
@@ -99,6 +79,26 @@ func NewCommand(config CommandConfig) Command {
 	}
 
 	return cmd
+}
+
+type Command struct {
+	model CommandModel
+	// Represents the way a command is hierarchically constructed
+	// including aliases.
+	//
+	// Example:
+	//		[][]string{{"set"}, {"bill", "stat"}, {"amount", "name"}}
+	// Resulting Commands:
+	//		set bill amount
+	//		set bill name
+	//		set stat amount
+	// 		set stat name
+	id                  int
+	tree                [][]string
+	hasArg              bool
+	status              CommandStatus
+	inputValidationFunc func(arg string) error
+	keyValidationFunc   func(key rune) bool
 }
 
 func (cb Command) GetId() int {
