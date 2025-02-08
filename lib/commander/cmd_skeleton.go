@@ -1,15 +1,14 @@
-package commands
+package commander
 
 import (
 	"fmt"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/jaeiya/billbank/lib/ui"
 	"github.com/jaeiya/billbank/lib/utils/logger"
 )
 
-func NewSkeletonCmd() ui.Command {
+func NewSkeletonCmd() Command {
 	m := skeletonModel{
 		BaseCommand: NewBaseCommand[skeletonModel]([][]string{
 			// Aliases
@@ -31,7 +30,8 @@ func NewSkeletonCmd() ui.Command {
 			},
 		},
 		{
-			"t that",
+			// FIXME  This shouldn't be possible. Do not allow identical branches.
+			"t this",
 			func(sm *skeletonModel) tea.Cmd { return sm.loadThat() },
 			func(sm skeletonModel) string {
 				return fmt.Sprintf("This counter goes up every 300ms: %d", sm.thatCounter)
@@ -45,8 +45,8 @@ func NewSkeletonCmd() ui.Command {
 		},
 	}...)
 
-	return ui.NewCommand(
-		ui.CommandConfig{
+	return NewCommand(
+		CommandConfig{
 			Model:               m,
 			InputValidationFunc: func(arg string) error { return nil },
 			KeyValidationFunc:   func(key rune) bool { return false },
@@ -61,7 +61,7 @@ type skeletonModel struct {
 	thatCounter int
 }
 
-func (m skeletonModel) Update(msg tea.Msg) (ui.CommandModel, tea.Cmd) {
+func (m skeletonModel) Update(msg tea.Msg) (CommandModel, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
 
@@ -83,7 +83,7 @@ func (m skeletonModel) View() string {
 	return m.BaseCommand.View(m)
 }
 
-func (m skeletonModel) SetStatus(status ui.CommandStatus) (ui.CommandModel, tea.Cmd) {
+func (m skeletonModel) SetStatus(status CommandStatus) (CommandModel, tea.Cmd) {
 	return m, m.BaseCommand.SetStatus(status)
 }
 

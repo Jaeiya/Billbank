@@ -1,4 +1,4 @@
-package commands
+package commander
 
 import (
 	"fmt"
@@ -12,39 +12,38 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/jaeiya/billbank/lib"
 	"github.com/jaeiya/billbank/lib/ui"
 	"github.com/jaeiya/billbank/lib/utils"
 )
 
 var (
 	infoLogStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("#29DEFF"))
-	attnLogStyle  = lipgloss.NewStyle().Foreground(lib.FgWarnColor)
-	errLogStyle   = lipgloss.NewStyle().Foreground(lib.FgErrLightColor)
+	attnLogStyle  = lipgloss.NewStyle().Foreground(ui.FgWarnColor)
+	errLogStyle   = lipgloss.NewStyle().Foreground(ui.FgErrLightColor)
 	debugLogStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#1BE697"))
 	logStyle      = lipgloss.NewStyle().MarginLeft(1).MarginTop(1)
-	slogWordStyle = lipgloss.NewStyle().Foreground(lib.FgColor)
-	slogPathStyle = lipgloss.NewStyle().Align(lipgloss.Right).Foreground(lib.FgDimColor)
-	histStyle     = lipgloss.NewStyle().Foreground(lib.FgColor).Padding(1)
+	slogWordStyle = lipgloss.NewStyle().Foreground(ui.FgColor)
+	slogPathStyle = lipgloss.NewStyle().Align(lipgloss.Right).Foreground(ui.FgDimColor)
+	histStyle     = lipgloss.NewStyle().Foreground(ui.FgColor).Padding(1)
 
 	// Stats Styles
 	statHeader = lipgloss.NewStyle().
 			Width(30).
 			Align(lipgloss.Center).
-			Background(lib.BgDimColor).
-			Foreground(lib.FgWarnColor).
+			Background(ui.BgDimColor).
+			Foreground(ui.FgWarnColor).
 			PaddingTop(1)
 
 	statBox = lipgloss.NewStyle().
-		Background(lib.BgDimColor).
-		Foreground(lib.FgColor).
+		Background(ui.BgDimColor).
+		Foreground(ui.FgColor).
 		Align(lipgloss.Left).
 		Padding(1).
 		PaddingLeft(2).
 		Width(30)
 )
 
-func NewDebugCmd(h *utils.InputHistory) ui.Command {
+func NewDebugCmd(h *utils.InputHistory) Command {
 	m := debugCmdModel{
 		BaseCommand: NewBaseCommand[debugCmdModel]([][]string{
 			{"/", "x"},
@@ -88,8 +87,8 @@ func NewDebugCmd(h *utils.InputHistory) ui.Command {
 		},
 	}...)
 
-	return ui.NewCommand(
-		ui.CommandConfig{
+	return NewCommand(
+		CommandConfig{
 			Model:               m,
 			InputValidationFunc: func(arg string) error { return nil },
 			KeyValidationFunc:   func(key rune) bool { return false },
@@ -138,7 +137,7 @@ type debugCmdModel struct {
 	}
 }
 
-func (m debugCmdModel) Update(msg tea.Msg) (ui.CommandModel, tea.Cmd) {
+func (m debugCmdModel) Update(msg tea.Msg) (CommandModel, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
 
@@ -166,7 +165,7 @@ func (m debugCmdModel) View() string {
 	return m.BaseCommand.View(m)
 }
 
-func (m debugCmdModel) SetStatus(status ui.CommandStatus) (ui.CommandModel, tea.Cmd) {
+func (m debugCmdModel) SetStatus(status CommandStatus) (CommandModel, tea.Cmd) {
 	return m, m.BaseCommand.SetStatus(status)
 }
 

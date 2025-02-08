@@ -1,12 +1,13 @@
-package ui
+package commander
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/jaeiya/billbank/lib"
+	"github.com/jaeiya/billbank/lib/ui"
 	"github.com/jaeiya/billbank/lib/utils"
 	"github.com/jaeiya/billbank/lib/utils/logger"
 )
@@ -39,8 +40,23 @@ type CmdInputOption func(*CmdInputModel)
 var statusStyle = lipgloss.NewStyle().
 	Width(100).
 	PaddingLeft(1).
-	Background(lib.BgDarkColor).
-	Foreground(lib.FgColor)
+	Background(ui.BgDarkColor).
+	Foreground(ui.FgColor)
+
+var commanderInput textinput.Model = func() textinput.Model {
+	m := textinput.New()
+	m.Prompt = ""
+	m.PlaceholderStyle = m.PlaceholderStyle.Foreground(lipgloss.Color("#00FFA2"))
+	m.CompletionStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#00FFA2"))
+	m.Focus()
+	m.Cursor.Style = m.Cursor.Style.Foreground(lipgloss.Color("#00FFA2"))
+	m.PromptStyle = m.Cursor.Style.Foreground(lipgloss.Color("#00FFA2"))
+	m.Cursor.BlinkSpeed = time.Millisecond * 500
+	m.TextStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#FFF"))
+	m.Prompt = "> "
+	m.ShowSuggestions = true
+	return m
+}()
 
 // TODO - Use an interface to define input history methods
 func NewCmdInput(h *utils.InputHistory, options ...CmdInputOption) CmdInputModel {
@@ -48,7 +64,7 @@ func NewCmdInput(h *utils.InputHistory, options ...CmdInputOption) CmdInputModel
 		aliases: []string{},
 	}
 	model.CmdHistory = h
-	model.CommandInput = NewCommanderInput()
+	model.CommandInput = commanderInput
 
 	for _, addCmd := range options {
 		addCmd(&model)
@@ -89,11 +105,11 @@ func (m CmdInputModel) Update(msg tea.Msg) (CmdInputModel, tea.Cmd) {
 		m.CommandInput.Width = msg.Width
 
 	case UpdateStatusMsg:
-		color := lib.FgSuccessColor
+		color := ui.FgSuccessColor
 		if msg.Severity == MED {
-			color = lib.FgWarnColor
+			color = ui.FgWarnColor
 		} else if msg.Severity == HIGH {
-			color = lib.FgErrColor
+			color = ui.FgErrColor
 		}
 		style := statusStyle.Foreground(color)
 		m.statusText = style.Render(msg.String)
@@ -153,11 +169,11 @@ func tryEnterCmd(m CmdInputModel) (CmdInputModel, tea.Cmd) {
 
 	if cmd.status.IsCommand {
 		if cmd.status.IsComplete && !cmd.status.IsSupported {
-			statusStyle = statusStyle.Foreground(lib.FgErrColor)
+			statusStyle = statusStyle.Foreground(ui.FgErrColor)
 			m.statusText = "Unsupported Command Chain"
 			return m, nil
 		} else if !cmd.status.IsComplete {
-			statusStyle = statusStyle.Foreground(lib.FgWarnColor)
+			statusStyle = statusStyle.Foreground(ui.FgWarnColor)
 			m.statusText = "Incomplete Command"
 			return m, nil
 		}
@@ -169,7 +185,7 @@ func tryEnterCmd(m CmdInputModel) (CmdInputModel, tea.Cmd) {
 			return m, nil
 		}
 
-		statusStyle = statusStyle.Foreground(lib.FgSuccessColor)
+		statusStyle = statusStyle.Foreground(ui.FgSuccessColor)
 		m.statusText = fmt.Sprintf("Executing Command: %s", cmd.status.BranchStr)
 
 		m.CmdHistory.Add(m.CommandInput.Value())
@@ -185,7 +201,7 @@ func tryEnterCmd(m CmdInputModel) (CmdInputModel, tea.Cmd) {
 		return m, func() tea.Msg { return model }
 	}
 
-	statusStyle = statusStyle.Foreground(lib.FgErrColor)
+	statusStyle = statusStyle.Foreground(ui.FgErrColor)
 	m.statusText = "Invalid Command"
 	return m, nil
 }

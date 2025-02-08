@@ -1,4 +1,4 @@
-package ui
+package commander
 
 import (
 	"fmt"

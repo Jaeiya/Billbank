@@ -4,7 +4,6 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
-	"github.com/jaeiya/billbank/lib"
 )
 
 type boxColor struct {
@@ -15,15 +14,15 @@ type boxColor struct {
 
 var (
 	errBoxColors = boxColor{
-		bg:     lib.BgDarkColor,
-		header: lib.FgErrColor,
-		msg:    lib.FgWarnColor,
+		bg:     BgDarkColor,
+		header: FgErrColor,
+		msg:    FgWarnColor,
 	}
 
 	infoBoxColors = boxColor{
-		bg:     lib.BgDarkColor,
-		header: lib.FgSuccessColor,
-		msg:    lib.FgColor,
+		bg:     BgDarkColor,
+		header: FgSuccessColor,
+		msg:    FgColor,
 	}
 
 	boxSepChar = "━"
@@ -62,7 +61,7 @@ func newBox(width, height int, title, msg string, color boxColor) string {
 				Background(color.bg).
 				Foreground(color.header).
 				Render(title),
-			lipgloss.NewStyle().Background(lib.BgDarkColor).Foreground(lib.BgColor).
+			lipgloss.NewStyle().Background(BgDarkColor).Foreground(BgColor).
 				Render(strings.Repeat(boxSepChar, centerWidth)),
 			boxMsgStyle.Width(centerWidth).
 				Background(color.bg).

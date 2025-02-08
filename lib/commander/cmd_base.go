@@ -1,4 +1,4 @@
-package commands
+package commander
 
 import (
 	"fmt"
@@ -6,11 +6,16 @@ import (
 	"unsafe"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/jaeiya/billbank/lib/ui"
 	"github.com/jaeiya/billbank/lib/utils/logger"
 )
 
-type ExecBranchMsg string
+type (
+	ExecBranchMsg      string
+	CmdViewportSizeMsg struct {
+		Width  int
+		Height int
+	}
+)
 
 type BranchFunc[T any] func(*T) tea.Cmd
 
@@ -25,7 +30,7 @@ type BaseCommand[T any] struct {
 	cmdMap     map[string]BranchFunc[T]
 	cmdViewMap map[string]func(T) string
 	cmdTree    [][]string
-	cmdStatus  ui.CommandStatus
+	cmdStatus  CommandStatus
 	cmdError   error
 	viewWidth  int
 	viewHeight int
@@ -43,7 +48,7 @@ func (bc *BaseCommand[T]) Update(model *T, msg tea.Msg) (*T, tea.Cmd) {
 	basePtr := (*BaseCommand[T])(unsafe.Pointer(model))
 
 	switch msg := msg.(type) {
-	case ui.ViewportSizeMsg:
+	case CmdViewportSizeMsg:
 		logger.Log(logger.Debug, fmt.Sprintf("ViewPortSize: %dx%d", msg.Width, msg.Height))
 		// Hack to get around type safety
 		basePtr.viewHeight = msg.Height
@@ -87,7 +92,7 @@ func (bc *BaseCommand[T]) AddBranch(branches ...BranchEntry[T]) {
 	}
 }
 
-func (bc *BaseCommand[T]) SetStatus(status ui.CommandStatus) tea.Cmd {
+func (bc *BaseCommand[T]) SetStatus(status CommandStatus) tea.Cmd {
 	bc.cmdStatus = status
 	return func() tea.Msg { return ExecBranchMsg(bc.cmdStatus.BranchStr) }
 }

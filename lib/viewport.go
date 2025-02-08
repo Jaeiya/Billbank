@@ -1,11 +1,12 @@
-package ui
+package lib
 
 import (
 	"fmt"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/jaeiya/billbank/lib"
+	"github.com/jaeiya/billbank/lib/commander"
+	"github.com/jaeiya/billbank/lib/ui"
 	"github.com/jaeiya/billbank/lib/utils/logger"
 )
 
@@ -13,7 +14,7 @@ type (
 	ActiveCmdMsg       string
 	CommanderStatusMsg struct {
 		String   string
-		Severity StatusSeverity
+		Severity commander.StatusSeverity
 	}
 )
 
@@ -23,9 +24,9 @@ type ViewportSizeMsg struct {
 }
 
 type ViewPort struct {
-	Commander       CmdInputModel
-	CurrentCmdModel CommandModel
-	CommandStatus   CommandStatus
+	Commander       commander.CmdInputModel
+	CurrentCmdModel commander.CommandModel
+	CommandStatus   commander.CommandStatus
 	lastCmdError    error
 	height          int
 	width           int
@@ -45,12 +46,12 @@ func (vp ViewPort) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		vp.width = msg.Width
 		cmds = append(cmds, vp.sendViewportSize)
 
-	case CommandModel:
+	case commander.CommandModel:
 		vp.CurrentCmdModel = msg
 		vp.CurrentCmdModel, cmd = vp.CurrentCmdModel.Update(vp.sendViewportSize())
 		cmds = append(cmds, cmd)
 
-	case CommandStatus:
+	case commander.CommandStatus:
 		vp.CurrentCmdModel, cmd = vp.CurrentCmdModel.SetStatus(msg)
 		cmds = append(cmds, cmd)
 
@@ -81,14 +82,14 @@ func (vp ViewPort) View() string {
 	if vp.lastCmdError != nil {
 		return lipgloss.JoinVertical(
 			lipgloss.Left,
-			NewErrorBox("Command Error", vp.lastCmdError.Error(), vp.width, vp.height-h),
+			ui.NewErrorBox("Command Error", vp.lastCmdError.Error(), vp.width, vp.height-h),
 			cmdrStr,
 		)
 	}
 
 	return lipgloss.JoinVertical(
 		lipgloss.Top,
-		lipgloss.NewStyle().Foreground(lib.FgColor).Render(
+		lipgloss.NewStyle().Foreground(ui.FgColor).Render(
 			lipgloss.Place(
 				vp.width,
 				vp.height-h,
@@ -117,7 +118,7 @@ func (vp *ViewPort) catchCmdErrors() tea.Cmd {
 	if err != nil {
 		logger.Log(logger.Error, fmt.Sprintf("CommandError: %s", err))
 		vp.lastCmdError = err
-		return vp.sendStatusMsg("Command Implementation Error", HIGH)
+		return vp.sendStatusMsg("Command Implementation Error", commander.HIGH)
 	}
 
 	vp.lastCmdError = nil
@@ -132,11 +133,11 @@ func (vp ViewPort) sendViewportSize() tea.Msg {
 	}
 }
 
-func (vp ViewPort) sendStatusMsg(msg string, s StatusSeverity) func() tea.Msg {
+func (vp ViewPort) sendStatusMsg(msg string, s commander.StatusSeverity) func() tea.Msg {
 	return func() tea.Msg {
-		return UpdateStatusMsg{
-			msg,
-			s,
+		return commander.UpdateStatusMsg{
+			String:   msg,
+			Severity: s,
 		}
 	}
 }
