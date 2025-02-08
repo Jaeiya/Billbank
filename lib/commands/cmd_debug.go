@@ -47,7 +47,7 @@ var (
 func NewDebugCmd(h *utils.InputHistory) ui.Command {
 	m := debugCmdModel{
 		BaseCommand: NewBaseCommand[debugCmdModel]([][]string{
-			{"/"},
+			{"/", "x"},
 			{"history", "log", "slog", "stats"},
 			{"clear"},
 		}),
@@ -55,7 +55,7 @@ func NewDebugCmd(h *utils.InputHistory) ui.Command {
 		slog:    debugSlog{viewPort: viewport.New(0, 0)},
 	}
 
-	m.AddCommands([]CommandEntry[debugCmdModel]{
+	m.AddBranch([]BranchEntry[debugCmdModel]{
 		{
 			"/ history",
 			func(dcm *debugCmdModel) tea.Cmd { return dcm.loadInputHistory() },

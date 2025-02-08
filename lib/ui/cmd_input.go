@@ -62,7 +62,7 @@ func WithCommands(cmds ...Command) CmdInputOption {
 		aliasStore := map[string]bool{}
 
 		for _, cmd := range cmds {
-			for _, a := range cmd.GetAliases() {
+			for _, a := range cmd.tree[0] {
 				if aliasStore[a] {
 					panic("command alias already exists")
 				}
@@ -124,7 +124,7 @@ func (m CmdInputModel) Update(msg tea.Msg) (CmdInputModel, tea.Cmd) {
 		case "enter":
 			m, cmd = tryEnterCmd(m)
 			if m.currCmd.status.Error != nil {
-				msg := fmt.Sprintf("%s::[%s]", m.currCmd.status.Error.Error(), m.currCmd.status.TreeStr)
+				msg := fmt.Sprintf("%s::[%s]", m.currCmd.status.Error.Error(), m.currCmd.status.BranchStr)
 				logger.Log(logger.Attention, fmt.Sprintf("CommandParser: %s", msg))
 			}
 			cmds = append(cmds, cmd)
@@ -148,7 +148,7 @@ func tryEnterCmd(m CmdInputModel) (CmdInputModel, tea.Cmd) {
 	m, _ = tryParseCmd(m, tea.KeyMsg{})
 	cmd := m.currCmd
 
-	logger.Log(logger.Info, fmt.Sprintf("ExecCommand: [%s]", cmd.status.TreeStr))
+	logger.Log(logger.Info, fmt.Sprintf("ExecCommand: [%s]", cmd.status.BranchStr))
 	logger.Log(logger.Debug, fmt.Sprintf("CommandStatus: [%+v]", cmd.status))
 
 	if cmd.status.IsCommand {
@@ -170,7 +170,7 @@ func tryEnterCmd(m CmdInputModel) (CmdInputModel, tea.Cmd) {
 		}
 
 		statusStyle = statusStyle.Foreground(lib.FgSuccessColor)
-		m.statusText = fmt.Sprintf("Executing Command: %s", cmd.status.TreeStr)
+		m.statusText = fmt.Sprintf("Executing Command: %s", cmd.status.BranchStr)
 
 		m.CmdHistory.Add(m.CommandInput.Value())
 
@@ -215,7 +215,7 @@ func tryParseCmd(m CmdInputModel, msg tea.KeyMsg) (CmdInputModel, tea.Cmd) {
 		m.currCmd = c
 		if cmdStatus.IsCommand {
 			if !cmdStatus.IsComplete {
-				m.CommandInput.SetSuggestions(cmdStatus.Suggestions)
+				m.CommandInput.SetSuggestions(cmdStatus.Branches)
 			}
 			break
 		}

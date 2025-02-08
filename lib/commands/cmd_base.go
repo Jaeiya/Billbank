@@ -10,19 +10,19 @@ import (
 	"github.com/jaeiya/billbank/lib/utils/logger"
 )
 
-type ExecCmdMsg string
+type ExecBranchMsg string
 
-type CommandFunc[T any] func(*T) tea.Cmd
+type BranchFunc[T any] func(*T) tea.Cmd
 
-type CommandEntry[T any] struct {
+type BranchEntry[T any] struct {
 	String string
-	Fn     CommandFunc[T]
+	Fn     BranchFunc[T]
 	ViewFn func(T) string
 }
 
 type BaseCommand[T any] struct {
 	cmdList    []string
-	cmdMap     map[string]CommandFunc[T]
+	cmdMap     map[string]BranchFunc[T]
 	cmdViewMap map[string]func(T) string
 	cmdTree    [][]string
 	cmdStatus  ui.CommandStatus
@@ -33,7 +33,7 @@ type BaseCommand[T any] struct {
 
 func NewBaseCommand[T any](tree [][]string) BaseCommand[T] {
 	return BaseCommand[T]{
-		cmdMap:     map[string]CommandFunc[T]{},
+		cmdMap:     map[string]BranchFunc[T]{},
 		cmdViewMap: map[string]func(T) string{},
 		cmdTree:    tree,
 	}
@@ -48,9 +48,9 @@ func (bc *BaseCommand[T]) Update(model *T, msg tea.Msg) (*T, tea.Cmd) {
 		// Hack to get around type safety
 		basePtr.viewHeight = msg.Height
 		basePtr.viewWidth = msg.Width
-		return model, func() tea.Msg { return ExecCmdMsg(bc.cmdStatus.TreeStr) }
+		return model, func() tea.Msg { return ExecBranchMsg(bc.cmdStatus.BranchStr) }
 
-	case ExecCmdMsg:
+	case ExecBranchMsg:
 		// NOTE  Do not propagate errors to new branch commands; this
 		// is because it's possible that an exec msg is sent to execute
 		// a branch command on an already loaded command. Branch
@@ -63,7 +63,7 @@ func (bc *BaseCommand[T]) Update(model *T, msg tea.Msg) (*T, tea.Cmd) {
 		if err != nil {
 			basePtr.cmdError = err
 		} else if !bc.HasView() {
-			basePtr.cmdError = fmt.Errorf("tried to display missing view from [%s]", bc.cmdStatus.TreeStr)
+			basePtr.cmdError = fmt.Errorf("tried to display missing view from [%s]", bc.cmdStatus.BranchStr)
 		}
 
 		return model, cmd
@@ -73,21 +73,21 @@ func (bc *BaseCommand[T]) Update(model *T, msg tea.Msg) (*T, tea.Cmd) {
 	return model, nil
 }
 
-func (bc *BaseCommand[T]) AddCommands(cmds ...CommandEntry[T]) {
-	for _, cmd := range cmds {
-		bc.cmdList = append(bc.cmdList, cmd.String)
-		if cmd.Fn != nil {
-			bc.cmdMap[cmd.String] = cmd.Fn
+func (bc *BaseCommand[T]) AddBranch(branches ...BranchEntry[T]) {
+	for _, branch := range branches {
+		bc.cmdList = append(bc.cmdList, branch.String)
+		if branch.Fn != nil {
+			bc.cmdMap[branch.String] = branch.Fn
 		}
-		if cmd.ViewFn != nil {
-			bc.cmdViewMap[cmd.String] = cmd.ViewFn
+		if branch.ViewFn != nil {
+			bc.cmdViewMap[branch.String] = branch.ViewFn
 		}
 	}
 }
 
 func (bc *BaseCommand[T]) SetStatus(status ui.CommandStatus) tea.Cmd {
 	bc.cmdStatus = status
-	return func() tea.Msg { return ExecCmdMsg(bc.cmdStatus.TreeStr) }
+	return func() tea.Msg { return ExecBranchMsg(bc.cmdStatus.BranchStr) }
 }
 
 func (bc BaseCommand[T]) GetError() error {
@@ -103,7 +103,7 @@ HasView returns true if the current command tree string has
 an applicable view associated with it.
 */
 func (bc BaseCommand[T]) HasView() bool {
-	_, ok := bc.cmdViewMap[bc.cmdStatus.TreeStr]
+	_, ok := bc.cmdViewMap[bc.cmdStatus.BranchStr]
 	return ok
 }
 
@@ -132,13 +132,13 @@ func (bc BaseCommand[T]) ValidateCommand() {
 	}
 }
 
-func (bc BaseCommand[T]) IsSupported(treeStr string) bool {
-	_, ok := bc.cmdMap[treeStr]
+func (bc BaseCommand[T]) IsSupported(branchStr string) bool {
+	_, ok := bc.cmdMap[branchStr]
 	return ok
 }
 
 func (bc BaseCommand[T]) Exec(model *T) (tea.Cmd, error) {
-	cmd := bc.cmdStatus.TreeStr
+	cmd := bc.cmdStatus.BranchStr
 	fn, ok := bc.cmdMap[cmd]
 	if !ok {
 		return nil, fmt.Errorf("command::[%s] not implemented", cmd)
@@ -147,7 +147,7 @@ func (bc BaseCommand[T]) Exec(model *T) (tea.Cmd, error) {
 }
 
 func (bc BaseCommand[T]) ExecView(model T) string {
-	cmd := bc.cmdStatus.TreeStr
+	cmd := bc.cmdStatus.BranchStr
 	fn, ok := bc.cmdViewMap[cmd]
 	if !ok {
 		return fmt.Sprintf("command::[%s] missing view", cmd)
@@ -158,6 +158,6 @@ func (bc BaseCommand[T]) ExecView(model T) string {
 func (bc BaseCommand[T]) poll(d time.Duration) tea.Cmd {
 	return func() tea.Msg {
 		time.Sleep(d)
-		return ExecCmdMsg(bc.cmdStatus.TreeStr)
+		return ExecBranchMsg(bc.cmdStatus.BranchStr)
 	}
 }

@@ -23,10 +23,10 @@ type CommandStatus struct {
 	IsCommand   bool
 	IsComplete  bool
 	IsSupported bool
-	Suggestions []string
+	Branches    []string
 	Arg         string
 	CommandStr  string
-	TreeStr     string
+	BranchStr   string
 	// The command tree position of the input. A command can be in an incomplete state,
 	// which means the input is correct, but it's in a lower position within the
 	// command tree hierarchy.
@@ -52,7 +52,7 @@ type CommandModel interface {
 	GetError() error
 	GetCmdTree() [][]string
 	SetStatus(CommandStatus) (CommandModel, tea.Cmd)
-	IsSupported(treeStr string) bool
+	IsSupported(branchStr string) bool
 	ValidateCommand()
 }
 
@@ -101,10 +101,6 @@ func NewCommand(config CommandConfig) Command {
 	return cmd
 }
 
-func (cb Command) GetAliases() []string {
-	return cb.tree[0]
-}
-
 func (cb Command) GetId() int {
 	return cb.id
 }
@@ -132,7 +128,7 @@ func (cb *Command) ParseCommand(cmd string) CommandStatus {
 			Arg:        cmdFields[len(cmdFields)-1],
 			TreePos:    finalPos - 1,
 			CommandStr: cmdStr,
-			TreeStr:    cmd,
+			BranchStr:  cmd,
 		}
 		if len(cmdFields) == finalPos {
 			cs.Error = fmt.Errorf("expected a value after '%s'", cmdFields[len(cmdFields)-1])
@@ -144,11 +140,11 @@ func (cb *Command) ParseCommand(cmd string) CommandStatus {
 
 	isComplete = finalPos == len(cmdFields) && !cb.hasArg
 
-	var suggestions []string
+	var branches []string
 	if finalPos < len(cb.tree) {
-		suggestions = cb.normalizeSuggestions(cmd, finalPos, cb.tree[finalPos])
+		branches = cb.normalizeBranches(cmd, finalPos, cb.tree[finalPos])
 	} else {
-		suggestions = cb.normalizeSuggestions(cmd, finalPos, []string{})
+		branches = cb.normalizeBranches(cmd, finalPos, []string{})
 	}
 
 	var err error
@@ -173,10 +169,10 @@ func (cb *Command) ParseCommand(cmd string) CommandStatus {
 		IsCommand:   isCommand,
 		IsComplete:  isComplete,
 		IsSupported: cb.model.IsSupported(cmd),
-		Suggestions: suggestions,
+		Branches:    branches,
 		TreePos:     finalPos - 1,
 		CommandStr:  cmdStr,
-		TreeStr:     cmd,
+		BranchStr:   cmd,
 		Error:       err,
 	}
 }
@@ -189,35 +185,35 @@ func (cb *Command) ValidateKey(key rune) bool {
 }
 
 /*
-normalizeSuggestions prepends the previous command string to the suggestions.
+normalizeBranches prepends the previous cmd branch string to the suggestions.
 This is necessary because the input box needs the whole phrase as a
 completion.
 */
-func (cb *Command) normalizeSuggestions(
-	cmd string,
+func (cb *Command) normalizeBranches(
+	branchStr string,
 	treePos int,
-	suggestions []string,
+	branches []string,
 ) []string {
-	normSuggestions := make([]string, len(suggestions))
-	copy(normSuggestions, suggestions)
+	newBranches := make([]string, len(branches))
+	copy(newBranches, branches)
 
-	cmd = strings.TrimSpace(cmd)
-	cmdParts := strings.Fields(cmd)
+	branchStr = strings.TrimSpace(branchStr)
+	leaves := strings.Fields(branchStr)
 
-	cmdPrefix := ""
-	if treePos > 0 && treePos <= len(cmdParts) {
-		cmdPrefix = strings.Join(cmdParts[:treePos], " ") + " "
+	branchPrefix := ""
+	if treePos > 0 && treePos <= len(leaves) {
+		branchPrefix = strings.Join(leaves[:treePos], " ") + " "
 	}
 
-	// Prevents repeated suggestions and only allows
-	// suggestions for partially entered commands.
-	if len(cmdParts) == treePos {
-		return []string{strings.TrimSpace(cmdPrefix)}
+	// Prevents repeated cmd branches and only allows
+	// cmd branches for partially entered cmd branches.
+	if len(leaves) == treePos {
+		return []string{strings.TrimSpace(branchPrefix)}
 	}
 
-	for i, s := range normSuggestions {
-		normSuggestions[i] = cmdPrefix + s
+	for i, s := range newBranches {
+		newBranches[i] = branchPrefix + s
 	}
 
-	return normSuggestions
+	return newBranches
 }
