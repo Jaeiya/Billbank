@@ -59,18 +59,20 @@ func (bc *BaseCommand[T]) Update(model *T, msg tea.Msg) (*T, tea.Cmd) {
 		if basePtr.cmdError != nil {
 			basePtr.cmdError = nil
 		}
-		cmd, err := bc.Exec(model)
-		if err != nil {
-			basePtr.cmdError = err
-		} else if !bc.HasView() {
-			basePtr.cmdError = fmt.Errorf("tried to display missing view from [%s]", bc.cmdStatus.BranchStr)
-		}
-
-		return model, cmd
+		return model, bc.exec(basePtr, model)
 
 	}
 
 	return model, nil
+}
+
+func (bc BaseCommand[T]) View(model T) string {
+	branchStr := bc.cmdStatus.BranchStr
+	fn, ok := bc.cmdViewMap[bc.cmdStatus.BranchStr]
+	if !ok {
+		return fmt.Sprintf("command::[%s] missing view", branchStr)
+	}
+	return fn(model)
 }
 
 func (bc *BaseCommand[T]) AddBranch(branches ...BranchEntry[T]) {
@@ -137,20 +139,13 @@ func (bc BaseCommand[T]) IsSupported(branchStr string) bool {
 	return ok
 }
 
-func (bc BaseCommand[T]) Exec(model *T) (tea.Cmd, error) {
-	cmd := bc.cmdStatus.BranchStr
-	fn, ok := bc.cmdMap[cmd]
+func (BaseCommand[T]) exec(bc *BaseCommand[T], model *T) tea.Cmd {
+	branchStr := bc.cmdStatus.BranchStr
+	fn, ok := bc.cmdMap[branchStr]
 	if !ok {
-		return nil, fmt.Errorf("command::[%s] not implemented", cmd)
-	}
-	return fn(model), nil
-}
-
-func (bc BaseCommand[T]) ExecView(model T) string {
-	cmd := bc.cmdStatus.BranchStr
-	fn, ok := bc.cmdViewMap[cmd]
-	if !ok {
-		return fmt.Sprintf("command::[%s] missing view", cmd)
+		bc.cmdError = fmt.Errorf("command::[%s] not implemented", branchStr)
+	} else if !bc.HasView() {
+		bc.cmdError = fmt.Errorf("tried to display missing view from [%s]", bc.cmdStatus.BranchStr)
 	}
 	return fn(model)
 }

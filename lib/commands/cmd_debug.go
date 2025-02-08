@@ -163,7 +163,7 @@ func (m debugCmdModel) Update(msg tea.Msg) (ui.CommandModel, tea.Cmd) {
 }
 
 func (m debugCmdModel) View() string {
-	return m.ExecView(m)
+	return m.BaseCommand.View(m)
 }
 
 func (m debugCmdModel) SetStatus(status ui.CommandStatus) (ui.CommandModel, tea.Cmd) {
