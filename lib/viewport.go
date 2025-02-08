@@ -127,7 +127,7 @@ func (vp *ViewPort) catchCmdErrors() tea.Cmd {
 }
 
 func (vp ViewPort) sendViewportSize() tea.Msg {
-	return ViewportSizeMsg{
+	return commander.CmdViewportSizeMsg{
 		Height: vp.height - lipgloss.Height(vp.Commander.View()),
 		Width:  vp.width,
 	}
