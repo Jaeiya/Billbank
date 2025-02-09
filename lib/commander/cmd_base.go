@@ -48,13 +48,14 @@ func (bc *BaseCommand[T]) Update(model *T, msg tea.Msg) (*T, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case CmdViewportSizeMsg:
-		logger.Log(logger.Debug, fmt.Sprintf("ViewPortSize: %dx%d", msg.Width, msg.Height))
+		logger.Log(logger.Debug, fmt.Sprintf("BaseCommand: setting viewport size [%dx%d]", msg.Width, msg.Height))
 		bc.viewHeight = msg.Height
 		bc.viewWidth = msg.Width
 		return model, func() tea.Msg { return ExecBranchMsg(bc.cmdStatus.BranchStr) }
 
 	case CommandStatus:
 		bc.cmdStatus = msg
+		logger.Log(logger.Debug, fmt.Sprintf("BaseCommand: executing branch [%s]", msg.BranchStr))
 		cmds = append(cmds, func() tea.Msg { return ExecBranchMsg(msg.BranchStr) })
 
 	case ExecBranchMsg:
