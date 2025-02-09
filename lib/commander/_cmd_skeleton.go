@@ -1,4 +1,3 @@
-
 import (
 	"fmt"
 	"time"
@@ -55,7 +54,7 @@ func NewSkeletonCmd() Command {
 }
 
 type skeletonModel struct {
-	BaseCommand[skeletonModel]
+	*BaseCommand[skeletonModel]
 	thisCounter int
 	thatCounter int
 }

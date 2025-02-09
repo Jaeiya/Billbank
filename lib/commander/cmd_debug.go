@@ -126,7 +126,7 @@ type debugSlog struct {
 }
 
 type debugCmdModel struct {
-	BaseCommand[debugCmdModel]
+	*BaseCommand[debugCmdModel]
 	history debugHistory
 	log     debugLog
 	slog    debugSlog

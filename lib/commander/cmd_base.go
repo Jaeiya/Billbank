@@ -3,7 +3,6 @@ package commander
 import (
 	"fmt"
 	"time"
-	"unsafe"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/jaeiya/billbank/lib/utils/logger"
@@ -36,8 +35,8 @@ type BaseCommand[T any] struct {
 	viewHeight int
 }
 
-func NewBaseCommand[T any](tree [][]string) BaseCommand[T] {
-	return BaseCommand[T]{
+func NewBaseCommand[T any](tree [][]string) *BaseCommand[T] {
+	return &BaseCommand[T]{
 		cmdMap:     map[string]BranchFunc[T]{},
 		cmdViewMap: map[string]func(T) string{},
 		cmdTree:    tree,
@@ -46,17 +45,16 @@ func NewBaseCommand[T any](tree [][]string) BaseCommand[T] {
 
 func (bc *BaseCommand[T]) Update(model *T, msg tea.Msg) (*T, tea.Cmd) {
 	var cmds []tea.Cmd
-	basePtr := (*BaseCommand[T])(unsafe.Pointer(model))
 
 	switch msg := msg.(type) {
 	case CmdViewportSizeMsg:
 		logger.Log(logger.Debug, fmt.Sprintf("ViewPortSize: %dx%d", msg.Width, msg.Height))
-		basePtr.viewHeight = msg.Height
-		basePtr.viewWidth = msg.Width
+		bc.viewHeight = msg.Height
+		bc.viewWidth = msg.Width
 		return model, func() tea.Msg { return ExecBranchMsg(bc.cmdStatus.BranchStr) }
 
 	case CommandStatus:
-		basePtr.cmdStatus = msg
+		bc.cmdStatus = msg
 		cmds = append(cmds, func() tea.Msg { return ExecBranchMsg(msg.BranchStr) })
 
 	case ExecBranchMsg:
@@ -65,10 +63,10 @@ func (bc *BaseCommand[T]) Update(model *T, msg tea.Msg) (*T, tea.Cmd) {
 		// a branch command on an already loaded command. Branch
 		// commands are treated as a separate command even if they're
 		// executed from the same command struct.
-		if basePtr.cmdError != nil {
-			basePtr.cmdError = nil
+		if bc.cmdError != nil {
+			bc.cmdError = nil
 		}
-		cmds = append(cmds, bc.exec(basePtr, model))
+		cmds = append(cmds, bc.exec(model))
 
 	}
 
@@ -143,7 +141,7 @@ func (bc BaseCommand[T]) IsSupported(branchStr string) bool {
 	return ok
 }
 
-func (BaseCommand[T]) exec(bc *BaseCommand[T], model *T) tea.Cmd {
+func (bc *BaseCommand[T]) exec(model *T) tea.Cmd {
 	branchStr := bc.cmdStatus.BranchStr
 	fn, ok := bc.cmdMap[branchStr]
 	if !ok {

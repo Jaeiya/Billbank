@@ -2,8 +2,8 @@ package main
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/jaeiya/billbank/lib/commands"
-	"github.com/jaeiya/billbank/lib/ui"
+	"github.com/jaeiya/billbank/lib"
+	"github.com/jaeiya/billbank/lib/commander"
 	"github.com/jaeiya/billbank/lib/utils"
 	"github.com/jaeiya/billbank/lib/utils/logger"
 )
@@ -22,10 +22,15 @@ func main() {
 	logger.CreateLog(logger.Debug)
 	logger.Log(logger.Info, "Starting BillBank")
 
-	vp := ui.ViewPort{}
+	vp := lib.ViewPort{}
 	h := utils.NewCmdHistory()
 
-	vp.Commander = ui.NewCmdInput(h, ui.WithCommands(commands.NewDebugCmd(h)))
+	vp.Commander = commander.NewCmdInput(
+		h,
+		commander.WithCommands(
+			commander.NewDebugCmd(h),
+		), // commands.NewTmpCmd()),
+	)
 
 	p1 := tea.NewProgram(
 		vp,
