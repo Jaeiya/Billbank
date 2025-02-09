@@ -130,7 +130,7 @@ func (m debugCmdModel) Update(msg tea.Msg) (CommandModel, tea.Cmd) {
 		}
 	}
 
-	_, cmd = m.slog.viewPort.Update(msg)
+	m.slog.viewPort, cmd = m.slog.viewPort.Update(msg)
 	cmds = append(cmds, cmd)
 
 	return m, tea.Batch(cmds...)
