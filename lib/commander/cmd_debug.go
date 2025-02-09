@@ -328,7 +328,7 @@ func (m debugCmdModel) viewSlog() string {
 
 func (m *debugCmdModel) loadStats() tea.Cmd {
 	var err error
-	pollCmd := m.poll(time.Millisecond * 250)
+	pollCmd := m.poll(time.Millisecond * 350)
 
 	path := filepath.Join(utils.GetWorkingDir(), "log.txt")
 	fileInfo, err := os.Stat(path)
