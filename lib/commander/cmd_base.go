@@ -59,6 +59,9 @@ func (bc *BaseCommand[T]) Update(model T, msg tea.Msg) (T, tea.Cmd) {
 			cmds = append(cmds, func() tea.Msg { return ExecBranchMsg(msg.BranchStr) })
 		}
 
+	case tea.KeyMsg:
+		cmds = append(cmds, func() tea.Msg { return ExecBranchMsg(bc.cmdStatus.BranchStr) })
+
 	case ExecBranchMsg:
 		// Each execution is considered a new command execution
 		// therefore we treat it as a "first" execution.
