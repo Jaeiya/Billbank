@@ -52,12 +52,9 @@ func (bc *BaseCommand[T]) Update(model T, msg tea.Msg) (T, tea.Cmd) {
 		bc.viewWidth = msg.Width
 
 	case CommandStatus:
-		// Do not re-execute branch command if it's already running
-		if bc.cmdStatus.BranchStr != msg.BranchStr {
-			bc.cmdStatus = msg
-			logger.Log(logger.Debug, fmt.Sprintf("BaseCommand: executing branch [%s]", msg.BranchStr))
-			cmds = append(cmds, func() tea.Msg { return ExecBranchMsg(msg.BranchStr) })
-		}
+		bc.cmdStatus = msg
+		logger.Log(logger.Debug, fmt.Sprintf("BaseCommand: executing branch [%s]", msg.BranchStr))
+		cmds = append(cmds, func() tea.Msg { return ExecBranchMsg(msg.BranchStr) })
 
 	case tea.KeyMsg:
 		cmds = append(cmds, func() tea.Msg { return ExecBranchMsg(bc.cmdStatus.BranchStr) })
