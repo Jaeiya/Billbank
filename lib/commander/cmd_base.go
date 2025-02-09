@@ -16,7 +16,7 @@ type (
 	}
 )
 
-type BranchFunc[T any] func(*T) tea.Cmd
+type BranchFunc[T any] func(T) (T, tea.Cmd)
 
 type BranchEntry[T any] struct {
 	String string
@@ -43,7 +43,8 @@ func NewBaseCommand[T any](tree [][]string) *BaseCommand[T] {
 	}
 }
 
-func (bc *BaseCommand[T]) Update(model *T, msg tea.Msg) (*T, tea.Cmd) {
+func (bc *BaseCommand[T]) Update(model T, msg tea.Msg) (T, tea.Cmd) {
+	var cmd tea.Cmd
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
@@ -66,7 +67,8 @@ func (bc *BaseCommand[T]) Update(model *T, msg tea.Msg) (*T, tea.Cmd) {
 		if bc.cmdError != nil {
 			bc.cmdError = nil
 		}
-		cmds = append(cmds, bc.exec(model))
+		model, cmd = bc.exec(model)
+		cmds = append(cmds, cmd)
 
 	}
 
@@ -141,7 +143,7 @@ func (bc BaseCommand[T]) IsSupported(branchStr string) bool {
 	return ok
 }
 
-func (bc *BaseCommand[T]) exec(model *T) tea.Cmd {
+func (bc *BaseCommand[T]) exec(model T) (T, tea.Cmd) {
 	branchStr := bc.cmdStatus.BranchStr
 	fn, ok := bc.cmdMap[branchStr]
 	if !ok {
