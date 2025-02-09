@@ -2,7 +2,6 @@ package commander
 
 import (
 	"fmt"
-	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/jaeiya/billbank/lib/utils/logger"
@@ -16,7 +15,7 @@ type (
 	}
 )
 
-type BranchFunc[T any] func(T) (T, tea.Cmd)
+type BranchFunc[T any] func(T) T
 
 type BranchEntry[T any] struct {
 	String string
@@ -44,7 +43,6 @@ func NewBaseCommand[T any](tree [][]string) *BaseCommand[T] {
 }
 
 func (bc *BaseCommand[T]) Update(model T, msg tea.Msg) (T, tea.Cmd) {
-	var cmd tea.Cmd
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
@@ -67,8 +65,7 @@ func (bc *BaseCommand[T]) Update(model T, msg tea.Msg) (T, tea.Cmd) {
 		if bc.cmdError != nil {
 			bc.cmdError = nil
 		}
-		model, cmd = bc.exec(model)
-		cmds = append(cmds, cmd)
+		model = bc.exec(model)
 
 	}
 
@@ -143,7 +140,7 @@ func (bc BaseCommand[T]) IsSupported(branchStr string) bool {
 	return ok
 }
 
-func (bc *BaseCommand[T]) exec(model T) (T, tea.Cmd) {
+func (bc *BaseCommand[T]) exec(model T) T {
 	branchStr := bc.cmdStatus.BranchStr
 	fn, ok := bc.cmdMap[branchStr]
 	if !ok {
@@ -152,11 +149,4 @@ func (bc *BaseCommand[T]) exec(model T) (T, tea.Cmd) {
 		bc.cmdError = fmt.Errorf("tried to display missing view from [%s]", bc.cmdStatus.BranchStr)
 	}
 	return fn(model)
-}
-
-func (bc BaseCommand[T]) poll(d time.Duration) tea.Cmd {
-	return func() tea.Msg {
-		time.Sleep(d)
-		return ExecBranchMsg(bc.cmdStatus.BranchStr)
-	}
 }

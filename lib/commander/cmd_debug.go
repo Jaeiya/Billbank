@@ -140,9 +140,9 @@ func (m debugCmdModel) View() string {
 	return m.BaseCommand.View(m)
 }
 
-func loadInputHistory(m debugCmdModel) (debugCmdModel, tea.Cmd) {
+func loadInputHistory(m debugCmdModel) debugCmdModel {
 	if m.history.data.GetLen() == m.history.lastLen {
-		return m, nil
+		return m
 	}
 
 	var sb strings.Builder
@@ -156,37 +156,37 @@ func loadInputHistory(m debugCmdModel) (debugCmdModel, tea.Cmd) {
 	}
 	m.history.lastLen = m.history.data.GetLen()
 	m.history.view = sb.String()
-	return m, nil
+	return m
 }
 
 func viewHistory(m debugCmdModel) string {
 	return histStyle.Render(m.history.view)
 }
 
-func loadLog(m debugCmdModel) (debugCmdModel, tea.Cmd) {
+func loadLog(m debugCmdModel) debugCmdModel {
 	path := filepath.Join(utils.GetWorkingDir(), "log.txt")
 	fileInfo, err := os.Stat(path)
 	if err != nil {
 		panic(err)
 	}
 	if fileInfo.Size() == int64(len(m.log.view)+1) {
-		return m, nil
+		return m
 	}
 	bytes, err := os.ReadFile(path)
 	if err != nil {
 		m.log.view = err.Error()
-		return m, nil
+		return m
 	}
 	m.log.view = strings.TrimSpace(string(bytes))
 	m.log.lineCount = strings.Count(m.log.view, "\n")
-	return m, nil
+	return m
 }
 
 func viewLog(m debugCmdModel) string {
 	return m.log.view
 }
 
-func clearLog(m debugCmdModel) (debugCmdModel, tea.Cmd) {
+func clearLog(m debugCmdModel) debugCmdModel {
 	path := filepath.Join(utils.GetWorkingDir(), "log.txt")
 	err := os.Truncate(path, 0)
 	if err != nil {
@@ -197,7 +197,7 @@ func clearLog(m debugCmdModel) (debugCmdModel, tea.Cmd) {
 	// No reason to hold old slog info
 	m.slog.view = ""
 	m.slog.lineCount = 0
-	return m, nil
+	return m
 }
 
 func clearLogView(m debugCmdModel) string {
@@ -209,12 +209,11 @@ func clearLogView(m debugCmdModel) string {
 	)
 }
 
-func loadSlog(m debugCmdModel) (debugCmdModel, tea.Cmd) {
-	m, _ = loadLog(m)
-	pollCmd := m.poll(time.Millisecond * 250)
+func loadSlog(m debugCmdModel) debugCmdModel {
+	m = loadLog(m)
 
 	if m.log.lineCount == m.slog.lineCount {
-		return m, pollCmd
+		return m
 	}
 
 	var tagBuilder, pathBuilder, wordBuilder strings.Builder
@@ -278,13 +277,13 @@ func loadSlog(m debugCmdModel) (debugCmdModel, tea.Cmd) {
 	fixedWidthContent := lipgloss.NewStyle().Width(m.viewWidth - 1).Render(m.slog.view)
 	m.slog.viewPort.SetContent(fixedWidthContent)
 	m.slog.viewPort.GotoBottom()
-	return m, pollCmd
+	return m
 }
 
-func clearSlog(m debugCmdModel) (debugCmdModel, tea.Cmd) {
+func clearSlog(m debugCmdModel) debugCmdModel {
 	m.slog.lineCount = 0
 	m.slog.view = ""
-	return m, nil
+	return m
 }
 
 func clearSlogView(m debugCmdModel) string {
@@ -305,9 +304,8 @@ func viewSlog(m debugCmdModel) string {
 	return logStyle.Render(content)
 }
 
-func loadStats(m debugCmdModel) (debugCmdModel, tea.Cmd) {
+func loadStats(m debugCmdModel) debugCmdModel {
 	var err error
-	pollCmd := m.poll(time.Millisecond * 350)
 
 	path := filepath.Join(utils.GetWorkingDir(), "log.txt")
 	fileInfo, err := os.Stat(path)
@@ -334,7 +332,7 @@ func loadStats(m debugCmdModel) (debugCmdModel, tea.Cmd) {
 		memWorking: m.stats.memStats.OtherSys + m.stats.memStats.HeapSys,
 	}
 
-	return m, pollCmd
+	return m
 }
 
 func viewStats(m debugCmdModel) string {
