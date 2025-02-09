@@ -51,7 +51,6 @@ func (bc *BaseCommand[T]) Update(model *T, msg tea.Msg) (*T, tea.Cmd) {
 		logger.Log(logger.Debug, fmt.Sprintf("BaseCommand: setting viewport size [%dx%d]", msg.Width, msg.Height))
 		bc.viewHeight = msg.Height
 		bc.viewWidth = msg.Width
-		return model, func() tea.Msg { return ExecBranchMsg(bc.cmdStatus.BranchStr) }
 
 	case CommandStatus:
 		// Do not re-execute branch command if it's already running
