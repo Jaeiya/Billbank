@@ -45,18 +45,19 @@ func NewBaseCommand[T any](tree [][]string) BaseCommand[T] {
 }
 
 func (bc *BaseCommand[T]) Update(model *T, msg tea.Msg) (*T, tea.Cmd) {
+	var cmds []tea.Cmd
 	basePtr := (*BaseCommand[T])(unsafe.Pointer(model))
 
 	switch msg := msg.(type) {
 	case CmdViewportSizeMsg:
 		logger.Log(logger.Debug, fmt.Sprintf("ViewPortSize: %dx%d", msg.Width, msg.Height))
-		// Hack to get around type safety
 		basePtr.viewHeight = msg.Height
 		basePtr.viewWidth = msg.Width
 		return model, func() tea.Msg { return ExecBranchMsg(bc.cmdStatus.BranchStr) }
 
 	case CommandStatus:
 		basePtr.cmdStatus = msg
+		cmds = append(cmds, func() tea.Msg { return ExecBranchMsg(msg.BranchStr) })
 
 	case ExecBranchMsg:
 		// NOTE  Do not propagate errors to new branch commands; this
@@ -67,11 +68,11 @@ func (bc *BaseCommand[T]) Update(model *T, msg tea.Msg) (*T, tea.Cmd) {
 		if basePtr.cmdError != nil {
 			basePtr.cmdError = nil
 		}
-		return model, bc.exec(basePtr, model)
+		cmds = append(cmds, bc.exec(basePtr, model))
 
 	}
 
-	return model, nil
+	return model, tea.Batch(cmds...)
 }
 
 func (bc BaseCommand[T]) View(model T) string {
