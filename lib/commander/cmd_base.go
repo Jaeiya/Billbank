@@ -96,11 +96,6 @@ func (bc *BaseCommand[T]) AddBranch(branches ...BranchEntry[T]) {
 	}
 }
 
-func (bc *BaseCommand[T]) SetStatus(status CommandStatus) tea.Cmd {
-	bc.cmdStatus = status
-	return func() tea.Msg { return ExecBranchMsg(bc.cmdStatus.BranchStr) }
-}
-
 func (bc BaseCommand[T]) GetError() error {
 	return bc.cmdError
 }
