@@ -55,6 +55,9 @@ func (bc *BaseCommand[T]) Update(model *T, msg tea.Msg) (*T, tea.Cmd) {
 		basePtr.viewWidth = msg.Width
 		return model, func() tea.Msg { return ExecBranchMsg(bc.cmdStatus.BranchStr) }
 
+	case CommandStatus:
+		basePtr.cmdStatus = msg
+
 	case ExecBranchMsg:
 		// NOTE  Do not propagate errors to new branch commands; this
 		// is because it's possible that an exec msg is sent to execute

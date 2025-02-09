@@ -197,8 +197,12 @@ func tryEnterCmd(m CmdInputModel) (CmdInputModel, tea.Cmd) {
 		}
 		m.lastCmd = cmd
 		m.CommandInput.Reset()
-		model, _ := cmd.model.SetStatus(cmd.status)
-		return m, func() tea.Msg { return model }
+		return m, tea.Sequence(
+			// If the model is not set first, then status will
+			// not be received.
+			func() tea.Msg { return cmd.model },
+			func() tea.Msg { return cmd.status },
+		)
 	}
 
 	statusStyle = statusStyle.Foreground(ui.FgErrColor)

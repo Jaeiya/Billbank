@@ -165,10 +165,6 @@ func (m debugCmdModel) View() string {
 	return m.BaseCommand.View(m)
 }
 
-func (m debugCmdModel) SetStatus(status CommandStatus) (CommandModel, tea.Cmd) {
-	return m, m.BaseCommand.SetStatus(status)
-}
-
 func (m *debugCmdModel) loadInputHistory() tea.Cmd {
 	if m.history.data.GetLen() == m.history.lastLen {
 		return nil

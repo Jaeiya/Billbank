@@ -82,10 +82,6 @@ func (m skeletonModel) View() string {
 	return m.BaseCommand.View(m)
 }
 
-func (m skeletonModel) SetStatus(status CommandStatus) (CommandModel, tea.Cmd) {
-	return m, m.BaseCommand.SetStatus(status)
-}
-
 func (m *skeletonModel) loadThis() tea.Cmd {
 	m.thisCounter += 1
 	return nil

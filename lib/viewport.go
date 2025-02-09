@@ -51,10 +51,6 @@ func (vp ViewPort) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		vp.CurrentCmdModel, cmd = vp.CurrentCmdModel.Update(vp.sendViewportSize())
 		cmds = append(cmds, cmd)
 
-	case commander.CommandStatus:
-		vp.CurrentCmdModel, cmd = vp.CurrentCmdModel.SetStatus(msg)
-		cmds = append(cmds, cmd)
-
 	case CommanderStatusMsg:
 		cmds = append(cmds, vp.sendStatusMsg(msg.String, msg.Severity))
 	}
