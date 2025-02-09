@@ -62,11 +62,8 @@ func (bc *BaseCommand[T]) Update(model *T, msg tea.Msg) (*T, tea.Cmd) {
 		}
 
 	case ExecBranchMsg:
-		// NOTE  Do not propagate errors to new branch commands; this
-		// is because it's possible that an exec msg is sent to execute
-		// a branch command on an already loaded command. Branch
-		// commands are treated as a separate command even if they're
-		// executed from the same command struct.
+		// Each execution is considered a new command execution
+		// therefore we treat it as a "first" execution.
 		if bc.cmdError != nil {
 			bc.cmdError = nil
 		}
