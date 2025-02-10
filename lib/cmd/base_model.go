@@ -10,8 +10,8 @@ import (
 
 type (
 	ExecBranchMsg struct {
-		isOnKey          bool
 		isOnViewportSize bool
+		meta             string
 	}
 	ViewportSizeMsg struct {
 		Width  int
@@ -20,10 +20,9 @@ type (
 )
 
 type Branch[T any] struct {
-	String       string
-	Fn           func(T) T
-	ViewFn       func(T) string
-	IsPollingKey bool
+	String string
+	Fn     func(T) T
+	ViewFn func(T) string
 }
 
 type BaseCmdModel[T any] struct {
@@ -55,24 +54,15 @@ func (bc *BaseCmdModel[T]) Update(model T, msg tea.Msg) (T, tea.Cmd) {
 		logger.Log(logger.Debug, fmt.Sprintf("BaseModel: setting viewport size [%dx%d]", msg.Width, msg.Height))
 		bc.viewHeight = msg.Height
 		bc.viewWidth = msg.Width
-		// We don't need to execute the branch command on first
-		// msg because it will be sent by the viewport.
-		if !bc.isFirstMsg {
-			teaCmds = append(teaCmds, func() tea.Msg { return ExecBranchMsg{isOnViewportSize: true} })
-		}
+		teaCmds = append(teaCmds, func() tea.Msg { return ExecBranchMsg{isOnViewportSize: true, meta: "ViewPortSize"} })
 
-	case Status:
-		bc.cmdStatus = msg
-		teaCmds = append(teaCmds, func() tea.Msg { return ExecBranchMsg{} })
-
-	case tea.KeyMsg:
-		teaCmds = append(teaCmds, func() tea.Msg { return ExecBranchMsg{isOnKey: true} })
+	case UpdateCmdMsg:
+		bc.cmdStatus = msg.Status
 
 	case ExecBranchMsg:
-		cmd := bc.cmdBranchMap[bc.cmdStatus.BranchStr]
-		if msg.isOnKey && cmd.IsPollingKey || msg.isOnViewportSize {
+		if msg.isOnViewportSize {
 			model = bc.exec(model, false)
-		} else if !msg.isOnKey && !msg.isOnViewportSize {
+		} else if !msg.isOnViewportSize {
 			model = bc.exec(model, true)
 		}
 

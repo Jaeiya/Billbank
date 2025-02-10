@@ -56,12 +56,12 @@ func NewDebugCmd(h *utils.InputHistory) cmd.Command {
 	}
 
 	m.AddBranch([]cmd.Branch[debugModel]{
-		{String: "/ history", Fn: loadHistory, ViewFn: viewHistory, IsPollingKey: false},
-		{String: "/ log", Fn: loadLog, ViewFn: viewLog, IsPollingKey: false},
-		{String: "/ slog", Fn: loadSlog, ViewFn: viewSlog, IsPollingKey: false},
-		{String: "/ stats", Fn: loadStats, ViewFn: viewStats, IsPollingKey: false},
-		{String: "/ log clear", Fn: clearLog, ViewFn: clearLogView, IsPollingKey: false},
-		{String: "/ slog clear", Fn: clearSlog, ViewFn: clearSlogView, IsPollingKey: false},
+		{String: "/ history", Fn: loadHistory, ViewFn: viewHistory},
+		{String: "/ log", Fn: loadLog, ViewFn: viewLog},
+		{String: "/ slog", Fn: loadSlog, ViewFn: viewSlog},
+		{String: "/ stats", Fn: loadStats, ViewFn: viewStats},
+		{String: "/ log clear", Fn: clearLog, ViewFn: clearLogView},
+		{String: "/ slog clear", Fn: clearSlog, ViewFn: clearSlogView},
 	}...)
 
 	return cmd.New(

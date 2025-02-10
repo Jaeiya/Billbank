@@ -17,6 +17,11 @@ type UpdateStatusMsg struct {
 	Severity StatusSeverity
 }
 
+type UpdateCmdMsg struct {
+	Model  Model
+	Status Status
+}
+
 type StatusSeverity int
 
 const (
@@ -164,8 +169,11 @@ func tryEnterCmd(m CmdInputModel) (CmdInputModel, tea.Cmd) {
 	m, _ = tryParseCmd(m, tea.KeyMsg{})
 	cmd := m.currCmd
 
-	logger.Log(logger.Info, fmt.Sprintf("ExecCommand: [%s]", cmd.status.BranchStr))
-	logger.Log(logger.Debug, fmt.Sprintf("CommandStatus: [%+v]", cmd.status))
+	logger.Log(
+		logger.Info,
+		fmt.Sprintf("CommandInput: sending command [%s]", cmd.status.BranchStr),
+	)
+	logger.Log(logger.Debug, fmt.Sprintf("CommandInput: command status [%+v]", cmd.status))
 
 	if cmd.status.IsCommand {
 		if cmd.status.IsComplete && !cmd.status.IsSupported {
@@ -193,16 +201,12 @@ func tryEnterCmd(m CmdInputModel) (CmdInputModel, tea.Cmd) {
 		lastCmd := m.lastCmd
 		if lastCmd.GetId() == cmd.GetId() {
 			m.CommandInput.Reset()
-			return m, func() tea.Msg { return cmd.status }
+			return m, func() tea.Msg { return UpdateCmdMsg{nil, cmd.status} }
 		}
 		m.lastCmd = cmd
 		m.CommandInput.Reset()
-		return m, tea.Sequence(
-			// If the model is not set first, then status will
-			// not be received.
-			func() tea.Msg { return cmd.model },
-			func() tea.Msg { return cmd.status },
-		)
+		teaMsg := UpdateCmdMsg{cmd.model, cmd.status}
+		return m, func() tea.Msg { return teaMsg }
 	}
 
 	statusStyle = statusStyle.Foreground(ui.FgErrColor)
