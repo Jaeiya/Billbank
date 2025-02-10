@@ -187,6 +187,20 @@ func (bc *BaseCommand[T]) exec(model T, clearErrors bool) T {
 		bc.ClearErrors()
 	}
 
+	withOrWithoutErr := "with error"
+	if bc.lastError.Error() == "" {
+		withOrWithoutErr = "without error"
+	}
+
+	logger.Log(
+		logger.Debug,
+		fmt.Sprintf(
+			"BaseCommand: executing branch [%s] [%s]",
+			branchStr,
+			withOrWithoutErr,
+		),
+	)
+
 	if cmd.Fn == nil {
 		err := fmt.Errorf("[%s] tried to execute missing implementation func()", branchStr)
 		if bc.lastError.Error() != err.Error() {
