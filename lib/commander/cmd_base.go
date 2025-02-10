@@ -29,32 +29,37 @@ type BranchCommand[T any] struct {
 }
 
 type BaseCommand[T any] struct {
-	cmdMap     map[string]BranchCommand[T]
-	cmdTree    [][]string
-	cmdStatus  CommandStatus
-	cmdErrors  []error
-	lastError  error
-	viewWidth  int
-	viewHeight int
+	cmdMap      map[string]BranchCommand[T]
+	cmdTree     [][]string
+	cmdStatus   CommandStatus
+	cmdErrors   []error
+	lastError   error
+	isFirstLoad bool
+	viewWidth   int
+	viewHeight  int
 }
 
 func NewBaseCommand[T any](tree [][]string) *BaseCommand[T] {
 	return &BaseCommand[T]{
-		cmdMap:    map[string]BranchCommand[T]{},
-		cmdTree:   tree,
-		lastError: fmt.Errorf(""),
+		cmdMap:      map[string]BranchCommand[T]{},
+		cmdTree:     tree,
+		lastError:   fmt.Errorf(""),
+		isFirstLoad: true,
 	}
 }
 
 func (bc *BaseCommand[T]) Update(model T, msg tea.Msg) (T, tea.Cmd) {
 	var teaCmds []tea.Cmd
+	defer func() { bc.isFirstLoad = false }()
 
 	switch msg := msg.(type) {
 	case CmdViewportSizeMsg:
 		logger.Log(logger.Debug, fmt.Sprintf("BaseCommand: setting viewport size [%dx%d]", msg.Width, msg.Height))
 		bc.viewHeight = msg.Height
 		bc.viewWidth = msg.Width
-		if bc.cmdStatus.BranchStr != "" {
+		// We don't need to execute the branch command on first
+		// msg because it will be sent by the viewport.
+		if !bc.isFirstLoad {
 			teaCmds = append(teaCmds, func() tea.Msg { return ExecBranchMsg{isOnViewportSize: true} })
 		}
 
