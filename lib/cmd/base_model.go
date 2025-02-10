@@ -34,6 +34,8 @@ type BaseCmdModel[T any] struct {
 	isFirstMsg   bool
 	viewWidth    int
 	viewHeight   int
+	hasStaleView bool
+	staleView    string
 }
 
 func NewBaseModel[T any](tree [][]string) *BaseCmdModel[T] {
@@ -54,17 +56,15 @@ func (bc *BaseCmdModel[T]) Update(model T, msg tea.Msg) (T, tea.Cmd) {
 		logger.Log(logger.Debug, fmt.Sprintf("BaseModel: setting viewport size [%dx%d]", msg.Width, msg.Height))
 		bc.viewHeight = msg.Height
 		bc.viewWidth = msg.Width
-		teaCmds = append(teaCmds, func() tea.Msg { return ExecBranchMsg{isOnViewportSize: true, meta: "ViewPortSize"} })
+		bc.hasStaleView = false
+		model = bc.Exec(model)
 
 	case UpdateCmdMsg:
+		// The branch won't be executed until the next model update
+		// therefore we need to mark the view as stale, so it won't
+		// try to view uninitialized model data.
+		bc.hasStaleView = true
 		bc.cmdStatus = msg.Status
-
-	case ExecBranchMsg:
-		if msg.isOnViewportSize {
-			model = bc.Exec(model, false)
-		} else if !msg.isOnViewportSize {
-			model = bc.Exec(model, true)
-		}
 
 	}
 
@@ -75,13 +75,9 @@ func (bc *BaseCmdModel[T]) View(model T) string {
 	branchStr := bc.cmdStatus.BranchStr
 	cmd := bc.cmdBranchMap[branchStr]
 
-	if cmd.ViewFn == nil {
-		bc.AddError(
-			fmt.Errorf(
-				"tried to display missing view from [%s]",
-				branchStr,
-			),
-		)
+	if bc.hasStaleView {
+		logger.Log(logger.Debug, fmt.Sprintf("BaseModel: loading stale view [%s]", branchStr))
+		return bc.staleView
 	}
 
 	errs := bc.GetErrors()
@@ -94,6 +90,7 @@ func (bc *BaseCmdModel[T]) View(model T) string {
 		)
 	}
 
+	bc.staleView = cmd.ViewFn(model)
 	return cmd.ViewFn(model)
 }
 
@@ -181,26 +178,15 @@ func (bc BaseCmdModel[T]) IsInitialized() bool {
 // Exec executes the current branch command in the context of the
 // passed model, with the option to clear all past and present
 // errors. All detected errors are logged and stored.
-func (bc *BaseCmdModel[T]) Exec(model T, clearErrors bool) T {
+func (bc *BaseCmdModel[T]) Exec(model T) T {
 	branchStr := bc.cmdStatus.BranchStr
 	cmd := bc.cmdBranchMap[branchStr]
 
-	if clearErrors {
-		bc.ClearErrors()
-	}
-
-	withOrWithoutErr := "with error"
-	if bc.lastCmdError.Error() == "" {
-		withOrWithoutErr = "without error"
-	}
+	bc.ClearErrors()
 
 	logger.Log(
 		logger.Debug,
-		fmt.Sprintf(
-			"BaseModel: executing branch [%s] [%s]",
-			branchStr,
-			withOrWithoutErr,
-		),
+		fmt.Sprintf("BaseModel: executing branch [%s]", branchStr),
 	)
 
 	if cmd.Fn == nil {
