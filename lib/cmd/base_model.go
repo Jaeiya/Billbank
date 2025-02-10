@@ -9,10 +9,6 @@ import (
 )
 
 type (
-	ExecBranchMsg struct {
-		isOnViewportSize bool
-		meta             string
-	}
 	ViewportSizeMsg struct {
 		Width  int
 		Height int
