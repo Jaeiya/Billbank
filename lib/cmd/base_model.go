@@ -61,9 +61,9 @@ func (bc *BaseCmdModel[T]) Update(model T, msg tea.Msg) (T, tea.Cmd) {
 
 	case ExecBranchMsg:
 		if msg.isOnViewportSize {
-			model = bc.exec(model, false)
+			model = bc.Exec(model, false)
 		} else if !msg.isOnViewportSize {
-			model = bc.exec(model, true)
+			model = bc.Exec(model, true)
 		}
 
 	}
@@ -129,6 +129,10 @@ func (bc BaseCmdModel[T]) GetCmdTree() [][]string {
 	return bc.cmdTree
 }
 
+func (bc BaseCmdModel[T]) IsActiveBranch(branch string) bool {
+	return bc.cmdStatus.BranchStr == branch
+}
+
 /*
 HasView returns true if the current command tree string has
 an applicable view associated with it.
@@ -174,10 +178,10 @@ func (bc BaseCmdModel[T]) IsInitialized() bool {
 		bc.viewHeight > 0
 }
 
-// exec executes the current branch command in the context of the
+// Exec executes the current branch command in the context of the
 // passed model, with the option to clear all past and present
 // errors. All detected errors are logged and stored.
-func (bc *BaseCmdModel[T]) exec(model T, clearErrors bool) T {
+func (bc *BaseCmdModel[T]) Exec(model T, clearErrors bool) T {
 	branchStr := bc.cmdStatus.BranchStr
 	cmd := bc.cmdBranchMap[branchStr]
 
