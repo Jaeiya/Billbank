@@ -179,6 +179,9 @@ func (bc BaseCommand[T]) IsInitialized() bool {
 	return len(bc.cmdMap) > 0 && len(bc.cmdStatus.BranchStr) > 0
 }
 
+// exec executes the current branch command in the context of the
+// passed model, with the option to clear all past and present
+// errors. All detected errors are logged and stored.
 func (bc *BaseCommand[T]) exec(model T, clearErrors bool) T {
 	branchStr := bc.cmdStatus.BranchStr
 	cmd := bc.cmdMap[branchStr]
