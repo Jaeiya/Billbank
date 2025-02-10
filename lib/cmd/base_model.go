@@ -113,6 +113,9 @@ func (bc BaseCmdModel[T]) GetViewSize() (int, int) {
 
 func (bc *BaseCmdModel[T]) AddBranch(branchCmds ...Branch[T]) {
 	for _, cmd := range branchCmds {
+		if _, alreadyExists := bc.cmdBranchMap[cmd.String]; alreadyExists {
+			panic(fmt.Errorf("found multiple command branches for [%s]", cmd.String))
+		}
 		bc.cmdBranchMap[cmd.String] = cmd
 	}
 }
