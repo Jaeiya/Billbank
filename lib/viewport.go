@@ -1,13 +1,10 @@
 package lib
 
 import (
-	"fmt"
-
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/jaeiya/billbank/lib/commander"
 	"github.com/jaeiya/billbank/lib/ui"
-	"github.com/jaeiya/billbank/lib/utils/logger"
 )
 
 type (
@@ -27,7 +24,6 @@ type ViewPort struct {
 	Commander       commander.CmdInputModel
 	CurrentCmdModel commander.CommandModel
 	CommandStatus   commander.CommandStatus
-	lastCmdError    error
 	height          int
 	width           int
 }
@@ -56,7 +52,7 @@ func (vp ViewPort) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	if vp.CurrentCmdModel != nil {
 		vp.CurrentCmdModel, cmd = vp.CurrentCmdModel.Update(msg)
-		cmds = append(cmds, cmd, vp.catchCmdErrors())
+		cmds = append(cmds, cmd)
 	}
 
 	vp.Commander, cmd = vp.Commander.Update(msg)
@@ -74,14 +70,6 @@ func (vp ViewPort) View() string {
 		cmdView = vp.CurrentCmdModel.View()
 	}
 
-	if vp.lastCmdError != nil {
-		return lipgloss.JoinVertical(
-			lipgloss.Left,
-			ui.NewErrorBox("Command Error", vp.lastCmdError.Error(), vp.width, vp.height-h),
-			cmdrStr,
-		)
-	}
-
 	return lipgloss.JoinVertical(
 		lipgloss.Top,
 		lipgloss.NewStyle().Foreground(ui.FgColor).Render(
@@ -95,30 +83,6 @@ func (vp ViewPort) View() string {
 		),
 		cmdrStr,
 	)
-}
-
-func (vp *ViewPort) catchCmdErrors() tea.Cmd {
-	err := vp.CurrentCmdModel.GetError()
-
-	if err == vp.lastCmdError {
-		return nil
-	}
-
-	if err != nil && vp.lastCmdError != nil {
-		if err.Error() == vp.lastCmdError.Error() {
-			return nil
-		}
-	}
-
-	if err != nil {
-		logger.Log(logger.Error, fmt.Sprintf("CommandError: %s", err))
-		vp.lastCmdError = err
-		return vp.sendStatusMsg("Command Implementation Error", commander.HIGH)
-	}
-
-	vp.lastCmdError = nil
-
-	return nil
 }
 
 func (vp ViewPort) sendViewportSize() tea.Msg {

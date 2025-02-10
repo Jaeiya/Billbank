@@ -4,12 +4,15 @@ import (
 	"fmt"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/jaeiya/billbank/lib/ui"
 	"github.com/jaeiya/billbank/lib/utils/logger"
 )
 
 type (
-	ExecBranchMsg      struct{}
-	ExecOnKey          struct{}
+	ExecBranchMsg struct {
+		isOnKey          bool
+		isOnViewportSize bool
+	}
 	CmdViewportSizeMsg struct {
 		Width  int
 		Height int
@@ -22,22 +25,24 @@ type BranchCommand[T any] struct {
 	String       string
 	Fn           BranchFunc[T]
 	ViewFn       func(T) string
-	isKeyPolling bool
+	isPollingKey bool
 }
 
 type BaseCommand[T any] struct {
 	cmdMap     map[string]BranchCommand[T]
 	cmdTree    [][]string
 	cmdStatus  CommandStatus
-	cmdError   error
+	cmdErrors  []error
+	lastError  error
 	viewWidth  int
 	viewHeight int
 }
 
 func NewBaseCommand[T any](tree [][]string) *BaseCommand[T] {
 	return &BaseCommand[T]{
-		cmdMap:  map[string]BranchCommand[T]{},
-		cmdTree: tree,
+		cmdMap:    map[string]BranchCommand[T]{},
+		cmdTree:   tree,
+		lastError: fmt.Errorf(""),
 	}
 }
 
@@ -50,7 +55,7 @@ func (bc *BaseCommand[T]) Update(model T, msg tea.Msg) (T, tea.Cmd) {
 		bc.viewHeight = msg.Height
 		bc.viewWidth = msg.Width
 		if bc.cmdStatus.BranchStr != "" {
-			teaCmds = append(teaCmds, func() tea.Msg { return ExecBranchMsg{} })
+			teaCmds = append(teaCmds, func() tea.Msg { return ExecBranchMsg{isOnViewportSize: true} })
 		}
 
 	case CommandStatus:
@@ -58,16 +63,15 @@ func (bc *BaseCommand[T]) Update(model T, msg tea.Msg) (T, tea.Cmd) {
 		teaCmds = append(teaCmds, func() tea.Msg { return ExecBranchMsg{} })
 
 	case tea.KeyMsg:
-		teaCmds = append(teaCmds, func() tea.Msg { return ExecOnKey{} })
-
-	case ExecOnKey:
-		cmd := bc.cmdMap[bc.cmdStatus.BranchStr]
-		if cmd.isKeyPolling {
-			model = bc.exec(model)
-		}
+		teaCmds = append(teaCmds, func() tea.Msg { return ExecBranchMsg{isOnKey: true} })
 
 	case ExecBranchMsg:
-		model = bc.exec(model)
+		cmd := bc.cmdMap[bc.cmdStatus.BranchStr]
+		if msg.isOnKey && cmd.isPollingKey || msg.isOnViewportSize {
+			model = bc.exec(model, false)
+		} else if !msg.isOnKey && !msg.isOnViewportSize {
+			model = bc.exec(model, true)
+		}
 
 	}
 
@@ -79,11 +83,22 @@ func (bc *BaseCommand[T]) View(model T) string {
 	cmd := bc.cmdMap[branchStr]
 
 	if cmd.ViewFn == nil {
-		bc.cmdError = fmt.Errorf(
-			"tried to display missing view from [%s]",
-			bc.cmdStatus.BranchStr,
+		bc.AddError(
+			fmt.Errorf(
+				"tried to display missing view from [%s]",
+				bc.cmdStatus.BranchStr,
+			),
 		)
-		return fmt.Sprintf("command::[%s] missing view", branchStr)
+	}
+
+	errs := bc.GetErrors()
+	if len(errs) > 0 {
+		return ui.NewErrorBox(
+			"Command View Error",
+			errs[0].Error(),
+			bc.viewWidth,
+			bc.viewHeight,
+		)
 	}
 
 	return cmd.ViewFn(model)
@@ -95,8 +110,19 @@ func (bc *BaseCommand[T]) AddBranch(branchCmds ...BranchCommand[T]) {
 	}
 }
 
-func (bc BaseCommand[T]) GetError() error {
-	return bc.cmdError
+func (bc *BaseCommand[T]) AddError(err error) {
+	bc.cmdErrors = append(bc.cmdErrors, err)
+}
+
+func (bc BaseCommand[T]) GetErrors() []error {
+	return bc.cmdErrors
+}
+
+func (bc *BaseCommand[T]) ClearErrors() {
+	if len(bc.cmdErrors) > 0 {
+		bc.lastError = fmt.Errorf("")
+		bc.cmdErrors = nil
+	}
 }
 
 func (bc BaseCommand[T]) GetCmdTree() [][]string {
@@ -145,23 +171,33 @@ func (bc BaseCommand[T]) IsInitialized() bool {
 	return len(bc.cmdMap) > 0 && len(bc.cmdStatus.BranchStr) > 0
 }
 
-func (bc *BaseCommand[T]) exec(model T) T {
+func (bc *BaseCommand[T]) exec(model T, clearErrors bool) T {
 	branchStr := bc.cmdStatus.BranchStr
 	cmd := bc.cmdMap[branchStr]
 
-	if bc.cmdError != nil {
-		bc.cmdError = nil
+	if clearErrors {
+		bc.ClearErrors()
 	}
 
 	if cmd.Fn == nil {
-		bc.cmdError = fmt.Errorf("command::[%s] not implemented", branchStr)
+		bc.AddError(fmt.Errorf("command::[%s] not implemented", branchStr))
 	}
 
 	if cmd.ViewFn == nil {
-		bc.cmdError = fmt.Errorf(
+		bc.AddError(fmt.Errorf(
 			"tried to display missing view from [%s]",
 			bc.cmdStatus.BranchStr,
-		)
+		))
 	}
+
+	errs := bc.GetErrors()
+	if len(errs) > 0 {
+		if bc.lastError.Error() != errs[0].Error() {
+			logger.Log(logger.Error, fmt.Sprintf("CommandError: %s", errs[0]))
+		}
+		bc.lastError = errs[0]
+		return model
+	}
+
 	return cmd.Fn(model)
 }

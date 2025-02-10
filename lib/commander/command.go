@@ -22,7 +22,7 @@ var cmdId = 0
 type CommandModel interface {
 	Update(tea.Msg) (CommandModel, tea.Cmd)
 	View() string
-	GetError() error
+	GetErrors() []error
 	GetCmdTree() [][]string
 	IsSupported(branchStr string) bool
 	IsInitialized() bool
