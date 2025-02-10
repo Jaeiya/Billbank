@@ -54,13 +54,13 @@ func NewDebugCmd(h *utils.InputHistory) Command {
 		slog:    debugSlog{viewPort: viewport.New(0, 0)},
 	}
 
-	m.AddBranch([]BranchEntry[debugCmdModel]{
-		{"/ history", loadInputHistory, viewHistory},
-		{"/ log", loadLog, viewLog},
-		{"/ slog", loadSlog, viewSlog},
-		{"/ stats", loadStats, viewStats},
-		{"/ log clear", clearLog, clearLogView},
-		{"/ slog clear", clearSlog, clearSlogView},
+	m.AddBranch([]BranchCommand[debugCmdModel]{
+		{"/ history", loadInputHistory, viewHistory, false},
+		{"/ log", loadLog, viewLog, false},
+		{"/ slog", loadSlog, viewSlog, false},
+		{"/ stats", loadStats, viewStats, false},
+		{"/ log clear", clearLog, clearLogView, false},
+		{"/ slog clear", clearSlog, clearSlogView, false},
 	}...)
 
 	return NewCommand(

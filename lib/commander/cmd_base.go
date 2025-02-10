@@ -8,7 +8,8 @@ import (
 )
 
 type (
-	ExecBranchMsg      string
+	ExecBranchMsg      struct{}
+	ExecOnKey          struct{}
 	CmdViewportSizeMsg struct {
 		Width  int
 		Height int
@@ -17,16 +18,15 @@ type (
 
 type BranchFunc[T any] func(T) T
 
-type BranchEntry[T any] struct {
-	String string
-	Fn     BranchFunc[T]
-	ViewFn func(T) string
+type BranchCommand[T any] struct {
+	String       string
+	Fn           BranchFunc[T]
+	ViewFn       func(T) string
+	isKeyPolling bool
 }
 
 type BaseCommand[T any] struct {
-	cmdList    []string
-	cmdMap     map[string]BranchFunc[T]
-	cmdViewMap map[string]func(T) string
+	cmdMap     map[string]BranchCommand[T]
 	cmdTree    [][]string
 	cmdStatus  CommandStatus
 	cmdError   error
@@ -36,14 +36,13 @@ type BaseCommand[T any] struct {
 
 func NewBaseCommand[T any](tree [][]string) *BaseCommand[T] {
 	return &BaseCommand[T]{
-		cmdMap:     map[string]BranchFunc[T]{},
-		cmdViewMap: map[string]func(T) string{},
-		cmdTree:    tree,
+		cmdMap:  map[string]BranchCommand[T]{},
+		cmdTree: tree,
 	}
 }
 
 func (bc *BaseCommand[T]) Update(model T, msg tea.Msg) (T, tea.Cmd) {
-	var cmds []tea.Cmd
+	var teaCmds []tea.Cmd
 
 	switch msg := msg.(type) {
 	case CmdViewportSizeMsg:
@@ -53,43 +52,43 @@ func (bc *BaseCommand[T]) Update(model T, msg tea.Msg) (T, tea.Cmd) {
 
 	case CommandStatus:
 		bc.cmdStatus = msg
-		logger.Log(logger.Debug, fmt.Sprintf("BaseCommand: executing branch [%s]", msg.BranchStr))
-		cmds = append(cmds, func() tea.Msg { return ExecBranchMsg(msg.BranchStr) })
+		teaCmds = append(teaCmds, func() tea.Msg { return ExecBranchMsg{} })
 
 	case tea.KeyMsg:
-		cmds = append(cmds, func() tea.Msg { return ExecBranchMsg(bc.cmdStatus.BranchStr) })
+		teaCmds = append(teaCmds, func() tea.Msg { return ExecOnKey{} })
+
+	case ExecOnKey:
+		cmd := bc.cmdMap[bc.cmdStatus.BranchStr]
+		if cmd.isKeyPolling {
+			model = bc.exec(model)
+		}
 
 	case ExecBranchMsg:
-		// Each execution is considered a new command execution
-		// therefore we treat it as a "first" execution.
-		if bc.cmdError != nil {
-			bc.cmdError = nil
-		}
 		model = bc.exec(model)
 
 	}
 
-	return model, tea.Batch(cmds...)
+	return model, tea.Batch(teaCmds...)
 }
 
-func (bc BaseCommand[T]) View(model T) string {
+func (bc *BaseCommand[T]) View(model T) string {
 	branchStr := bc.cmdStatus.BranchStr
-	fn, ok := bc.cmdViewMap[bc.cmdStatus.BranchStr]
-	if !ok {
+	cmd := bc.cmdMap[branchStr]
+
+	if cmd.ViewFn == nil {
+		bc.cmdError = fmt.Errorf(
+			"tried to display missing view from [%s]",
+			bc.cmdStatus.BranchStr,
+		)
 		return fmt.Sprintf("command::[%s] missing view", branchStr)
 	}
-	return fn(model)
+
+	return cmd.ViewFn(model)
 }
 
-func (bc *BaseCommand[T]) AddBranch(branches ...BranchEntry[T]) {
-	for _, branch := range branches {
-		bc.cmdList = append(bc.cmdList, branch.String)
-		if branch.Fn != nil {
-			bc.cmdMap[branch.String] = branch.Fn
-		}
-		if branch.ViewFn != nil {
-			bc.cmdViewMap[branch.String] = branch.ViewFn
-		}
+func (bc *BaseCommand[T]) AddBranch(branchCmds ...BranchCommand[T]) {
+	for _, cmd := range branchCmds {
+		bc.cmdMap[cmd.String] = cmd
 	}
 }
 
@@ -106,8 +105,8 @@ HasView returns true if the current command tree string has
 an applicable view associated with it.
 */
 func (bc BaseCommand[T]) HasView() bool {
-	_, ok := bc.cmdViewMap[bc.cmdStatus.BranchStr]
-	return ok
+	cmd := bc.cmdMap[bc.cmdStatus.BranchStr]
+	return cmd.ViewFn != nil
 }
 
 func (bc BaseCommand[T]) ValidateCommand() {
@@ -115,21 +114,17 @@ func (bc BaseCommand[T]) ValidateCommand() {
 		panic("missing sub commands, did you forget to add them?")
 	}
 
-	for _, cmd := range bc.cmdList {
-		if _, ok := bc.cmdMap[cmd]; !ok {
+	for _, cmd := range bc.cmdMap {
+		if cmd.Fn == nil {
 			logger.Log(
 				logger.Error,
-				fmt.Sprintf("CommandError: command not implemented for [%s]", cmd),
+				fmt.Sprintf("CommandError: command not implemented for [%s]", cmd.String),
 			)
 		}
-	}
-
-	for cmd := range bc.cmdMap {
-		_, ok := bc.cmdViewMap[cmd]
-		if !ok {
+		if cmd.ViewFn == nil {
 			logger.Log(
 				logger.Attention,
-				fmt.Sprintf("CommandWarn: missing command view for [%s]", cmd),
+				fmt.Sprintf("CommandWarn: missing command view for [%s]", cmd.String),
 			)
 		}
 	}
@@ -142,11 +137,21 @@ func (bc BaseCommand[T]) IsSupported(branchStr string) bool {
 
 func (bc *BaseCommand[T]) exec(model T) T {
 	branchStr := bc.cmdStatus.BranchStr
-	fn, ok := bc.cmdMap[branchStr]
-	if !ok {
-		bc.cmdError = fmt.Errorf("command::[%s] not implemented", branchStr)
-	} else if !bc.HasView() {
-		bc.cmdError = fmt.Errorf("tried to display missing view from [%s]", bc.cmdStatus.BranchStr)
+	cmd := bc.cmdMap[branchStr]
+
+	if bc.cmdError != nil {
+		bc.cmdError = nil
 	}
-	return fn(model)
+
+	if cmd.Fn == nil {
+		bc.cmdError = fmt.Errorf("command::[%s] not implemented", branchStr)
+	}
+
+	if cmd.ViewFn == nil {
+		bc.cmdError = fmt.Errorf(
+			"tried to display missing view from [%s]",
+			bc.cmdStatus.BranchStr,
+		)
+	}
+	return cmd.Fn(model)
 }
