@@ -94,7 +94,7 @@ func (bc *BaseCommand[T]) View(model T) string {
 	errs := bc.GetErrors()
 	if len(errs) > 0 {
 		return ui.NewErrorBox(
-			"Command View Error",
+			"Command Error",
 			errs[0].Error(),
 			bc.viewWidth,
 			bc.viewHeight,
@@ -147,13 +147,16 @@ func (bc BaseCommand[T]) ValidateCommand() {
 		if cmd.Fn == nil {
 			logger.Log(
 				logger.Error,
-				fmt.Sprintf("CommandError: command not implemented for [%s]", cmd.String),
+				fmt.Sprintf(
+					"CommandError: [%s] is missing an implementation func()",
+					cmd.String,
+				),
 			)
 		}
 		if cmd.ViewFn == nil {
 			logger.Log(
-				logger.Attention,
-				fmt.Sprintf("CommandWarn: missing command view for [%s]", cmd.String),
+				logger.Error,
+				fmt.Sprintf("CommandError: [%s] is missing a view func()", cmd.String),
 			)
 		}
 	}
@@ -180,22 +183,22 @@ func (bc *BaseCommand[T]) exec(model T, clearErrors bool) T {
 	}
 
 	if cmd.Fn == nil {
-		bc.AddError(fmt.Errorf("command::[%s] not implemented", branchStr))
+		err := fmt.Errorf("[%s] tried to execute missing implementation func()", branchStr)
+		if bc.lastError.Error() != err.Error() {
+			logger.Log(logger.Error, fmt.Sprintf("CommandError: %s", err))
+			bc.lastError = err
+			bc.AddError(err)
+		}
+		return model
 	}
 
 	if cmd.ViewFn == nil {
-		bc.AddError(fmt.Errorf(
-			"tried to display missing view from [%s]",
-			bc.cmdStatus.BranchStr,
-		))
-	}
-
-	errs := bc.GetErrors()
-	if len(errs) > 0 {
-		if bc.lastError.Error() != errs[0].Error() {
-			logger.Log(logger.Error, fmt.Sprintf("CommandError: %s", errs[0]))
+		err := fmt.Errorf("[%s] tried to execute missing view func()", branchStr)
+		if bc.lastError.Error() != err.Error() {
+			logger.Log(logger.Error, fmt.Sprintf("CommandError: %s", err))
+			bc.lastError = err
+			bc.AddError(err)
 		}
-		bc.lastError = errs[0]
 		return model
 	}
 
