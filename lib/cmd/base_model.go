@@ -167,11 +167,11 @@ func (bc BaseCmdModel[T]) IsSupported(branchStr string) bool {
 	return ok
 }
 
-// IsInitialized checks to make sure that the command not
-// only has available commands, but also that a status
-// has been set.
+// IsInitialized checks to make sure that various expected values
+// are set.
 func (bc BaseCmdModel[T]) IsInitialized() bool {
-	return len(bc.cmdBranchMap) > 0 && len(bc.cmdStatus.BranchStr) > 0
+	return len(bc.cmdBranchMap) > 0 && len(bc.cmdStatus.BranchStr) > 0 && bc.viewWidth > 0 &&
+		bc.viewHeight > 0
 }
 
 // exec executes the current branch command in the context of the
