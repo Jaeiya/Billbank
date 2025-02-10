@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -21,10 +22,12 @@ const (
 )
 
 type LogMsg struct {
-	msg   any
-	level LogLevel
-	file  string
-	line  int
+	msg     string
+	level   LogLevel
+	file    string
+	line    int
+	subject string
+	vars    []any
 }
 
 var (
@@ -34,7 +37,7 @@ var (
 	logLevel LogLevel
 )
 
-func Log(ll LogLevel, msg any) {
+func Log(ll LogLevel, subject string, msg string, vars ...any) {
 	if ll < logLevel {
 		return
 	}
@@ -44,7 +47,7 @@ func Log(ll LogLevel, msg any) {
 	}
 
 	_, file, line, _ := runtime.Caller(1)
-	logChan <- LogMsg{msg, ll, file, line}
+	logChan <- LogMsg{msg, ll, file, line, subject, vars}
 }
 
 func CloseLog() {
@@ -72,14 +75,16 @@ func CreateLog(ll LogLevel) bool {
 }
 
 func logMessages() {
-	for msg := range logChan {
-		logger.Printf(
-			"%s [%s] [%s:%d]: %+v\n",
+	for log := range logChan {
+		msg := fmt.Sprintf(
+			"%s [%s] [%s:%d]: %s: %s\n",
 			time.Now().Format("03:04:05.000 PM MST"),
-			getLogLevelStr(msg.level),
-			filepath.Base(msg.file), msg.line,
-			msg.msg,
+			getLogLevelStr(log.level),
+			filepath.Base(log.file), log.line,
+			log.subject,
+			log.msg,
 		)
+		logger.Printf(msg, log.vars...)
 	}
 }
 

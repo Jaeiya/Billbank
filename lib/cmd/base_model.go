@@ -53,7 +53,7 @@ func (bc *BaseCmdModel[T]) Update(model T, msg tea.Msg) (T, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case ViewportSizeMsg:
-		logger.Log(logger.Debug, fmt.Sprintf("BaseModel: setting viewport size [%dx%d]", msg.Width, msg.Height))
+		logger.Log(logger.Hot, "BaseModel", " setting viewport size [%dx%d]", msg.Width, msg.Height)
 		bc.viewHeight = msg.Height
 		bc.viewWidth = msg.Width
 		bc.hasStaleView = false
@@ -76,7 +76,7 @@ func (bc *BaseCmdModel[T]) View(model T) string {
 	cmd := bc.cmdBranchMap[branchStr]
 
 	if bc.hasStaleView {
-		logger.Log(logger.Debug, fmt.Sprintf("BaseModel: loading stale view [%s]", branchStr))
+		logger.Log(logger.Debug, "BaseModel", " loading stale view [%s]", branchStr)
 		return bc.staleView
 	}
 
@@ -148,16 +148,17 @@ func (bc BaseCmdModel[T]) ValidateCommand() {
 		if cmd.Fn == nil {
 			logger.Log(
 				logger.Error,
-				fmt.Sprintf(
-					"CommandError: [%s] is missing an implementation func()",
-					cmd.String,
-				),
+				"CommandError",
+				"[%s] is missing an implementation func()",
+				cmd.String,
 			)
 		}
 		if cmd.ViewFn == nil {
 			logger.Log(
 				logger.Error,
-				fmt.Sprintf("CommandError: [%s] is missing a view func()", cmd.String),
+				"CommandError",
+				"[%s] is missing a view func()",
+				cmd.String,
 			)
 		}
 	}
@@ -184,15 +185,12 @@ func (bc *BaseCmdModel[T]) Exec(model T) T {
 
 	bc.ClearErrors()
 
-	logger.Log(
-		logger.Debug,
-		fmt.Sprintf("BaseModel: executing branch [%s]", branchStr),
-	)
+	logger.Log(logger.Hot, "BaseModel", " executing branch [%s]", branchStr)
 
 	if cmd.Fn == nil {
 		err := fmt.Errorf("[%s] tried to execute missing implementation func()", branchStr)
 		if bc.lastCmdError.Error() != err.Error() {
-			logger.Log(logger.Error, fmt.Sprintf("CommandError: %s", err))
+			logger.Log(logger.Error, "CommandError", "%s", err)
 			bc.lastCmdError = err
 			bc.AddError(err)
 		}
@@ -202,7 +200,7 @@ func (bc *BaseCmdModel[T]) Exec(model T) T {
 	if cmd.ViewFn == nil {
 		err := fmt.Errorf("[%s] tried to execute missing view func()", branchStr)
 		if bc.lastCmdError.Error() != err.Error() {
-			logger.Log(logger.Error, fmt.Sprintf("CommandError: %s", err))
+			logger.Log(logger.Error, "CommandError", "%s", err)
 			bc.lastCmdError = err
 			bc.AddError(err)
 		}
@@ -213,7 +211,7 @@ func (bc *BaseCmdModel[T]) Exec(model T) T {
 	errs := bc.GetErrors()
 	if len(errs) > 0 {
 		if bc.lastCmdError.Error() != errs[0].Error() {
-			logger.Log(logger.Error, fmt.Sprintf("CommandError: %s", errs[0].Error()))
+			logger.Log(logger.Error, "CommandError", "%s", errs[0].Error())
 		}
 		bc.lastCmdError = errs[0]
 	}

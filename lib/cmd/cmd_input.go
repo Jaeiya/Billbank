@@ -146,7 +146,7 @@ func (m CmdInputModel) Update(msg tea.Msg) (CmdInputModel, tea.Cmd) {
 			m, cmd = tryEnterCmd(m)
 			if m.currCmd.status.Error != nil {
 				msg := fmt.Sprintf("%s::[%s]", m.currCmd.status.Error.Error(), m.currCmd.status.BranchStr)
-				logger.Log(logger.Attention, fmt.Sprintf("CommandParser: %s", msg))
+				logger.Log(logger.Attention, "CommandParser", " %s", msg)
 			}
 			cmds = append(cmds, cmd)
 
@@ -169,11 +169,8 @@ func tryEnterCmd(m CmdInputModel) (CmdInputModel, tea.Cmd) {
 	m, _ = tryParseCmd(m, tea.KeyMsg{})
 	cmd := m.currCmd
 
-	logger.Log(
-		logger.Info,
-		fmt.Sprintf("CommandInput: sending command [%s]", cmd.status.BranchStr),
-	)
-	logger.Log(logger.Debug, fmt.Sprintf("CommandInput: command status [%+v]", cmd.status))
+	logger.Log(logger.Info, "CommandInput", " sending command [%s]", cmd.status.BranchStr)
+	logger.Log(logger.Debug, "CommandInput", " command status [%+v]", cmd.status)
 
 	if cmd.status.IsCommand {
 		if cmd.status.IsComplete && !cmd.status.IsSupported {
