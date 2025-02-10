@@ -5,6 +5,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/jaeiya/billbank/lib/cmd"
 	"github.com/jaeiya/billbank/lib/ui"
+	"github.com/jaeiya/billbank/lib/utils/logger"
 )
 
 type (
@@ -40,12 +41,15 @@ func (vp ViewPort) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		vp.height = msg.Height
 		vp.width = msg.Width
+		logger.Log(logger.Hot, "ViewPort", "[WindowSizeMsg] sending viewport size [%d:%d]", vp.width, vp.height)
 		teaCmds = append(teaCmds, vp.sendViewportSize)
 
 	case cmd.UpdateCmdMsg:
 		if msg.Model != nil {
 			vp.CurrentCmdModel = msg.Model
+			logger.Log(logger.Debug, "ViewPort", " storing new command model [%s]", msg.Status.BranchStr)
 		}
+		logger.Log(logger.Debug, "ViewPort", " [UpdateCmdMsg] sending viewport size [%d:%d]", vp.width, vp.height)
 		teaCmds = append(teaCmds, vp.sendViewportSize)
 
 	case CommanderStatusMsg:

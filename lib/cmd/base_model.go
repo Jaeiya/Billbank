@@ -59,8 +59,10 @@ func (bc *BaseCmdModel[T]) Update(model T, msg tea.Msg) (T, tea.Cmd) {
 		// The branch won't be executed until the next model update
 		// therefore we need to mark the view as stale, so it won't
 		// try to view uninitialized model data.
+		oldBranch := bc.cmdStatus.BranchStr
 		bc.hasStaleView = true
 		bc.cmdStatus = msg.Status
+		logger.Log(logger.Debug, "BaseModel", " updated command branch [%s] to [%s]", oldBranch, bc.cmdStatus.BranchStr)
 
 	}
 
