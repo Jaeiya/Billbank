@@ -167,14 +167,15 @@ func loadLog(m debugCmdModel) debugCmdModel {
 	path := filepath.Join(utils.GetWorkingDir(), "log.txt")
 	fileInfo, err := os.Stat(path)
 	if err != nil {
-		panic(err)
+		m.AddError(err)
+		return m
 	}
 	if fileInfo.Size() == int64(len(m.log.view)+1) {
 		return m
 	}
 	bytes, err := os.ReadFile(path)
 	if err != nil {
-		m.log.view = err.Error()
+		m.AddError(err)
 		return m
 	}
 	m.log.view = strings.TrimSpace(string(bytes))
@@ -190,7 +191,8 @@ func clearLog(m debugCmdModel) debugCmdModel {
 	path := filepath.Join(utils.GetWorkingDir(), "log.txt")
 	err := os.Truncate(path, 0)
 	if err != nil {
-		panic(err)
+		m.AddError(err)
+		return m
 	}
 	m.log.view = ""
 	m.log.lineCount = 0
@@ -310,7 +312,8 @@ func loadStats(m debugCmdModel) debugCmdModel {
 	path := filepath.Join(utils.GetWorkingDir(), "log.txt")
 	fileInfo, err := os.Stat(path)
 	if err != nil {
-		panic(err)
+		m.AddError(err)
+		return m
 	}
 
 	var historySize int
