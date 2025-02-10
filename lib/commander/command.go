@@ -25,6 +25,7 @@ type CommandModel interface {
 	GetError() error
 	GetCmdTree() [][]string
 	IsSupported(branchStr string) bool
+	IsInitialized() bool
 	ValidateCommand()
 }
 

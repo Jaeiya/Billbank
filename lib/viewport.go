@@ -69,7 +69,7 @@ func (vp ViewPort) View() string {
 	h := lipgloss.Height(cmdrStr)
 	cmdView := ""
 
-	if vp.CurrentCmdModel != nil {
+	if vp.CurrentCmdModel != nil && vp.CurrentCmdModel.IsInitialized() {
 		cmdView = vp.CurrentCmdModel.View()
 	}
 

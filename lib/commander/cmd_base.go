@@ -135,6 +135,13 @@ func (bc BaseCommand[T]) IsSupported(branchStr string) bool {
 	return ok
 }
 
+// IsInitialized checks to make sure that the command not
+// only has available commands, but also that a status
+// has been set.
+func (bc BaseCommand[T]) IsInitialized() bool {
+	return len(bc.cmdMap) > 0 && len(bc.cmdStatus.BranchStr) > 0
+}
+
 func (bc *BaseCommand[T]) exec(model T) T {
 	branchStr := bc.cmdStatus.BranchStr
 	cmd := bc.cmdMap[branchStr]
