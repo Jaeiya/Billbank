@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -45,6 +46,12 @@ var (
 )
 
 func NewDebugCmd(h *utils.InputHistory) cmd.Command {
+	vp := viewport.New(0, 0)
+	vp.KeyMap.Down = key.NewBinding()
+	vp.KeyMap.Up = key.NewBinding()
+	vp.KeyMap.HalfPageUp = key.NewBinding(key.WithKeys("ctrl+k"))
+	vp.KeyMap.HalfPageDown = key.NewBinding(key.WithKeys("ctrl+j"))
+
 	m := debugModel{
 		BaseCmdModel: cmd.NewBaseModel[debugModel]([][]string{
 			{"/", "x"},
@@ -52,7 +59,7 @@ func NewDebugCmd(h *utils.InputHistory) cmd.Command {
 			{"clear"},
 		}),
 		history: debugHistory{data: h},
-		slog:    debugSlog{viewPort: viewport.New(0, 0)},
+		slog:    debugSlog{viewPort: vp},
 	}
 
 	m.AddBranch([]cmd.Branch[debugModel]{
@@ -120,16 +127,6 @@ func (m debugModel) Update(msg tea.Msg) (cmd.Model, tea.Cmd) {
 
 	m, cmd = m.BaseCmdModel.Update(m, msg)
 	cmds = append(cmds, cmd)
-
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		if msg.String() == "ctrl+j" {
-			m.slog.viewPort.LineDown(5)
-		}
-		if msg.String() == "ctrl+k" {
-			m.slog.viewPort.LineUp(5)
-		}
-	}
 
 	m.slog.viewPort, cmd = m.slog.viewPort.Update(msg)
 	cmds = append(cmds, cmd)
