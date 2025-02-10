@@ -221,5 +221,14 @@ func (bc *BaseCommand[T]) exec(model T, clearErrors bool) T {
 		return model
 	}
 
-	return cmd.Fn(model)
+	model = cmd.Fn(model)
+	errs := bc.GetErrors()
+	if len(errs) > 0 {
+		if bc.lastError.Error() != errs[0].Error() {
+			logger.Log(logger.Error, fmt.Sprintf("CommandError: %s", errs[0].Error()))
+		}
+		bc.lastError = errs[0]
+	}
+
+	return model
 }
