@@ -1,4 +1,4 @@
-package commander
+package cmd
 
 import (
 	"fmt"
@@ -19,8 +19,8 @@ var (
 
 var cmdId = 0
 
-type CommandModel interface {
-	Update(tea.Msg) (CommandModel, tea.Cmd)
+type Model interface {
+	Update(tea.Msg) (Model, tea.Cmd)
 	View() string
 	GetErrors() []error
 	GetCmdTree() [][]string
@@ -29,7 +29,7 @@ type CommandModel interface {
 	ValidateCommand()
 }
 
-type CommandStatus struct {
+type Status struct {
 	IsCommand   bool
 	IsComplete  bool
 	IsSupported bool
@@ -49,14 +49,14 @@ type CommandStatus struct {
 	Error   error
 }
 
-type CommandConfig struct {
-	Model               CommandModel
+type Config struct {
+	Model               Model
 	HasArg              bool
 	InputValidationFunc func(arg string) error
 	KeyValidationFunc   func(key rune) bool
 }
 
-func NewCommand(config CommandConfig) Command {
+func New(config Config) Command {
 	if config.HasArg && config.InputValidationFunc == nil {
 		panic("command arguments need a validation function")
 	}
@@ -70,7 +70,7 @@ func NewCommand(config CommandConfig) Command {
 	cmdId += 1
 	cmd := Command{
 		model:               config.Model,
-		status:              CommandStatus{},
+		status:              Status{},
 		tree:                config.Model.GetCmdTree(),
 		inputValidationFunc: config.InputValidationFunc,
 		hasArg:              config.HasArg,
@@ -82,7 +82,7 @@ func NewCommand(config CommandConfig) Command {
 }
 
 type Command struct {
-	model CommandModel
+	model Model
 	id    int
 	// Represents the way a command is hierarchically constructed
 	// including aliases.
@@ -96,7 +96,7 @@ type Command struct {
 	// 		set stat name
 	tree                [][]string
 	hasArg              bool
-	status              CommandStatus
+	status              Status
 	inputValidationFunc func(arg string) error
 	keyValidationFunc   func(key rune) bool
 }
@@ -105,7 +105,7 @@ func (cb Command) GetId() int {
 	return cb.id
 }
 
-func (cb *Command) ParseCommand(cmd string) CommandStatus {
+func (cb *Command) ParseCommand(cmd string) Status {
 	cmdFields := strings.Fields(cmd)
 	var finalPos int = 0
 	var isCommand, isComplete bool
@@ -122,7 +122,7 @@ func (cb *Command) ParseCommand(cmd string) CommandStatus {
 	isCommand = finalPos > 0
 
 	if isCommand && cb.hasArg && finalPos == len(cb.tree) {
-		cs := CommandStatus{
+		cs := Status{
 			IsCommand:  true,
 			IsComplete: true,
 			Arg:        cmdFields[len(cmdFields)-1],
@@ -165,7 +165,7 @@ func (cb *Command) ParseCommand(cmd string) CommandStatus {
 		}
 	}
 
-	return CommandStatus{
+	return Status{
 		IsCommand:   isCommand,
 		IsComplete:  isComplete,
 		IsSupported: cb.model.IsSupported(cmd),

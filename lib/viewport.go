@@ -3,7 +3,7 @@ package lib
 import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/jaeiya/billbank/lib/commander"
+	"github.com/jaeiya/billbank/lib/cmd"
 	"github.com/jaeiya/billbank/lib/ui"
 )
 
@@ -11,7 +11,7 @@ type (
 	ActiveCmdMsg       string
 	CommanderStatusMsg struct {
 		String   string
-		Severity commander.StatusSeverity
+		Severity cmd.StatusSeverity
 	}
 )
 
@@ -21,9 +21,9 @@ type ViewportSizeMsg struct {
 }
 
 type ViewPort struct {
-	Commander       commander.CmdInputModel
-	CurrentCmdModel commander.CommandModel
-	CommandStatus   commander.CommandStatus
+	CommandInput    cmd.CmdInputModel
+	CurrentCmdModel cmd.Model
+	CommandStatus   cmd.Status
 	height          int
 	width           int
 }
@@ -33,36 +33,36 @@ func (vp ViewPort) Init() tea.Cmd {
 }
 
 func (vp ViewPort) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var cmds []tea.Cmd
-	var cmd tea.Cmd
+	var teaCmds []tea.Cmd
+	var teaCmd tea.Cmd
 
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		vp.height = msg.Height
 		vp.width = msg.Width
-		cmds = append(cmds, vp.sendViewportSize)
+		teaCmds = append(teaCmds, vp.sendViewportSize)
 
-	case commander.CommandModel:
+	case cmd.Model:
 		vp.CurrentCmdModel = msg
-		cmds = append(cmds, vp.sendViewportSize)
+		teaCmds = append(teaCmds, vp.sendViewportSize)
 
 	case CommanderStatusMsg:
-		cmds = append(cmds, vp.sendStatusMsg(msg.String, msg.Severity))
+		teaCmds = append(teaCmds, vp.sendStatusMsg(msg.String, msg.Severity))
 	}
 
 	if vp.CurrentCmdModel != nil {
-		vp.CurrentCmdModel, cmd = vp.CurrentCmdModel.Update(msg)
-		cmds = append(cmds, cmd)
+		vp.CurrentCmdModel, teaCmd = vp.CurrentCmdModel.Update(msg)
+		teaCmds = append(teaCmds, teaCmd)
 	}
 
-	vp.Commander, cmd = vp.Commander.Update(msg)
-	cmds = append(cmds, cmd)
+	vp.CommandInput, teaCmd = vp.CommandInput.Update(msg)
+	teaCmds = append(teaCmds, teaCmd)
 
-	return vp, tea.Batch(cmds...)
+	return vp, tea.Batch(teaCmds...)
 }
 
 func (vp ViewPort) View() string {
-	cmdrStr := vp.Commander.View()
+	cmdrStr := vp.CommandInput.View()
 	h := lipgloss.Height(cmdrStr)
 	cmdView := ""
 
@@ -86,15 +86,15 @@ func (vp ViewPort) View() string {
 }
 
 func (vp ViewPort) sendViewportSize() tea.Msg {
-	return commander.CmdViewportSizeMsg{
-		Height: vp.height - lipgloss.Height(vp.Commander.View()),
+	return cmd.ViewportSizeMsg{
+		Height: vp.height - lipgloss.Height(vp.CommandInput.View()),
 		Width:  vp.width,
 	}
 }
 
-func (vp ViewPort) sendStatusMsg(msg string, s commander.StatusSeverity) func() tea.Msg {
+func (vp ViewPort) sendStatusMsg(msg string, s cmd.StatusSeverity) func() tea.Msg {
 	return func() tea.Msg {
-		return commander.UpdateStatusMsg{
+		return cmd.UpdateStatusMsg{
 			String:   msg,
 			Severity: s,
 		}

@@ -1,4 +1,4 @@
-package commander
+package commands
 
 import (
 	"fmt"
@@ -12,6 +12,7 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/jaeiya/billbank/lib/cmd"
 	"github.com/jaeiya/billbank/lib/ui"
 	"github.com/jaeiya/billbank/lib/utils"
 )
@@ -43,9 +44,9 @@ var (
 		Width(30)
 )
 
-func NewDebugCmd(h *utils.InputHistory) Command {
-	m := debugCmdModel{
-		BaseCommand: NewBaseCommand[debugCmdModel]([][]string{
+func NewDebugCmd(h *utils.InputHistory) cmd.Command {
+	m := debugModel{
+		BaseCmdModel: cmd.NewBaseModel[debugModel]([][]string{
 			{"/", "x"},
 			{"history", "log", "slog", "stats"},
 			{"clear"},
@@ -54,23 +55,35 @@ func NewDebugCmd(h *utils.InputHistory) Command {
 		slog:    debugSlog{viewPort: viewport.New(0, 0)},
 	}
 
-	m.AddBranch([]BranchCommand[debugCmdModel]{
-		{"/ history", loadInputHistory, viewHistory, false},
-		{"/ log", loadLog, viewLog, false},
-		{"/ slog", loadSlog, viewSlog, false},
-		{"/ stats", loadStats, viewStats, false},
-		{"/ log clear", clearLog, clearLogView, false},
-		{"/ slog clear", clearSlog, clearSlogView, false},
+	m.AddBranch([]cmd.Branch[debugModel]{
+		{String: "/ history", Fn: loadHistory, ViewFn: viewHistory, IsPollingKey: false},
+		{String: "/ log", Fn: loadLog, ViewFn: viewLog, IsPollingKey: false},
+		{String: "/ slog", Fn: loadSlog, ViewFn: viewSlog, IsPollingKey: false},
+		{String: "/ stats", Fn: loadStats, ViewFn: viewStats, IsPollingKey: false},
+		{String: "/ log clear", Fn: clearLog, ViewFn: clearLogView, IsPollingKey: false},
+		{String: "/ slog clear", Fn: clearSlog, ViewFn: clearSlogView, IsPollingKey: false},
 	}...)
 
-	return NewCommand(
-		CommandConfig{
+	return cmd.New(
+		cmd.Config{
 			Model:               m,
 			InputValidationFunc: func(arg string) error { return nil },
 			KeyValidationFunc:   func(key rune) bool { return false },
 			HasArg:              false,
 		},
 	)
+}
+
+type debugModel struct {
+	*cmd.BaseCmdModel[debugModel]
+	history debugHistory
+	log     debugLog
+	slog    debugSlog
+	stats   struct {
+		data       debugStats
+		memStats   runtime.MemStats
+		renderTime time.Time
+	}
 }
 
 type debugStats struct {
@@ -101,23 +114,11 @@ type debugSlog struct {
 	lastRenderDur time.Duration
 }
 
-type debugCmdModel struct {
-	*BaseCommand[debugCmdModel]
-	history debugHistory
-	log     debugLog
-	slog    debugSlog
-	stats   struct {
-		data       debugStats
-		memStats   runtime.MemStats
-		renderTime time.Time
-	}
-}
-
-func (m debugCmdModel) Update(msg tea.Msg) (CommandModel, tea.Cmd) {
+func (m debugModel) Update(msg tea.Msg) (cmd.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
 
-	m, cmd = m.BaseCommand.Update(m, msg)
+	m, cmd = m.BaseCmdModel.Update(m, msg)
 	cmds = append(cmds, cmd)
 
 	switch msg := msg.(type) {
@@ -136,18 +137,18 @@ func (m debugCmdModel) Update(msg tea.Msg) (CommandModel, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m debugCmdModel) View() string {
-	return m.BaseCommand.View(m)
+func (m debugModel) View() string {
+	return m.BaseCmdModel.View(m)
 }
 
-func loadInputHistory(m debugCmdModel) debugCmdModel {
+func loadHistory(m debugModel) debugModel {
 	if m.history.data.GetLen() == m.history.lastLen {
 		return m
 	}
 
 	var sb strings.Builder
-	items := m.history.data.GetInputs()
-	for i, item := range items {
+	list := m.history.data.ListHistory()
+	for i, item := range list {
 		if i == 0 {
 			sb.WriteString(item)
 			continue
@@ -159,11 +160,11 @@ func loadInputHistory(m debugCmdModel) debugCmdModel {
 	return m
 }
 
-func viewHistory(m debugCmdModel) string {
+func viewHistory(m debugModel) string {
 	return histStyle.Render(m.history.view)
 }
 
-func loadLog(m debugCmdModel) debugCmdModel {
+func loadLog(m debugModel) debugModel {
 	path := filepath.Join(utils.GetWorkingDir(), "log.txt")
 	fileInfo, err := os.Stat(path)
 	if err != nil {
@@ -183,11 +184,11 @@ func loadLog(m debugCmdModel) debugCmdModel {
 	return m
 }
 
-func viewLog(m debugCmdModel) string {
+func viewLog(m debugModel) string {
 	return m.log.view
 }
 
-func clearLog(m debugCmdModel) debugCmdModel {
+func clearLog(m debugModel) debugModel {
 	path := filepath.Join(utils.GetWorkingDir(), "log.txt")
 	err := os.Truncate(path, 0)
 	if err != nil {
@@ -202,16 +203,16 @@ func clearLog(m debugCmdModel) debugCmdModel {
 	return m
 }
 
-func clearLogView(m debugCmdModel) string {
+func clearLogView(m debugModel) string {
+	w, h := m.GetViewSize()
 	return ui.NewInfoBox(
 		"Clear Log",
 		"The log has been successfully cleared!",
-		m.viewWidth,
-		m.viewHeight,
+		w, h,
 	)
 }
 
-func loadSlog(m debugCmdModel) debugCmdModel {
+func loadSlog(m debugModel) debugModel {
 	m = loadLog(m)
 
 	if m.log.lineCount == m.slog.lineCount {
@@ -273,31 +274,32 @@ func loadSlog(m debugCmdModel) debugCmdModel {
 	m.slog.view = content
 
 	// The terminal can be resized at any time
-	m.slog.viewPort.Width = m.viewWidth
-	m.slog.viewPort.Height = m.viewHeight - 2
+	w, h := m.GetViewSize()
+	m.slog.viewPort.Width = w
+	m.slog.viewPort.Height = h - 2
 
-	fixedWidthContent := lipgloss.NewStyle().Width(m.viewWidth - 1).Render(m.slog.view)
+	fixedWidthContent := lipgloss.NewStyle().Width(w - 1).Render(m.slog.view)
 	m.slog.viewPort.SetContent(fixedWidthContent)
 	m.slog.viewPort.GotoBottom()
 	return m
 }
 
-func clearSlog(m debugCmdModel) debugCmdModel {
+func clearSlog(m debugModel) debugModel {
 	m.slog.lineCount = 0
 	m.slog.view = ""
 	return m
 }
 
-func clearSlogView(m debugCmdModel) string {
+func clearSlogView(m debugModel) string {
+	w, h := m.GetViewSize()
 	return ui.NewInfoBox(
 		"Clear Slog",
 		"Slog has been reset and will be re-rendered on execution.",
-		m.viewWidth,
-		m.viewHeight,
+		w, h,
 	)
 }
 
-func viewSlog(m debugCmdModel) string {
+func viewSlog(m debugModel) string {
 	content := fmt.Sprintf(
 		"%s\nTook: %s",
 		m.slog.viewPort.View(),
@@ -306,7 +308,7 @@ func viewSlog(m debugCmdModel) string {
 	return logStyle.Render(content)
 }
 
-func loadStats(m debugCmdModel) debugCmdModel {
+func loadStats(m debugModel) debugModel {
 	var err error
 
 	path := filepath.Join(utils.GetWorkingDir(), "log.txt")
@@ -317,7 +319,7 @@ func loadStats(m debugCmdModel) debugCmdModel {
 	}
 
 	var historySize int
-	for _, item := range m.history.data.GetInputs() {
+	for _, item := range m.history.data.ListHistory() {
 		historySize += len(item)
 	}
 
@@ -338,7 +340,7 @@ func loadStats(m debugCmdModel) debugCmdModel {
 	return m
 }
 
-func viewStats(m debugCmdModel) string {
+func viewStats(m debugModel) string {
 	debugHeader := statHeader.Render("History Stats")
 
 	debugTitles := lipgloss.JoinVertical(
@@ -407,9 +409,10 @@ func viewStats(m debugCmdModel) string {
 		memValues,
 	))
 
+	w, h := m.GetViewSize()
+
 	return lipgloss.Place(
-		m.viewWidth,
-		m.viewHeight,
+		w, h,
 		lipgloss.Center,
 		lipgloss.Center,
 		lipgloss.JoinHorizontal(

@@ -52,7 +52,7 @@ func (h *InputHistory) Cycle(msg tea.KeyMsg) (string, bool) {
 	return h.cmds[h.pos], false
 }
 
-func (h InputHistory) GetInputs() []string {
+func (h InputHistory) ListHistory() []string {
 	newList := make([]string, len(h.cmds))
 	copy(newList, h.cmds)
 	return newList

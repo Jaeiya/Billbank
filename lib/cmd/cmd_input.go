@@ -1,4 +1,4 @@
-package commander
+package cmd
 
 import (
 	"fmt"
@@ -59,7 +59,7 @@ var commanderInput textinput.Model = func() textinput.Model {
 }()
 
 // TODO - Use an interface to define input history methods
-func NewCmdInput(h *utils.InputHistory, options ...CmdInputOption) CmdInputModel {
+func NewInput(h *utils.InputHistory, options ...CmdInputOption) CmdInputModel {
 	model := CmdInputModel{
 		aliases: []string{},
 	}
@@ -73,7 +73,7 @@ func NewCmdInput(h *utils.InputHistory, options ...CmdInputOption) CmdInputModel
 	return model
 }
 
-func WithCommands(cmds ...Command) CmdInputOption {
+func With(cmds ...Command) CmdInputOption {
 	return func(m *CmdInputModel) {
 		aliasStore := map[string]bool{}
 

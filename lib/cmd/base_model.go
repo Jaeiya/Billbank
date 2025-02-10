@@ -1,4 +1,4 @@
-package commander
+package cmd
 
 import (
 	"fmt"
@@ -13,57 +13,55 @@ type (
 		isOnKey          bool
 		isOnViewportSize bool
 	}
-	CmdViewportSizeMsg struct {
+	ViewportSizeMsg struct {
 		Width  int
 		Height int
 	}
 )
 
-type BranchFunc[T any] func(T) T
-
-type BranchCommand[T any] struct {
+type Branch[T any] struct {
 	String       string
-	Fn           BranchFunc[T]
+	Fn           func(T) T
 	ViewFn       func(T) string
-	isPollingKey bool
+	IsPollingKey bool
 }
 
-type BaseCommand[T any] struct {
-	cmdMap      map[string]BranchCommand[T]
-	cmdTree     [][]string
-	cmdStatus   CommandStatus
-	cmdErrors   []error
-	lastError   error
-	isFirstLoad bool
-	viewWidth   int
-	viewHeight  int
+type BaseCmdModel[T any] struct {
+	cmdBranchMap map[string]Branch[T]
+	cmdTree      [][]string
+	cmdStatus    Status
+	cmdErrors    []error
+	lastCmdError error
+	isFirstMsg   bool
+	viewWidth    int
+	viewHeight   int
 }
 
-func NewBaseCommand[T any](tree [][]string) *BaseCommand[T] {
-	return &BaseCommand[T]{
-		cmdMap:      map[string]BranchCommand[T]{},
-		cmdTree:     tree,
-		lastError:   fmt.Errorf(""),
-		isFirstLoad: true,
+func NewBaseModel[T any](tree [][]string) *BaseCmdModel[T] {
+	return &BaseCmdModel[T]{
+		cmdBranchMap: map[string]Branch[T]{},
+		cmdTree:      tree,
+		lastCmdError: fmt.Errorf(""),
+		isFirstMsg:   true,
 	}
 }
 
-func (bc *BaseCommand[T]) Update(model T, msg tea.Msg) (T, tea.Cmd) {
+func (bc *BaseCmdModel[T]) Update(model T, msg tea.Msg) (T, tea.Cmd) {
 	var teaCmds []tea.Cmd
-	defer func() { bc.isFirstLoad = false }()
+	defer func() { bc.isFirstMsg = false }()
 
 	switch msg := msg.(type) {
-	case CmdViewportSizeMsg:
-		logger.Log(logger.Debug, fmt.Sprintf("BaseCommand: setting viewport size [%dx%d]", msg.Width, msg.Height))
+	case ViewportSizeMsg:
+		logger.Log(logger.Debug, fmt.Sprintf("BaseModel: setting viewport size [%dx%d]", msg.Width, msg.Height))
 		bc.viewHeight = msg.Height
 		bc.viewWidth = msg.Width
 		// We don't need to execute the branch command on first
 		// msg because it will be sent by the viewport.
-		if !bc.isFirstLoad {
+		if !bc.isFirstMsg {
 			teaCmds = append(teaCmds, func() tea.Msg { return ExecBranchMsg{isOnViewportSize: true} })
 		}
 
-	case CommandStatus:
+	case Status:
 		bc.cmdStatus = msg
 		teaCmds = append(teaCmds, func() tea.Msg { return ExecBranchMsg{} })
 
@@ -71,8 +69,8 @@ func (bc *BaseCommand[T]) Update(model T, msg tea.Msg) (T, tea.Cmd) {
 		teaCmds = append(teaCmds, func() tea.Msg { return ExecBranchMsg{isOnKey: true} })
 
 	case ExecBranchMsg:
-		cmd := bc.cmdMap[bc.cmdStatus.BranchStr]
-		if msg.isOnKey && cmd.isPollingKey || msg.isOnViewportSize {
+		cmd := bc.cmdBranchMap[bc.cmdStatus.BranchStr]
+		if msg.isOnKey && cmd.IsPollingKey || msg.isOnViewportSize {
 			model = bc.exec(model, false)
 		} else if !msg.isOnKey && !msg.isOnViewportSize {
 			model = bc.exec(model, true)
@@ -83,15 +81,15 @@ func (bc *BaseCommand[T]) Update(model T, msg tea.Msg) (T, tea.Cmd) {
 	return model, tea.Batch(teaCmds...)
 }
 
-func (bc *BaseCommand[T]) View(model T) string {
+func (bc *BaseCmdModel[T]) View(model T) string {
 	branchStr := bc.cmdStatus.BranchStr
-	cmd := bc.cmdMap[branchStr]
+	cmd := bc.cmdBranchMap[branchStr]
 
 	if cmd.ViewFn == nil {
 		bc.AddError(
 			fmt.Errorf(
 				"tried to display missing view from [%s]",
-				bc.cmdStatus.BranchStr,
+				branchStr,
 			),
 		)
 	}
@@ -109,28 +107,32 @@ func (bc *BaseCommand[T]) View(model T) string {
 	return cmd.ViewFn(model)
 }
 
-func (bc *BaseCommand[T]) AddBranch(branchCmds ...BranchCommand[T]) {
+func (bc BaseCmdModel[T]) GetViewSize() (int, int) {
+	return bc.viewWidth, bc.viewHeight
+}
+
+func (bc *BaseCmdModel[T]) AddBranch(branchCmds ...Branch[T]) {
 	for _, cmd := range branchCmds {
-		bc.cmdMap[cmd.String] = cmd
+		bc.cmdBranchMap[cmd.String] = cmd
 	}
 }
 
-func (bc *BaseCommand[T]) AddError(err error) {
+func (bc *BaseCmdModel[T]) AddError(err error) {
 	bc.cmdErrors = append(bc.cmdErrors, err)
 }
 
-func (bc BaseCommand[T]) GetErrors() []error {
+func (bc BaseCmdModel[T]) GetErrors() []error {
 	return bc.cmdErrors
 }
 
-func (bc *BaseCommand[T]) ClearErrors() {
+func (bc *BaseCmdModel[T]) ClearErrors() {
 	if len(bc.cmdErrors) > 0 {
-		bc.lastError = fmt.Errorf("")
+		bc.lastCmdError = fmt.Errorf("")
 		bc.cmdErrors = nil
 	}
 }
 
-func (bc BaseCommand[T]) GetCmdTree() [][]string {
+func (bc BaseCmdModel[T]) GetCmdTree() [][]string {
 	return bc.cmdTree
 }
 
@@ -138,17 +140,17 @@ func (bc BaseCommand[T]) GetCmdTree() [][]string {
 HasView returns true if the current command tree string has
 an applicable view associated with it.
 */
-func (bc BaseCommand[T]) HasView() bool {
-	cmd := bc.cmdMap[bc.cmdStatus.BranchStr]
+func (bc BaseCmdModel[T]) HasView() bool {
+	cmd := bc.cmdBranchMap[bc.cmdStatus.BranchStr]
 	return cmd.ViewFn != nil
 }
 
-func (bc BaseCommand[T]) ValidateCommand() {
-	if len(bc.cmdMap) == 0 {
+func (bc BaseCmdModel[T]) ValidateCommand() {
+	if len(bc.cmdBranchMap) == 0 {
 		panic("missing sub commands, did you forget to add them?")
 	}
 
-	for _, cmd := range bc.cmdMap {
+	for _, cmd := range bc.cmdBranchMap {
 		if cmd.Fn == nil {
 			logger.Log(
 				logger.Error,
@@ -167,38 +169,38 @@ func (bc BaseCommand[T]) ValidateCommand() {
 	}
 }
 
-func (bc BaseCommand[T]) IsSupported(branchStr string) bool {
-	_, ok := bc.cmdMap[branchStr]
+func (bc BaseCmdModel[T]) IsSupported(branchStr string) bool {
+	_, ok := bc.cmdBranchMap[branchStr]
 	return ok
 }
 
 // IsInitialized checks to make sure that the command not
 // only has available commands, but also that a status
 // has been set.
-func (bc BaseCommand[T]) IsInitialized() bool {
-	return len(bc.cmdMap) > 0 && len(bc.cmdStatus.BranchStr) > 0
+func (bc BaseCmdModel[T]) IsInitialized() bool {
+	return len(bc.cmdBranchMap) > 0 && len(bc.cmdStatus.BranchStr) > 0
 }
 
 // exec executes the current branch command in the context of the
 // passed model, with the option to clear all past and present
 // errors. All detected errors are logged and stored.
-func (bc *BaseCommand[T]) exec(model T, clearErrors bool) T {
+func (bc *BaseCmdModel[T]) exec(model T, clearErrors bool) T {
 	branchStr := bc.cmdStatus.BranchStr
-	cmd := bc.cmdMap[branchStr]
+	cmd := bc.cmdBranchMap[branchStr]
 
 	if clearErrors {
 		bc.ClearErrors()
 	}
 
 	withOrWithoutErr := "with error"
-	if bc.lastError.Error() == "" {
+	if bc.lastCmdError.Error() == "" {
 		withOrWithoutErr = "without error"
 	}
 
 	logger.Log(
 		logger.Debug,
 		fmt.Sprintf(
-			"BaseCommand: executing branch [%s] [%s]",
+			"BaseModel: executing branch [%s] [%s]",
 			branchStr,
 			withOrWithoutErr,
 		),
@@ -206,9 +208,9 @@ func (bc *BaseCommand[T]) exec(model T, clearErrors bool) T {
 
 	if cmd.Fn == nil {
 		err := fmt.Errorf("[%s] tried to execute missing implementation func()", branchStr)
-		if bc.lastError.Error() != err.Error() {
+		if bc.lastCmdError.Error() != err.Error() {
 			logger.Log(logger.Error, fmt.Sprintf("CommandError: %s", err))
-			bc.lastError = err
+			bc.lastCmdError = err
 			bc.AddError(err)
 		}
 		return model
@@ -216,9 +218,9 @@ func (bc *BaseCommand[T]) exec(model T, clearErrors bool) T {
 
 	if cmd.ViewFn == nil {
 		err := fmt.Errorf("[%s] tried to execute missing view func()", branchStr)
-		if bc.lastError.Error() != err.Error() {
+		if bc.lastCmdError.Error() != err.Error() {
 			logger.Log(logger.Error, fmt.Sprintf("CommandError: %s", err))
-			bc.lastError = err
+			bc.lastCmdError = err
 			bc.AddError(err)
 		}
 		return model
@@ -227,10 +229,10 @@ func (bc *BaseCommand[T]) exec(model T, clearErrors bool) T {
 	model = cmd.Fn(model)
 	errs := bc.GetErrors()
 	if len(errs) > 0 {
-		if bc.lastError.Error() != errs[0].Error() {
+		if bc.lastCmdError.Error() != errs[0].Error() {
 			logger.Log(logger.Error, fmt.Sprintf("CommandError: %s", errs[0].Error()))
 		}
-		bc.lastError = errs[0]
+		bc.lastCmdError = errs[0]
 	}
 
 	return model
