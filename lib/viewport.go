@@ -44,6 +44,7 @@ func (vp ViewPort) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		vp.height = msg.Height
 		vp.width = msg.Width
+		cmds = append(cmds, vp.sendViewportSize)
 
 	case commander.CommandModel:
 		vp.CurrentCmdModel = msg
