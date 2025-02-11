@@ -35,7 +35,6 @@ type Status struct {
 	IsSupported bool
 	Branches    []string
 	Arg         string
-	CommandStr  string
 	BranchStr   string
 	Error       error
 }
@@ -124,14 +123,12 @@ func (cb *Command) ParseCommand(cmd string) Status {
 	cmdFields := strings.Fields(cmd)
 	var finalPos int = 0
 	var isCommand, isComplete bool
-	var cmdStr string
 
 	for pos, cmds := range cb.tree {
 		if len(cmdFields) == pos || !slices.Contains(cmds, cmdFields[pos]) {
 			break
 		}
 		finalPos = pos + 1
-		cmdStr = cmdFields[pos]
 	}
 
 	isCommand = finalPos > 0
@@ -141,7 +138,6 @@ func (cb *Command) ParseCommand(cmd string) Status {
 			IsCommand:  true,
 			IsComplete: true,
 			Arg:        cmdFields[len(cmdFields)-1],
-			CommandStr: cmdStr,
 			BranchStr:  cmd,
 		}
 		if len(cmdFields) == finalPos {
@@ -184,7 +180,6 @@ func (cb *Command) ParseCommand(cmd string) Status {
 		IsComplete:  isComplete,
 		IsSupported: cb.model.IsSupported(cmd),
 		Branches:    branches,
-		CommandStr:  cmdStr,
 		BranchStr:   cmd,
 		Error:       err,
 	}
