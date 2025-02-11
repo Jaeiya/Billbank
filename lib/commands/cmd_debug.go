@@ -233,7 +233,7 @@ func loadSlog(m debugModel) debugModel {
 		return m
 	}
 
-	var tagBuilder, pathBuilder, wordBuilder strings.Builder
+	var tagBuilder, subjBuilder, wordBuilder strings.Builder
 	now := time.Now()
 
 	lines := strings.Split(m.log.view, "\n")
@@ -265,24 +265,24 @@ func loadSlog(m debugModel) debugModel {
 
 		tagBuilder.WriteString(fmt.Sprintf("%s \n", tag))
 
-		var msg string
 		var words []string = parts[5:]
-		if strings.Contains(words[0], ":") {
-			words[0] = subjectStyle.Render(words[0])
-			words[1] = slogWordStyle.Render(strings.Join(words[1:], " "))
-			msg = fmt.Sprintf("%s %s", words[0], words[1])
-		} else {
-			msg = slogWordStyle.Render(strings.Join(words, " "))
-		}
 
-		pathBuilder.WriteString(fmt.Sprintf("%s] \n", strings.Split(parts[4], ".")[0]))
-		wordBuilder.WriteString(fmt.Sprintf("%s\n", msg))
+		words[0] = fmt.Sprintf(
+			"%s%s",
+			words[0][:len(words[0])-1],
+			subjectStyle.Render(words[0][len(words[0])-1:]),
+		)
+		words[1] = slogWordStyle.Render(strings.Join(words[1:], " "))
+
+		subjBuilder.WriteString(words[0])
+		subjBuilder.WriteString("\n")
+		wordBuilder.WriteString(fmt.Sprintf(" %s\n", words[1]))
 	}
 
 	content := strings.TrimSpace(lipgloss.JoinHorizontal(
 		lipgloss.Left,
 		tagBuilder.String(),
-		slogPathStyle.Render(pathBuilder.String()),
+		slogPathStyle.Render(subjBuilder.String()),
 		wordBuilder.String(),
 	))
 
