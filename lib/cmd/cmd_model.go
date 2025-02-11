@@ -50,10 +50,24 @@ type Status struct {
 }
 
 type Config struct {
-	Model               Model
-	HasArg              bool
+	// Command Model which needs to implement the
+	// command Base Model.
+	Model Model
+
+	// Setting this to true will prevent non-arg
+	// commands from working properly
+	HasArg bool
+
+	// Validates the command argument. For instance
+	// if the user should enter a price, then you
+	// would validate that here.
 	InputValidationFunc func(arg string) error
-	KeyValidationFunc   func(key rune) bool
+
+	// Limit the character set to be used. For
+	// instance, if the argument is supposed to be
+	// a price, then don't allow any chars other
+	// than numbers and a period.
+	KeyValidationFunc func(key rune) bool
 }
 
 func New(config Config) Command {
