@@ -70,6 +70,10 @@ func Log(ll LogLevel, subject string, msg string, vars ...any) {
 	logChan <- LogMsg{msg, ll, file, line, subject, vars}
 }
 
+func SetLogLevel(ll LogLevel) {
+	logLevel = ll
+}
+
 func CloseLog() {
 	close(logChan)
 }
