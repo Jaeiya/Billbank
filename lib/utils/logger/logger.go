@@ -37,24 +37,7 @@ var (
 	logLevel LogLevel
 )
 
-func Log(ll LogLevel, subject string, msg string, vars ...any) {
-	if ll < logLevel {
-		return
-	}
-
-	if !isReady {
-		panic("log not initialized")
-	}
-
-	_, file, line, _ := runtime.Caller(1)
-	logChan <- LogMsg{msg, ll, file, line, subject, vars}
-}
-
-func CloseLog() {
-	close(logChan)
-}
-
-func CreateLog(ll LogLevel) bool {
+func NewLog(ll LogLevel) bool {
 	if isReady {
 		return true
 	}
@@ -72,6 +55,23 @@ func CreateLog(ll LogLevel) bool {
 	isReady = true
 
 	return true
+}
+
+func Log(ll LogLevel, subject string, msg string, vars ...any) {
+	if ll < logLevel {
+		return
+	}
+
+	if !isReady {
+		panic("log not initialized")
+	}
+
+	_, file, line, _ := runtime.Caller(1)
+	logChan <- LogMsg{msg, ll, file, line, subject, vars}
+}
+
+func CloseLog() {
+	close(logChan)
 }
 
 func logMessages() {
