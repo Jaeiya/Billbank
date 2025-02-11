@@ -20,7 +20,7 @@ import (
 
 var (
 	infoLogStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#29DEFF"))
-	attnLogStyle = lipgloss.NewStyle().Foreground(ui.FgWarnColor)
+	attnLogStyle = lipgloss.NewStyle().Background(ui.BgDarkColor).Foreground(ui.FgWarnColor)
 	errLogStyle  = lipgloss.NewStyle().
 			Background(lipgloss.Color(ui.BgDarkColor)).
 			Foreground(ui.FgErrColor)
