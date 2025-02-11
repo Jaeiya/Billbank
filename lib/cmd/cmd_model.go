@@ -37,16 +37,7 @@ type Status struct {
 	Arg         string
 	CommandStr  string
 	BranchStr   string
-	// The command tree position of the input. A command can be in an incomplete state,
-	// which means the input is correct, but it's in a lower position within the
-	// command tree hierarchy.
-	//
-	// Example:
-	//		set              // TreePos 0
-	// 		set bills        // TreePos 1
-	//		set bills amount // TreePos 2
-	TreePos int
-	Error   error
+	Error       error
 }
 
 type Config struct {
@@ -150,7 +141,6 @@ func (cb *Command) ParseCommand(cmd string) Status {
 			IsCommand:  true,
 			IsComplete: true,
 			Arg:        cmdFields[len(cmdFields)-1],
-			TreePos:    finalPos - 1,
 			CommandStr: cmdStr,
 			BranchStr:  cmd,
 		}
@@ -194,7 +184,6 @@ func (cb *Command) ParseCommand(cmd string) Status {
 		IsComplete:  isComplete,
 		IsSupported: cb.model.IsSupported(cmd),
 		Branches:    branches,
-		TreePos:     finalPos - 1,
 		CommandStr:  cmdStr,
 		BranchStr:   cmd,
 		Error:       err,
