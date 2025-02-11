@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/jaeiya/billbank/lib/utils/logger"
+	"github.com/jaeiya/billbank/lib/logger"
 )
 
 var (

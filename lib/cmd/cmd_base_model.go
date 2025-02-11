@@ -5,8 +5,8 @@ import (
 
 	"github.com/charmbracelet/bubbles/cursor"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/jaeiya/billbank/lib/logger"
 	"github.com/jaeiya/billbank/lib/ui"
-	"github.com/jaeiya/billbank/lib/utils/logger"
 )
 
 type (
@@ -22,7 +22,7 @@ type Branch[T any] struct {
 	ViewFn func(T) string
 }
 
-type BaseCmdModel[T any] struct {
+type BaseModel[T any] struct {
 	cmdBranchMap map[string]Branch[T]
 	cmdTree      [][]string
 	cmdStatus    Status
@@ -39,8 +39,8 @@ type BaseCmdModel[T any] struct {
 	isInterrupt bool
 }
 
-func NewBaseModel[T any](tree [][]string) *BaseCmdModel[T] {
-	return &BaseCmdModel[T]{
+func NewBaseModel[T any](tree [][]string) *BaseModel[T] {
+	return &BaseModel[T]{
 		cmdBranchMap: map[string]Branch[T]{},
 		cmdTree:      tree,
 		lastCmdError: fmt.Errorf(""),
@@ -48,7 +48,7 @@ func NewBaseModel[T any](tree [][]string) *BaseCmdModel[T] {
 	}
 }
 
-func (bc *BaseCmdModel[T]) Update(model T, msg tea.Msg) (T, tea.Cmd) {
+func (bc *BaseModel[T]) Update(model T, msg tea.Msg) (T, tea.Cmd) {
 	var teaCmds []tea.Cmd
 	defer func() { bc.isFirstMsg = false }()
 
@@ -84,7 +84,7 @@ func (bc *BaseCmdModel[T]) Update(model T, msg tea.Msg) (T, tea.Cmd) {
 	return model, tea.Batch(teaCmds...)
 }
 
-func (bc *BaseCmdModel[T]) View(model T) string {
+func (bc *BaseModel[T]) View(model T) string {
 	branchStr := bc.cmdStatus.BranchStr
 	cmd := bc.cmdBranchMap[branchStr]
 
@@ -117,11 +117,11 @@ func (bc *BaseCmdModel[T]) View(model T) string {
 	return cmd.ViewFn(model)
 }
 
-func (bc BaseCmdModel[T]) GetViewSize() (int, int) {
+func (bc BaseModel[T]) GetViewSize() (int, int) {
 	return bc.viewWidth, bc.viewHeight
 }
 
-func (bc *BaseCmdModel[T]) AddBranch(branchCmds ...Branch[T]) {
+func (bc *BaseModel[T]) AddBranch(branchCmds ...Branch[T]) {
 	for _, cmd := range branchCmds {
 		if _, alreadyExists := bc.cmdBranchMap[cmd.String]; alreadyExists {
 			panic(fmt.Errorf("found multiple command branches for [%s]", cmd.String))
@@ -130,26 +130,26 @@ func (bc *BaseCmdModel[T]) AddBranch(branchCmds ...Branch[T]) {
 	}
 }
 
-func (bc *BaseCmdModel[T]) AddError(err error) {
+func (bc *BaseModel[T]) AddError(err error) {
 	bc.cmdErrors = append(bc.cmdErrors, err)
 }
 
-func (bc BaseCmdModel[T]) GetErrors() []error {
+func (bc BaseModel[T]) GetErrors() []error {
 	return bc.cmdErrors
 }
 
-func (bc *BaseCmdModel[T]) ClearErrors() {
+func (bc *BaseModel[T]) ClearErrors() {
 	if len(bc.cmdErrors) > 0 {
 		bc.lastCmdError = fmt.Errorf("")
 		bc.cmdErrors = nil
 	}
 }
 
-func (bc BaseCmdModel[T]) GetCmdTree() [][]string {
+func (bc BaseModel[T]) GetCmdTree() [][]string {
 	return bc.cmdTree
 }
 
-func (bc BaseCmdModel[T]) IsActiveBranch(branch string) bool {
+func (bc BaseModel[T]) IsActiveBranch(branch string) bool {
 	return bc.cmdStatus.BranchStr == branch
 }
 
@@ -157,12 +157,12 @@ func (bc BaseCmdModel[T]) IsActiveBranch(branch string) bool {
 HasView returns true if the current command tree string has
 an applicable view associated with it.
 */
-func (bc BaseCmdModel[T]) HasView() bool {
+func (bc BaseModel[T]) HasView() bool {
 	cmd := bc.cmdBranchMap[bc.cmdStatus.BranchStr]
 	return cmd.ViewFn != nil
 }
 
-func (bc BaseCmdModel[T]) ValidateCommand() {
+func (bc BaseModel[T]) ValidateCommand() {
 	if len(bc.cmdBranchMap) == 0 {
 		panic("missing sub commands, did you forget to add them?")
 	}
@@ -187,21 +187,21 @@ func (bc BaseCmdModel[T]) ValidateCommand() {
 	}
 }
 
-func (bc BaseCmdModel[T]) IsSupported(branchStr string) bool {
+func (bc BaseModel[T]) IsSupported(branchStr string) bool {
 	_, ok := bc.cmdBranchMap[branchStr]
 	return ok
 }
 
 // IsInitialized checks to make sure that various expected values
 // are set.
-func (bc BaseCmdModel[T]) IsInitialized() bool {
+func (bc BaseModel[T]) IsInitialized() bool {
 	return len(bc.cmdBranchMap) > 0 && len(bc.cmdStatus.BranchStr) > 0 && bc.viewWidth > 0 &&
 		bc.viewHeight > 0
 }
 
 // Exec executes the current branch command in the context of the
 // passed model. All detected errors are logged and stored.
-func (bc *BaseCmdModel[T]) Exec(model T) T {
+func (bc *BaseModel[T]) Exec(model T) T {
 	bc.isInterrupt = false
 	branchStr := bc.cmdStatus.BranchStr
 	cmd := bc.cmdBranchMap[branchStr]

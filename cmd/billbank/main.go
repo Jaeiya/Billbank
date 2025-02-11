@@ -5,8 +5,8 @@ import (
 	"github.com/jaeiya/billbank/lib"
 	"github.com/jaeiya/billbank/lib/cmd"
 	"github.com/jaeiya/billbank/lib/commands"
+	"github.com/jaeiya/billbank/lib/logger"
 	"github.com/jaeiya/billbank/lib/utils"
-	"github.com/jaeiya/billbank/lib/utils/logger"
 )
 
 func main() {

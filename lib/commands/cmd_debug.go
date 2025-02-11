@@ -14,9 +14,9 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/jaeiya/billbank/lib/cmd"
+	"github.com/jaeiya/billbank/lib/logger"
 	"github.com/jaeiya/billbank/lib/ui"
 	"github.com/jaeiya/billbank/lib/utils"
-	"github.com/jaeiya/billbank/lib/utils/logger"
 )
 
 var (
@@ -61,7 +61,7 @@ func NewDebugCmd(h *utils.InputHistory) cmd.Command {
 	vp.KeyMap.HalfPageDown = key.NewBinding(key.WithKeys("ctrl+j"))
 
 	m := debugModel{
-		BaseCmdModel: cmd.NewBaseModel[debugModel]([][]string{
+		BaseModel: cmd.NewBaseModel[debugModel]([][]string{
 			{"/"},
 			{"history", "log", "slog", "stats"},
 			{"clear"},
@@ -90,7 +90,7 @@ func NewDebugCmd(h *utils.InputHistory) cmd.Command {
 }
 
 type debugModel struct {
-	*cmd.BaseCmdModel[debugModel]
+	*cmd.BaseModel[debugModel]
 	history debugHistory
 	log     debugLog
 	slog    debugSlog
@@ -133,7 +133,7 @@ func (m debugModel) Update(msg tea.Msg) (cmd.Model, tea.Cmd) {
 	var teaCmd tea.Cmd
 	var teaCmds []tea.Cmd
 
-	m, teaCmd = m.BaseCmdModel.Update(m, msg)
+	m, teaCmd = m.BaseModel.Update(m, msg)
 	teaCmds = append(teaCmds, teaCmd)
 
 	switch msg := msg.(type) {
@@ -156,7 +156,7 @@ func (m debugModel) Update(msg tea.Msg) (cmd.Model, tea.Cmd) {
 }
 
 func (m debugModel) View() string {
-	return m.BaseCmdModel.View(m)
+	return m.BaseModel.View(m)
 }
 
 func loadHistory(m debugModel) debugModel {
