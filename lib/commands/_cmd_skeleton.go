@@ -1,31 +1,67 @@
+
 import (
 	"fmt"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/jaeiya/billbank/lib/cmd"
-	"github.com/jaeiya/billbank/lib/utils/logger"
+	"github.com/jaeiya/billbank/lib/logger"
 )
 
+// # How a command works
+//
+// Each command has a command tree and it has a very specific hierarchy that
+// lays out how commands are processed. There are branches and leaves. A
+// leaf is a single node in a command branch and a branch is a string of
+// nodes pulled one at a time from each slice within the tree.
+//
+// Example Tree:
+//
+//	[][]string{{"set"}, {"bill", "stat"}, {"amount", "name"}}
+//
+// Leaves:
+//
+//	"set", "bill", "stat", "amount", and "name"
+//
+// Branches
+//
+//	"set"
+//	"set bill"
+//	"set stat"
+//	"set bill amount"
+//	"set bill name"
+//	"set stat amount"
+//	"set stat name"
+//
+// Each branch is capable of being executed as a command, but not all
+// branches need to be supported. Any unsupported branches that are
+// executed, will result in a status msg indicating that it's
+// unsupported.
 func NewSkeletonCmd() cmd.Command {
+	//
+	// Anything that needs to be initialized should be here
+	// so that it can be passed to your model.
+	//
 	m := skeletonModel{
-		BaseCmdModel: cmd.NewBaseModel[skeletonModel]([][]string{
-			// Aliases
-			{"t", "test"},
-			// Branches
-			{"this", "that", "other", "nil", "nilview"},
+		BaseModel: cmd.NewBaseModel[skeletonModel]([][]string{
+			{"t", "test"}, // Aliases
+			{"this", "that", "other", "nil", "nilview"}, // Branches
 		}),
 	}
 
+	//
+	// Will panic if you forget to add branches
+	//
 	m.AddBranch([]cmd.Branch[skeletonModel]{
 		// If you want to use aliases, you'll need to add
 		// a separate branch with the same funcs. We have
-		// two branches below that reference "this".
+		// two branches below that reference the "this"
+		// command.
 		{String: "t this", Fn: loadThis, ViewFn: thisView},
 		{String: "test this", Fn: loadThis, ViewFn: thisView},
 
 		{String: "t that", Fn: loadThat, ViewFn: thatView},
 
-		// You can also set nil values
+		// Nil values are also valid
 		{String: "t nil", Fn: nil, ViewFn: nil},
 		{
 			String: "t nilview",
@@ -39,26 +75,28 @@ func NewSkeletonCmd() cmd.Command {
 			Model:               m,
 			InputValidationFunc: func(arg string) error { return nil },
 			KeyValidationFunc:   func(key rune) bool { return false },
-			HasArg:              false,
+			// You cannot mix arg & non-arg commands
+			HasArg: false,
 		},
 	)
 }
 
 type skeletonModel struct {
-	*cmd.BaseCmdModel[skeletonModel]
+	*cmd.BaseModel[skeletonModel]
 	thisCounter int
 	thatCounter int
 }
 
 func (m skeletonModel) Update(msg tea.Msg) (cmd.Model, tea.Cmd) {
-	var cmd tea.Cmd
-	var cmds []tea.Cmd
+	var teaCmd tea.Cmd
+	var teaCmds []tea.Cmd
 
-	m, cmd = m.BaseCmdModel.Update(m, msg)
-	cmds = append(cmds, cmd)
+	m, teaCmd = m.BaseModel.Update(m, msg)
+	teaCmds = append(teaCmds, teaCmd)
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
+		// Executes for every branch
 		if msg.String() == "ctrl+h" {
 			logger.Log(logger.Info, "Skeleton", "hello from new command")
 		}
@@ -71,11 +109,11 @@ func (m skeletonModel) Update(msg tea.Msg) (cmd.Model, tea.Cmd) {
 		}
 	}
 
-	return m, tea.Batch(cmds...)
+	return m, tea.Batch(teaCmds...)
 }
 
 func (m skeletonModel) View() string {
-	return m.BaseCmdModel.View(m)
+	return m.BaseModel.View(m)
 }
 
 func loadThis(m skeletonModel) skeletonModel {
