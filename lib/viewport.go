@@ -56,13 +56,13 @@ func (vp ViewPort) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		teaCmds = append(teaCmds, vp.sendStatusMsg(msg.String, msg.Severity))
 	}
 
+	vp.CommandInput, teaCmd = vp.CommandInput.Update(msg)
+	teaCmds = append(teaCmds, teaCmd)
+
 	if vp.CurrentCmdModel != nil {
 		vp.CurrentCmdModel, teaCmd = vp.CurrentCmdModel.Update(msg)
 		teaCmds = append(teaCmds, teaCmd)
 	}
-
-	vp.CommandInput, teaCmd = vp.CommandInput.Update(msg)
-	teaCmds = append(teaCmds, teaCmd)
 
 	return vp, tea.Batch(teaCmds...)
 }
