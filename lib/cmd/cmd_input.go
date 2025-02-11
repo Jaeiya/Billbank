@@ -165,7 +165,10 @@ func (m CmdInputModel) View() string {
 }
 
 func tryEnterCmd(m CmdInputModel) (CmdInputModel, tea.Cmd) {
-	m, _ = tryParseCmd(m, tea.KeyMsg{})
+	// Empty commands will not yet have been parsed.
+	if m.CommandInput.Value() == "" {
+		m, _ = tryParseCmd(m, tea.KeyMsg{})
+	}
 	cmd := m.currCmd
 
 	logger.Log(logger.Info, "CommandInput", "parsing command [%s]", cmd.status.BranchStr)
