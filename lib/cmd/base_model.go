@@ -54,7 +54,9 @@ func (bc *BaseCmdModel[T]) Update(model T, msg tea.Msg) (T, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case ViewportSizeMsg:
-		logger.Log(logger.Hot, "BaseModel", " setting viewport size [%dx%d]", msg.Width, msg.Height)
+		logger.Log(
+			logger.Hot, "BaseModel", "setting viewport size [%dx%d]", msg.Width, msg.Height,
+		)
 		bc.viewHeight = msg.Height
 		bc.viewWidth = msg.Width
 		bc.hasStaleView = false
@@ -87,7 +89,7 @@ func (bc *BaseCmdModel[T]) View(model T) string {
 	cmd := bc.cmdBranchMap[branchStr]
 
 	if bc.hasStaleView {
-		logger.Log(logger.Debug, "BaseModel", " loading stale view [%s]", branchStr)
+		logger.Log(logger.Debug, "BaseModel", "loading [stale] view [%s]", bc.staleBranch)
 		return bc.staleView
 	}
 
@@ -207,7 +209,7 @@ func (bc *BaseCmdModel[T]) Exec(model T) T {
 
 	bc.ClearErrors()
 
-	logger.Log(logger.Hot, "BaseModel", " executing branch [%s]", branchStr)
+	logger.Log(logger.Hot, "BaseModel", "executing branch [%s]", branchStr)
 
 	if cmd.Fn == nil {
 		err := fmt.Errorf("[%s] tried to execute missing implementation func()", branchStr)
