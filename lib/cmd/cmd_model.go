@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/jaeiya/billbank/lib/utils/logger"
 )
 
 var (
@@ -123,6 +124,8 @@ func (cb *Command) ParseCommand(cmd string) Status {
 	cmdFields := strings.Fields(cmd)
 	var finalPos int = 0
 	var isCommand, isComplete bool
+
+	logger.Log(logger.Hot, "CommandModel", "parsing command [%s]", cmd)
 
 	for pos, cmds := range cb.tree {
 		if len(cmdFields) == pos || !slices.Contains(cmds, cmdFields[pos]) {

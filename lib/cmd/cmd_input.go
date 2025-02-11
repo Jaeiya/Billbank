@@ -171,7 +171,7 @@ func tryEnterCmd(m CmdInputModel) (CmdInputModel, tea.Cmd) {
 	}
 	cmd := m.currCmd
 
-	logger.Log(logger.Info, "CommandInput", "parsing command [%s]", cmd.status.BranchStr)
+	logger.Log(logger.Info, "CommandInput", "entering command [%s]", cmd.status.BranchStr)
 	logger.Log(logger.Debug, "CommandInput", "command status [%+v]", cmd.status)
 
 	if cmd.status.IsCommand {
@@ -231,11 +231,14 @@ func onAnyKey(m CmdInputModel, msg tea.KeyMsg) (CmdInputModel, tea.Cmd) {
 	if len(msg.String()) == 1 {
 		char := rune(msg.String()[0])
 		if m.currCmd.status.IsComplete {
+			logger.Log(logger.Debug, "CommandInput", "[onAnyKey] try validating on [%c]", char)
 			if !m.currCmd.ValidateKey(char) {
 				return m, nil
 			}
 		}
 	}
+
+	logger.Log(logger.Hot, "CommandInput", "[onAnyKey] try parse command on [%s]", msg)
 
 	return tryParseCmd(m, msg)
 }
