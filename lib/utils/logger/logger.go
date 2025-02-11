@@ -19,6 +19,7 @@ const (
 	Info
 	Attention
 	Error
+	None
 )
 
 type LogMsg struct {
