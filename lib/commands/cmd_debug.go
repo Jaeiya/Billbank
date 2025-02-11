@@ -61,7 +61,7 @@ func NewDebugCmd(h *utils.InputHistory) cmd.Command {
 
 	m := debugModel{
 		BaseCmdModel: cmd.NewBaseModel[debugModel]([][]string{
-			{"/", "x"},
+			{"/"},
 			{"history", "log", "slog", "stats"},
 			{"clear"},
 		}),
