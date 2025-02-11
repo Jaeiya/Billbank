@@ -1,4 +1,3 @@
-
 import (
 	"fmt"
 
@@ -13,15 +12,26 @@ func NewSkeletonCmd() cmd.Command {
 			// Aliases
 			{"t", "test"},
 			// Branches
-			{"this", "that", "other"},
+			{"this", "that", "other", "nil", "nilview"},
 		}),
 	}
 
 	m.AddBranch([]cmd.Branch[skeletonModel]{
-		{String: "t this", Fn: loadThis, ViewFn: thisView, IsPollingKey: false},
-		{String: "t that", Fn: loadThat, ViewFn: thatView, IsPollingKey: false},
-		// You can also set a nil view
-		{String: "t other", Fn: nil, ViewFn: nil, IsPollingKey: false},
+		// If you want to use aliases, you'll need to add
+		// a separate branch with the same funcs. We have
+		// two branches below that reference "this".
+		{String: "t this", Fn: loadThis, ViewFn: thisView},
+		{String: "test this", Fn: loadThis, ViewFn: thisView},
+
+		{String: "t that", Fn: loadThat, ViewFn: thatView},
+
+		// You can also set nil values
+		{String: "t nil", Fn: nil, ViewFn: nil},
+		{
+			String: "t nilview",
+			Fn:     func(sm skeletonModel) skeletonModel { return sm },
+			ViewFn: nil,
+		},
 	}...)
 
 	return cmd.New(
@@ -50,11 +60,14 @@ func (m skeletonModel) Update(msg tea.Msg) (cmd.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		if msg.String() == "ctrl+h" {
-			logger.Log(logger.Info, "hello from new command")
+			logger.Log(logger.Info, "Skeleton", "hello from new command")
 		}
 
-		if msg.String() == "ctrl+o" {
-			m.thatCounter += 1
+		// Only activate on certain branches
+		if m.IsActiveBranch("t this") || m.IsActiveBranch("test this") {
+			if msg.String() == "ctrl+k" {
+				m.thisCounter += 1
+			}
 		}
 	}
 
@@ -71,15 +84,16 @@ func loadThis(m skeletonModel) skeletonModel {
 
 func thisView(m skeletonModel) string {
 	return fmt.Sprintf(
-		"This Counter goes up every time you enter the command: %d",
+		"Hit ctrl+k to increment the counter: %d",
 		m.thisCounter,
 	)
 }
 
 func loadThat(m skeletonModel) skeletonModel {
+	m.thatCounter += 1
 	return m
 }
 
 func thatView(m skeletonModel) string {
-	return fmt.Sprintf("This counter goes up every 300ms: %d", m.thatCounter)
+	return fmt.Sprintf("Execute the command again to increment the counter: %d", m.thatCounter)
 }
