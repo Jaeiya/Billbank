@@ -198,10 +198,22 @@ func tryEnterCmd(m CmdInputModel) (CmdInputModel, tea.Cmd) {
 		lastCmd := m.lastCmd
 		if lastCmd.GetId() == cmd.GetId() {
 			m.CommandInput.Reset()
+			logger.Log(
+				logger.Debug,
+				"CommandInput",
+				"sending command [status] update [%s]",
+				cmd.status.BranchStr,
+			)
 			return m, func() tea.Msg { return UpdateCmdMsg{nil, cmd.status} }
 		}
 		m.lastCmd = cmd
 		m.CommandInput.Reset()
+		logger.Log(
+			logger.Debug,
+			"CommandInput",
+			"sending command [model & status] update [%s]",
+			cmd.status.BranchStr,
+		)
 		teaMsg := UpdateCmdMsg{cmd.model, cmd.status}
 		return m, func() tea.Msg { return teaMsg }
 	}
