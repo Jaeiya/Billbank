@@ -127,16 +127,26 @@ type debugSlog struct {
 }
 
 func (m debugModel) Update(msg tea.Msg) (cmd.Model, tea.Cmd) {
-	var cmd tea.Cmd
-	var cmds []tea.Cmd
+	var teaCmd tea.Cmd
+	var teaCmds []tea.Cmd
 
-	m, cmd = m.BaseCmdModel.Update(m, msg)
-	cmds = append(cmds, cmd)
+	m, teaCmd = m.BaseCmdModel.Update(m, msg)
+	teaCmds = append(teaCmds, teaCmd)
 
-	m.slog.viewPort, cmd = m.slog.viewPort.Update(msg)
-	cmds = append(cmds, cmd)
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		if m.IsActiveBranch("/ slog") {
+			// Reload slog
+			if msg.String() == "ctrl+r" {
+				m = m.Exec(m)
+			}
+		}
+	}
 
-	return m, tea.Batch(cmds...)
+	m.slog.viewPort, teaCmd = m.slog.viewPort.Update(msg)
+	teaCmds = append(teaCmds, teaCmd)
+
+	return m, tea.Batch(teaCmds...)
 }
 
 func (m debugModel) View() string {
