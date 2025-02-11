@@ -19,9 +19,11 @@ import (
 )
 
 var (
-	infoLogStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("#29DEFF"))
-	attnLogStyle  = lipgloss.NewStyle().Foreground(ui.FgWarnColor)
-	errLogStyle   = lipgloss.NewStyle().Foreground(ui.FgErrLightColor)
+	infoLogStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#29DEFF"))
+	attnLogStyle = lipgloss.NewStyle().Foreground(ui.FgWarnColor)
+	errLogStyle  = lipgloss.NewStyle().
+			Background(lipgloss.Color(ui.BgDarkColor)).
+			Foreground(ui.FgErrColor)
 	debugLogStyle = lipgloss.NewStyle().
 			Background(lipgloss.Color("#2E3F00")).
 			Foreground(lipgloss.Color("#D3FF5C"))
