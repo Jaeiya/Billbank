@@ -211,7 +211,7 @@ func clearLog(m debugModel) debugModel {
 	}
 	m.log.view = ""
 	m.log.lineCount = 0
-	// No reason to hold old slog info
+	// No reason to hold stale slog info
 	m.slog.view = ""
 	m.slog.lineCount = 0
 	return m

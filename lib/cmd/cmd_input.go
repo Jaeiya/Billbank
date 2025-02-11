@@ -160,7 +160,6 @@ func (m CmdInputModel) Update(msg tea.Msg) (CmdInputModel, tea.Cmd) {
 }
 
 func (m CmdInputModel) View() string {
-	// Double newline prevents resize artifacts
 	s := fmt.Sprintf("%s\n%s", statusStyle.Render(m.statusText), m.CommandInput.View())
 	return s
 }

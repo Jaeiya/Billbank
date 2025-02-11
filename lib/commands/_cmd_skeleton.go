@@ -63,7 +63,7 @@ func (m skeletonModel) Update(msg tea.Msg) (cmd.Model, tea.Cmd) {
 			logger.Log(logger.Info, "Skeleton", "hello from new command")
 		}
 
-		// Only activate on certain branches
+		// Only watch certain keys on certain branches
 		if m.IsActiveBranch("t this") || m.IsActiveBranch("test this") {
 			if msg.String() == "ctrl+k" {
 				m.thisCounter += 1

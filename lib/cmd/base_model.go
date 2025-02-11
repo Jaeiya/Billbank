@@ -200,8 +200,7 @@ func (bc BaseCmdModel[T]) IsInitialized() bool {
 }
 
 // Exec executes the current branch command in the context of the
-// passed model, with the option to clear all past and present
-// errors. All detected errors are logged and stored.
+// passed model. All detected errors are logged and stored.
 func (bc *BaseCmdModel[T]) Exec(model T) T {
 	bc.isInterrupt = false
 	branchStr := bc.cmdStatus.BranchStr
