@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/charmbracelet/bubbles/cursor"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/jaeiya/billbank/lib/ui"
 	"github.com/jaeiya/billbank/lib/utils/logger"
@@ -32,6 +33,10 @@ type BaseCmdModel[T any] struct {
 	viewHeight   int
 	hasStaleView bool
 	staleView    string
+	staleBranch  string
+	// Whether or not a tea.Msg is an interrupt which
+	// we'll use to prevent things like log spamming.
+	isInterrupt bool
 }
 
 func NewBaseModel[T any](tree [][]string) *BaseCmdModel[T] {
@@ -62,8 +67,16 @@ func (bc *BaseCmdModel[T]) Update(model T, msg tea.Msg) (T, tea.Cmd) {
 		oldBranch := bc.cmdStatus.BranchStr
 		bc.hasStaleView = true
 		bc.cmdStatus = msg.Status
-		logger.Log(logger.Debug, "BaseModel", " updated command branch [%s] to [%s]", oldBranch, bc.cmdStatus.BranchStr)
+		logger.Log(
+			logger.Debug,
+			"BaseModel",
+			"updated command branch [%s] to [%s]",
+			oldBranch,
+			bc.cmdStatus.BranchStr,
+		)
 
+	case cursor.BlinkMsg, tea.MouseMsg:
+		bc.isInterrupt = true
 	}
 
 	return model, tea.Batch(teaCmds...)
@@ -78,6 +91,15 @@ func (bc *BaseCmdModel[T]) View(model T) string {
 		return bc.staleView
 	}
 
+	if !bc.isInterrupt {
+		logger.Log(
+			logger.Hot,
+			"BaseModel",
+			"loading [current] view [%s]",
+			bc.cmdStatus.BranchStr,
+		)
+	}
+
 	errs := bc.GetErrors()
 	if len(errs) > 0 {
 		return ui.NewErrorBox(
@@ -89,6 +111,7 @@ func (bc *BaseCmdModel[T]) View(model T) string {
 	}
 
 	bc.staleView = cmd.ViewFn(model)
+	bc.staleBranch = bc.cmdStatus.BranchStr
 	return cmd.ViewFn(model)
 }
 
@@ -178,6 +201,7 @@ func (bc BaseCmdModel[T]) IsInitialized() bool {
 // passed model, with the option to clear all past and present
 // errors. All detected errors are logged and stored.
 func (bc *BaseCmdModel[T]) Exec(model T) T {
+	bc.isInterrupt = false
 	branchStr := bc.cmdStatus.BranchStr
 	cmd := bc.cmdBranchMap[branchStr]
 
