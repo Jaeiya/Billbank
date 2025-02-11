@@ -16,6 +16,7 @@ import (
 	"github.com/jaeiya/billbank/lib/cmd"
 	"github.com/jaeiya/billbank/lib/ui"
 	"github.com/jaeiya/billbank/lib/utils"
+	"github.com/jaeiya/billbank/lib/utils/logger"
 )
 
 var (
@@ -140,6 +141,9 @@ func (m debugModel) Update(msg tea.Msg) (cmd.Model, tea.Cmd) {
 		if m.IsActiveBranch("/ slog") {
 			// Reload slog
 			if msg.String() == "ctrl+r" {
+				logger.Log(logger.Debug, "DebugCommand", "reload slog")
+				// Wait for the above log to be written
+				time.Sleep(time.Millisecond * 50)
 				m = m.Exec(m)
 			}
 		}
