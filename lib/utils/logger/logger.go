@@ -88,7 +88,11 @@ func logMessages() {
 			log.subject,
 			log.msg,
 		)
-		logger.Printf(msg, log.vars...)
+		if len(log.vars) == 0 {
+			logger.Print(msg)
+		} else {
+			logger.Printf(msg, log.vars...)
+		}
 	}
 }
 
