@@ -226,19 +226,23 @@ func tryEnterCmd(m CmdInputModel) (CmdInputModel, tea.Cmd) {
 }
 
 func onAnyKey(m CmdInputModel, msg tea.KeyMsg) (CmdInputModel, tea.Cmd) {
+	var key string = msg.String()
+	if key[0] == 0 {
+		key = "ctrl"
+	}
 	m.statusText = ""
 	// Restrict user input to "valid" keys
 	if len(msg.String()) == 1 {
 		char := rune(msg.String()[0])
 		if m.currCmd.status.IsComplete {
-			logger.Log(logger.Hot, "CommandInput", "[onAnyKey] try validating on [%c]", char)
+			logger.Log(logger.Hot, "CommandInput", "[onAnyKey] try validating on [%s]", key)
 			if !m.currCmd.ValidateKey(char) {
 				return m, nil
 			}
 		}
 	}
 
-	logger.Log(logger.Hot, "CommandInput", "[onAnyKey] try parse command on [%s]", msg)
+	logger.Log(logger.Hot, "CommandInput", "[onAnyKey] try parse command on [%s]", key)
 
 	return tryParseCmd(m, msg)
 }
