@@ -51,10 +51,6 @@ func Log(ll LogLevel, subject string, msg string, vars ...any) {
 		return
 	}
 
-	if !isReady {
-		panic("log not initialized")
-	}
-
 	_, file, line, _ := runtime.Caller(1)
 	logChan <- LogMsg{msg, ll, file, line, subject, vars}
 }
