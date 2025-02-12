@@ -15,7 +15,8 @@ import (
 type LogLevel int
 
 const (
-	Hot = LogLevel(iota)
+	Insane = LogLevel(iota)
+	Hot
 	Debug
 	Info
 	Attention
@@ -113,6 +114,8 @@ func getLogLevelStr(ll LogLevel) string {
 		return "DBG"
 	case Hot:
 		return "HOT"
+	case Insane:
+		return "∞∞∞"
 	default:
 		panic("invalid log level")
 	}

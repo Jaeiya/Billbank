@@ -31,6 +31,9 @@ var (
 	hotLogStyle = lipgloss.NewStyle().
 			Background(lipgloss.Color("#FF9600")).
 			Foreground(lipgloss.Color("#000"))
+	insaneLogStyle = lipgloss.NewStyle().
+			Background(lipgloss.Color("#FF004E")).
+			Foreground(lipgloss.Color("#FFCFDE"))
 	logStyle      = lipgloss.NewStyle().MarginLeft(1).MarginTop(1)
 	slogWordStyle = lipgloss.NewStyle().Foreground(ui.FgColor)
 	slogPathStyle = lipgloss.NewStyle().Align(lipgloss.Right).Foreground(ui.FgDimColor)
@@ -268,6 +271,9 @@ func loadSlog(m debugModel) debugModel {
 		case "[HOT]":
 			tag = hotLogStyle.Render(tag)
 			subjectStyle = hotLogStyle
+		case "[∞∞∞]":
+			tag = insaneLogStyle.Render(tag)
+			subjectStyle = insaneLogStyle
 		}
 
 		tagBuilder.WriteString(fmt.Sprintf("%s \n", tag))
