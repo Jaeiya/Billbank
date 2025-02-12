@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"sync"
 	"time"
 
 	"github.com/jaeiya/billbank/lib/utils"
@@ -36,6 +37,7 @@ var (
 	stdLogger *log.Logger
 	logChan   = make(chan LogMsg, 50)
 	logLevel  LogLevel
+	once      sync.Once
 )
 
 func Log(ll LogLevel, subject string, msg string, vars ...any) {
@@ -64,19 +66,21 @@ func CloseLog() {
 }
 
 func initLog() {
-	if isReady {
-		return
-	}
-	path := filepath.Join(utils.GetWorkingDir(), "log.txt")
+	once.Do(func() {
+		if isReady {
+			return
+		}
+		path := filepath.Join(utils.GetWorkingDir(), "log.txt")
 
-	file, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC|os.O_APPEND, 0o644)
-	if err != nil {
-		panic(err)
-	}
+		file, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC|os.O_APPEND, 0o644)
+		if err != nil {
+			panic(err)
+		}
 
-	stdLogger = log.New(file, "", 0)
-	go logMessages()
-	isReady = true
+		stdLogger = log.New(file, "", 0)
+		go logMessages()
+		isReady = true
+	})
 }
 
 func logMessages() {
