@@ -89,7 +89,7 @@ func (bc *BaseModel[T]) View(model T) string {
 	cmd := bc.cmdBranchMap[branchStr]
 
 	if bc.hasStaleView {
-		logger.Log(logger.Debug, "BaseModel", "loading [stale] view [%s]", bc.staleBranch)
+		logger.Log(logger.Hot, "BaseModel", "loading [stale] view [%s]", bc.staleBranch)
 		return bc.staleView
 	}
 
