@@ -39,7 +39,14 @@ var (
 )
 
 func Log(ll LogLevel, subject string, msg string, vars ...any) {
+	// Removes side-effects when testing code that is
+	// using the logger.
+	if logLevel == None {
+		return
+	}
+
 	initLog()
+
 	if ll < logLevel {
 		return
 	}
