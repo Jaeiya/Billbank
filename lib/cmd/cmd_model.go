@@ -43,6 +43,7 @@ type Status struct {
 type Config struct {
 	// The overall name of the command
 	Name string
+
 	// Command Model which needs to implement the
 	// command Base Model.
 	Model Model
@@ -67,6 +68,7 @@ func New(config Config) Command {
 	if config.Name == "" {
 		panic("missing command name")
 	}
+
 	if config.HasArg && config.InputValidationFunc == nil {
 		panic("command arguments need a validation function")
 	}
@@ -132,7 +134,7 @@ func (cb *Command) ParseCommand(cmd string) Status {
 	var finalPos int = 0
 	var isCommand, isComplete bool
 
-	logger.Log(logger.Hot, "CommandModel", "parsing command [%s]", cmd)
+	logger.Log(logger.Insane, "CommandModel", "parsing command [%s]", cmd)
 
 	for pos, cmds := range cb.tree {
 		if len(cmdFields) == pos || !slices.Contains(cmds, cmdFields[pos]) {

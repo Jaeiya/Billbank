@@ -252,6 +252,13 @@ func tryParseCmd(m CmdInputModel, msg tea.KeyMsg) (CmdInputModel, tea.Cmd) {
 	m.CommandInput, cmd = m.CommandInput.Update(msg)
 	m.currCmd = Command{}
 	for _, c := range m.commands {
+		logger.Log(
+			logger.Insane,
+			"CommandInput",
+			"testing if [%s] is a [%s] command",
+			m.CommandInput.Value(),
+			c.name,
+		)
 		cmdStatus := c.ParseCommand(m.CommandInput.Value())
 		c.status = cmdStatus
 		m.currCmd = c
