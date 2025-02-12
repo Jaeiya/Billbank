@@ -41,6 +41,8 @@ type Status struct {
 }
 
 type Config struct {
+	// The overall name of the command
+	Name string
 	// Command Model which needs to implement the
 	// command Base Model.
 	Model Model
@@ -62,6 +64,9 @@ type Config struct {
 }
 
 func New(config Config) Command {
+	if config.Name == "" {
+		panic("missing command name")
+	}
 	if config.HasArg && config.InputValidationFunc == nil {
 		panic("command arguments need a validation function")
 	}
@@ -74,6 +79,7 @@ func New(config Config) Command {
 
 	cmdId += 1
 	cmd := Command{
+		name:                config.Name,
 		model:               config.Model,
 		status:              Status{},
 		tree:                config.Model.GetCmdTree(),
@@ -107,8 +113,9 @@ func New(config Config) Command {
 // Each command branch is an execution path. What
 // happens in that execution path is up to the dev.
 type Command struct {
-	model               Model
 	id                  int
+	name                string
+	model               Model
 	tree                [][]string
 	hasArg              bool
 	status              Status

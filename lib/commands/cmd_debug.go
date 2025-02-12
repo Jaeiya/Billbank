@@ -81,6 +81,7 @@ func NewDebugCmd(h *utils.InputHistory) cmd.Command {
 
 	return cmd.New(
 		cmd.Config{
+			Name:                "Debug",
 			Model:               m,
 			InputValidationFunc: func(arg string) error { return nil },
 			KeyValidationFunc:   func(key rune) bool { return false },
