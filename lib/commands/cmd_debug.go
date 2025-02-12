@@ -66,10 +66,17 @@ func NewDebugCmd(h *utils.InputHistory) cmd.Command {
 	vp.KeyMap.HalfPageDown = key.NewBinding(key.WithKeys("ctrl+j"))
 
 	m := debugModel{
-		BaseModel: cmd.NewBaseModel[debugModel]([][]string{
-			{"/"},
-			{"history", "log", "slog", "stats"},
-			{"clear"},
+		BaseModel: cmd.NewBaseModel[debugModel](cmd.Tree{
+			Aliases: []string{"/"},
+			Branches: []cmd.CmdBranch{
+				{Leaves: []string{"history"}, HasArg: false},
+				{Leaves: []string{"john"}, HasArg: true},
+				{Leaves: []string{"log"}, HasArg: false},
+				{Leaves: []string{"log", "clear"}, HasArg: false},
+				{Leaves: []string{"slog"}, HasArg: false},
+				{Leaves: []string{"slog", "clear"}, HasArg: false},
+				{Leaves: []string{"stats"}, HasArg: false},
+			},
 		}),
 		history: debugHistory{data: h},
 		slog:    debugSlog{viewPort: vp},

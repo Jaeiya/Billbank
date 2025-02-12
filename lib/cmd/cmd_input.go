@@ -1,7 +1,9 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/charmbracelet/bubbles/textinput"
@@ -83,7 +85,7 @@ func With(cmds ...Command) CmdInputOption {
 		aliasStore := map[string]bool{}
 
 		for _, cmd := range cmds {
-			for _, a := range cmd.tree[0] {
+			for _, a := range cmd.tree.Aliases {
 				if aliasStore[a] {
 					panic("command alias already exists")
 				}
@@ -173,56 +175,46 @@ func tryEnterCmd(m CmdInputModel) (CmdInputModel, tea.Cmd) {
 
 	logger.Log(logger.Info, "CommandInput", "entering command [%s]", cmd.status.BranchStr)
 	logger.Log(logger.Debug, "CommandInput", "command status [%+v]", cmd.status)
+	logger.Log(logger.Debug, "CommandInput", "branch string [%s]", cmd.status.BranchStr)
 
-	if cmd.status.IsCommand {
-		if cmd.status.IsComplete && !cmd.status.IsSupported {
-			statusStyle = statusStyle.Foreground(ui.FgErrColor)
-			m.statusText = "Unsupported Command Chain"
-			return m, nil
-		} else if !cmd.status.IsComplete {
+	cmdErr := cmd.status.Error
+	if cmdErr != nil {
+		m.statusText = cmdErr.Error()
+		statusStyle = statusStyle.Foreground(ui.FgErrColor)
+		if errors.Is(cmdErr, ErrIncompleteCmd) || strings.Contains(cmdErr.Error(), "expected") {
 			statusStyle = statusStyle.Foreground(ui.FgWarnColor)
-			m.statusText = "Incomplete Command"
-			return m, nil
 		}
+		return m, nil
 	}
 
-	if cmd.status.IsComplete && cmd.status.IsCommand {
-		if cmd.status.Error != nil {
-			m.statusText = cmd.status.Error.Error()
-			return m, nil
-		}
+	statusStyle = statusStyle.Foreground(ui.FgSuccessColor)
+	m.statusText = fmt.Sprintf("Executing Command: %s", cmd.status.BranchStr)
 
-		statusStyle = statusStyle.Foreground(ui.FgSuccessColor)
-		m.statusText = fmt.Sprintf("Executing Command: %s", cmd.status.BranchStr)
+	m.CmdHistory.Add(m.CommandInput.Value())
 
-		m.CmdHistory.Add(m.CommandInput.Value())
-
-		lastCmd := m.lastCmd
-		if lastCmd.GetId() == cmd.GetId() {
-			m.CommandInput.Reset()
-			logger.Log(
-				logger.Debug,
-				"CommandInput",
-				"sending command [status] update [%s]",
-				cmd.status.BranchStr,
-			)
-			return m, func() tea.Msg { return UpdateCmdMsg{nil, cmd.status} }
-		}
-		m.lastCmd = cmd
+	lastCmd := m.lastCmd
+	if lastCmd.GetId() == cmd.GetId() {
 		m.CommandInput.Reset()
 		logger.Log(
 			logger.Debug,
 			"CommandInput",
-			"sending command [model & status] update [%s]",
+			"sending command [status] update [%s]",
 			cmd.status.BranchStr,
 		)
-		teaMsg := UpdateCmdMsg{cmd.model, cmd.status}
-		return m, func() tea.Msg { return teaMsg }
+		return m, func() tea.Msg { return UpdateCmdMsg{nil, cmd.status} }
 	}
 
-	statusStyle = statusStyle.Foreground(ui.FgErrColor)
-	m.statusText = "Invalid Command"
-	return m, nil
+	m.lastCmd = cmd
+	m.CommandInput.Reset()
+	logger.Log(
+		logger.Debug,
+		"CommandInput",
+		"sending command [model & status] update [%s]",
+		cmd.status.BranchStr,
+	)
+
+	teaMsg := UpdateCmdMsg{cmd.model, cmd.status}
+	return m, func() tea.Msg { return teaMsg }
 }
 
 func onAnyKey(m CmdInputModel, msg tea.KeyMsg) (CmdInputModel, tea.Cmd) {
@@ -234,7 +226,7 @@ func onAnyKey(m CmdInputModel, msg tea.KeyMsg) (CmdInputModel, tea.Cmd) {
 	// Restrict user input to "valid" keys
 	if len(msg.String()) == 1 {
 		char := rune(msg.String()[0])
-		if m.currCmd.status.IsComplete {
+		if m.currCmd.status.Error != nil {
 			logger.Log(logger.Hot, "CommandInput", "[onAnyKey] try validating on [%s]", key)
 			if !m.currCmd.ValidateKey(char) {
 				return m, nil
@@ -260,11 +252,11 @@ func tryParseCmd(m CmdInputModel, msg tea.KeyMsg) (CmdInputModel, tea.Cmd) {
 			c.name,
 		)
 		cmdStatus := c.ParseCommand(m.CommandInput.Value())
-		c.status = cmdStatus
 		m.currCmd = c
+		m.currCmd.status = cmdStatus
 		if cmdStatus.IsCommand {
-			if !cmdStatus.IsComplete {
-				m.CommandInput.SetSuggestions(cmdStatus.Branches)
+			if errors.Is(cmdStatus.Error, ErrIncompleteCmd) {
+				m.CommandInput.SetSuggestions(cmdStatus.BranchSuggestions)
 			}
 			break
 		}

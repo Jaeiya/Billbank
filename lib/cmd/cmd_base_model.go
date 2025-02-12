@@ -24,7 +24,7 @@ type Branch[T any] struct {
 
 type BaseModel[T any] struct {
 	cmdBranchMap map[string]Branch[T]
-	cmdTree      [][]string
+	cmdTree      Tree
 	cmdStatus    Status
 	cmdErrors    []error
 	lastCmdError error
@@ -39,7 +39,7 @@ type BaseModel[T any] struct {
 	isInterrupt bool
 }
 
-func NewBaseModel[T any](tree [][]string) *BaseModel[T] {
+func NewBaseModel[T any](tree Tree) *BaseModel[T] {
 	return &BaseModel[T]{
 		cmdBranchMap: map[string]Branch[T]{},
 		cmdTree:      tree,
@@ -145,7 +145,7 @@ func (bc *BaseModel[T]) ClearErrors() {
 	}
 }
 
-func (bc BaseModel[T]) GetCmdTree() [][]string {
+func (bc BaseModel[T]) GetCmdTree() Tree {
 	return bc.cmdTree
 }
 

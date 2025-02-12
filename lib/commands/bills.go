@@ -11,8 +11,11 @@ func NewBillsCmd() cmd.Command {
 	// so that it can be passed to your model.
 	//
 	m := billsModel{
-		BaseModel: cmd.NewBaseModel[billsModel]([][]string{
-			{"bills"},
+		BaseModel: cmd.NewBaseModel[billsModel](cmd.Tree{
+			Aliases: []string{"bills"},
+			Branches: []cmd.CmdBranch{
+				{Leaves: []string{}, HasArg: false},
+			},
 		}),
 	}
 

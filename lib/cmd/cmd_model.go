@@ -10,12 +10,12 @@ import (
 )
 
 var (
-	ErrFatalCommand    = fmt.Errorf("command parsing failed; this should not happen")
-	ErrNotCommand      = fmt.Errorf("unrecognized command")
-	ErrIncompleteCmd   = fmt.Errorf("incomplete command")
-	ErrMissingArgument = fmt.Errorf("missing argument")
-	ErrEmptyCommand    = fmt.Errorf("empty command")
-	ErrUnsupportedCmd  = fmt.Errorf("unsupported command chain")
+	ErrFatalCommand     = fmt.Errorf("command parsing failed; this should not happen")
+	ErrNotCommand       = fmt.Errorf("unrecognized command")
+	ErrIncompleteCmd    = fmt.Errorf("incomplete command")
+	ErrMissingArgument  = fmt.Errorf("missing argument")
+	ErrEmptyCommand     = fmt.Errorf("empty command")
+	ErrUnimplementedCmd = fmt.Errorf("unimplemented command")
 )
 
 var cmdId = 0
@@ -24,20 +24,18 @@ type Model interface {
 	Update(tea.Msg) (Model, tea.Cmd)
 	View() string
 	GetErrors() []error
-	GetCmdTree() [][]string
+	GetCmdTree() Tree
 	IsSupported(branchStr string) bool
 	IsInitialized() bool
 	ValidateCommand()
 }
 
 type Status struct {
-	IsCommand   bool
-	IsComplete  bool
-	IsSupported bool
-	Branches    []string
-	Arg         string
-	BranchStr   string
-	Error       error
+	IsCommand         bool
+	BranchSuggestions []string
+	Arg               string
+	BranchStr         string
+	Error             error
 }
 
 type Config struct {
@@ -118,82 +116,114 @@ type Command struct {
 	id                  int
 	name                string
 	model               Model
-	tree                [][]string
+	tree                Tree
 	hasArg              bool
 	status              Status
 	inputValidationFunc func(arg string) error
 	keyValidationFunc   func(key rune) bool
 }
 
+type Tree struct {
+	Aliases  []string
+	Branches []CmdBranch
+}
+
+type CmdBranch struct {
+	Leaves []string
+	HasArg bool
+}
+
 func (cb Command) GetId() int {
 	return cb.id
 }
 
-func (cb *Command) ParseCommand(cmd string) Status {
-	cmdFields := strings.Fields(cmd)
-	var finalPos int = 0
-	var isCommand, isComplete bool
+func (cb Command) ParseCommand(input string) Status {
+	var cmdFields []string = strings.Fields(input)
+	if len(cmdFields) == 0 {
+		return Status{Error: ErrEmptyCommand}
+	}
 
-	logger.Log(logger.Insane, "CommandModel", "parsing command [%s]", cmd)
+	var alias string = cmdFields[0]
+	var isCompleted bool
+	var err error
+	var branches []string
+	var activeBranch CmdBranch
 
-	for pos, cmds := range cb.tree {
-		if len(cmdFields) == pos || !slices.Contains(cmds, cmdFields[pos]) {
+	if !slices.Contains(cb.tree.Aliases, alias) {
+		return Status{Error: ErrNotCommand}
+	}
+
+	for _, b := range cb.tree.Branches {
+		fieldStr := strings.Join(cmdFields[1:], " ")
+		branchStr := strings.Join(b.Leaves, " ")
+		branches = append(branches, fmt.Sprintf("%s %s", alias, branchStr))
+		activeBranch = b
+
+		if b.HasArg {
+			if len(b.Leaves) == len(cmdFields)-1 {
+				if fieldStr == branchStr {
+					isCompleted = false
+					break
+				}
+			}
+
+			if len(cmdFields) == len(b.Leaves)+2 {
+				fieldStr = strings.Join(cmdFields[1:len(cmdFields)-1], " ")
+				if fieldStr == branchStr {
+					isCompleted = true
+					break
+				}
+			}
+		}
+
+		if fieldStr == branchStr {
+			isCompleted = true
 			break
 		}
-		finalPos = pos + 1
+
 	}
 
-	isCommand = finalPos > 0
-
-	if isCommand && cb.hasArg && finalPos == len(cb.tree) {
-		cs := Status{
-			IsCommand:  true,
-			IsComplete: true,
-			Arg:        cmdFields[len(cmdFields)-1],
-			BranchStr:  cmd,
-		}
-		if len(cmdFields) == finalPos {
-			cs.Error = fmt.Errorf("expected a value after '%s'", cmdFields[len(cmdFields)-1])
-		} else {
-			cs.Error = cb.inputValidationFunc(cmdFields[len(cmdFields)-1])
-		}
-		return cs
-	}
-
-	isComplete = finalPos == len(cmdFields) && !cb.hasArg
-
-	var branches []string
-	if finalPos < len(cb.tree) {
-		branches = cb.normalizeBranches(cmd, finalPos, cb.tree[finalPos])
-	} else {
-		branches = cb.normalizeBranches(cmd, finalPos, []string{})
-	}
-
-	var err error
-
-	if isCommand && !cb.model.IsSupported(cmd) {
-		err = ErrUnsupportedCmd
-	}
-
-	if isCommand && !isComplete {
+	if !isCompleted {
 		err = ErrIncompleteCmd
 	}
 
-	if !isCommand {
-		if cmd == "" {
-			err = ErrEmptyCommand
-		} else {
-			err = ErrNotCommand
+	if !isCompleted && activeBranch.HasArg && len(activeBranch.Leaves) == len(cmdFields)-1 {
+		err = fmt.Errorf("expected value after %s ", cmdFields[len(cmdFields)-1])
+	}
+
+	if isCompleted && !cb.model.IsSupported(input) {
+		err = ErrUnimplementedCmd
+	}
+
+	var arg string
+	if activeBranch.HasArg && isCompleted {
+		arg = cmdFields[len(cmdFields)-1]
+	}
+
+	var suggestedBranches []string
+	for _, b := range branches {
+		leaves := strings.Fields(b)
+		if len(cmdFields) == len(leaves) {
+			suggestedBranches = append(
+				suggestedBranches,
+				strings.Join(leaves[:len(cmdFields)], " "),
+			)
 		}
 	}
 
+	logger.Log(logger.Insane, "CommandModel", "branch suggestions [%+v]", suggestedBranches)
+
+	branchStr := fmt.Sprintf("%s %s", cmdFields[0], strings.Join(activeBranch.Leaves, " "))
+	if len(activeBranch.Leaves) == 0 {
+		branchStr = cmdFields[0]
+	}
+
 	return Status{
-		IsCommand:   isCommand,
-		IsComplete:  isComplete,
-		IsSupported: cb.model.IsSupported(cmd),
-		Branches:    branches,
-		BranchStr:   cmd,
-		Error:       err,
+		IsCommand:         true,
+		BranchStr:         branchStr,
+		BranchSuggestions: suggestedBranches,
+		Arg:               arg,
+		Error:             err,
 	}
 }
 
@@ -202,38 +232,4 @@ func (cb *Command) ValidateKey(key rune) bool {
 		return cb.keyValidationFunc(key)
 	}
 	return true
-}
-
-/*
-normalizeBranches prepends the previous cmd branch string to the suggestions.
-This is necessary because the input box needs the whole phrase as a
-completion.
-*/
-func (cb *Command) normalizeBranches(
-	branchStr string,
-	treePos int,
-	branches []string,
-) []string {
-	newBranches := make([]string, len(branches))
-	copy(newBranches, branches)
-
-	branchStr = strings.TrimSpace(branchStr)
-	leaves := strings.Fields(branchStr)
-
-	branchPrefix := ""
-	if treePos > 0 && treePos <= len(leaves) {
-		branchPrefix = strings.Join(leaves[:treePos], " ") + " "
-	}
-
-	// Prevents repeated cmd branches and only allows
-	// cmd branches for partially entered cmd branches.
-	if len(leaves) == treePos {
-		return []string{strings.TrimSpace(branchPrefix)}
-	}
-
-	for i, s := range newBranches {
-		newBranches[i] = branchPrefix + s
-	}
-
-	return newBranches
 }
