@@ -57,6 +57,8 @@ func NewDebugCmd(h *utils.InputHistory) cmd.Command {
 	vp := viewport.New(0, 0)
 	vp.KeyMap.Down = key.NewBinding()
 	vp.KeyMap.Up = key.NewBinding()
+	vp.KeyMap.PageDown = key.NewBinding()
+	vp.KeyMap.PageUp = key.NewBinding()
 	vp.KeyMap.HalfPageUp = key.NewBinding(key.WithKeys("ctrl+k"))
 	vp.KeyMap.HalfPageDown = key.NewBinding(key.WithKeys("ctrl+j"))
 
