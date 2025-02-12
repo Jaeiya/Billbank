@@ -32,33 +32,14 @@ type LogMsg struct {
 }
 
 var (
-	isReady  = false
-	logger   *log.Logger
-	logChan  = make(chan LogMsg, 50)
-	logLevel LogLevel
+	isReady   = false
+	stdLogger *log.Logger
+	logChan   = make(chan LogMsg, 50)
+	logLevel  LogLevel
 )
 
-func NewLog(ll LogLevel) bool {
-	if isReady {
-		return true
-	}
-
-	path := filepath.Join(utils.GetWorkingDir(), "log.txt")
-
-	file, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC|os.O_APPEND, 0o644)
-	if err != nil {
-		panic(err)
-	}
-
-	logLevel = ll
-	logger = log.New(file, "", 0)
-	go logMessages()
-	isReady = true
-
-	return true
-}
-
 func Log(ll LogLevel, subject string, msg string, vars ...any) {
+	initLog()
 	if ll < logLevel {
 		return
 	}
@@ -79,6 +60,22 @@ func CloseLog() {
 	close(logChan)
 }
 
+func initLog() {
+	if isReady {
+		return
+	}
+	path := filepath.Join(utils.GetWorkingDir(), "log.txt")
+
+	file, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC|os.O_APPEND, 0o644)
+	if err != nil {
+		panic(err)
+	}
+
+	stdLogger = log.New(file, "", 0)
+	go logMessages()
+	isReady = true
+}
+
 func logMessages() {
 	for log := range logChan {
 		msg := fmt.Sprintf(
@@ -90,9 +87,9 @@ func logMessages() {
 			log.msg,
 		)
 		if len(log.vars) == 0 {
-			logger.Print(msg)
+			stdLogger.Print(msg)
 		} else {
-			logger.Printf(msg, log.vars...)
+			stdLogger.Printf(msg, log.vars...)
 		}
 	}
 }
