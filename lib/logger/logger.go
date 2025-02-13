@@ -35,9 +35,9 @@ type LogMsg struct {
 
 var (
 	isReady   = false
-	stdLogger *log.Logger
+	logLevel  = None
 	logChan   = make(chan LogMsg, 50)
-	logLevel  LogLevel
+	stdLogger *log.Logger
 	once      sync.Once
 )
 
