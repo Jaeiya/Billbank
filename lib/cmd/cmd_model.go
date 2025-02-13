@@ -79,14 +79,14 @@ func New(config Config) Command {
 
 	cmdId += 1
 	cmd := Command{
-		name:                config.Name,
-		model:               config.Model,
-		status:              Status{},
-		tree:                config.Model.GetCmdTree(),
-		inputValidationFunc: config.InputValidationFunc,
-		hasArg:              config.HasArg,
-		id:                  cmdId,
-		keyValidationFunc:   config.KeyValidationFunc,
+		name:          config.Name,
+		model:         config.Model,
+		status:        Status{},
+		tree:          config.Model.GetCmdTree(),
+		validateInput: config.InputValidationFunc,
+		hasArg:        config.HasArg,
+		id:            cmdId,
+		validateKey:   config.KeyValidationFunc,
 	}
 
 	return cmd
@@ -113,14 +113,14 @@ func New(config Config) Command {
 // Each command branch is an execution path. What
 // happens in that execution path is up to the dev.
 type Command struct {
-	id                  int
-	name                string
-	model               Model
-	tree                Tree
-	hasArg              bool
-	status              Status
-	inputValidationFunc func(arg string) error
-	keyValidationFunc   func(key rune) bool
+	id            int
+	name          string
+	model         Model
+	tree          Tree
+	hasArg        bool
+	status        Status
+	validateInput func(arg string) error
+	validateKey   func(key rune) bool
 }
 
 type Tree struct {
@@ -129,8 +129,10 @@ type Tree struct {
 }
 
 type Branch struct {
-	Leaves []string
-	HasArg bool
+	Leaves        []string
+	HasArg        bool
+	ValidateKey   func(key rune) bool
+	ValidateInput func(arg string) error
 }
 
 func (cb Command) GetId() int {
@@ -171,6 +173,15 @@ func (cb Command) ParseCommand(cmdPathInput string) Status {
 				inputPath = strings.Join(pathParts[1:len(pathParts)-1], " ")
 				if inputPath == cmdPath {
 					isCompleted = true
+					if cb.validateInput != nil {
+						err = activeBranch.ValidateInput(pathParts[len(pathParts)-1])
+						return Status{
+							IsCommand: true,
+							Path:      strings.TrimSpace(alias + " " + inputPath),
+							Arg:       pathParts[len(pathParts)-1],
+							Error:     err,
+						}
+					}
 					break
 				}
 			}
@@ -232,8 +243,8 @@ func (cb Command) ParseCommand(cmdPathInput string) Status {
 }
 
 func (cb *Command) ValidateKey(key rune) bool {
-	if cb.keyValidationFunc != nil && cb.hasArg {
-		return cb.keyValidationFunc(key)
+	if cb.validateKey != nil && cb.hasArg {
+		return cb.validateKey(key)
 	}
 	return true
 }
