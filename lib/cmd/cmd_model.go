@@ -215,15 +215,7 @@ func (cb Command) ParseCommand(cmdPathInput string) Status {
 	// Suggestions are only relevant when we don't know
 	// what the command is.
 	if !isCompleted {
-		for _, b := range cmdPaths {
-			leaves := strings.Fields(b)
-			if len(pathParts) == len(leaves) {
-				possiblePaths = append(
-					possiblePaths,
-					strings.Join(leaves[:len(pathParts)], " "),
-				)
-			}
-		}
+		possiblePaths = populateSuggestions(cmdPaths, pathParts)
 	}
 
 	logger.Log(logger.Insane, "CommandModel", "path suggestions [%+v]", possiblePaths)
@@ -240,6 +232,20 @@ func (cb Command) ParseCommand(cmdPathInput string) Status {
 		Path:            path,
 		Arg:             arg,
 	}
+}
+
+func populateSuggestions(cmdPaths []string, pathParts []string) []string {
+	var suggestions []string
+	for _, path := range cmdPaths {
+		leaves := strings.Fields(path)
+		if len(pathParts) == len(leaves) {
+			suggestions = append(
+				suggestions,
+				strings.Join(leaves[:len(pathParts)], " "),
+			)
+		}
+	}
+	return suggestions
 }
 
 func (cb *Command) ValidateKey(key rune) bool {
