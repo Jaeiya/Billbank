@@ -30,6 +30,7 @@ func main() {
 		h,
 		cmd.With(
 			commands.NewDebugCmd(h),
+			commands.NewBillsCmd(),
 		),
 	)
 

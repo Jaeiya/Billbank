@@ -25,6 +25,7 @@ func NewBillsCmd() cmd.Command {
 
 	return cmd.New(
 		cmd.Config{
+			Name:                "Bills",
 			Model:               m,
 			InputValidationFunc: func(arg string) error { return nil },
 			KeyValidationFunc:   func(key rune) bool { return false },
@@ -61,4 +62,12 @@ func (m billsModel) Update(msg tea.Msg) (cmd.Model, tea.Cmd) {
 
 func (m billsModel) View() string {
 	return m.BaseModel.View(m)
+}
+
+func loadBills(m billsModel) billsModel {
+	return m
+}
+
+func viewBills(m billsModel) string {
+	return "hello"
 }
