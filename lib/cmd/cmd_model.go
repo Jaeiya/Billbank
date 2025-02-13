@@ -125,10 +125,10 @@ type Command struct {
 
 type Tree struct {
 	Aliases  []string
-	Branches []CmdBranch
+	Branches []Branch
 }
 
-type CmdBranch struct {
+type Branch struct {
 	Leaves []string
 	HasArg bool
 }
@@ -147,7 +147,7 @@ func (cb Command) ParseCommand(input string) Status {
 	var isCompleted bool
 	var err error
 	var branches []string
-	var activeBranch CmdBranch
+	var activeBranch Branch
 
 	if !slices.Contains(cb.tree.Aliases, alias) {
 		return Status{Error: ErrNotCommand}

@@ -16,24 +16,24 @@ type (
 	}
 )
 
-type Branch[T any] struct {
-	String string
-	Fn     func(T) T
-	ViewFn func(T) string
+type BranchExec[T any] struct {
+	BranchStr string
+	Fn        func(T) T
+	ViewFn    func(T) string
 }
 
 type BaseModel[T any] struct {
-	cmdBranchMap map[string]Branch[T]
-	cmdTree      Tree
-	cmdStatus    Status
-	cmdErrors    []error
-	lastCmdError error
-	isFirstMsg   bool
-	viewWidth    int
-	viewHeight   int
-	hasStaleView bool
-	staleView    string
-	staleBranch  string
+	branchExecMap map[string]BranchExec[T]
+	cmdTree       Tree
+	cmdStatus     Status
+	cmdErrors     []error
+	lastCmdError  error
+	isFirstMsg    bool
+	viewWidth     int
+	viewHeight    int
+	hasStaleView  bool
+	staleView     string
+	staleBranch   string
 	// Whether or not a tea.Msg is an interrupt which
 	// we'll use to prevent things like log spamming.
 	isInterrupt bool
@@ -41,10 +41,10 @@ type BaseModel[T any] struct {
 
 func NewBaseModel[T any](tree Tree) *BaseModel[T] {
 	return &BaseModel[T]{
-		cmdBranchMap: map[string]Branch[T]{},
-		cmdTree:      tree,
-		lastCmdError: fmt.Errorf(""),
-		isFirstMsg:   true,
+		branchExecMap: map[string]BranchExec[T]{},
+		cmdTree:       tree,
+		lastCmdError:  fmt.Errorf(""),
+		isFirstMsg:    true,
 	}
 }
 
@@ -86,7 +86,7 @@ func (bc *BaseModel[T]) Update(model T, msg tea.Msg) (T, tea.Cmd) {
 
 func (bc *BaseModel[T]) View(model T) string {
 	branchStr := bc.cmdStatus.BranchStr
-	cmd := bc.cmdBranchMap[branchStr]
+	cmd := bc.branchExecMap[branchStr]
 
 	if bc.hasStaleView {
 		logger.Log(logger.Hot, "BaseModel", "loading [stale] view [%s]", bc.staleBranch)
@@ -121,12 +121,12 @@ func (bc BaseModel[T]) GetViewSize() (int, int) {
 	return bc.viewWidth, bc.viewHeight
 }
 
-func (bc *BaseModel[T]) AddBranch(branchCmds ...Branch[T]) {
+func (bc *BaseModel[T]) AddExecBranches(branchCmds ...BranchExec[T]) {
 	for _, cmd := range branchCmds {
-		if _, alreadyExists := bc.cmdBranchMap[cmd.String]; alreadyExists {
-			panic(fmt.Errorf("found multiple command branches for [%s]", cmd.String))
+		if _, alreadyExists := bc.branchExecMap[cmd.BranchStr]; alreadyExists {
+			panic(fmt.Errorf("found multiple command branches for [%s]", cmd.BranchStr))
 		}
-		bc.cmdBranchMap[cmd.String] = cmd
+		bc.branchExecMap[cmd.BranchStr] = cmd
 	}
 }
 
@@ -158,22 +158,22 @@ HasView returns true if the current command tree string has
 an applicable view associated with it.
 */
 func (bc BaseModel[T]) HasView() bool {
-	cmd := bc.cmdBranchMap[bc.cmdStatus.BranchStr]
+	cmd := bc.branchExecMap[bc.cmdStatus.BranchStr]
 	return cmd.ViewFn != nil
 }
 
 func (bc BaseModel[T]) ValidateCommand() {
-	if len(bc.cmdBranchMap) == 0 {
+	if len(bc.branchExecMap) == 0 {
 		panic("missing sub commands, did you forget to add them?")
 	}
 
-	for _, cmd := range bc.cmdBranchMap {
+	for _, cmd := range bc.branchExecMap {
 		if cmd.Fn == nil {
 			logger.Log(
 				logger.Error,
 				"CommandError",
 				"[%s] is missing an implementation func()",
-				cmd.String,
+				cmd.BranchStr,
 			)
 		}
 		if cmd.ViewFn == nil {
@@ -181,21 +181,21 @@ func (bc BaseModel[T]) ValidateCommand() {
 				logger.Error,
 				"CommandError",
 				"[%s] is missing a view func()",
-				cmd.String,
+				cmd.BranchStr,
 			)
 		}
 	}
 }
 
 func (bc BaseModel[T]) IsSupported(branchStr string) bool {
-	_, ok := bc.cmdBranchMap[branchStr]
+	_, ok := bc.branchExecMap[branchStr]
 	return ok
 }
 
 // IsInitialized checks to make sure that various expected values
 // are set.
 func (bc BaseModel[T]) IsInitialized() bool {
-	return len(bc.cmdBranchMap) > 0 && len(bc.cmdStatus.BranchStr) > 0 && bc.viewWidth > 0 &&
+	return len(bc.branchExecMap) > 0 && len(bc.cmdStatus.BranchStr) > 0 && bc.viewWidth > 0 &&
 		bc.viewHeight > 0
 }
 
@@ -204,7 +204,7 @@ func (bc BaseModel[T]) IsInitialized() bool {
 func (bc *BaseModel[T]) Exec(model T) T {
 	bc.isInterrupt = false
 	branchStr := bc.cmdStatus.BranchStr
-	cmd := bc.cmdBranchMap[branchStr]
+	cmd := bc.branchExecMap[branchStr]
 
 	bc.ClearErrors()
 

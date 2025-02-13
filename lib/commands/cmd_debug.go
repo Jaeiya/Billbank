@@ -68,7 +68,7 @@ func NewDebugCmd(h *utils.InputHistory) cmd.Command {
 	m := debugModel{
 		BaseModel: cmd.NewBaseModel[debugModel](cmd.Tree{
 			Aliases: []string{"/"},
-			Branches: []cmd.CmdBranch{
+			Branches: []cmd.Branch{
 				{Leaves: []string{"history"}, HasArg: false},
 				{Leaves: []string{"john"}, HasArg: true},
 				{Leaves: []string{"log"}, HasArg: false},
@@ -82,13 +82,13 @@ func NewDebugCmd(h *utils.InputHistory) cmd.Command {
 		slog:    debugSlog{viewPort: vp},
 	}
 
-	m.AddBranch([]cmd.Branch[debugModel]{
-		{String: "/ history", Fn: loadHistory, ViewFn: viewHistory},
-		{String: "/ log", Fn: loadLog, ViewFn: viewLog},
-		{String: "/ slog", Fn: loadSlog, ViewFn: viewSlog},
-		{String: "/ stats", Fn: loadStats, ViewFn: viewStats},
-		{String: "/ log clear", Fn: clearLog, ViewFn: clearLogView},
-		{String: "/ slog clear", Fn: clearSlog, ViewFn: clearSlogView},
+	m.AddExecBranches([]cmd.BranchExec[debugModel]{
+		{BranchStr: "/ history", Fn: loadHistory, ViewFn: viewHistory},
+		{BranchStr: "/ log", Fn: loadLog, ViewFn: viewLog},
+		{BranchStr: "/ slog", Fn: loadSlog, ViewFn: viewSlog},
+		{BranchStr: "/ stats", Fn: loadStats, ViewFn: viewStats},
+		{BranchStr: "/ log clear", Fn: clearLog, ViewFn: clearLogView},
+		{BranchStr: "/ slog clear", Fn: clearSlog, ViewFn: clearSlogView},
 	}...)
 
 	return cmd.New(
