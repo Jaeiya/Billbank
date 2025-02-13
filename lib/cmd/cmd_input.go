@@ -20,8 +20,8 @@ type UpdateStatusMsg struct {
 }
 
 type UpdateCmdMsg struct {
-	Model  Model
-	Status Status
+	Model         Model
+	CommandStatus Status
 }
 
 type StatusSeverity int
@@ -147,7 +147,7 @@ func (m CmdInputModel) Update(msg tea.Msg) (CmdInputModel, tea.Cmd) {
 		case "enter":
 			m, cmd = tryEnterCmd(m)
 			if m.currCmd.status.Error != nil {
-				msg := fmt.Sprintf("%s::[%s]", m.currCmd.status.Error.Error(), m.currCmd.status.BranchStr)
+				msg := fmt.Sprintf("%s::[%s]", m.currCmd.status.Error.Error(), m.currCmd.status.CurrentPath)
 				logger.Log(logger.Attention, "CommandParser", "%s", msg)
 			}
 			cmds = append(cmds, cmd)
@@ -173,9 +173,7 @@ func tryEnterCmd(m CmdInputModel) (CmdInputModel, tea.Cmd) {
 	}
 	cmd := m.currCmd
 
-	logger.Log(logger.Info, "CommandInput", "entering command [%s]", cmd.status.BranchStr)
-	logger.Log(logger.Debug, "CommandInput", "command status [%+v]", cmd.status)
-	logger.Log(logger.Debug, "CommandInput", "branch string [%s]", cmd.status.BranchStr)
+	logger.Log(logger.Info, "CommandInput", "entering command [%+v]", cmd.status)
 
 	cmdErr := cmd.status.Error
 	if cmdErr != nil {
@@ -188,7 +186,7 @@ func tryEnterCmd(m CmdInputModel) (CmdInputModel, tea.Cmd) {
 	}
 
 	statusStyle = statusStyle.Foreground(ui.FgSuccessColor)
-	m.statusText = fmt.Sprintf("Executing Command: %s", cmd.status.BranchStr)
+	m.statusText = fmt.Sprintf("Executing Command: %s", cmd.status.CurrentPath)
 
 	m.CmdHistory.Add(m.CommandInput.Value())
 
@@ -199,7 +197,7 @@ func tryEnterCmd(m CmdInputModel) (CmdInputModel, tea.Cmd) {
 			logger.Debug,
 			"CommandInput",
 			"sending command [status] update [%s]",
-			cmd.status.BranchStr,
+			cmd.status.CurrentPath,
 		)
 		return m, func() tea.Msg { return UpdateCmdMsg{nil, cmd.status} }
 	}
@@ -210,7 +208,7 @@ func tryEnterCmd(m CmdInputModel) (CmdInputModel, tea.Cmd) {
 		logger.Debug,
 		"CommandInput",
 		"sending command [model & status] update [%s]",
-		cmd.status.BranchStr,
+		cmd.status.CurrentPath,
 	)
 
 	teaMsg := UpdateCmdMsg{cmd.model, cmd.status}
@@ -227,7 +225,7 @@ func onAnyKey(m CmdInputModel, msg tea.KeyMsg) (CmdInputModel, tea.Cmd) {
 	if len(msg.String()) == 1 {
 		char := rune(msg.String()[0])
 		if m.currCmd.status.Error != nil {
-			logger.Log(logger.Hot, "CommandInput", "[onAnyKey] try validating on [%s]", key)
+			logger.Log(logger.Hot, "CommandInput", "[onAnyKey] try validating [%s]", key)
 			if !m.currCmd.ValidateKey(char) {
 				return m, nil
 			}
@@ -247,7 +245,7 @@ func tryParseCmd(m CmdInputModel, msg tea.KeyMsg) (CmdInputModel, tea.Cmd) {
 		logger.Log(
 			logger.Insane,
 			"CommandInput",
-			"testing if [%s] is a [%s] command",
+			"test if [%s] is a [%s] command",
 			m.CommandInput.Value(),
 			c.name,
 		)
@@ -256,7 +254,7 @@ func tryParseCmd(m CmdInputModel, msg tea.KeyMsg) (CmdInputModel, tea.Cmd) {
 		m.currCmd.status = cmdStatus
 		if cmdStatus.IsCommand {
 			if errors.Is(cmdStatus.Error, ErrIncompleteCmd) {
-				m.CommandInput.SetSuggestions(cmdStatus.BranchSuggestions)
+				m.CommandInput.SetSuggestions(cmdStatus.PathSuggestions)
 			}
 			break
 		}

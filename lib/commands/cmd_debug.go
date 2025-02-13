@@ -66,7 +66,7 @@ func NewDebugCmd(h *utils.InputHistory) cmd.Command {
 	vp.KeyMap.HalfPageDown = key.NewBinding(key.WithKeys("ctrl+j"))
 
 	m := debugModel{
-		BaseModel: cmd.NewBaseModel[debugModel](cmd.Tree{
+		BaseModel: cmd.NewBaseModel(cmd.Tree{
 			Aliases: []string{"/"},
 			Branches: []cmd.Branch{
 				{Leaves: []string{"history"}, HasArg: false},
@@ -77,19 +77,17 @@ func NewDebugCmd(h *utils.InputHistory) cmd.Command {
 				{Leaves: []string{"slog", "clear"}, HasArg: false},
 				{Leaves: []string{"stats"}, HasArg: false},
 			},
+		}, []cmd.BranchCommand[debugModel]{
+			{Path: "/ history", Run: loadHistory, View: viewHistory},
+			{Path: "/ log", Run: loadLog, View: viewLog},
+			{Path: "/ slog", Run: loadSlog, View: viewSlog},
+			{Path: "/ stats", Run: loadStats, View: viewStats},
+			{Path: "/ log clear", Run: clearLog, View: clearLogView},
+			{Path: "/ slog clear", Run: clearSlog, View: clearSlogView},
 		}),
 		history: debugHistory{data: h},
 		slog:    debugSlog{viewPort: vp},
 	}
-
-	m.AddExecBranches([]cmd.BranchExec[debugModel]{
-		{BranchStr: "/ history", Fn: loadHistory, ViewFn: viewHistory},
-		{BranchStr: "/ log", Fn: loadLog, ViewFn: viewLog},
-		{BranchStr: "/ slog", Fn: loadSlog, ViewFn: viewSlog},
-		{BranchStr: "/ stats", Fn: loadStats, ViewFn: viewStats},
-		{BranchStr: "/ log clear", Fn: clearLog, ViewFn: clearLogView},
-		{BranchStr: "/ slog clear", Fn: clearSlog, ViewFn: clearSlogView},
-	}...)
 
 	return cmd.New(
 		cmd.Config{
@@ -151,7 +149,7 @@ func (m debugModel) Update(msg tea.Msg) (cmd.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		if m.IsActiveBranch("/ slog") {
+		if m.IsActivePath("/ slog") {
 			// Reload slog
 			if msg.String() == "ctrl+r" {
 				logger.Log(logger.Debug, "DebugCommand", "reload slog")

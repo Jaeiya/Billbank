@@ -11,17 +11,15 @@ func NewBillsCmd() cmd.Command {
 	// so that it can be passed to your model.
 	//
 	m := billsModel{
-		BaseModel: cmd.NewBaseModel[billsModel](cmd.Tree{
+		BaseModel: cmd.NewBaseModel(cmd.Tree{
 			Aliases: []string{"bills"},
 			Branches: []cmd.Branch{
 				{Leaves: []string{}, HasArg: false},
 			},
+		}, []cmd.BranchCommand[billsModel]{
+			{Path: "bills", Run: loadBills, View: viewBills},
 		}),
 	}
-
-	m.AddExecBranches([]cmd.BranchExec[billsModel]{
-		{BranchStr: "bills", Fn: loadBills, ViewFn: viewBills},
-	}...)
 
 	return cmd.New(
 		cmd.Config{

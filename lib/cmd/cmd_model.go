@@ -25,17 +25,17 @@ type Model interface {
 	View() string
 	GetErrors() []error
 	GetCmdTree() Tree
-	IsSupported(branchStr string) bool
+	IsSupported(cmdPath string) bool
 	IsInitialized() bool
 	ValidateCommand()
 }
 
 type Status struct {
-	IsCommand         bool
-	BranchSuggestions []string
-	Arg               string
-	BranchStr         string
-	Error             error
+	IsCommand       bool
+	PathSuggestions []string
+	CurrentPath     string
+	Arg             string
+	Error           error
 }
 
 type Config struct {
@@ -146,7 +146,7 @@ func (cb Command) ParseCommand(input string) Status {
 	var alias string = cmdFields[0]
 	var isCompleted bool
 	var err error
-	var branches []string
+	var cmdPaths []string
 	var activeBranch Branch
 
 	if !slices.Contains(cb.tree.Aliases, alias) {
@@ -155,13 +155,13 @@ func (cb Command) ParseCommand(input string) Status {
 
 	for _, b := range cb.tree.Branches {
 		fieldStr := strings.Join(cmdFields[1:], " ")
-		branchStr := strings.Join(b.Leaves, " ")
-		branches = append(branches, fmt.Sprintf("%s %s", alias, branchStr))
+		cmdPath := strings.Join(b.Leaves, " ")
+		cmdPaths = append(cmdPaths, fmt.Sprintf("%s %s", alias, cmdPath))
 		activeBranch = b
 
 		if b.HasArg {
 			if len(b.Leaves) == len(cmdFields)-1 {
-				if fieldStr == branchStr {
+				if fieldStr == cmdPath {
 					isCompleted = false
 					break
 				}
@@ -169,14 +169,14 @@ func (cb Command) ParseCommand(input string) Status {
 
 			if len(cmdFields) == len(b.Leaves)+2 {
 				fieldStr = strings.Join(cmdFields[1:len(cmdFields)-1], " ")
-				if fieldStr == branchStr {
+				if fieldStr == cmdPath {
 					isCompleted = true
 					break
 				}
 			}
 		}
 
-		if fieldStr == branchStr {
+		if fieldStr == cmdPath {
 			isCompleted = true
 			break
 		}
@@ -200,30 +200,30 @@ func (cb Command) ParseCommand(input string) Status {
 		arg = cmdFields[len(cmdFields)-1]
 	}
 
-	var suggestedBranches []string
-	for _, b := range branches {
+	var possiblePaths []string
+	for _, b := range cmdPaths {
 		leaves := strings.Fields(b)
 		if len(cmdFields) == len(leaves) {
-			suggestedBranches = append(
-				suggestedBranches,
+			possiblePaths = append(
+				possiblePaths,
 				strings.Join(leaves[:len(cmdFields)], " "),
 			)
 		}
 	}
 
-	logger.Log(logger.Insane, "CommandModel", "branch suggestions [%+v]", suggestedBranches)
+	logger.Log(logger.Insane, "CommandModel", "path suggestions [%+v]", possiblePaths)
 
-	branchStr := fmt.Sprintf("%s %s", cmdFields[0], strings.Join(activeBranch.Leaves, " "))
+	path := fmt.Sprintf("%s %s", cmdFields[0], strings.Join(activeBranch.Leaves, " "))
 	if len(activeBranch.Leaves) == 0 {
-		branchStr = cmdFields[0]
+		path = cmdFields[0]
 	}
 
 	return Status{
-		IsCommand:         true,
-		BranchStr:         branchStr,
-		BranchSuggestions: suggestedBranches,
-		Arg:               arg,
-		Error:             err,
+		IsCommand:       true,
+		Error:           err,
+		PathSuggestions: possiblePaths,
+		CurrentPath:     path,
+		Arg:             arg,
 	}
 }
 
