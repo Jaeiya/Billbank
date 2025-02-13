@@ -33,7 +33,7 @@ type Model interface {
 type Status struct {
 	IsCommand       bool
 	PathSuggestions []string
-	CurrentPath     string
+	Path            string
 	Arg             string
 	Error           error
 }
@@ -222,7 +222,7 @@ func (cb Command) ParseCommand(input string) Status {
 		IsCommand:       true,
 		Error:           err,
 		PathSuggestions: possiblePaths,
-		CurrentPath:     path,
+		Path:            path,
 		Arg:             arg,
 	}
 }

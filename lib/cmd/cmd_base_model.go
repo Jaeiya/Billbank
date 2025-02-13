@@ -74,7 +74,7 @@ func (bc *BaseModel[T]) Update(model T, msg tea.Msg) (T, tea.Cmd) {
 		// The command path won't be executed until the next model update
 		// therefore we need to mark the view as stale, so it won't
 		// try to view uninitialized model data.
-		oldPath := bc.cmdStatus.CurrentPath
+		oldPath := bc.cmdStatus.Path
 		bc.hasStaleView = true
 		bc.cmdStatus = msg.CommandStatus
 		logger.Log(
@@ -82,7 +82,7 @@ func (bc *BaseModel[T]) Update(model T, msg tea.Msg) (T, tea.Cmd) {
 			"BaseModel",
 			"updated command path [%s] to [%s]",
 			oldPath,
-			bc.cmdStatus.CurrentPath,
+			bc.cmdStatus.Path,
 		)
 
 	case cursor.BlinkMsg, tea.MouseMsg:
@@ -93,7 +93,7 @@ func (bc *BaseModel[T]) Update(model T, msg tea.Msg) (T, tea.Cmd) {
 }
 
 func (bc *BaseModel[T]) View(model T) string {
-	cmdPath := bc.cmdStatus.CurrentPath
+	cmdPath := bc.cmdStatus.Path
 	cmd := bc.cmdMap[cmdPath]
 
 	if bc.hasStaleView {
@@ -106,7 +106,7 @@ func (bc *BaseModel[T]) View(model T) string {
 			logger.Hot,
 			"BaseModel",
 			"loading [current] view [%s]",
-			bc.cmdStatus.CurrentPath,
+			bc.cmdStatus.Path,
 		)
 	}
 
@@ -121,7 +121,7 @@ func (bc *BaseModel[T]) View(model T) string {
 	}
 
 	bc.staleView = cmd.View(model)
-	bc.stalePath = bc.cmdStatus.CurrentPath
+	bc.stalePath = bc.cmdStatus.Path
 	return cmd.View(model)
 }
 
@@ -149,7 +149,7 @@ func (bc BaseModel[T]) GetCmdTree() Tree {
 }
 
 func (bc BaseModel[T]) IsActivePath(cmdPath string) bool {
-	return bc.cmdStatus.CurrentPath == cmdPath
+	return bc.cmdStatus.Path == cmdPath
 }
 
 /*
@@ -157,7 +157,7 @@ HasView returns true if the current command tree string has
 an applicable view associated with it.
 */
 func (bc BaseModel[T]) HasView() bool {
-	cmd := bc.cmdMap[bc.cmdStatus.CurrentPath]
+	cmd := bc.cmdMap[bc.cmdStatus.Path]
 	return cmd.View != nil
 }
 
@@ -194,7 +194,7 @@ func (bc BaseModel[T]) IsSupported(cmdPath string) bool {
 // IsInitialized checks to make sure that various expected values
 // are set.
 func (bc BaseModel[T]) IsInitialized() bool {
-	return len(bc.cmdMap) > 0 && len(bc.cmdStatus.CurrentPath) > 0 && bc.viewWidth > 0 &&
+	return len(bc.cmdMap) > 0 && len(bc.cmdStatus.Path) > 0 && bc.viewWidth > 0 &&
 		bc.viewHeight > 0
 }
 
@@ -202,7 +202,7 @@ func (bc BaseModel[T]) IsInitialized() bool {
 // passed model. All detected errors are logged and stored.
 func (bc *BaseModel[T]) Exec(model T) T {
 	bc.isInterrupt = false
-	cmdPath := bc.cmdStatus.CurrentPath
+	cmdPath := bc.cmdStatus.Path
 	cmd := bc.cmdMap[cmdPath]
 
 	bc.ClearErrors()
