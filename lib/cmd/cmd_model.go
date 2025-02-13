@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/jaeiya/billbank/lib/logger"
 )
 
 var (
@@ -129,10 +128,10 @@ type Tree struct {
 }
 
 type Branch struct {
-	Leaves        []string
-	HasArg        bool
-	ValidateKey   func(key rune) bool
-	ValidateInput func(arg string) error
+	Leaves      []string
+	HasArg      bool
+	ValidateKey func(key rune) bool
+	ValidateArg func(arg string) error
 }
 
 func (cb Command) GetId() int {
@@ -146,7 +145,6 @@ func (cb Command) ParseCommand(cmdPathInput string) Status {
 	}
 
 	var alias string = pathParts[0]
-	var isCompleted bool
 	var err error
 	var cmdPaths []string
 	var activeBranch Branch
@@ -161,76 +159,46 @@ func (cb Command) ParseCommand(cmdPathInput string) Status {
 		cmdPaths = append(cmdPaths, fmt.Sprintf("%s %s", alias, cmdPath))
 		activeBranch = b
 
-		if b.HasArg {
-			if len(b.Leaves) == len(pathParts)-1 {
-				if inputPath == cmdPath {
-					isCompleted = false
-					break
-				}
-			}
-
-			if len(pathParts) == len(b.Leaves)+2 {
-				inputPath = strings.Join(pathParts[1:len(pathParts)-1], " ")
-				if inputPath == cmdPath {
-					isCompleted = true
-					if cb.validateInput != nil {
-						err = activeBranch.ValidateInput(pathParts[len(pathParts)-1])
-						return Status{
-							IsCommand: true,
-							Path:      strings.TrimSpace(alias + " " + inputPath),
-							Arg:       pathParts[len(pathParts)-1],
-							Error:     err,
-						}
-					}
-					break
-				}
+		if !b.HasArg && inputPath == cmdPath && cb.model.IsSupported(cmdPathInput) {
+			return Status{
+				IsCommand: true,
+				Path:      strings.TrimSpace(alias + " " + cmdPath),
 			}
 		}
 
-		if inputPath == cmdPath {
-			isCompleted = true
-			break
+		// Is the command valid, but missing an argument?
+		if b.HasArg && len(b.Leaves) == len(pathParts)-1 && inputPath == cmdPath {
+			return Status{
+				IsCommand: true,
+				Error: fmt.Errorf(
+					"expected value after '%s'",
+					pathParts[len(pathParts)-1],
+				),
+			}
 		}
 
-	}
-
-	if !isCompleted {
-		err = ErrIncompleteCmd
-	}
-
-	if !isCompleted && activeBranch.HasArg && len(activeBranch.Leaves) == len(pathParts)-1 {
-		err = fmt.Errorf("expected value after %s ", pathParts[len(pathParts)-1])
-	}
-
-	if isCompleted && !cb.model.IsSupported(cmdPathInput) {
-		err = ErrUnimplementedCmd
-	}
-
-	var arg string
-	if activeBranch.HasArg && isCompleted {
-		arg = pathParts[len(pathParts)-1]
-	}
-
-	var possiblePaths []string
-	// Suggestions are only relevant when we don't know
-	// what the command is.
-	if !isCompleted {
-		possiblePaths = populateSuggestions(cmdPaths, pathParts)
-	}
-
-	logger.Log(logger.Insane, "CommandModel", "path suggestions [%+v]", possiblePaths)
-
-	path := fmt.Sprintf("%s %s", pathParts[0], strings.Join(activeBranch.Leaves, " "))
-	if len(activeBranch.Leaves) == 0 {
-		path = pathParts[0]
+		if b.HasArg && len(pathParts) == len(b.Leaves)+2 {
+			// Do we have a valid path when excluding the argument?
+			inputPath = strings.Join(pathParts[1:len(pathParts)-1], " ")
+			if inputPath == cmdPath {
+				err = activeBranch.ValidateArg(pathParts[len(pathParts)-1])
+				return Status{
+					IsCommand: true,
+					Path:      strings.TrimSpace(alias + " " + inputPath),
+					Arg:       pathParts[len(pathParts)-1],
+					Error:     err,
+				}
+			}
+		}
 	}
 
 	return Status{
 		IsCommand:       true,
-		Error:           err,
-		PathSuggestions: possiblePaths,
-		Path:            path,
-		Arg:             arg,
+		Error:           ErrIncompleteCmd,
+		PathSuggestions: populateSuggestions(cmdPaths, pathParts),
+		Path: strings.TrimSpace(
+			fmt.Sprintf("%s %s", pathParts[0], strings.Join(activeBranch.Leaves, " ")),
+		),
 	}
 }
 
