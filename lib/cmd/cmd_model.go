@@ -201,13 +201,17 @@ func (cb Command) ParseCommand(input string) Status {
 	}
 
 	var possiblePaths []string
-	for _, b := range cmdPaths {
-		leaves := strings.Fields(b)
-		if len(cmdFields) == len(leaves) {
-			possiblePaths = append(
-				possiblePaths,
-				strings.Join(leaves[:len(cmdFields)], " "),
-			)
+	// Suggestions are only relevant when we don't know
+	// what the command is.
+	if !isCompleted {
+		for _, b := range cmdPaths {
+			leaves := strings.Fields(b)
+			if len(cmdFields) == len(leaves) {
+				possiblePaths = append(
+					possiblePaths,
+					strings.Join(leaves[:len(cmdFields)], " "),
+				)
+			}
 		}
 	}
 
