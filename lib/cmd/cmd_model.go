@@ -137,13 +137,13 @@ func (cb Command) GetId() int {
 	return cb.id
 }
 
-func (cb Command) ParseCommand(input string) Status {
-	var cmdFields []string = strings.Fields(input)
-	if len(cmdFields) == 0 {
+func (cb Command) ParseCommand(cmdPathInput string) Status {
+	var pathParts []string = strings.Fields(cmdPathInput)
+	if len(pathParts) == 0 {
 		return Status{Error: ErrEmptyCommand}
 	}
 
-	var alias string = cmdFields[0]
+	var alias string = pathParts[0]
 	var isCompleted bool
 	var err error
 	var cmdPaths []string
@@ -154,29 +154,29 @@ func (cb Command) ParseCommand(input string) Status {
 	}
 
 	for _, b := range cb.tree.Branches {
-		fieldStr := strings.Join(cmdFields[1:], " ")
+		inputPath := strings.Join(pathParts[1:], " ")
 		cmdPath := strings.Join(b.Leaves, " ")
 		cmdPaths = append(cmdPaths, fmt.Sprintf("%s %s", alias, cmdPath))
 		activeBranch = b
 
 		if b.HasArg {
-			if len(b.Leaves) == len(cmdFields)-1 {
-				if fieldStr == cmdPath {
+			if len(b.Leaves) == len(pathParts)-1 {
+				if inputPath == cmdPath {
 					isCompleted = false
 					break
 				}
 			}
 
-			if len(cmdFields) == len(b.Leaves)+2 {
-				fieldStr = strings.Join(cmdFields[1:len(cmdFields)-1], " ")
-				if fieldStr == cmdPath {
+			if len(pathParts) == len(b.Leaves)+2 {
+				inputPath = strings.Join(pathParts[1:len(pathParts)-1], " ")
+				if inputPath == cmdPath {
 					isCompleted = true
 					break
 				}
 			}
 		}
 
-		if fieldStr == cmdPath {
+		if inputPath == cmdPath {
 			isCompleted = true
 			break
 		}
@@ -187,17 +187,17 @@ func (cb Command) ParseCommand(input string) Status {
 		err = ErrIncompleteCmd
 	}
 
-	if !isCompleted && activeBranch.HasArg && len(activeBranch.Leaves) == len(cmdFields)-1 {
-		err = fmt.Errorf("expected value after %s ", cmdFields[len(cmdFields)-1])
+	if !isCompleted && activeBranch.HasArg && len(activeBranch.Leaves) == len(pathParts)-1 {
+		err = fmt.Errorf("expected value after %s ", pathParts[len(pathParts)-1])
 	}
 
-	if isCompleted && !cb.model.IsSupported(input) {
+	if isCompleted && !cb.model.IsSupported(cmdPathInput) {
 		err = ErrUnimplementedCmd
 	}
 
 	var arg string
 	if activeBranch.HasArg && isCompleted {
-		arg = cmdFields[len(cmdFields)-1]
+		arg = pathParts[len(pathParts)-1]
 	}
 
 	var possiblePaths []string
@@ -206,10 +206,10 @@ func (cb Command) ParseCommand(input string) Status {
 	if !isCompleted {
 		for _, b := range cmdPaths {
 			leaves := strings.Fields(b)
-			if len(cmdFields) == len(leaves) {
+			if len(pathParts) == len(leaves) {
 				possiblePaths = append(
 					possiblePaths,
-					strings.Join(leaves[:len(cmdFields)], " "),
+					strings.Join(leaves[:len(pathParts)], " "),
 				)
 			}
 		}
@@ -217,9 +217,9 @@ func (cb Command) ParseCommand(input string) Status {
 
 	logger.Log(logger.Insane, "CommandModel", "path suggestions [%+v]", possiblePaths)
 
-	path := fmt.Sprintf("%s %s", cmdFields[0], strings.Join(activeBranch.Leaves, " "))
+	path := fmt.Sprintf("%s %s", pathParts[0], strings.Join(activeBranch.Leaves, " "))
 	if len(activeBranch.Leaves) == 0 {
-		path = cmdFields[0]
+		path = pathParts[0]
 	}
 
 	return Status{
