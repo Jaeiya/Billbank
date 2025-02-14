@@ -70,7 +70,6 @@ func NewDebugCmd(h *utils.InputHistory) cmd.Command {
 			Aliases: []string{"/"},
 			Branches: []cmd.Branch{
 				{Leaves: []string{"history"}, HasArg: false},
-				{Leaves: []string{"john"}, HasArg: true},
 				{Leaves: []string{"log"}, HasArg: false},
 				{Leaves: []string{"log", "clear"}, HasArg: false},
 				{Leaves: []string{"slog"}, HasArg: false},
@@ -91,11 +90,8 @@ func NewDebugCmd(h *utils.InputHistory) cmd.Command {
 
 	return cmd.New(
 		cmd.Config{
-			Name:                "Debug",
-			Model:               m,
-			InputValidationFunc: func(arg string) error { return nil },
-			KeyValidationFunc:   func(key rune) bool { return false },
-			HasArg:              false,
+			Name:  "Debug",
+			Model: m,
 		},
 	)
 }

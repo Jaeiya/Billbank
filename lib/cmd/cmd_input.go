@@ -221,19 +221,9 @@ func onAnyKey(m CmdInputModel, msg tea.KeyMsg) (CmdInputModel, tea.Cmd) {
 		key = "ctrl"
 	}
 	m.statusText = ""
-	// Restrict user input to "valid" keys
-	if len(msg.String()) == 1 {
-		char := rune(msg.String()[0])
-		if m.currCmd.status.Error != nil {
-			logger.Log(logger.Hot, "CommandInput", "[onAnyKey] try validating [%s]", key)
-			if !m.currCmd.ValidateKey(char) {
-				return m, nil
-			}
-		}
-	}
-
+	cmdStatus := m.currCmd.status
+	logger.Log(logger.Insane, "CommandModel", "[onAnyKey] command status [%+v]", cmdStatus)
 	logger.Log(logger.Hot, "CommandInput", "[onAnyKey] try parse command on [%s]", key)
-
 	return tryParseCmd(m, msg)
 }
 

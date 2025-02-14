@@ -45,29 +45,14 @@ type Config struct {
 	// command Base Model.
 	Model Model
 
-	// Setting this to true will prevent non-arg
-	// commands from working properly
-	HasArg bool
-
 	// Validates the command argument. For instance
 	// if the user should enter a price, then you
 	// would validate that here.
-	InputValidationFunc func(arg string) error
-
-	// Limit the character set to be used. For
-	// instance, if the argument is supposed to be
-	// a price, then don't allow any chars other
-	// than numbers and a period.
-	KeyValidationFunc func(key rune) bool
 }
 
 func New(config Config) Command {
 	if config.Name == "" {
 		panic("missing command name")
-	}
-
-	if config.HasArg && config.InputValidationFunc == nil {
-		panic("command arguments need a validation function")
 	}
 
 	if config.Model == nil {
@@ -78,14 +63,11 @@ func New(config Config) Command {
 
 	cmdId += 1
 	cmd := Command{
-		name:          config.Name,
-		model:         config.Model,
-		status:        Status{},
-		tree:          config.Model.GetCmdTree(),
-		validateInput: config.InputValidationFunc,
-		hasArg:        config.HasArg,
-		id:            cmdId,
-		validateKey:   config.KeyValidationFunc,
+		name:   config.Name,
+		model:  config.Model,
+		status: Status{},
+		tree:   config.Model.GetCmdTree(),
+		id:     cmdId,
 	}
 
 	return cmd
@@ -112,14 +94,11 @@ func New(config Config) Command {
 // Each command branch is an execution path. What
 // happens in that execution path is up to the dev.
 type Command struct {
-	id            int
-	name          string
-	model         Model
-	tree          Tree
-	hasArg        bool
-	status        Status
-	validateInput func(arg string) error
-	validateKey   func(key rune) bool
+	id     int
+	name   string
+	model  Model
+	tree   Tree
+	status Status
 }
 
 type Tree struct {
@@ -128,9 +107,10 @@ type Tree struct {
 }
 
 type Branch struct {
-	Leaves      []string
-	HasArg      bool
-	ValidateKey func(key rune) bool
+	Leaves []string
+	HasArg bool
+	// Allows you to validate the users input
+	// argument before the command is run.
 	ValidateArg func(arg string) error
 }
 
@@ -214,11 +194,4 @@ func populateSuggestions(cmdPaths []string, pathParts []string) []string {
 		}
 	}
 	return suggestions
-}
-
-func (cb *Command) ValidateKey(key rune) bool {
-	if cb.validateKey != nil && cb.hasArg {
-		return cb.validateKey(key)
-	}
-	return true
 }

@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/charmbracelet/bubbles/cursor"
 	tea "github.com/charmbracelet/bubbletea"
@@ -46,6 +47,17 @@ func NewBaseModel[T any](cmdTree Tree, cmds []BranchCommand[T]) *BaseModel[T] {
 			panic(fmt.Errorf("found multiple command paths for [%s]", cmd.Path))
 		}
 		cmdMap[cmd.Path] = cmd
+	}
+
+	for _, branch := range cmdTree.Branches {
+		if branch.HasArg && branch.ValidateArg == nil {
+			panic(
+				fmt.Errorf(
+					"command branch [%s] is missing an arg validation func()",
+					strings.TrimSpace(cmdTree.Aliases[0]+" "+strings.Join(branch.Leaves, " ")),
+				),
+			)
+		}
 	}
 
 	return &BaseModel[T]{

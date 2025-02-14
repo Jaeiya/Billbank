@@ -23,12 +23,8 @@ func NewBillsCmd() cmd.Command {
 
 	return cmd.New(
 		cmd.Config{
-			Name:                "Bills",
-			Model:               m,
-			InputValidationFunc: func(arg string) error { return nil },
-			KeyValidationFunc:   func(key rune) bool { return false },
-			// You cannot mix arg & non-arg commands
-			HasArg: false,
+			Name:  "Bills",
+			Model: m,
 		},
 	)
 }
