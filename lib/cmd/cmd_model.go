@@ -107,8 +107,8 @@ type Tree struct {
 }
 
 type Branch struct {
-	Leaves []string
-	HasArg bool
+	Leaves  []string
+	NeedArg bool
 	// Allows you to validate the users input
 	// argument before the command is run.
 	ValidateArg func(arg string) error
@@ -125,7 +125,7 @@ func (cb Command) ParseCommand(cmdPathInput string) Status {
 	}
 
 	var alias string = pathParts[0]
-	var err error
+	var cmdLeaves []string = pathParts[1:]
 	var cmdPaths []string
 	var activeBranch Branch
 
@@ -139,15 +139,16 @@ func (cb Command) ParseCommand(cmdPathInput string) Status {
 		cmdPaths = append(cmdPaths, fmt.Sprintf("%s %s", alias, cmdPath))
 		activeBranch = b
 
-		if !b.HasArg && inputPath == cmdPath && cb.model.IsSupported(cmdPathInput) {
+		if !b.NeedArg && inputPath == cmdPath && cb.model.IsSupported(cmdPathInput) {
 			return Status{
 				IsCommand: true,
 				Path:      strings.TrimSpace(alias + " " + cmdPath),
 			}
 		}
 
-		// Is the command valid, but missing an argument?
-		if b.HasArg && len(b.Leaves) == len(pathParts)-1 && inputPath == cmdPath {
+		hasArg := len(cmdLeaves) == len(b.Leaves)+1
+
+		if b.NeedArg && !hasArg && inputPath == cmdPath {
 			return Status{
 				IsCommand: true,
 				Error: fmt.Errorf(
@@ -157,16 +158,14 @@ func (cb Command) ParseCommand(cmdPathInput string) Status {
 			}
 		}
 
-		if b.HasArg && len(pathParts) == len(b.Leaves)+2 {
-			// Do we have a valid path when excluding the argument?
-			inputPath = strings.Join(pathParts[1:len(pathParts)-1], " ")
+		if b.NeedArg && hasArg {
+			inputPath = strings.Join(cmdLeaves[:len(cmdLeaves)-1], " ")
 			if inputPath == cmdPath {
-				err = activeBranch.ValidateArg(pathParts[len(pathParts)-1])
 				return Status{
 					IsCommand: true,
 					Path:      strings.TrimSpace(alias + " " + inputPath),
 					Arg:       pathParts[len(pathParts)-1],
-					Error:     err,
+					Error:     activeBranch.ValidateArg(pathParts[len(pathParts)-1]),
 				}
 			}
 		}

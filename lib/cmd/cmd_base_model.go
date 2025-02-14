@@ -50,7 +50,7 @@ func NewBaseModel[T any](cmdTree Tree, cmds []BranchCommand[T]) *BaseModel[T] {
 	}
 
 	for _, branch := range cmdTree.Branches {
-		if branch.HasArg && branch.ValidateArg == nil {
+		if branch.NeedArg && branch.ValidateArg == nil {
 			panic(
 				fmt.Errorf(
 					"command branch [%s] is missing an arg validation func()",

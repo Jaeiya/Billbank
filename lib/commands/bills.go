@@ -14,7 +14,9 @@ func NewBillsCmd() cmd.Command {
 		BaseModel: cmd.NewBaseModel(cmd.Tree{
 			Aliases: []string{"bills"},
 			Branches: []cmd.Branch{
-				{Leaves: []string{}, HasArg: false},
+				{Leaves: []string{}, NeedArg: true, ValidateArg: func(arg string) error {
+					return nil
+				}},
 			},
 		}, []cmd.BranchCommand[billsModel]{
 			{Path: "bills", Run: loadBills, View: viewBills},
@@ -63,5 +65,5 @@ func loadBills(m billsModel) billsModel {
 }
 
 func viewBills(m billsModel) string {
-	return "hello"
+	return "Hello, " + m.GetCmdArg()
 }

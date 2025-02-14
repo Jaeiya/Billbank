@@ -69,12 +69,12 @@ func NewDebugCmd(h *utils.InputHistory) cmd.Command {
 		BaseModel: cmd.NewBaseModel(cmd.Tree{
 			Aliases: []string{"/"},
 			Branches: []cmd.Branch{
-				{Leaves: []string{"history"}, HasArg: false},
-				{Leaves: []string{"log"}, HasArg: false},
-				{Leaves: []string{"log", "clear"}, HasArg: false},
-				{Leaves: []string{"slog"}, HasArg: false},
-				{Leaves: []string{"slog", "clear"}, HasArg: false},
-				{Leaves: []string{"stats"}, HasArg: false},
+				{Leaves: []string{"history"}, NeedArg: false},
+				{Leaves: []string{"log"}, NeedArg: false},
+				{Leaves: []string{"log", "clear"}, NeedArg: false},
+				{Leaves: []string{"slog"}, NeedArg: false},
+				{Leaves: []string{"slog", "clear"}, NeedArg: false},
+				{Leaves: []string{"stats"}, NeedArg: false},
 			},
 		}, []cmd.BranchCommand[debugModel]{
 			{Path: "/ history", Run: loadHistory, View: viewHistory},
