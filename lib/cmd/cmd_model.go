@@ -179,9 +179,7 @@ func (cb Command) ParseCommand(cmdPathInput string) Status {
 		IsCommand:       true,
 		Error:           ErrIncompleteCmd,
 		PathSuggestions: populateSuggestions(cmdPaths, pathParts),
-		Path: strings.TrimSpace(
-			fmt.Sprintf("%s %s", pathParts[0], strings.Join(activeBranch.Leaves, " ")),
-		),
+		Path:            cmdPathInput,
 	}
 }
 
