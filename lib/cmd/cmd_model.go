@@ -9,7 +9,6 @@ import (
 )
 
 var (
-	ErrFatalCommand     = fmt.Errorf("command parsing failed; this should not happen")
 	ErrNotCommand       = fmt.Errorf("unrecognized command")
 	ErrIncompleteCmd    = fmt.Errorf("incomplete command")
 	ErrMissingArgument  = fmt.Errorf("missing argument")
@@ -133,22 +132,27 @@ func (cb Command) ParseCommand(cmdPathInput string) Status {
 		return Status{Error: ErrNotCommand}
 	}
 
-	for _, b := range cb.tree.Branches {
+	for _, branch := range cb.tree.Branches {
 		inputPath := strings.Join(pathParts[1:], " ")
-		cmdPath := strings.Join(b.Leaves, " ")
+		cmdPath := strings.Join(branch.Leaves, " ")
 		cmdPaths = append(cmdPaths, fmt.Sprintf("%s %s", alias, cmdPath))
-		activeBranch = b
+		activeBranch = branch
 
-		if !b.NeedArg && inputPath == cmdPath && cb.model.IsSupported(cmdPathInput) {
+		if !branch.NeedArg && inputPath == cmdPath {
+			var err error
+			if !cb.model.IsSupported(cmdPathInput) {
+				err = ErrUnimplementedCmd
+			}
 			return Status{
 				IsCommand: true,
 				Path:      strings.TrimSpace(alias + " " + cmdPath),
+				Error:     err,
 			}
 		}
 
-		hasArg := len(cmdLeaves) == len(b.Leaves)+1
+		hasArg := len(cmdLeaves) == len(branch.Leaves)+1
 
-		if b.NeedArg && !hasArg && inputPath == cmdPath {
+		if branch.NeedArg && !hasArg && inputPath == cmdPath {
 			return Status{
 				IsCommand: true,
 				Error: fmt.Errorf(
@@ -158,7 +162,7 @@ func (cb Command) ParseCommand(cmdPathInput string) Status {
 			}
 		}
 
-		if b.NeedArg && hasArg {
+		if branch.NeedArg && hasArg {
 			inputPath = strings.Join(cmdLeaves[:len(cmdLeaves)-1], " ")
 			if inputPath == cmdPath {
 				return Status{
