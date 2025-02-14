@@ -60,25 +60,29 @@ func Log(ll LogLevel, msg string, vars ...any) {
 	logChan <- LogMsg{msg, ll, file, line, vars}
 }
 
-func LogFatal(msg string, vars ...any) {
+func LogFatal(errMsg string, description string, vars ...any) {
 	defer func() {
 		CloseLog()
 		os.Exit(1)
 	}()
 
-	msg = strings.TrimSpace(msg)
-	msg = fmt.Sprintf("\n%s\n", strings.ReplaceAll(msg, "\n", " "))
-	msg = lipgloss.NewStyle().
+	errMsg = lipgloss.NewStyle().Foreground(ui.Red).Render(errMsg)
+
+	description = strings.TrimSpace(description)
+	description = fmt.Sprintf("\n%s\n", strings.ReplaceAll(description, "\n", " "))
+	description = lipgloss.NewStyle().
 		PaddingLeft(1).
-		Width(50).
-		Foreground(ui.BrightYellow).
-		Render(fmt.Sprintf(msg, vars...))
+		Width(60).
+		Foreground(ui.Yellow).
+		Render(description)
 
 	if len(vars) > 0 {
-		fmt.Print(msg)
+		fmt.Printf(errMsg, vars...)
+		fmt.Print(description)
 		fmt.Printf("\n%s\n", getStack())
 	} else {
-		fmt.Println(msg)
+		fmt.Println(errMsg)
+		fmt.Println(description)
 	}
 }
 
