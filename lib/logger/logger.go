@@ -21,16 +21,16 @@ const (
 	Info
 	Attention
 	Error
+	Fatal
 	None
 )
 
 type LogMsg struct {
-	msg     string
-	level   LogLevel
-	file    string
-	line    int
-	subject string
-	vars    []any
+	msg   string
+	level LogLevel
+	file  string
+	line  int
+	vars  []any
 }
 
 var (
@@ -41,7 +41,7 @@ var (
 	once      sync.Once
 )
 
-func Log(ll LogLevel, subject string, msg string, vars ...any) {
+func Log(ll LogLevel, msg string, vars ...any) {
 	// Removes side-effects when testing code that is
 	// using the logger.
 	if logLevel == None {
@@ -55,7 +55,7 @@ func Log(ll LogLevel, subject string, msg string, vars ...any) {
 	}
 
 	_, file, line, _ := runtime.Caller(1)
-	logChan <- LogMsg{msg, ll, file, line, subject, vars}
+	logChan <- LogMsg{msg, ll, file, line, vars}
 }
 
 func SetLogLevel(ll LogLevel) {
@@ -87,11 +87,10 @@ func initLog() {
 func logMessages() {
 	for log := range logChan {
 		msg := fmt.Sprintf(
-			"%s [%s] [%s:%d]: %s: %s\n",
+			"%s [%s] [%s:%d]: %s\n",
 			time.Now().Format("03:04:05.000 PM MST"),
 			getLogLevelStr(log.level),
 			filepath.Base(log.file), log.line,
-			log.subject,
 			log.msg,
 		)
 		if len(log.vars) == 0 {

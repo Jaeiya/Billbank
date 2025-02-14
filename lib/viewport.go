@@ -41,15 +41,15 @@ func (vp ViewPort) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		vp.height = msg.Height
 		vp.width = msg.Width
-		logger.Log(logger.Hot, "ViewPort", "[WindowSizeMsg] sending viewport size [%d:%d]", vp.width, vp.height)
+		logger.Log(logger.Hot, "[WindowSizeMsg] sending viewport size [%d:%d]", vp.width, vp.height)
 		teaCmds = append(teaCmds, vp.sendViewportSize)
 
 	case cmd.UpdateCmdMsg:
 		if msg.Model != nil {
 			vp.CurrentCmdModel = msg.Model
-			logger.Log(logger.Debug, "ViewPort", "storing new command model [%s]", msg.CommandStatus.Path)
+			logger.Log(logger.Debug, "storing new command model [%s]", msg.CommandStatus.Path)
 		}
-		logger.Log(logger.Debug, "ViewPort", "[UpdateCmdMsg] sending viewport size [%d:%d]", vp.width, vp.height)
+		logger.Log(logger.Debug, "[UpdateCmdMsg] sending viewport size [%d:%d]", vp.width, vp.height)
 		teaCmds = append(teaCmds, vp.sendViewportSize)
 
 	case CommanderStatusMsg:

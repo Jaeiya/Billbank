@@ -74,9 +74,7 @@ func (bc *BaseModel[T]) Update(model T, msg tea.Msg) (T, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case ViewportSizeMsg:
-		logger.Log(
-			logger.Hot, "BaseModel", "setting viewport size [%dx%d]", msg.Width, msg.Height,
-		)
+		logger.Log(logger.Hot, "setting viewport size [%dx%d]", msg.Width, msg.Height)
 		bc.viewHeight = msg.Height
 		bc.viewWidth = msg.Width
 		bc.hasStaleView = false
@@ -89,9 +87,7 @@ func (bc *BaseModel[T]) Update(model T, msg tea.Msg) (T, tea.Cmd) {
 		oldPath := bc.cmdStatus.Path
 		bc.hasStaleView = true
 		bc.cmdStatus = msg.CommandStatus
-		logger.Log(
-			logger.Debug,
-			"BaseModel",
+		logger.Log(logger.Debug,
 			"updated command path [%s] to [%s]",
 			oldPath,
 			bc.cmdStatus.Path,
@@ -109,14 +105,13 @@ func (bc *BaseModel[T]) View(model T) string {
 	cmd := bc.cmdMap[cmdPath]
 
 	if bc.hasStaleView {
-		logger.Log(logger.Hot, "BaseModel", "loading [stale] view [%s]", bc.stalePath)
+		logger.Log(logger.Hot, "loading [stale] view [%s]", bc.stalePath)
 		return bc.staleView
 	}
 
 	if !bc.isInterrupt {
 		logger.Log(
 			logger.Hot,
-			"BaseModel",
 			"loading [current] view [%s]",
 			bc.cmdStatus.Path,
 		)
@@ -186,7 +181,6 @@ func (m BaseModel[T]) ValidateCommand() {
 		if cmd.Run == nil {
 			logger.Log(
 				logger.Error,
-				"CommandError",
 				"[%s] is missing an implementation func()",
 				cmd.Path,
 			)
@@ -194,7 +188,6 @@ func (m BaseModel[T]) ValidateCommand() {
 		if cmd.View == nil {
 			logger.Log(
 				logger.Error,
-				"CommandError",
 				"[%s] is missing a view func()",
 				cmd.Path,
 			)
@@ -223,12 +216,12 @@ func (m *BaseModel[T]) Exec(model T) T {
 
 	m.ClearErrors()
 
-	logger.Log(logger.Hot, "BaseModel", "executing command path [%s]", cmdPath)
+	logger.Log(logger.Hot, "executing command path [%s]", cmdPath)
 
 	if cmd.Run == nil {
 		err := fmt.Errorf("[%s] tried to execute missing implementation func()", cmdPath)
 		if m.lastCmdError.Error() != err.Error() {
-			logger.Log(logger.Error, "CommandError", "%s", err)
+			logger.Log(logger.Error, "%s", err)
 			m.lastCmdError = err
 			m.AddError(err)
 		}
@@ -238,7 +231,7 @@ func (m *BaseModel[T]) Exec(model T) T {
 	if cmd.View == nil {
 		err := fmt.Errorf("[%s] tried to execute missing view func()", cmdPath)
 		if m.lastCmdError.Error() != err.Error() {
-			logger.Log(logger.Error, "CommandError", "%s", err)
+			logger.Log(logger.Error, "%s", err)
 			m.lastCmdError = err
 			m.AddError(err)
 		}
@@ -249,7 +242,7 @@ func (m *BaseModel[T]) Exec(model T) T {
 	errs := m.GetErrors()
 	if len(errs) > 0 {
 		if m.lastCmdError.Error() != errs[0].Error() {
-			logger.Log(logger.Error, "CommandError", "%s", errs[0].Error())
+			logger.Log(logger.Error, "%s", errs[0].Error())
 		}
 		m.lastCmdError = errs[0]
 	}

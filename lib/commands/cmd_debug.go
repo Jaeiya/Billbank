@@ -148,7 +148,7 @@ func (m debugModel) Update(msg tea.Msg) (cmd.Model, tea.Cmd) {
 		if m.IsActivePath("/ slog") {
 			// Reload slog
 			if msg.String() == "ctrl+r" {
-				logger.Log(logger.Debug, "DebugCommand", "reload slog")
+				logger.Log(logger.Debug, "reload slog")
 				// Wait for the above log to be written
 				time.Sleep(time.Millisecond * 50)
 				m = m.Exec(m)
@@ -283,11 +283,12 @@ func loadSlog(m debugModel) debugModel {
 
 		bullet := subjectStyle.Render("<>")
 		subj := fmt.Sprintf("%s %s", strings.Split(parts[4], ".")[0][1:], bullet)
-		words[1] = slogWordStyle.Render(strings.Join(words[1:], " "))
 
 		subjBuilder.WriteString(subj)
-		subjBuilder.WriteString("\n")
-		wordBuilder.WriteString(fmt.Sprintf(" %s\n", words[1]))
+		subjBuilder.WriteString("\n ")
+		wordBuilder.WriteString(
+			fmt.Sprintf(" %s\n", slogWordStyle.Render(strings.Join(words, " "))),
+		)
 	}
 
 	content := strings.TrimSpace(lipgloss.JoinHorizontal(

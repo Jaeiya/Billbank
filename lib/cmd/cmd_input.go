@@ -148,7 +148,7 @@ func (m CmdInputModel) Update(msg tea.Msg) (CmdInputModel, tea.Cmd) {
 			m, cmd = tryEnterCmd(m)
 			if m.currCmd.status.Error != nil {
 				msg := fmt.Sprintf("%s::[%s]", m.currCmd.status.Error.Error(), m.currCmd.status.Path)
-				logger.Log(logger.Attention, "CommandParser", "%s", msg)
+				logger.Log(logger.Attention, "%s", msg)
 			}
 			cmds = append(cmds, cmd)
 
@@ -173,7 +173,7 @@ func tryEnterCmd(m CmdInputModel) (CmdInputModel, tea.Cmd) {
 	}
 	cmd := m.currCmd
 
-	logger.Log(logger.Info, "CommandInput", "entering command [%+v]", cmd.status)
+	logger.Log(logger.Info, "entering command [%+v]", cmd.status)
 
 	cmdErr := cmd.status.Error
 	if cmdErr != nil {
@@ -195,7 +195,6 @@ func tryEnterCmd(m CmdInputModel) (CmdInputModel, tea.Cmd) {
 		m.CommandInput.Reset()
 		logger.Log(
 			logger.Debug,
-			"CommandInput",
 			"sending command [status] update [%s]",
 			cmd.status.Path,
 		)
@@ -206,7 +205,6 @@ func tryEnterCmd(m CmdInputModel) (CmdInputModel, tea.Cmd) {
 	m.CommandInput.Reset()
 	logger.Log(
 		logger.Debug,
-		"CommandInput",
 		"sending command [model & status] update [%s]",
 		cmd.status.Path,
 	)
@@ -222,8 +220,8 @@ func onAnyKey(m CmdInputModel, msg tea.KeyMsg) (CmdInputModel, tea.Cmd) {
 	}
 	m.statusText = ""
 	cmdStatus := m.currCmd.status
-	logger.Log(logger.Insane, "CommandModel", "[onAnyKey] command status [%+v]", cmdStatus)
-	logger.Log(logger.Hot, "CommandInput", "[onAnyKey] try parse command on [%s]", key)
+	logger.Log(logger.Insane, "[onAnyKey] command status [%+v]", cmdStatus)
+	logger.Log(logger.Hot, "[onAnyKey] try parse command on [%s]", key)
 	return tryParseCmd(m, msg)
 }
 
@@ -234,7 +232,6 @@ func tryParseCmd(m CmdInputModel, msg tea.KeyMsg) (CmdInputModel, tea.Cmd) {
 	for _, c := range m.commands {
 		logger.Log(
 			logger.Insane,
-			"CommandInput",
 			"test if [%s] is a [%s] command",
 			m.CommandInput.Value(),
 			c.name,
