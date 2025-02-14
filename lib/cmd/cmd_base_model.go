@@ -137,52 +137,52 @@ func (bc *BaseModel[T]) View(model T) string {
 	return cmd.View(model)
 }
 
-func (bc BaseModel[T]) GetViewSize() (int, int) {
-	return bc.viewWidth, bc.viewHeight
+func (m BaseModel[T]) GetViewSize() (int, int) {
+	return m.viewWidth, m.viewHeight
 }
 
-func (bc BaseModel[T]) GetCmdArg() string {
-	return bc.cmdStatus.Arg
+func (m BaseModel[T]) GetCmdArg() string {
+	return m.cmdStatus.Arg
 }
 
-func (bc *BaseModel[T]) AddError(err error) {
-	bc.cmdErrors = append(bc.cmdErrors, err)
+func (m *BaseModel[T]) AddError(err error) {
+	m.cmdErrors = append(m.cmdErrors, err)
 }
 
-func (bc BaseModel[T]) GetErrors() []error {
-	return bc.cmdErrors
+func (m BaseModel[T]) GetErrors() []error {
+	return m.cmdErrors
 }
 
-func (bc *BaseModel[T]) ClearErrors() {
-	if len(bc.cmdErrors) > 0 {
-		bc.lastCmdError = fmt.Errorf("")
-		bc.cmdErrors = nil
+func (m *BaseModel[T]) ClearErrors() {
+	if len(m.cmdErrors) > 0 {
+		m.lastCmdError = fmt.Errorf("")
+		m.cmdErrors = nil
 	}
 }
 
-func (bc BaseModel[T]) GetCmdTree() Tree {
-	return bc.cmdTree
+func (m BaseModel[T]) GetCmdTree() Tree {
+	return m.cmdTree
 }
 
-func (bc BaseModel[T]) IsActivePath(cmdPath string) bool {
-	return bc.cmdStatus.Path == cmdPath
+func (m BaseModel[T]) IsActivePath(cmdPath string) bool {
+	return m.cmdStatus.Path == cmdPath
 }
 
 /*
 HasView returns true if the current command tree string has
 an applicable view associated with it.
 */
-func (bc BaseModel[T]) HasView() bool {
-	cmd := bc.cmdMap[bc.cmdStatus.Path]
+func (m BaseModel[T]) HasView() bool {
+	cmd := m.cmdMap[m.cmdStatus.Path]
 	return cmd.View != nil
 }
 
-func (bc BaseModel[T]) ValidateCommand() {
-	if len(bc.cmdMap) == 0 {
+func (m BaseModel[T]) ValidateCommand() {
+	if len(m.cmdMap) == 0 {
 		panic("missing sub commands, did you forget to add them?")
 	}
 
-	for _, cmd := range bc.cmdMap {
+	for _, cmd := range m.cmdMap {
 		if cmd.Run == nil {
 			logger.Log(
 				logger.Error,
@@ -202,56 +202,56 @@ func (bc BaseModel[T]) ValidateCommand() {
 	}
 }
 
-func (bc BaseModel[T]) IsSupported(cmdPath string) bool {
-	_, ok := bc.cmdMap[cmdPath]
+func (m BaseModel[T]) IsSupported(cmdPath string) bool {
+	_, ok := m.cmdMap[cmdPath]
 	return ok
 }
 
 // IsInitialized checks to make sure that various expected values
 // are set.
-func (bc BaseModel[T]) IsInitialized() bool {
-	return len(bc.cmdMap) > 0 && len(bc.cmdStatus.Path) > 0 && bc.viewWidth > 0 &&
-		bc.viewHeight > 0
+func (m BaseModel[T]) IsInitialized() bool {
+	return len(m.cmdMap) > 0 && len(m.cmdStatus.Path) > 0 && m.viewWidth > 0 &&
+		m.viewHeight > 0
 }
 
 // Exec executes the current command path in the context of the
 // passed model. All detected errors are logged and stored.
-func (bc *BaseModel[T]) Exec(model T) T {
-	bc.isInterrupt = false
-	cmdPath := bc.cmdStatus.Path
-	cmd := bc.cmdMap[cmdPath]
+func (m *BaseModel[T]) Exec(model T) T {
+	m.isInterrupt = false
+	cmdPath := m.cmdStatus.Path
+	cmd := m.cmdMap[cmdPath]
 
-	bc.ClearErrors()
+	m.ClearErrors()
 
 	logger.Log(logger.Hot, "BaseModel", "executing command path [%s]", cmdPath)
 
 	if cmd.Run == nil {
 		err := fmt.Errorf("[%s] tried to execute missing implementation func()", cmdPath)
-		if bc.lastCmdError.Error() != err.Error() {
+		if m.lastCmdError.Error() != err.Error() {
 			logger.Log(logger.Error, "CommandError", "%s", err)
-			bc.lastCmdError = err
-			bc.AddError(err)
+			m.lastCmdError = err
+			m.AddError(err)
 		}
 		return model
 	}
 
 	if cmd.View == nil {
 		err := fmt.Errorf("[%s] tried to execute missing view func()", cmdPath)
-		if bc.lastCmdError.Error() != err.Error() {
+		if m.lastCmdError.Error() != err.Error() {
 			logger.Log(logger.Error, "CommandError", "%s", err)
-			bc.lastCmdError = err
-			bc.AddError(err)
+			m.lastCmdError = err
+			m.AddError(err)
 		}
 		return model
 	}
 
 	model = cmd.Run(model)
-	errs := bc.GetErrors()
+	errs := m.GetErrors()
 	if len(errs) > 0 {
-		if bc.lastCmdError.Error() != errs[0].Error() {
+		if m.lastCmdError.Error() != errs[0].Error() {
 			logger.Log(logger.Error, "CommandError", "%s", errs[0].Error())
 		}
-		bc.lastCmdError = errs[0]
+		m.lastCmdError = errs[0]
 	}
 
 	return model
