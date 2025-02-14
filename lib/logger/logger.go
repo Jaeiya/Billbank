@@ -71,7 +71,7 @@ func LogFatal(msg string, vars ...any) {
 	msg = lipgloss.NewStyle().
 		PaddingLeft(1).
 		Width(50).
-		Foreground(ui.Red).
+		Foreground(ui.BrightYellow).
 		Render(fmt.Sprintf(msg, vars...))
 
 	if len(vars) > 0 {
