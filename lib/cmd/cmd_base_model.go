@@ -10,14 +10,17 @@ import (
 	"github.com/jaeiya/billbank/lib/ui"
 )
 
-const ErrMultipleCmdMsg = `
-Found multiple branch commands with the same path [%s]. The paths must
-be unique for each branch.
+const MsgMultipleCmdErr = `
+Branch-command paths must be unique for each branch, just like command-tree
+branches must have unique leaf combinations. "hello world" is not the same as
+"world hello", but neither can be part of more than one branch on the same
+command.
 `
 
-const ErrMissingArgFunc = `
-Command tree branch [%s] is missing an arg validation function. All
-branches that require arguments, also require a validation function.
+const MsgMissingArgFuncErr = `
+If a branch requires an argument, then it also requires validation. If you
+have not included a validation function, then you're not validating the
+users input, which is an anti-pattern.
 `
 
 type (
@@ -54,7 +57,11 @@ func NewBaseModel[T any](cmdTree Tree, cmds []BranchCommand[T]) *BaseModel[T] {
 	cmdMap := map[string]BranchCommand[T]{}
 	for _, cmd := range cmds {
 		if _, alreadyExists := cmdMap[cmd.Path]; alreadyExists {
-			logger.LogFatal(ErrMultipleCmdMsg, cmd.Path)
+			logger.LogFatal(
+				"Found multiple branch commands with the same path [%s].",
+				MsgMultipleCmdErr,
+				cmd.Path,
+			)
 		}
 		cmdMap[cmd.Path] = cmd
 	}
@@ -62,7 +69,8 @@ func NewBaseModel[T any](cmdTree Tree, cmds []BranchCommand[T]) *BaseModel[T] {
 	for _, branch := range cmdTree.Branches {
 		if branch.NeedArg && branch.ValidateArg == nil {
 			logger.LogFatal(
-				ErrMissingArgFunc,
+				"Command-tree branch [%s] is missing an arg validation function.",
+				MsgMissingArgFuncErr,
 				strings.TrimSpace(cmdTree.Aliases[0]+" "+strings.Join(branch.Leaves, "")),
 			)
 		}

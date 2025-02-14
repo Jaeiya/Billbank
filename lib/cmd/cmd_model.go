@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/jaeiya/billbank/lib/logger"
 )
 
 var (
@@ -15,6 +16,20 @@ var (
 	ErrEmptyCommand     = fmt.Errorf("empty command")
 	ErrUnimplementedCmd = fmt.Errorf("unimplemented command")
 )
+
+var MsgDuplicateBranchErr = `
+Did you forget to remove some test branches? Commands can only
+contain tree branches with unique leaf combinations. For instance,
+the leaves "hello" & "world" have two unique combinations. You
+can have two branches, one with "hello world" and one with
+"world hello", but not more than one of each.
+`
+
+var MsgNoBranchesWithDefaultArgErr = `
+Your command alias directly requires an argument, which means all
+branches other than the default branch, are hidden. Consider
+turning the command into a compound command: <alias keyword arg>
+instead of: <alias arg>`
 
 var cmdId = 0
 
@@ -59,6 +74,28 @@ func New(config Config) Command {
 	}
 
 	config.Model.ValidateCommand()
+
+	tree := config.Model.GetCmdTree()
+
+	branchNameStore := map[string]struct{}{}
+	for _, branch := range tree.Branches {
+		if len(branch.Leaves) == 0 && len(tree.Branches) > 1 && branch.NeedArg {
+			logger.LogFatal(
+				"Branches on the [%s] command have been hidden implicitly.",
+				MsgNoBranchesWithDefaultArgErr,
+				tree.Aliases[0],
+			)
+		}
+		cmdPath := strings.Join(branch.Leaves, " ")
+		if _, ok := branchNameStore[cmdPath]; ok {
+			logger.LogFatal(
+				"Found duplicate tree branches [%s]. ",
+				MsgDuplicateBranchErr,
+				tree.Aliases[0]+" "+cmdPath,
+			)
+		}
+		branchNameStore[cmdPath] = struct{}{}
+	}
 
 	cmdId += 1
 	cmd := Command{
