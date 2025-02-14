@@ -66,6 +66,7 @@ func LogFatal(msg string, vars ...any) {
 		os.Exit(1)
 	}()
 
+	msg = strings.TrimSpace(msg)
 	msg = fmt.Sprintf("\n%s\n", strings.ReplaceAll(msg, "\n", " "))
 	msg = lipgloss.NewStyle().
 		PaddingLeft(1).
