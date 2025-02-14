@@ -285,16 +285,11 @@ func loadSlog(m debugModel) debugModel {
 
 		var words []string = parts[5:]
 
-		bullet := "<>"
-		words[0] = fmt.Sprintf("%s %s", words[0][:len(words[0])-1], bullet)
-		words[0] = fmt.Sprintf(
-			"%s%s",
-			words[0][:len(words[0])-len(bullet)],
-			subjectStyle.Render(words[0][len(words[0])-len(bullet):]),
-		)
+		bullet := subjectStyle.Render("<>")
+		subj := fmt.Sprintf("%s %s", strings.Split(parts[4], ".")[0][1:], bullet)
 		words[1] = slogWordStyle.Render(strings.Join(words[1:], " "))
 
-		subjBuilder.WriteString(words[0])
+		subjBuilder.WriteString(subj)
 		subjBuilder.WriteString("\n")
 		wordBuilder.WriteString(fmt.Sprintf(" %s\n", words[1]))
 	}
