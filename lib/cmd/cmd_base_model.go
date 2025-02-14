@@ -10,6 +10,16 @@ import (
 	"github.com/jaeiya/billbank/lib/ui"
 )
 
+const ErrMultipleCmdMsg = `
+Found multiple branch commands with the same path [%s]. The paths must
+be unique for each branch.
+`
+
+const ErrMissingArgFunc = `
+Command tree branch [%s] is missing an arg validation function. All
+branches that require arguments, also require a validation function.
+`
+
 type (
 	ViewportSizeMsg struct {
 		Width  int
@@ -44,18 +54,16 @@ func NewBaseModel[T any](cmdTree Tree, cmds []BranchCommand[T]) *BaseModel[T] {
 	cmdMap := map[string]BranchCommand[T]{}
 	for _, cmd := range cmds {
 		if _, alreadyExists := cmdMap[cmd.Path]; alreadyExists {
-			panic(fmt.Errorf("found multiple command paths for [%s]", cmd.Path))
+			logger.LogFatal(ErrMultipleCmdMsg, cmd.Path)
 		}
 		cmdMap[cmd.Path] = cmd
 	}
 
 	for _, branch := range cmdTree.Branches {
 		if branch.NeedArg && branch.ValidateArg == nil {
-			panic(
-				fmt.Errorf(
-					"command branch [%s] is missing an arg validation func()",
-					strings.TrimSpace(cmdTree.Aliases[0]+" "+strings.Join(branch.Leaves, " ")),
-				),
+			logger.LogFatal(
+				ErrMissingArgFunc,
+				strings.TrimSpace(cmdTree.Aliases[0]+" "+strings.Join(branch.Leaves, "")),
 			)
 		}
 	}
