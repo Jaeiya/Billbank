@@ -24,7 +24,6 @@ const (
 	Info
 	Attention
 	Error
-	Fatal
 	None
 )
 
