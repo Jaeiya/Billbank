@@ -6,9 +6,12 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"sync"
 	"time"
 
+	"github.com/charmbracelet/lipgloss"
+	"github.com/jaeiya/billbank/lib/ui"
 	"github.com/jaeiya/billbank/lib/utils"
 )
 
@@ -56,6 +59,26 @@ func Log(ll LogLevel, msg string, vars ...any) {
 
 	_, file, line, _ := runtime.Caller(1)
 	logChan <- LogMsg{msg, ll, file, line, vars}
+}
+
+func LogFatal(msg string, vars ...any) {
+	defer func() {
+		CloseLog()
+		os.Exit(1)
+	}()
+
+	msg = fmt.Sprintf("\n %s\n", msg)
+
+	if len(vars) > 0 {
+		fmt.Print(
+			lipgloss.NewStyle().
+				Foreground(ui.Red).
+				Render(fmt.Sprintf(msg, vars...)),
+		)
+		fmt.Printf("\n%s\n", getStack())
+	} else {
+		fmt.Println(msg)
+	}
 }
 
 func SetLogLevel(ll LogLevel) {
@@ -118,4 +141,35 @@ func getLogLevelStr(ll LogLevel) string {
 	default:
 		panic("invalid log level")
 	}
+}
+
+func getStack() string {
+	pc := make([]uintptr, 3)
+	n := runtime.Callers(3, pc)
+	if n == 0 {
+		return ""
+	}
+
+	pc = pc[:n]
+	frames := runtime.CallersFrames(pc)
+
+	// var sb strings.Builder
+	var funcBuilder strings.Builder
+	var fileBuilder strings.Builder
+	for {
+		frame, more := frames.Next()
+		file := filepath.Base(frame.File)
+		function := filepath.Base(frame.Function)
+		funcBuilder.WriteString(fmt.Sprintf("\t%s(): \n", function))
+		fileBuilder.WriteString(fmt.Sprintf("%s:%d\n", file, frame.Line))
+		if !more {
+			break
+		}
+	}
+	funcStyle := lipgloss.NewStyle().
+		Foreground(ui.Gray).
+		Align(lipgloss.Right).
+		Render(funcBuilder.String())
+	display := lipgloss.JoinHorizontal(lipgloss.Top, funcStyle, fileBuilder.String())
+	return display
 }
