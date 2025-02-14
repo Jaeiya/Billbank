@@ -141,6 +141,10 @@ func (bc BaseModel[T]) GetViewSize() (int, int) {
 	return bc.viewWidth, bc.viewHeight
 }
 
+func (bc BaseModel[T]) GetCmdArg() string {
+	return bc.cmdStatus.Arg
+}
+
 func (bc *BaseModel[T]) AddError(err error) {
 	bc.cmdErrors = append(bc.cmdErrors, err)
 }
