@@ -66,14 +66,15 @@ func LogFatal(msg string, vars ...any) {
 		os.Exit(1)
 	}()
 
-	msg = fmt.Sprintf("\n %s\n", msg)
+	msg = fmt.Sprintf("\n%s\n", strings.ReplaceAll(msg, "\n", " "))
+	msg = lipgloss.NewStyle().
+		PaddingLeft(1).
+		Width(50).
+		Foreground(ui.Red).
+		Render(fmt.Sprintf(msg, vars...))
 
 	if len(vars) > 0 {
-		fmt.Print(
-			lipgloss.NewStyle().
-				Foreground(ui.Red).
-				Render(fmt.Sprintf(msg, vars...)),
-		)
+		fmt.Print(msg)
 		fmt.Printf("\n%s\n", getStack())
 	} else {
 		fmt.Println(msg)
