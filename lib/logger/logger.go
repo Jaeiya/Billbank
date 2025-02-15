@@ -155,7 +155,7 @@ func getLogLevelStr(ll LogLevel) string {
 }
 
 func getStack() string {
-	pc := make([]uintptr, 3)
+	pc := make([]uintptr, 4)
 	n := runtime.Callers(3, pc)
 	if n == 0 {
 		return ""
