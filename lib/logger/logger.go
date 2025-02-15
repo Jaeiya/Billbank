@@ -66,6 +66,7 @@ func LogFatal(errMsg string, description string, vars ...any) {
 		os.Exit(1)
 	}()
 
+	errMsg = fmt.Sprintf("%s\n", errMsg)
 	errMsg = lipgloss.NewStyle().
 		Width(60).
 		PaddingTop(1).
@@ -75,7 +76,7 @@ func LogFatal(errMsg string, description string, vars ...any) {
 
 	description = strings.TrimSpace(description)
 	if len(description) > 0 {
-		description = fmt.Sprintf("\n%s\n", strings.ReplaceAll(description, "\n", " "))
+		description = fmt.Sprintf("%s\n", strings.ReplaceAll(description, "\n", " "))
 		description = lipgloss.NewStyle().
 			PaddingLeft(1).
 			Width(60).
