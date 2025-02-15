@@ -62,6 +62,22 @@ type BaseModel[T any] struct {
 }
 
 func NewBaseModel[T any](cmdTree Tree, cmds []BranchCommand[T]) *BaseModel[T] {
+	if len(cmdTree.Branches) == 0 {
+		logger.LogFatal(
+			"[%s] is missing any command-branches",
+			"",
+			cmdTree.Name,
+		)
+	}
+
+	if len(cmds) == 0 {
+		logger.LogFatal(
+			"[%s] is missing any branch-commands",
+			"",
+			cmdTree.Name,
+		)
+	}
+
 	cmdMap := map[string]BranchCommand[T]{}
 	for _, cmd := range cmds {
 		if _, alreadyExists := cmdMap[cmd.Path]; alreadyExists {
@@ -88,6 +104,22 @@ func NewBaseModel[T any](cmdTree Tree, cmds []BranchCommand[T]) *BaseModel[T] {
 			p := strings.TrimSpace(fmt.Sprintf("%s %s", alias, path))
 			logger.Log(logger.Hot, "binding command [%s] to [%s] as [%s]", path, alias, p)
 			cmdMap[p] = cmd
+		}
+
+		if cmd.Run == nil {
+			logger.Log(
+				logger.Error,
+				"[%s] is missing an implementation func()",
+				cmd.Path,
+			)
+		}
+
+		if cmd.View == nil {
+			logger.Log(
+				logger.Error,
+				"[%s] is missing a view func()",
+				cmd.Path,
+			)
 		}
 	}
 
@@ -222,29 +254,6 @@ an applicable view associated with it.
 func (m BaseModel[T]) HasView() bool {
 	cmd := m.cmdMap[m.cmdStatus.Path]
 	return cmd.View != nil
-}
-
-func (m BaseModel[T]) ValidateCommand() {
-	if len(m.cmdMap) == 0 {
-		panic("missing sub commands, did you forget to add them?")
-	}
-
-	for _, cmd := range m.cmdMap {
-		if cmd.Run == nil {
-			logger.Log(
-				logger.Error,
-				"[%s] is missing an implementation func()",
-				cmd.Path,
-			)
-		}
-		if cmd.View == nil {
-			logger.Log(
-				logger.Error,
-				"[%s] is missing a view func()",
-				cmd.Path,
-			)
-		}
-	}
 }
 
 func (m BaseModel[T]) IsSupported(cmdPath string) bool {

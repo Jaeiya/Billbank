@@ -41,7 +41,6 @@ type Model interface {
 	GetCmdTree() Tree
 	IsSupported(cmdPath string) bool
 	IsInitialized() bool
-	ValidateCommand()
 }
 
 type Status struct {
@@ -56,8 +55,6 @@ func New(model Model) Command {
 	if model == nil {
 		panic("missing command model")
 	}
-
-	model.ValidateCommand()
 
 	tree := model.GetCmdTree()
 
