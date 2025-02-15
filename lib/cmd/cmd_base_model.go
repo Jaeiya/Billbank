@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/cursor"
@@ -21,6 +22,13 @@ const MsgMissingArgFuncErr = `
 If a branch requires an argument, then it also requires validation. If you
 have not included a validation function, then you're not validating the
 users input, which is an anti-pattern.
+`
+
+const MsgCmdPathMissingAlias = `
+Did you forget to prepend the alias of the command to the command path?
+If you want to treat the alias as a command itself, the command path
+should be an alias. For instance if an alias is "hello", then you set
+the command path to just "hello".
 `
 
 type (
@@ -63,8 +71,32 @@ func NewBaseModel[T any](cmdTree Tree, cmds []BranchCommand[T]) *BaseModel[T] {
 				cmd.Path,
 			)
 		}
-		cmdMap[cmd.Path] = cmd
+		leaves := strings.Split(cmd.Path, " ")
+		alias := leaves[0]
+		path := strings.Join(leaves[1:], " ")
+
+		if !slices.Contains(cmdTree.Aliases, alias) {
+			logger.LogFatal(
+				"Command path [%s] is missing an alias of %+v",
+				MsgCmdPathMissingAlias,
+				cmd.Path,
+				cmdTree.Aliases,
+			)
+		}
+
+		for _, alias := range cmdTree.Aliases {
+			p := strings.TrimSpace(fmt.Sprintf("%s %s", alias, path))
+			logger.Log(logger.Hot, "binding command [%s] to [%s] as [%s]", path, alias, p)
+			cmdMap[p] = cmd
+		}
 	}
+
+	logger.Log(
+		logger.Debug,
+		"command %+v branch data %+v",
+		cmdTree.Aliases,
+		cmdMap,
+	)
 
 	for _, branch := range cmdTree.Branches {
 		if branch.NeedArg && branch.ValidateArg == nil {
@@ -213,6 +245,7 @@ func (m BaseModel[T]) ValidateCommand() {
 
 func (m BaseModel[T]) IsSupported(cmdPath string) bool {
 	_, ok := m.cmdMap[cmdPath]
+	logger.Log(logger.Debug, "stored cmd map [%+v] with [%s]", m.cmdMap, cmdPath)
 	return ok
 }
 
