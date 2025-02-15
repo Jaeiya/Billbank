@@ -93,8 +93,8 @@ func NewBaseModel[T any](cmdTree Tree, cmds []BranchCommand[T]) *BaseModel[T] {
 
 	logger.Log(
 		logger.Debug,
-		"command %+v branch data %+v",
-		cmdTree.Aliases,
+		"command [%s] data %+v",
+		cmdTree.Name,
 		cmdMap,
 	)
 
