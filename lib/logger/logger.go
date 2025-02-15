@@ -74,21 +74,22 @@ func LogFatal(errMsg string, description string, vars ...any) {
 		Render(errMsg)
 
 	description = strings.TrimSpace(description)
-	description = fmt.Sprintf("\n%s\n", strings.ReplaceAll(description, "\n", " "))
-	description = lipgloss.NewStyle().
-		PaddingLeft(1).
-		Width(60).
-		Foreground(ui.Yellow).
-		Render(description)
+	if len(description) > 0 {
+		description = fmt.Sprintf("\n%s\n", strings.ReplaceAll(description, "\n", " "))
+		description = lipgloss.NewStyle().
+			PaddingLeft(1).
+			Width(60).
+			Foreground(ui.Yellow).
+			Render(description)
+	}
 
 	if len(vars) > 0 {
 		fmt.Printf(errMsg, vars...)
-		fmt.Print(description)
-		fmt.Printf("\n%s\n", getStack())
 	} else {
 		fmt.Println(errMsg)
-		fmt.Println(description)
 	}
+	fmt.Print(description)
+	fmt.Printf("\n%s\n", getStack())
 }
 
 func SetLogLevel(ll LogLevel) {
