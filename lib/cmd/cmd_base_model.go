@@ -78,6 +78,14 @@ func NewBaseModel[T any](cmdTree Tree, cmds []BranchCommand[T]) *BaseModel[T] {
 		)
 	}
 
+	if len(cmds) != len(cmdTree.Branches) {
+		logger.LogFatal(
+			"[%s] has an inconsistent number of command-branches and branch-commands",
+			"Commands should always have a matching branch-command with a command-branch",
+			cmdTree.Name,
+		)
+	}
+
 	cmdMap := map[string]BranchCommand[T]{}
 	for _, cmd := range cmds {
 		if _, alreadyExists := cmdMap[cmd.Path]; alreadyExists {
