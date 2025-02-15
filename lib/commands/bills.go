@@ -23,12 +23,7 @@ func NewBillsCmd() cmd.Command {
 		}),
 	}
 
-	return cmd.New(
-		cmd.Config{
-			Name:  "Bills",
-			Model: m,
-		},
-	)
+	return cmd.New(m)
 }
 
 type billsModel struct {

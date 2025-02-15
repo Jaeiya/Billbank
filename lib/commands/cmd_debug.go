@@ -67,6 +67,7 @@ func NewDebugCmd(h *utils.InputHistory) cmd.Command {
 
 	m := debugModel{
 		BaseModel: cmd.NewBaseModel(cmd.Tree{
+			Name:    "Debug",
 			Aliases: []string{"/"},
 			Branches: []cmd.Branch{
 				{Leaves: []string{"history"}, NeedArg: false},
@@ -88,12 +89,7 @@ func NewDebugCmd(h *utils.InputHistory) cmd.Command {
 		slog:    debugSlog{viewPort: vp},
 	}
 
-	return cmd.New(
-		cmd.Config{
-			Name:  "Debug",
-			Model: m,
-		},
-	)
+	return cmd.New(m)
 }
 
 type debugModel struct {

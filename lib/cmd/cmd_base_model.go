@@ -188,6 +188,10 @@ func (m BaseModel[T]) GetCmdArg() string {
 	return m.cmdStatus.Arg
 }
 
+func (m BaseModel[T]) GetName() string {
+	return m.cmdTree.Name
+}
+
 func (m *BaseModel[T]) AddError(err error) {
 	m.cmdErrors = append(m.cmdErrors, err)
 }

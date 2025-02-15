@@ -234,7 +234,7 @@ func tryParseCmd(m CmdInputModel, msg tea.KeyMsg) (CmdInputModel, tea.Cmd) {
 			logger.Insane,
 			"test if [%s] is a [%s] command",
 			m.CommandInput.Value(),
-			c.name,
+			c.model.GetName(),
 		)
 		cmdStatus := c.ParseCommand(m.CommandInput.Value())
 		m.currCmd = c

@@ -36,6 +36,7 @@ var cmdId = 0
 type Model interface {
 	Update(tea.Msg) (Model, tea.Cmd)
 	View() string
+	GetName() string
 	GetErrors() []error
 	GetCmdTree() Tree
 	IsSupported(cmdPath string) bool
@@ -51,31 +52,14 @@ type Status struct {
 	Error           error
 }
 
-type Config struct {
-	// The overall name of the command
-	Name string
-
-	// Command Model which needs to implement the
-	// command Base Model.
-	Model Model
-
-	// Validates the command argument. For instance
-	// if the user should enter a price, then you
-	// would validate that here.
-}
-
-func New(config Config) Command {
-	if config.Name == "" {
-		panic("missing command name")
-	}
-
-	if config.Model == nil {
+func New(model Model) Command {
+	if model == nil {
 		panic("missing command model")
 	}
 
-	config.Model.ValidateCommand()
+	model.ValidateCommand()
 
-	tree := config.Model.GetCmdTree()
+	tree := model.GetCmdTree()
 
 	branchNameStore := map[string]struct{}{}
 	for _, branch := range tree.Branches {
@@ -99,10 +83,9 @@ func New(config Config) Command {
 
 	cmdId += 1
 	cmd := Command{
-		name:   config.Name,
-		model:  config.Model,
+		model:  model,
 		status: Status{},
-		tree:   config.Model.GetCmdTree(),
+		tree:   model.GetCmdTree(),
 		id:     cmdId,
 	}
 
@@ -131,13 +114,13 @@ func New(config Config) Command {
 // happens in that execution path is up to the dev.
 type Command struct {
 	id     int
-	name   string
 	model  Model
 	tree   Tree
 	status Status
 }
 
 type Tree struct {
+	Name     string
 	Aliases  []string
 	Branches []Branch
 }
