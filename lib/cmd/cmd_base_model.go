@@ -93,7 +93,7 @@ func NewBaseModel[T any](cmdTree Tree, cmds []BranchCommand[T]) *BaseModel[T] {
 
 	logger.Log(
 		logger.Debug,
-		"command [%s] data %+v",
+		"loaded command [%s] data %+v",
 		cmdTree.Name,
 		cmdMap,
 	)
