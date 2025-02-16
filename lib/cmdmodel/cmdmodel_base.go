@@ -125,18 +125,14 @@ func NewModelBase[T any](cmdTree BaseData[T]) *ModelBase[T] {
 		len(cmdTree.Commands),
 	)
 
-	if logger.GetLogLevel() <= logger.Debug {
+	logger.LogFunc(logger.Debug, func() string {
 		var cmdPaths []string = make([]string, 0, len(cmdMap))
 		for key := range cmdMap {
 			cmdPaths = append(cmdPaths, fmt.Sprintf("[%s]", key))
 		}
-		logger.Log(
-			logger.Debug,
-			"command [%s] loaded %+v",
-			cmdTree.Name,
-			strings.Join(cmdPaths, ", "),
-		)
-	}
+		pathStrings := fmt.Sprintf("%+v", strings.Join(cmdPaths, ", "))
+		return fmt.Sprintf("command [%s] loaded %s", cmdTree.Name, pathStrings)
+	})
 
 	return &ModelBase[T]{
 		cmdMap:       cmdMap,
