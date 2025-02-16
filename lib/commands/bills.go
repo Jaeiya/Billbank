@@ -11,7 +11,7 @@ func NewBillsCmd() cmdmodel.Model {
 	// so that it can be passed to your model.
 	//
 	m := billsModel{
-		ModelCmdBase: cmdmodel.NewModelCmdBase(cmdmodel.BaseCmdData[billsModel]{
+		ModelBase: cmdmodel.NewModelBase(cmdmodel.BaseData[billsModel]{
 			Name:    "Bills",
 			Aliases: []string{"bills", "b"},
 			Commands: []cmdmodel.BaseCommand[billsModel]{
@@ -24,14 +24,14 @@ func NewBillsCmd() cmdmodel.Model {
 }
 
 type billsModel struct {
-	*cmdmodel.ModelCmdBase[billsModel]
+	*cmdmodel.ModelBase[billsModel]
 }
 
-func (m billsModel) Update(msg tea.Msg) (cmdmodel.ModelCommand, tea.Cmd) {
+func (m billsModel) Update(msg tea.Msg) (cmdmodel.Interface, tea.Cmd) {
 	var teaCmd tea.Cmd
 	var teaCmds []tea.Cmd
 
-	m, teaCmd = m.ModelCmdBase.Update(m, msg)
+	m, teaCmd = m.ModelBase.Update(m, msg)
 	teaCmds = append(teaCmds, teaCmd)
 
 	// switch msg := msg.(type) {
@@ -49,7 +49,7 @@ func (m billsModel) Update(msg tea.Msg) (cmdmodel.ModelCommand, tea.Cmd) {
 }
 
 func (m billsModel) View() string {
-	return m.ModelCmdBase.View(m)
+	return m.ModelBase.View(m)
 }
 
 func loadBills(m billsModel) billsModel {

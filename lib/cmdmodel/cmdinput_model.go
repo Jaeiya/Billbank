@@ -20,7 +20,7 @@ type UpdateStatusMsg struct {
 }
 
 type UpdateCmdMsg struct {
-	Model         ModelCommand
+	Model         Interface
 	CommandStatus Status
 }
 
@@ -229,15 +229,15 @@ func tryParseCmd(m InputModel, msg tea.KeyMsg) (InputModel, tea.Cmd) {
 	var cmd tea.Cmd
 	m.CommandInput, cmd = m.CommandInput.Update(msg)
 	m.currCmd = Model{}
-	for _, c := range m.commands {
+	for _, cmd := range m.commands {
 		logger.Log(
 			logger.Insane,
 			"test if [%s] is a [%s] command",
 			m.CommandInput.Value(),
-			c.model.GetName(),
+			cmd.model.GetName(),
 		)
-		cmdStatus := c.ParseCommand(m.CommandInput.Value())
-		m.currCmd = c
+		cmdStatus := cmd.ParseCommand(m.CommandInput.Value())
+		m.currCmd = cmd
 		m.currCmd.status = cmdStatus
 		if cmdStatus.IsCommand {
 			if errors.Is(cmdStatus.Error, ErrIncompleteCmd) {

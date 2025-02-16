@@ -23,7 +23,7 @@ type ViewportSizeMsg struct {
 
 type ViewPort struct {
 	CommandInput    cmdmodel.InputModel
-	CurrentCmdModel cmdmodel.ModelCommand
+	CurrentCmdModel cmdmodel.Interface
 	CommandStatus   cmdmodel.Status
 	height          int
 	width           int

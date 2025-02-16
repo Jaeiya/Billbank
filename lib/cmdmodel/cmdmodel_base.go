@@ -60,7 +60,7 @@ type (
 	}
 )
 
-type BaseCmdData[T any] struct {
+type BaseData[T any] struct {
 	Name     string
 	Aliases  []string
 	Commands []BaseCommand[T]
@@ -74,9 +74,9 @@ type BaseCommand[T any] struct {
 	View        func(T) string
 }
 
-type ModelCmdBase[T any] struct {
+type ModelBase[T any] struct {
 	cmdMap       map[string]BaseCommand[T]
-	cmdTree      BaseCmdData[T]
+	cmdTree      BaseData[T]
 	cmdStatus    Status
 	cmdErrors    []error
 	lastCmdError error
@@ -91,7 +91,7 @@ type ModelCmdBase[T any] struct {
 	isInterrupt bool
 }
 
-func NewModelCmdBase[T any](cmdTree BaseCmdData[T]) *ModelCmdBase[T] {
+func NewModelBase[T any](cmdTree BaseData[T]) *ModelBase[T] {
 	if len(cmdTree.Commands) == 0 {
 		logger.LogFatal(
 			"Command [%s] has no command paths",
@@ -131,7 +131,7 @@ func NewModelCmdBase[T any](cmdTree BaseCmdData[T]) *ModelCmdBase[T] {
 		cmdMap,
 	)
 
-	return &ModelCmdBase[T]{
+	return &ModelBase[T]{
 		cmdMap:       cmdMap,
 		cmdTree:      cmdTree,
 		lastCmdError: fmt.Errorf(""),
@@ -139,7 +139,7 @@ func NewModelCmdBase[T any](cmdTree BaseCmdData[T]) *ModelCmdBase[T] {
 	}
 }
 
-func (bc *ModelCmdBase[T]) Update(model T, msg tea.Msg) (T, tea.Cmd) {
+func (bc *ModelBase[T]) Update(model T, msg tea.Msg) (T, tea.Cmd) {
 	var teaCmds []tea.Cmd
 	defer func() { bc.isFirstMsg = false }()
 
@@ -171,7 +171,7 @@ func (bc *ModelCmdBase[T]) Update(model T, msg tea.Msg) (T, tea.Cmd) {
 	return model, tea.Batch(teaCmds...)
 }
 
-func (bc *ModelCmdBase[T]) View(model T) string {
+func (bc *ModelBase[T]) View(model T) string {
 	cmdPath := bc.cmdStatus.Path
 	cmd := bc.cmdMap[cmdPath]
 
@@ -203,34 +203,34 @@ func (bc *ModelCmdBase[T]) View(model T) string {
 	return cmd.View(model)
 }
 
-func (m ModelCmdBase[T]) GetViewSize() (int, int) {
+func (m ModelBase[T]) GetViewSize() (int, int) {
 	return m.viewWidth, m.viewHeight
 }
 
-func (m ModelCmdBase[T]) GetCmdArg() string {
+func (m ModelBase[T]) GetCmdArg() string {
 	return m.cmdStatus.Arg
 }
 
-func (m ModelCmdBase[T]) GetName() string {
+func (m ModelBase[T]) GetName() string {
 	return m.cmdTree.Name
 }
 
-func (m *ModelCmdBase[T]) AddError(err error) {
+func (m *ModelBase[T]) AddError(err error) {
 	m.cmdErrors = append(m.cmdErrors, err)
 }
 
-func (m ModelCmdBase[T]) GetErrors() []error {
+func (m ModelBase[T]) GetErrors() []error {
 	return m.cmdErrors
 }
 
-func (m *ModelCmdBase[T]) ClearErrors() {
+func (m *ModelBase[T]) ClearErrors() {
 	if len(m.cmdErrors) > 0 {
 		m.lastCmdError = fmt.Errorf("")
 		m.cmdErrors = nil
 	}
 }
 
-func (m ModelCmdBase[T]) GetCmdData() CommandData {
+func (m ModelBase[T]) GetCmdData() CommandData {
 	var branches []Command
 	for _, cmd := range m.cmdTree.Commands {
 		branches = append(branches, Command{
@@ -246,7 +246,7 @@ func (m ModelCmdBase[T]) GetCmdData() CommandData {
 	}
 }
 
-func (m ModelCmdBase[T]) IsActivePath(cmdPath string) bool {
+func (m ModelBase[T]) IsActivePath(cmdPath string) bool {
 	return m.cmdStatus.Path == cmdPath
 }
 
@@ -254,26 +254,26 @@ func (m ModelCmdBase[T]) IsActivePath(cmdPath string) bool {
 HasView returns true if the current command tree string has
 an applicable view associated with it.
 */
-func (m ModelCmdBase[T]) HasView() bool {
+func (m ModelBase[T]) HasView() bool {
 	cmd := m.cmdMap[m.cmdStatus.Path]
 	return cmd.View != nil
 }
 
-func (m ModelCmdBase[T]) IsSupported(cmdPath string) bool {
+func (m ModelBase[T]) IsSupported(cmdPath string) bool {
 	_, ok := m.cmdMap[cmdPath]
 	return ok
 }
 
 // IsInitialized checks to make sure that various expected values
 // are set.
-func (m ModelCmdBase[T]) IsInitialized() bool {
+func (m ModelBase[T]) IsInitialized() bool {
 	return len(m.cmdMap) > 0 && len(m.cmdStatus.Path) > 0 && m.viewWidth > 0 &&
 		m.viewHeight > 0
 }
 
 // Exec executes the current command path in the context of the
 // passed model. All detected errors are logged and stored.
-func (m *ModelCmdBase[T]) Exec(model T) T {
+func (m *ModelBase[T]) Exec(model T) T {
 	m.isInterrupt = false
 	cmdPath := m.cmdStatus.Path
 	cmd := m.cmdMap[cmdPath]
@@ -314,7 +314,7 @@ func (m *ModelCmdBase[T]) Exec(model T) T {
 	return model
 }
 
-func validateBranches[T any](cmdTree BaseCmdData[T]) {
+func validateBranches[T any](cmdTree BaseData[T]) {
 	branchMap := map[string]struct{}{}
 	for _, cmd := range cmdTree.Commands {
 		if cmd.Path == "" && cmd.NeedArg && len(cmdTree.Commands) > 1 {
@@ -345,7 +345,7 @@ func validateBranches[T any](cmdTree BaseCmdData[T]) {
 	}
 }
 
-func mapCommands[T any](cmdTree BaseCmdData[T]) map[string]BaseCommand[T] {
+func mapCommands[T any](cmdTree BaseData[T]) map[string]BaseCommand[T] {
 	cmdMap := map[string]BaseCommand[T]{}
 	for _, cmd := range cmdTree.Commands {
 		leaves := strings.Split(cmd.Path, " ")
