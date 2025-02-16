@@ -42,9 +42,14 @@ type CommandData struct {
 }
 
 func newModelCommand[T any](baseCmd BaseCommand[T]) ModelCommand {
+	var pathParts []string
+	if baseCmd.Path != "" {
+		pathParts = strings.Split(baseCmd.Path, " ")
+	}
+
 	return ModelCommand{
 		baseCmd.Path,
-		strings.Split(baseCmd.Path, " "),
+		pathParts,
 		baseCmd.ArgType,
 		baseCmd.ValidateArg,
 	}
