@@ -66,12 +66,13 @@ func LogFatal(errMsg string, description string, vars ...any) {
 		os.Exit(1)
 	}()
 
-	errMsg = lipgloss.NewStyle().
-		Width(60).
+	maxDisplayWidth := 60
+
+	errMsgStyle := lipgloss.NewStyle().
+		Width(maxDisplayWidth).
 		PaddingTop(1).
 		PaddingLeft(1).
-		Foreground(ui.Red).
-		Render(errMsg)
+		Foreground(ui.Red)
 
 	description = strings.TrimSpace(description)
 	if len(description) > 0 {
@@ -79,10 +80,10 @@ func LogFatal(errMsg string, description string, vars ...any) {
 		for i, p := range paragraphs {
 			paragraphs[i] = lipgloss.NewStyle().
 				PaddingTop(1).
+				Width(maxDisplayWidth).
 				Render(strings.ReplaceAll(p, "\n", " "))
 		}
 		description = lipgloss.NewStyle().
-			Width(60).
 			PaddingLeft(1).
 			PaddingBottom(1).
 			Foreground(ui.Yellow).
@@ -90,9 +91,19 @@ func LogFatal(errMsg string, description string, vars ...any) {
 	}
 
 	if len(vars) > 0 {
-		errMsg = fmt.Sprintf(errMsg, vars...)
+		errMsg = errMsgStyle.Render(fmt.Sprintf(errMsg, vars...))
+	} else {
+		errMsg = errMsgStyle.Render(errMsg)
 	}
-	fmt.Print(lipgloss.JoinVertical(lipgloss.Left, errMsg, description, getStack()) + "\n")
+
+	fmt.Print(
+		lipgloss.JoinVertical(
+			lipgloss.Left,
+			errMsg,
+			description,
+			getStack(),
+		) + "\n",
+	)
 }
 
 func SetLogLevel(ll LogLevel) {
