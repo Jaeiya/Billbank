@@ -16,20 +16,6 @@ var (
 	ErrUnimplementedCmd = fmt.Errorf("unimplemented command")
 )
 
-var MsgDuplicateBranchErr = `
-Did you forget to remove some test branches? Commands can only
-contain tree branches with unique leaf combinations. For instance,
-the leaves "hello" & "world" have two unique combinations. You
-can have two branches, one with "hello world" and one with
-"world hello", but not more than one of each.
-`
-
-var MsgNoBranchesWithDefaultArgErr = `
-Your command alias directly requires an argument, which means all
-branches other than the default branch, are hidden. Consider
-turning the command into a compound command: <alias keyword arg>
-instead of: <alias arg>`
-
 var cmdId = 0
 
 type Interface interface {
