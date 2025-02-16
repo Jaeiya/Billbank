@@ -66,24 +66,17 @@ func NewDebugCmd(h *utils.InputHistory) cmd.Command {
 	vp.KeyMap.HalfPageDown = key.NewBinding(key.WithKeys("ctrl+j"))
 
 	m := debugModel{
-		BaseModel: cmd.NewBaseModel(cmd.Tree{
+		BaseModel: cmd.NewBaseModel(cmd.BaseTree[debugModel]{
 			Name:    "Debug",
 			Aliases: []string{"/"},
-			Branches: []cmd.Branch{
-				{Leaves: []string{"history"}, NeedArg: false},
-				{Leaves: []string{"log"}, NeedArg: false},
-				{Leaves: []string{"log", "clear"}, NeedArg: false},
-				{Leaves: []string{"slog"}, NeedArg: false},
-				{Leaves: []string{"slog", "clear"}, NeedArg: false},
-				{Leaves: []string{"stats"}, NeedArg: false},
+			Commands: []cmd.BaseCommand[debugModel]{
+				{Path: "history", Run: loadHistory, View: viewHistory},
+				{Path: "log", Run: loadLog, View: viewLog},
+				{Path: "slog", Run: loadSlog, View: viewSlog},
+				{Path: "stats", Run: loadStats, View: viewStats},
+				{Path: "clear log", Run: clearLog, View: clearLogView},
+				{Path: "clear slog", Run: clearSlog, View: clearSlogView},
 			},
-		}, []cmd.BranchCommand[debugModel]{
-			{Path: "history", Run: loadHistory, View: viewHistory},
-			{Path: "log", Run: loadLog, View: viewLog},
-			{Path: "slog", Run: loadSlog, View: viewSlog},
-			{Path: "stats", Run: loadStats, View: viewStats},
-			{Path: "log clear", Run: clearLog, View: clearLogView},
-			{Path: "slog clear", Run: clearSlog, View: clearSlogView},
 		}),
 		history: debugHistory{data: h},
 		slog:    debugSlog{viewPort: vp},

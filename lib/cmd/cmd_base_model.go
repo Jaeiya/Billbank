@@ -12,26 +12,45 @@ import (
 )
 
 const MsgMissingArgFuncErr = `
-If a branch requires an argument, then it also requires validation. If you
-have not included a validation function, then you're not validating the
-users input, which is an anti-pattern.
-`
+If a command path requires an argument, then it should also validate
+that argument. It's recommended to validate the arg inside this
+function because it can notify the user on error.`
 
 const MsgIsCmdItself = `
-Commands that are intended to be used by themselves (called by just
-their alias), with arguments, cannot also contain other branch commands.
-For instance, if you have a view command that takes an argument for the
-kind of view to display:
+Models with default commands (commands executed just by their alias),
+that take arguments, do not support extra commands. For instance, if
+your model has a "view" alias that takes an argument for the kind of
+view to display:
 
 [view 1] or [view 2]
 
-You cannot also support branch commands, which would also qualify
-as arguments passed to the view command:
+You're limited to just a single command path, the default path. You
+cannot then create more commands that take a more specific view type
+like so:
 
 [view details] or [view list]
 
-Either set up your command to accept arguments or other command branches,
-but not both.
+The above second-order commands will be ignored as if they don't exist.
+Either setup your model to accept args directly or commands, but not
+both. You can also setup your model to execute a default command without
+args, allowing you to add extra commands.
+`
+
+const MsgUsingAliasInCmdPath = `
+Command-paths do not need to include the alias of their parent model.
+
+If you're trying to setup a default command (a command executed by its
+aliases alone) then just add a command with an empty string for its path
+like so:
+
+{ Path: "", Run: loadCmd, View: loadView }
+
+Where loadCmd and loadView are functions that take your command model
+as an argument. This will allow the execution of the model aliases,
+as if they were commands themselves.
+
+Be aware though, that if you set an empty path's "NeedArg" to true,
+you can't add any more commands to that model.
 `
 
 type (
@@ -41,15 +60,23 @@ type (
 	}
 )
 
-type BranchCommand[T any] struct {
-	Path string
-	Run  func(T) T
-	View func(T) string
+type BaseTree[T any] struct {
+	Name     string
+	Aliases  []string
+	Commands []BaseCommand[T]
+}
+
+type BaseCommand[T any] struct {
+	Path        string
+	NeedArg     bool
+	ValidateArg func(arg string) error
+	Run         func(T) T
+	View        func(T) string
 }
 
 type BaseModel[T any] struct {
-	cmdMap       map[string]BranchCommand[T]
-	cmdTree      Tree
+	cmdMap       map[string]BaseCommand[T]
+	cmdTree      BaseTree[T]
 	cmdStatus    Status
 	cmdErrors    []error
 	lastCmdError error
@@ -64,32 +91,16 @@ type BaseModel[T any] struct {
 	isInterrupt bool
 }
 
-func NewBaseModel[T any](cmdTree Tree, cmds []BranchCommand[T]) *BaseModel[T] {
-	if len(cmdTree.Branches) == 0 {
+func NewBaseModel[T any](cmdTree BaseTree[T]) *BaseModel[T] {
+	if len(cmdTree.Commands) == 0 {
 		logger.LogFatal(
-			"[%s] has an empty command-branch list",
-			"All commands require at least one command branch.",
+			"Command [%s] has no command paths",
+			"Did you forget to add commands to a new command model?",
 			cmdTree.Name,
 		)
 	}
 
-	if len(cmds) == 0 {
-		logger.LogFatal(
-			"[%s] has an empty branch-command list",
-			"All commands require at least one branch command.",
-			cmdTree.Name,
-		)
-	}
-
-	if len(cmds) != len(cmdTree.Branches) {
-		logger.LogFatal(
-			"[%s] has an inconsistent number of command-branches and branch-commands",
-			"Commands should always have a matching branch-command with a command-branch",
-			cmdTree.Name,
-		)
-	}
-
-	for _, cmd := range cmds {
+	for _, cmd := range cmdTree.Commands {
 		leaves := strings.Split(cmd.Path, " ")
 		hasAlias := slices.ContainsFunc(cmdTree.Aliases, func(alias string) bool {
 			return leaves[0] == alias
@@ -97,20 +108,25 @@ func NewBaseModel[T any](cmdTree Tree, cmds []BranchCommand[T]) *BaseModel[T] {
 
 		if hasAlias {
 			logger.LogFatal(
-				"Branch [%s] does not need to include [%s] as part of the command path",
-				"Command paths do not need to include the alias of the command, as part of the path.",
-				cmd.Path,
-				leaves[0],
+				"[%s] command path [%s] does not need to include the command-alias [%s]",
+				MsgUsingAliasInCmdPath,
+				cmdTree.Name, cmd.Path, leaves[0],
 			)
 		}
 	}
 
-	validateBranches(cmds, cmdTree)
-	cmdMap := mapCommands(cmds, cmdTree)
+	validateBranches(cmdTree)
+	cmdMap := mapCommands(cmdTree)
 
 	logger.Log(
+		logger.Info,
+		"command [%s] loaded [%d] command paths",
+		cmdTree.Name,
+		len(cmdTree.Commands),
+	)
+	logger.Log(
 		logger.Debug,
-		"loaded command [%s] data %+v",
+		"[%s] data %+v",
 		cmdTree.Name,
 		cmdMap,
 	)
@@ -215,7 +231,20 @@ func (m *BaseModel[T]) ClearErrors() {
 }
 
 func (m BaseModel[T]) GetCmdTree() Tree {
-	return m.cmdTree
+	var branches []Branch
+	for _, cmd := range m.cmdTree.Commands {
+		branches = append(branches, Branch{
+			Leaves:      strings.Split(cmd.Path, " "),
+			NeedArg:     cmd.NeedArg,
+			ValidateArg: cmd.ValidateArg,
+		})
+	}
+
+	return Tree{
+		Name:     m.cmdTree.Name,
+		Aliases:  m.cmdTree.Aliases,
+		Branches: branches,
+	}
 }
 
 func (m BaseModel[T]) IsActivePath(cmdPath string) bool {
@@ -233,7 +262,6 @@ func (m BaseModel[T]) HasView() bool {
 
 func (m BaseModel[T]) IsSupported(cmdPath string) bool {
 	_, ok := m.cmdMap[cmdPath]
-	logger.Log(logger.Debug, "stored cmd map [%+v] with [%s]", m.cmdMap, cmdPath)
 	return ok
 }
 
@@ -287,43 +315,40 @@ func (m *BaseModel[T]) Exec(model T) T {
 	return model
 }
 
-func validateBranches[T any](cmds []BranchCommand[T], cmdTree Tree) {
+func validateBranches[T any](cmdTree BaseTree[T]) {
 	branchMap := map[string]struct{}{}
-	for _, branch := range cmdTree.Branches {
-		cmdPath := strings.Join(branch.Leaves, " ")
-		if cmdPath == "" && branch.NeedArg && len(cmdTree.Branches) > 1 {
+	for _, cmd := range cmdTree.Commands {
+		if cmd.Path == "" && cmd.NeedArg && len(cmdTree.Commands) > 1 {
 			logger.LogFatal(
-				"[%s] is using itself as a default command with both args and branch commands",
+				"[%s] has been initialized as a default command with args, but contains extra commands",
 				MsgIsCmdItself,
 				cmdTree.Name,
 			)
 		}
 
-		if branch.NeedArg && branch.ValidateArg == nil {
+		if cmd.NeedArg && cmd.ValidateArg == nil {
 			logger.LogFatal(
-				"Branch [%s] is missing an arg validation function.",
+				"[%s] command path [%s] is missing an arg validation function.",
 				MsgMissingArgFuncErr,
-				cmdPath,
+				cmdTree.Name, cmd.Path,
 			)
 		}
-		if _, ok := branchMap[cmdPath]; ok {
-			logger.LogFatal("Found duplicate tree branches [%s]", "", cmdPath)
+		if _, ok := branchMap[cmd.Path]; ok {
+			logger.LogFatal(
+				"[%s] contains a duplicate command path [%s]",
+				"Is it possible you were testing something and accidentally duplicated a command?",
+				cmdTree.Name,
+				cmd.Path,
+			)
 		}
 
-		foundCmd := slices.ContainsFunc(cmds, func(cmd BranchCommand[T]) bool {
-			return cmd.Path == cmdPath
-		})
-		if !foundCmd {
-			panic("branch command is missing a command branch")
-		}
-
-		branchMap[cmdPath] = struct{}{}
+		branchMap[cmd.Path] = struct{}{}
 	}
 }
 
-func mapCommands[T any](cmds []BranchCommand[T], cmdTree Tree) map[string]BranchCommand[T] {
-	cmdMap := map[string]BranchCommand[T]{}
-	for _, cmd := range cmds {
+func mapCommands[T any](cmdTree BaseTree[T]) map[string]BaseCommand[T] {
+	cmdMap := map[string]BaseCommand[T]{}
+	for _, cmd := range cmdTree.Commands {
 		leaves := strings.Split(cmd.Path, " ")
 		path := strings.Join(leaves, " ")
 
