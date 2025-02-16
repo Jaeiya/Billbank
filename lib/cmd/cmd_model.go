@@ -134,8 +134,8 @@ func (cb Command) GetId() int {
 	return cb.id
 }
 
-func (cb Command) ParseCommand(cmdPathInput string) Status {
-	var pathParts []string = strings.Fields(cmdPathInput)
+func (cb Command) ParseCommand(cmdInput string) Status {
+	var pathParts []string = strings.Fields(cmdInput)
 	if len(pathParts) == 0 {
 		return Status{Error: ErrEmptyCommand}
 	}
@@ -157,7 +157,7 @@ func (cb Command) ParseCommand(cmdPathInput string) Status {
 
 		if !branch.NeedArg && inputPath == cmdPath {
 			var err error
-			if !cb.model.IsSupported(cmdPathInput) {
+			if !cb.model.IsSupported(cmdInput) {
 				err = ErrUnimplementedCmd
 			}
 			return Status{
@@ -196,7 +196,7 @@ func (cb Command) ParseCommand(cmdPathInput string) Status {
 		IsCommand:       true,
 		Error:           ErrIncompleteCmd,
 		PathSuggestions: populateSuggestions(cmdPaths, pathParts),
-		Path:            cmdPathInput,
+		Path:            cmdInput,
 	}
 }
 
