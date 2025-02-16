@@ -37,8 +37,8 @@ func (m billsModel) Update(msg tea.Msg) (cmdmodel.Interface, tea.Cmd) {
 	// switch msg := msg.(type) {
 	// case tea.KeyMsg:
 
-	// 	// Only watch certain keys on certain branches
-	// 	// if m.IsActiveBranch("t this") || m.IsActiveBranch("test this") {
+	// 	// Only watch certain keys on certain cmd paths
+	// 	// if m.IsActivePath("t this") || m.IsActivePath("test this") {
 	// 	// 	if msg.String() == "ctrl+k" {
 	// 	// 		m.thisCounter += 1
 	// 	// 	}

@@ -76,7 +76,7 @@ type BaseCommand[T any] struct {
 
 type ModelBase[T any] struct {
 	cmdMap       map[string]BaseCommand[T]
-	cmdTree      BaseCmdData[T]
+	cmdData      BaseCmdData[T]
 	cmdStatus    Status
 	cmdErrors    []error
 	lastCmdError error
@@ -128,7 +128,7 @@ func NewModelBase[T any](cmdData BaseCmdData[T]) *ModelBase[T] {
 
 	return &ModelBase[T]{
 		cmdMap:       cmdMap,
-		cmdTree:      cmdData,
+		cmdData:      cmdData,
 		lastCmdError: fmt.Errorf(""),
 		isFirstMsg:   true,
 	}
@@ -207,7 +207,7 @@ func (m ModelBase[T]) GetCmdArg() string {
 }
 
 func (m ModelBase[T]) GetName() string {
-	return m.cmdTree.Name
+	return m.cmdData.Name
 }
 
 func (m *ModelBase[T]) AddError(err error) {
@@ -227,12 +227,12 @@ func (m *ModelBase[T]) ClearErrors() {
 
 func (m ModelBase[T]) GetCmdData() CommandData {
 	var commands []ModelCommand
-	for _, cmd := range m.cmdTree.Commands {
+	for _, cmd := range m.cmdData.Commands {
 		commands = append(commands, newModelCommand(cmd))
 	}
 
 	return CommandData{
-		Aliases:  m.cmdTree.Aliases,
+		Aliases:  m.cmdData.Aliases,
 		Commands: commands,
 	}
 }
