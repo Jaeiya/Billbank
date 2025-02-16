@@ -110,6 +110,10 @@ func SetLogLevel(ll LogLevel) {
 	logLevel = ll
 }
 
+func GetLogLevel() LogLevel {
+	return logLevel
+}
+
 func CloseLog() {
 	close(logChan)
 }
