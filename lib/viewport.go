@@ -3,7 +3,7 @@ package lib
 import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/jaeiya/billbank/lib/cmd"
+	"github.com/jaeiya/billbank/lib/cmdmodel"
 	"github.com/jaeiya/billbank/lib/logger"
 	"github.com/jaeiya/billbank/lib/ui"
 )
@@ -12,7 +12,7 @@ type (
 	ActiveCmdMsg       string
 	CommanderStatusMsg struct {
 		String   string
-		Severity cmd.StatusSeverity
+		Severity cmdmodel.StatusSeverity
 	}
 )
 
@@ -22,9 +22,9 @@ type ViewportSizeMsg struct {
 }
 
 type ViewPort struct {
-	CommandInput    cmd.CmdInputModel
-	CurrentCmdModel cmd.Model
-	CommandStatus   cmd.Status
+	CommandInput    cmdmodel.CmdInputModel
+	CurrentCmdModel cmdmodel.Model
+	CommandStatus   cmdmodel.Status
 	height          int
 	width           int
 }
@@ -44,7 +44,7 @@ func (vp ViewPort) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		logger.Log(logger.Hot, "[WindowSizeMsg] sending viewport size [%d:%d]", vp.width, vp.height)
 		teaCmds = append(teaCmds, vp.sendViewportSize)
 
-	case cmd.UpdateCmdMsg:
+	case cmdmodel.UpdateCmdMsg:
 		if msg.Model != nil {
 			vp.CurrentCmdModel = msg.Model
 			logger.Log(logger.Debug, "storing new command model [%s]", msg.CommandStatus.Path)
@@ -92,15 +92,15 @@ func (vp ViewPort) View() string {
 }
 
 func (vp ViewPort) sendViewportSize() tea.Msg {
-	return cmd.ViewportSizeMsg{
+	return cmdmodel.ViewportSizeMsg{
 		Height: vp.height - lipgloss.Height(vp.CommandInput.View()),
 		Width:  vp.width,
 	}
 }
 
-func (vp ViewPort) sendStatusMsg(msg string, s cmd.StatusSeverity) func() tea.Msg {
+func (vp ViewPort) sendStatusMsg(msg string, s cmdmodel.StatusSeverity) func() tea.Msg {
 	return func() tea.Msg {
-		return cmd.UpdateStatusMsg{
+		return cmdmodel.UpdateStatusMsg{
 			String:   msg,
 			Severity: s,
 		}

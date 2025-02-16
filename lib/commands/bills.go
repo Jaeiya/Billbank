@@ -2,32 +2,32 @@ package commands
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/jaeiya/billbank/lib/cmd"
+	"github.com/jaeiya/billbank/lib/cmdmodel"
 )
 
-func NewBillsCmd() cmd.Command {
+func NewBillsCmd() cmdmodel.CommandModel {
 	//
 	// Anything that needs to be initialized should be here
 	// so that it can be passed to your model.
 	//
 	m := billsModel{
-		BaseModel: cmd.NewBaseModel(cmd.BaseTree[billsModel]{
+		BaseModel: cmdmodel.NewBaseModel(cmdmodel.BaseCmdData[billsModel]{
 			Name:    "Bills",
 			Aliases: []string{"bills", "b"},
-			Commands: []cmd.BaseCommand[billsModel]{
+			Commands: []cmdmodel.BaseCommand[billsModel]{
 				{Path: "", Run: loadBills, View: viewBills},
 			},
 		}),
 	}
 
-	return cmd.New(m)
+	return cmdmodel.New(m)
 }
 
 type billsModel struct {
-	*cmd.BaseModel[billsModel]
+	*cmdmodel.BaseModel[billsModel]
 }
 
-func (m billsModel) Update(msg tea.Msg) (cmd.Model, tea.Cmd) {
+func (m billsModel) Update(msg tea.Msg) (cmdmodel.Model, tea.Cmd) {
 	var teaCmd tea.Cmd
 	var teaCmds []tea.Cmd
 

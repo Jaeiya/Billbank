@@ -13,7 +13,7 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/jaeiya/billbank/lib/cmd"
+	"github.com/jaeiya/billbank/lib/cmdmodel"
 	"github.com/jaeiya/billbank/lib/logger"
 	"github.com/jaeiya/billbank/lib/ui"
 	"github.com/jaeiya/billbank/lib/utils"
@@ -56,7 +56,7 @@ var (
 		Width(30)
 )
 
-func NewDebugCmd(h *utils.InputHistory) cmd.Command {
+func NewDebugCmd(h *utils.InputHistory) cmdmodel.CommandModel {
 	vp := viewport.New(0, 0)
 	vp.KeyMap.Down = key.NewBinding()
 	vp.KeyMap.Up = key.NewBinding()
@@ -66,10 +66,10 @@ func NewDebugCmd(h *utils.InputHistory) cmd.Command {
 	vp.KeyMap.HalfPageDown = key.NewBinding(key.WithKeys("ctrl+j"))
 
 	m := debugModel{
-		BaseModel: cmd.NewBaseModel(cmd.BaseTree[debugModel]{
+		BaseModel: cmdmodel.NewBaseModel(cmdmodel.BaseCmdData[debugModel]{
 			Name:    "Debug",
 			Aliases: []string{"/"},
-			Commands: []cmd.BaseCommand[debugModel]{
+			Commands: []cmdmodel.BaseCommand[debugModel]{
 				{Path: "history", Run: loadHistory, View: viewHistory},
 				{Path: "log", Run: loadLog, View: viewLog},
 				{Path: "slog", Run: loadSlog, View: viewSlog},
@@ -82,11 +82,11 @@ func NewDebugCmd(h *utils.InputHistory) cmd.Command {
 		slog:    debugSlog{viewPort: vp},
 	}
 
-	return cmd.New(m)
+	return cmdmodel.New(m)
 }
 
 type debugModel struct {
-	*cmd.BaseModel[debugModel]
+	*cmdmodel.BaseModel[debugModel]
 	history debugHistory
 	log     debugLog
 	slog    debugSlog
@@ -125,7 +125,7 @@ type debugSlog struct {
 	lastRenderDur time.Duration
 }
 
-func (m debugModel) Update(msg tea.Msg) (cmd.Model, tea.Cmd) {
+func (m debugModel) Update(msg tea.Msg) (cmdmodel.Model, tea.Cmd) {
 	var teaCmd tea.Cmd
 	var teaCmds []tea.Cmd
 

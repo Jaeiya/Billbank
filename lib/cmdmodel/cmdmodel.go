@@ -1,4 +1,4 @@
-package cmd
+package cmdmodel
 
 import (
 	"fmt"
@@ -38,7 +38,7 @@ type Model interface {
 	View() string
 	GetName() string
 	GetErrors() []error
-	GetCmdTree() Tree
+	GetCmdData() CommandData
 	IsSupported(cmdPath string) bool
 	IsInitialized() bool
 }
@@ -51,16 +51,29 @@ type Status struct {
 	Error           error
 }
 
-func New(model Model) Command {
+type CommandData struct {
+	Aliases  []string
+	Commands []Command
+}
+
+type Command struct {
+	Leaves  []string
+	NeedArg bool
+	// Allows you to validate the users input
+	// argument before the command is run.
+	ValidateArg func(arg string) error
+}
+
+func New(model Model) CommandModel {
 	if model == nil {
 		panic("missing command model")
 	}
 
-	tree := model.GetCmdTree()
+	tree := model.GetCmdData()
 
 	branchNameStore := map[string]struct{}{}
-	for _, branch := range tree.Branches {
-		if len(branch.Leaves) == 0 && len(tree.Branches) > 1 && branch.NeedArg {
+	for _, branch := range tree.Commands {
+		if len(branch.Leaves) == 0 && len(tree.Commands) > 1 && branch.NeedArg {
 			logger.LogFatal(
 				"Branches on the [%s] command have been hidden implicitly.",
 				MsgNoBranchesWithDefaultArgErr,
@@ -79,41 +92,22 @@ func New(model Model) Command {
 	}
 
 	cmdId += 1
-	cmd := Command{
-		model:  model,
-		status: Status{},
-		tree:   model.GetCmdTree(),
-		id:     cmdId,
-	}
+	cmd := CommandModel{cmdId, model, Status{}}
 
 	return cmd
 }
 
-type Command struct {
+type CommandModel struct {
 	id     int
 	model  Model
-	tree   Tree
 	status Status
 }
 
-type Tree struct {
-	Aliases  []string
-	Branches []Branch
-}
-
-type Branch struct {
-	Leaves  []string
-	NeedArg bool
-	// Allows you to validate the users input
-	// argument before the command is run.
-	ValidateArg func(arg string) error
-}
-
-func (cb Command) GetId() int {
+func (cb CommandModel) GetId() int {
 	return cb.id
 }
 
-func (cb Command) ParseCommand(cmdInput string) Status {
+func (cb CommandModel) ParseCommand(cmdInput string) Status {
 	var pathParts []string = strings.Fields(cmdInput)
 	if len(pathParts) == 0 {
 		return Status{Error: ErrEmptyCommand}
@@ -122,13 +116,15 @@ func (cb Command) ParseCommand(cmdInput string) Status {
 	var alias string = pathParts[0]
 	var cmdLeaves []string = pathParts[1:]
 	var cmdPaths []string
-	var activeBranch Branch
+	var activeBranch Command
 
-	if !slices.Contains(cb.tree.Aliases, alias) {
+	entry := cb.model.GetCmdData()
+
+	if !slices.Contains(entry.Aliases, alias) {
 		return Status{Error: ErrNotCommand}
 	}
 
-	for _, branch := range cb.tree.Branches {
+	for _, branch := range entry.Commands {
 		inputPath := strings.Join(pathParts[1:], " ")
 		cmdPath := strings.Join(branch.Leaves, " ")
 		cmdPaths = append(cmdPaths, fmt.Sprintf("%s %s", alias, cmdPath))

@@ -1,4 +1,4 @@
-package cmd
+package cmdmodel
 
 import (
 	"fmt"
@@ -60,7 +60,7 @@ type (
 	}
 )
 
-type BaseTree[T any] struct {
+type BaseCmdData[T any] struct {
 	Name     string
 	Aliases  []string
 	Commands []BaseCommand[T]
@@ -76,7 +76,7 @@ type BaseCommand[T any] struct {
 
 type BaseModel[T any] struct {
 	cmdMap       map[string]BaseCommand[T]
-	cmdTree      BaseTree[T]
+	cmdTree      BaseCmdData[T]
 	cmdStatus    Status
 	cmdErrors    []error
 	lastCmdError error
@@ -91,7 +91,7 @@ type BaseModel[T any] struct {
 	isInterrupt bool
 }
 
-func NewBaseModel[T any](cmdTree BaseTree[T]) *BaseModel[T] {
+func NewBaseModel[T any](cmdTree BaseCmdData[T]) *BaseModel[T] {
 	if len(cmdTree.Commands) == 0 {
 		logger.LogFatal(
 			"Command [%s] has no command paths",
@@ -230,19 +230,19 @@ func (m *BaseModel[T]) ClearErrors() {
 	}
 }
 
-func (m BaseModel[T]) GetCmdTree() Tree {
-	var branches []Branch
+func (m BaseModel[T]) GetCmdData() CommandData {
+	var branches []Command
 	for _, cmd := range m.cmdTree.Commands {
-		branches = append(branches, Branch{
+		branches = append(branches, Command{
 			Leaves:      strings.Split(cmd.Path, " "),
 			NeedArg:     cmd.NeedArg,
 			ValidateArg: cmd.ValidateArg,
 		})
 	}
 
-	return Tree{
+	return CommandData{
 		Aliases:  m.cmdTree.Aliases,
-		Branches: branches,
+		Commands: branches,
 	}
 }
 
@@ -314,7 +314,7 @@ func (m *BaseModel[T]) Exec(model T) T {
 	return model
 }
 
-func validateBranches[T any](cmdTree BaseTree[T]) {
+func validateBranches[T any](cmdTree BaseCmdData[T]) {
 	branchMap := map[string]struct{}{}
 	for _, cmd := range cmdTree.Commands {
 		if cmd.Path == "" && cmd.NeedArg && len(cmdTree.Commands) > 1 {
@@ -345,7 +345,7 @@ func validateBranches[T any](cmdTree BaseTree[T]) {
 	}
 }
 
-func mapCommands[T any](cmdTree BaseTree[T]) map[string]BaseCommand[T] {
+func mapCommands[T any](cmdTree BaseCmdData[T]) map[string]BaseCommand[T] {
 	cmdMap := map[string]BaseCommand[T]{}
 	for _, cmd := range cmdTree.Commands {
 		leaves := strings.Split(cmd.Path, " ")

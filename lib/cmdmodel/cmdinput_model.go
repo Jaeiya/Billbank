@@ -1,4 +1,4 @@
-package cmd
+package cmdmodel
 
 import (
 	"errors"
@@ -35,9 +35,9 @@ const (
 type CmdInputModel struct {
 	CommandInput textinput.Model
 	CmdHistory   *utils.InputHistory
-	commands     []Command
-	currCmd      Command
-	lastCmd      Command
+	commands     []CommandModel
+	currCmd      CommandModel
+	lastCmd      CommandModel
 	aliases      []string
 	statusText   string
 }
@@ -80,12 +80,12 @@ func NewInput(h *utils.InputHistory, options ...CmdInputOption) CmdInputModel {
 	return model
 }
 
-func With(cmds ...Command) CmdInputOption {
+func With(cmds ...CommandModel) CmdInputOption {
 	return func(m *CmdInputModel) {
 		aliasStore := map[string]bool{}
 
 		for _, cmd := range cmds {
-			for _, a := range cmd.tree.Aliases {
+			for _, a := range cmd.model.GetCmdData().Aliases {
 				if aliasStore[a] {
 					panic("command alias already exists")
 				}
@@ -228,7 +228,7 @@ func onAnyKey(m CmdInputModel, msg tea.KeyMsg) (CmdInputModel, tea.Cmd) {
 func tryParseCmd(m CmdInputModel, msg tea.KeyMsg) (CmdInputModel, tea.Cmd) {
 	var cmd tea.Cmd
 	m.CommandInput, cmd = m.CommandInput.Update(msg)
-	m.currCmd = Command{}
+	m.currCmd = CommandModel{}
 	for _, c := range m.commands {
 		logger.Log(
 			logger.Insane,
