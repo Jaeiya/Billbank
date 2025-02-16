@@ -20,8 +20,8 @@ func main() {
 	// db := sqlite.NewSqliteDb(filePath, lib.USD)
 	// defer db.Close()
 
-	logger.SetLogLevel(logger.Hot)
-	logger.Log(logger.Info, "Main", "Starting BillBank")
+	logger.SetLogLevel(logger.Info)
+	logger.Log(logger.Info, "Starting BillBank")
 
 	vp := lib.ViewPort{}
 	h := utils.NewCmdHistory()
