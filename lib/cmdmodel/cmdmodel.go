@@ -122,11 +122,13 @@ func (cb Model) ParseCommand(cmdInput string) Status {
 		if cmd.NeedArg && hasArg {
 			cmdPath = strings.Join(cmdPathParts[:len(cmdPathParts)-1], " ")
 			if cmdPath == cmd.Path {
+				arg := inputParts[len(inputParts)-1]
+				err := cmd.ValidateArg(arg)
 				return Status{
 					IsCommand: true,
 					Path:      strings.TrimSpace(alias + " " + cmd.Path),
 					Arg:       inputParts[len(inputParts)-1],
-					Error:     cmd.ValidateArg(inputParts[len(inputParts)-1]),
+					Error:     err,
 				}
 			}
 		}
