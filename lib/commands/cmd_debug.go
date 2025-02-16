@@ -66,7 +66,7 @@ func NewDebugCmd(h *utils.InputHistory) cmdmodel.Model {
 	vp.KeyMap.HalfPageDown = key.NewBinding(key.WithKeys("ctrl+j"))
 
 	m := debugModel{
-		ModelBase: cmdmodel.NewModelBase(cmdmodel.BaseData[debugModel]{
+		ModelBase: cmdmodel.NewModelBase(cmdmodel.BaseCmdData[debugModel]{
 			Name:    "Debug",
 			Aliases: []string{"/"},
 			Commands: []cmdmodel.BaseCommand[debugModel]{

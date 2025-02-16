@@ -11,7 +11,7 @@ func NewBillsCmd() cmdmodel.Model {
 	// so that it can be passed to your model.
 	//
 	m := billsModel{
-		ModelBase: cmdmodel.NewModelBase(cmdmodel.BaseData[billsModel]{
+		ModelBase: cmdmodel.NewModelBase(cmdmodel.BaseCmdData[billsModel]{
 			Name:    "Bills",
 			Aliases: []string{"bills", "b"},
 			Commands: []cmdmodel.BaseCommand[billsModel]{

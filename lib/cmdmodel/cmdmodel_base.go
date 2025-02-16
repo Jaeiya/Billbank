@@ -60,7 +60,7 @@ type (
 	}
 )
 
-type BaseData[T any] struct {
+type BaseCmdData[T any] struct {
 	Name     string
 	Aliases  []string
 	Commands []BaseCommand[T]
@@ -76,7 +76,7 @@ type BaseCommand[T any] struct {
 
 type ModelBase[T any] struct {
 	cmdMap       map[string]BaseCommand[T]
-	cmdTree      BaseData[T]
+	cmdTree      BaseCmdData[T]
 	cmdStatus    Status
 	cmdErrors    []error
 	lastCmdError error
@@ -91,38 +91,30 @@ type ModelBase[T any] struct {
 	isInterrupt bool
 }
 
-func NewModelBase[T any](cmdTree BaseData[T]) *ModelBase[T] {
-	if len(cmdTree.Commands) == 0 {
-		logger.LogFatal(
-			"Command [%s] has no command paths",
-			"Did you forget to add commands to a new command model?",
-			cmdTree.Name,
-		)
-	}
+func NewModelBase[T any](cmdData BaseCmdData[T]) *ModelBase[T] {
+	validateCmdData(cmdData)
 
-	for _, cmd := range cmdTree.Commands {
+	cmdMap := map[string]BaseCommand[T]{}
+	for _, cmd := range cmdData.Commands {
 		leaves := strings.Split(cmd.Path, " ")
-		hasAlias := slices.ContainsFunc(cmdTree.Aliases, func(alias string) bool {
-			return leaves[0] == alias
-		})
-
-		if hasAlias {
-			logger.LogFatal(
-				"[%s] command path [%s] does not need to include the command-alias [%s]",
-				MsgUsingAliasInCmdPath,
-				cmdTree.Name, cmd.Path, leaves[0],
+		path := strings.Join(leaves, " ")
+		for _, alias := range cmdData.Aliases {
+			fullCmdPath := strings.TrimSpace(fmt.Sprintf("%s %s", alias, path))
+			logger.Log(
+				logger.Hot,
+				"binding command [%s] to [%s] as [%s]",
+				path, alias, fullCmdPath,
 			)
+			cmdMap[fullCmdPath] = cmd
 		}
-	}
 
-	validateCommands(cmdTree)
-	cmdMap := mapCommands(cmdTree)
+	}
 
 	logger.Log(
 		logger.Info,
 		"command [%s] loaded [%d] command paths",
-		cmdTree.Name,
-		len(cmdTree.Commands),
+		cmdData.Name,
+		len(cmdData.Commands),
 	)
 
 	logger.LogFunc(logger.Debug, func() string {
@@ -131,12 +123,12 @@ func NewModelBase[T any](cmdTree BaseData[T]) *ModelBase[T] {
 			cmdPaths = append(cmdPaths, fmt.Sprintf("[%s]", key))
 		}
 		pathStrings := fmt.Sprintf("%+v", strings.Join(cmdPaths, ", "))
-		return fmt.Sprintf("command [%s] loaded %s", cmdTree.Name, pathStrings)
+		return fmt.Sprintf("command [%s] loaded %s", cmdData.Name, pathStrings)
 	})
 
 	return &ModelBase[T]{
 		cmdMap:       cmdMap,
-		cmdTree:      cmdTree,
+		cmdTree:      cmdData,
 		lastCmdError: fmt.Errorf(""),
 		isFirstMsg:   true,
 	}
@@ -249,15 +241,6 @@ func (m ModelBase[T]) IsActivePath(cmdPath string) bool {
 	return m.cmdStatus.Path == cmdPath
 }
 
-/*
-HasView returns true if the current command tree string has
-an applicable view associated with it.
-*/
-func (m ModelBase[T]) HasView() bool {
-	cmd := m.cmdMap[m.cmdStatus.Path]
-	return cmd.View != nil
-}
-
 func (m ModelBase[T]) IsSupported(cmdPath string) bool {
 	_, ok := m.cmdMap[cmdPath]
 	return ok
@@ -313,7 +296,30 @@ func (m *ModelBase[T]) Exec(model T) T {
 	return model
 }
 
-func validateCommands[T any](cmdTree BaseData[T]) {
+func validateCmdData[T any](cmdTree BaseCmdData[T]) {
+	if len(cmdTree.Commands) == 0 {
+		logger.LogFatal(
+			"Command [%s] has no command paths",
+			"Did you forget to add commands to a new command model?",
+			cmdTree.Name,
+		)
+	}
+
+	for _, cmd := range cmdTree.Commands {
+		leaves := strings.Split(cmd.Path, " ")
+		hasAlias := slices.ContainsFunc(cmdTree.Aliases, func(alias string) bool {
+			return leaves[0] == alias
+		})
+
+		if hasAlias {
+			logger.LogFatal(
+				"[%s] command path [%s] does not need to include the command-alias [%s]",
+				MsgUsingAliasInCmdPath,
+				cmdTree.Name, cmd.Path, leaves[0],
+			)
+		}
+	}
+
 	cmdMap := map[string]struct{}{}
 	for _, cmd := range cmdTree.Commands {
 		if cmd.Path == "" && cmd.NeedArg && len(cmdTree.Commands) > 1 {
@@ -339,23 +345,6 @@ func validateCommands[T any](cmdTree BaseData[T]) {
 				cmd.Path,
 			)
 		}
-
 		cmdMap[cmd.Path] = struct{}{}
 	}
-}
-
-func mapCommands[T any](cmdTree BaseData[T]) map[string]BaseCommand[T] {
-	cmdMap := map[string]BaseCommand[T]{}
-	for _, cmd := range cmdTree.Commands {
-		leaves := strings.Split(cmd.Path, " ")
-		path := strings.Join(leaves, " ")
-
-		for _, alias := range cmdTree.Aliases {
-			p := strings.TrimSpace(fmt.Sprintf("%s %s", alias, path))
-			logger.Log(logger.Hot, "binding command [%s] to [%s] as [%s]", path, alias, p)
-			cmdMap[p] = cmd
-		}
-
-	}
-	return cmdMap
 }
