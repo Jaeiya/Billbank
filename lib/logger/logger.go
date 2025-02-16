@@ -60,6 +60,19 @@ func Log(ll LogLevel, msg string, vars ...any) {
 	logChan <- LogMsg{msg, ll, file, line, vars}
 }
 
+// LogFunc executes the msgFn and passes its result to the
+// default log func, if the specified log level is active.
+//
+// This is useful if you need a log that does some heavy
+// processing, but only want that processing to occur on
+// a specific log level.
+func LogFunc(ll LogLevel, msgFn func() string, vars ...any) {
+	if ll < logLevel {
+		return
+	}
+	Log(ll, msgFn())
+}
+
 func LogFatal(errMsg string, description string, vars ...any) {
 	defer func() {
 		CloseLog()
