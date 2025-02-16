@@ -115,7 +115,7 @@ func NewModelBase[T any](cmdTree BaseData[T]) *ModelBase[T] {
 		}
 	}
 
-	validateBranches(cmdTree)
+	validateCommands(cmdTree)
 	cmdMap := mapCommands(cmdTree)
 
 	logger.Log(
@@ -231,18 +231,14 @@ func (m *ModelBase[T]) ClearErrors() {
 }
 
 func (m ModelBase[T]) GetCmdData() CommandData {
-	var branches []Command
+	var commands []ModelCommand
 	for _, cmd := range m.cmdTree.Commands {
-		branches = append(branches, Command{
-			Leaves:      strings.Split(cmd.Path, " "),
-			NeedArg:     cmd.NeedArg,
-			ValidateArg: cmd.ValidateArg,
-		})
+		commands = append(commands, newModelCommand(cmd))
 	}
 
 	return CommandData{
 		Aliases:  m.cmdTree.Aliases,
-		Commands: branches,
+		Commands: commands,
 	}
 }
 
@@ -314,8 +310,8 @@ func (m *ModelBase[T]) Exec(model T) T {
 	return model
 }
 
-func validateBranches[T any](cmdTree BaseData[T]) {
-	branchMap := map[string]struct{}{}
+func validateCommands[T any](cmdTree BaseData[T]) {
+	cmdMap := map[string]struct{}{}
 	for _, cmd := range cmdTree.Commands {
 		if cmd.Path == "" && cmd.NeedArg && len(cmdTree.Commands) > 1 {
 			logger.LogFatal(
@@ -332,7 +328,7 @@ func validateBranches[T any](cmdTree BaseData[T]) {
 				cmdTree.Name, cmd.Path,
 			)
 		}
-		if _, ok := branchMap[cmd.Path]; ok {
+		if _, ok := cmdMap[cmd.Path]; ok {
 			logger.LogFatal(
 				"[%s] contains a duplicate command path [%s]",
 				"Is it possible you were testing something and accidentally duplicated a command?",
@@ -341,7 +337,7 @@ func validateBranches[T any](cmdTree BaseData[T]) {
 			)
 		}
 
-		branchMap[cmd.Path] = struct{}{}
+		cmdMap[cmd.Path] = struct{}{}
 	}
 }
 

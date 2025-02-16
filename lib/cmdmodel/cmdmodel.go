@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/jaeiya/billbank/lib/logger"
 )
 
 var (
@@ -53,14 +52,22 @@ type Status struct {
 
 type CommandData struct {
 	Aliases  []string
-	Commands []Command
+	Commands []ModelCommand
 }
 
-type Command struct {
-	Leaves  []string
-	NeedArg bool
-	// Allows you to validate the users input
-	// argument before the command is run.
+func newModelCommand[T any](baseCmd BaseCommand[T]) ModelCommand {
+	return ModelCommand{
+		baseCmd.Path,
+		strings.Split(baseCmd.Path, " "),
+		baseCmd.NeedArg,
+		baseCmd.ValidateArg,
+	}
+}
+
+type ModelCommand struct {
+	Path        string
+	PathParts   []string
+	NeedArg     bool
 	ValidateArg func(arg string) error
 }
 
@@ -68,33 +75,8 @@ func New(model Interface) Model {
 	if model == nil {
 		panic("missing command model")
 	}
-
-	tree := model.GetCmdData()
-
-	branchNameStore := map[string]struct{}{}
-	for _, branch := range tree.Commands {
-		if len(branch.Leaves) == 0 && len(tree.Commands) > 1 && branch.NeedArg {
-			logger.LogFatal(
-				"Branches on the [%s] command have been hidden implicitly.",
-				MsgNoBranchesWithDefaultArgErr,
-				tree.Aliases[0],
-			)
-		}
-		cmdPath := strings.Join(branch.Leaves, " ")
-		if _, ok := branchNameStore[cmdPath]; ok {
-			logger.LogFatal(
-				"Found duplicate tree branches [%s]. ",
-				MsgDuplicateBranchErr,
-				tree.Aliases[0]+" "+cmdPath,
-			)
-		}
-		branchNameStore[cmdPath] = struct{}{}
-	}
-
 	cmdId += 1
-	cmd := Model{cmdId, model, Status{}}
-
-	return cmd
+	return Model{cmdId, model, Status{}}
 }
 
 type Model struct {
@@ -108,60 +90,57 @@ func (cb Model) GetId() int {
 }
 
 func (cb Model) ParseCommand(cmdInput string) Status {
-	var pathParts []string = strings.Fields(cmdInput)
-	if len(pathParts) == 0 {
+	var inputParts []string = strings.Fields(cmdInput)
+	if len(inputParts) == 0 {
 		return Status{Error: ErrEmptyCommand}
 	}
 
-	var alias string = pathParts[0]
-	var cmdLeaves []string = pathParts[1:]
+	var alias string = inputParts[0]
+	var cmdPathParts []string = inputParts[1:]
 	var cmdPaths []string
-	var activeBranch Command
 
-	entry := cb.model.GetCmdData()
+	cmdData := cb.model.GetCmdData()
 
-	if !slices.Contains(entry.Aliases, alias) {
+	if !slices.Contains(cmdData.Aliases, alias) {
 		return Status{Error: ErrNotCommand}
 	}
 
-	for _, branch := range entry.Commands {
-		inputPath := strings.Join(pathParts[1:], " ")
-		cmdPath := strings.Join(branch.Leaves, " ")
-		cmdPaths = append(cmdPaths, fmt.Sprintf("%s %s", alias, cmdPath))
-		activeBranch = branch
+	for _, cmd := range cmdData.Commands {
+		cmdPath := strings.Join(cmdPathParts, " ")
+		cmdPaths = append(cmdPaths, fmt.Sprintf("%s %s", alias, cmd.Path))
 
-		if !branch.NeedArg && inputPath == cmdPath {
+		if !cmd.NeedArg && cmdPath == cmd.Path {
 			var err error
 			if !cb.model.IsSupported(cmdInput) {
 				err = ErrUnimplementedCmd
 			}
 			return Status{
 				IsCommand: true,
-				Path:      strings.TrimSpace(alias + " " + cmdPath),
+				Path:      strings.TrimSpace(alias + " " + cmd.Path),
 				Error:     err,
 			}
 		}
 
-		hasArg := len(cmdLeaves) == len(branch.Leaves)+1
+		hasArg := len(cmdPathParts) == len(cmd.PathParts)+1
 
-		if branch.NeedArg && !hasArg && inputPath == cmdPath {
+		if cmd.NeedArg && !hasArg && cmdPath == cmd.Path {
 			return Status{
 				IsCommand: true,
 				Error: fmt.Errorf(
 					"expected value after '%s'",
-					pathParts[len(pathParts)-1],
+					inputParts[len(inputParts)-1],
 				),
 			}
 		}
 
-		if branch.NeedArg && hasArg {
-			inputPath = strings.Join(cmdLeaves[:len(cmdLeaves)-1], " ")
-			if inputPath == cmdPath {
+		if cmd.NeedArg && hasArg {
+			cmdPath = strings.Join(cmdPathParts[:len(cmdPathParts)-1], " ")
+			if cmdPath == cmd.Path {
 				return Status{
 					IsCommand: true,
-					Path:      strings.TrimSpace(alias + " " + inputPath),
-					Arg:       pathParts[len(pathParts)-1],
-					Error:     activeBranch.ValidateArg(pathParts[len(pathParts)-1]),
+					Path:      strings.TrimSpace(alias + " " + cmd.Path),
+					Arg:       inputParts[len(inputParts)-1],
+					Error:     cmd.ValidateArg(inputParts[len(inputParts)-1]),
 				}
 			}
 		}
@@ -170,7 +149,7 @@ func (cb Model) ParseCommand(cmdInput string) Status {
 	return Status{
 		IsCommand:       true,
 		Error:           ErrIncompleteCmd,
-		PathSuggestions: populateSuggestions(cmdPaths, pathParts),
+		PathSuggestions: populateSuggestions(cmdPaths, inputParts),
 		Path:            cmdInput,
 	}
 }
@@ -178,11 +157,11 @@ func (cb Model) ParseCommand(cmdInput string) Status {
 func populateSuggestions(cmdPaths, pathParts []string) []string {
 	var suggestions []string
 	for _, path := range cmdPaths {
-		leaves := strings.Fields(path)
-		if len(pathParts) == len(leaves) {
+		cmdPathParts := strings.Fields(path)
+		if len(cmdPathParts) >= len(pathParts) {
 			suggestions = append(
 				suggestions,
-				strings.Join(leaves[:len(pathParts)], " "),
+				strings.Join(cmdPathParts[:len(pathParts)], " "),
 			)
 		}
 	}
