@@ -45,7 +45,7 @@ func newModelCommand[T any](baseCmd BaseCommand[T]) ModelCommand {
 	return ModelCommand{
 		baseCmd.Path,
 		strings.Split(baseCmd.Path, " "),
-		baseCmd.NeedArg,
+		baseCmd.ArgType,
 		baseCmd.ValidateArg,
 	}
 }
@@ -53,7 +53,7 @@ func newModelCommand[T any](baseCmd BaseCommand[T]) ModelCommand {
 type ModelCommand struct {
 	Path        string
 	PathParts   []string
-	NeedArg     bool
+	ArgType     ArgType
 	ValidateArg func(arg string) error
 }
 
@@ -95,7 +95,7 @@ func (cb Model) ParseCommand(cmdInput string) Status {
 		cmdPath := strings.Join(cmdPathParts, " ")
 		cmdPaths = append(cmdPaths, fmt.Sprintf("%s %s", alias, cmd.Path))
 
-		if !cmd.NeedArg && cmdPath == cmd.Path {
+		if cmd.ArgType < ArgRequired && cmdPath == cmd.Path {
 			var err error
 			if !cb.model.IsSupported(cmdInput) {
 				err = ErrUnimplementedCmd
@@ -109,7 +109,7 @@ func (cb Model) ParseCommand(cmdInput string) Status {
 
 		hasArg := len(cmdPathParts) == len(cmd.PathParts)+1
 
-		if cmd.NeedArg && !hasArg && cmdPath == cmd.Path {
+		if cmd.ArgType > ArgNone && !hasArg && cmdPath == cmd.Path {
 			return Status{
 				IsCommand: true,
 				Error: fmt.Errorf(
@@ -119,7 +119,7 @@ func (cb Model) ParseCommand(cmdInput string) Status {
 			}
 		}
 
-		if cmd.NeedArg && hasArg {
+		if cmd.ArgType > ArgNone && hasArg {
 			cmdPath = strings.Join(cmdPathParts[:len(cmdPathParts)-1], " ")
 			if cmdPath == cmd.Path {
 				arg := inputParts[len(inputParts)-1]

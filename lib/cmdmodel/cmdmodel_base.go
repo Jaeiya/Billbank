@@ -50,8 +50,15 @@ as an argument. This will allow the execution of the model aliases,
 as if they were commands themselves.
 
 Be aware though, that if you set an empty path's "NeedArg" to true,
-you can't add any more commands to that model.
-`
+you can't add any more commands to that model.`
+
+type ArgType int
+
+const (
+	ArgNone = ArgType(iota)
+	ArgOptional
+	ArgRequired
+)
 
 type (
 	ViewportSizeMsg struct {
@@ -68,7 +75,7 @@ type BaseCmdData[T any] struct {
 
 type BaseCommand[T any] struct {
 	Path        string
-	NeedArg     bool
+	ArgType     ArgType
 	ValidateArg func(arg string) error
 	Run         func(T) T
 	View        func(T) string
@@ -322,7 +329,7 @@ func validateCmdData[T any](cmdData BaseCmdData[T]) {
 
 	cmdMap := map[string]struct{}{}
 	for _, cmd := range cmdData.Commands {
-		if cmd.Path == "" && cmd.NeedArg && len(cmdData.Commands) > 1 {
+		if cmd.Path == "" && cmd.ArgType == ArgRequired && len(cmdData.Commands) > 1 {
 			logger.LogFatal(
 				"[%s] has been initialized as a default command with args, but contains extra commands",
 				MsgIsCmdItself,
@@ -330,7 +337,7 @@ func validateCmdData[T any](cmdData BaseCmdData[T]) {
 			)
 		}
 
-		if cmd.NeedArg && cmd.ValidateArg == nil {
+		if cmd.ArgType > ArgNone && cmd.ValidateArg == nil {
 			logger.LogFatal(
 				"[%s] command path [%s] is missing an arg validation function.",
 				MsgMissingArgFuncErr,
