@@ -72,7 +72,19 @@ func NewDebugCmd(h *utils.InputHistory) cmdmodel.Model {
 			Commands: []cmdmodel.BaseCommand[debugModel]{
 				{Path: "history", Run: loadHistory, View: viewHistory},
 				{Path: "log", Run: loadLog, View: viewLog},
-				{Path: "slog", Run: loadSlog, View: viewSlog},
+				{
+					Path:    "slog",
+					Run:     loadSlog,
+					View:    viewSlog,
+					ArgType: cmdmodel.ArgOptional,
+					ValidateArg: func(arg string) error {
+						_, err := utils.ParseInt(arg)
+						if err != nil {
+							return fmt.Errorf("[%s] is not a valid number of lines", arg)
+						}
+						return nil
+					},
+				},
 				{Path: "stats", Run: loadStats, View: viewStats},
 				{Path: "clear log", Run: clearLog, View: clearLogView},
 				{Path: "clear slog", Run: clearSlog, View: clearSlogView},
@@ -228,15 +240,19 @@ func clearLogView(m debugModel) string {
 
 func loadSlog(m debugModel) debugModel {
 	m = loadLog(m)
+	arg := m.GetCmdArg()
 
-	if m.log.lineCount == m.slog.lineCount {
-		return m
+	maxLines := 100
+	if arg != "" {
+		// Error has already been validated through cmd
+		maxLines, _ = utils.ParseInt(arg)
 	}
 
 	var tagBuilder, subjBuilder, wordBuilder strings.Builder
 	now := time.Now()
 
 	lines := strings.Split(m.log.view, "\n")
+	lines = lines[max(len(lines)-maxLines, 0):]
 	for _, line := range lines {
 		if line == "" {
 			continue
