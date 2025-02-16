@@ -241,7 +241,6 @@ func (m BaseModel[T]) GetCmdTree() Tree {
 	}
 
 	return Tree{
-		Name:     m.cmdTree.Name,
 		Aliases:  m.cmdTree.Aliases,
 		Branches: branches,
 	}

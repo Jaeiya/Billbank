@@ -89,26 +89,6 @@ func New(model Model) Command {
 	return cmd
 }
 
-// A command is not a single entry point, but a tree of
-// entry points. A single command instance can and will
-// allow multiple execution paths via a tree hierarchy.
-// The first level of the tree is for command aliases
-// and all subsequent levels are leaves attached to
-// those aliases.
-//
-// Example:
-//
-//	[][]string{{"set"}, {"bill", "stat"}, {"amount", "name"}}
-//
-// Resulting Command Branches:
-//
-//	set bill amount
-//	set bill name
-//	set stat amount
-//	set stat name
-//
-// Each command branch is an execution path. What
-// happens in that execution path is up to the dev.
 type Command struct {
 	id     int
 	model  Model
@@ -117,7 +97,6 @@ type Command struct {
 }
 
 type Tree struct {
-	Name     string
 	Aliases  []string
 	Branches []Branch
 }
@@ -200,7 +179,7 @@ func (cb Command) ParseCommand(cmdInput string) Status {
 	}
 }
 
-func populateSuggestions(cmdPaths []string, pathParts []string) []string {
+func populateSuggestions(cmdPaths, pathParts []string) []string {
 	var suggestions []string
 	for _, path := range cmdPaths {
 		leaves := strings.Fields(path)
