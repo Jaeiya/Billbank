@@ -296,18 +296,18 @@ func (m *ModelBase[T]) Exec(model T) T {
 	return model
 }
 
-func validateCmdData[T any](cmdTree BaseCmdData[T]) {
-	if len(cmdTree.Commands) == 0 {
+func validateCmdData[T any](cmdData BaseCmdData[T]) {
+	if len(cmdData.Commands) == 0 {
 		logger.LogFatal(
 			"Command [%s] has no command paths",
 			"Did you forget to add commands to a new command model?",
-			cmdTree.Name,
+			cmdData.Name,
 		)
 	}
 
-	for _, cmd := range cmdTree.Commands {
+	for _, cmd := range cmdData.Commands {
 		leaves := strings.Split(cmd.Path, " ")
-		hasAlias := slices.ContainsFunc(cmdTree.Aliases, func(alias string) bool {
+		hasAlias := slices.ContainsFunc(cmdData.Aliases, func(alias string) bool {
 			return leaves[0] == alias
 		})
 
@@ -315,18 +315,18 @@ func validateCmdData[T any](cmdTree BaseCmdData[T]) {
 			logger.LogFatal(
 				"[%s] command path [%s] does not need to include the command-alias [%s]",
 				MsgUsingAliasInCmdPath,
-				cmdTree.Name, cmd.Path, leaves[0],
+				cmdData.Name, cmd.Path, leaves[0],
 			)
 		}
 	}
 
 	cmdMap := map[string]struct{}{}
-	for _, cmd := range cmdTree.Commands {
-		if cmd.Path == "" && cmd.NeedArg && len(cmdTree.Commands) > 1 {
+	for _, cmd := range cmdData.Commands {
+		if cmd.Path == "" && cmd.NeedArg && len(cmdData.Commands) > 1 {
 			logger.LogFatal(
 				"[%s] has been initialized as a default command with args, but contains extra commands",
 				MsgIsCmdItself,
-				cmdTree.Name,
+				cmdData.Name,
 			)
 		}
 
@@ -334,14 +334,14 @@ func validateCmdData[T any](cmdTree BaseCmdData[T]) {
 			logger.LogFatal(
 				"[%s] command path [%s] is missing an arg validation function.",
 				MsgMissingArgFuncErr,
-				cmdTree.Name, cmd.Path,
+				cmdData.Name, cmd.Path,
 			)
 		}
 		if _, ok := cmdMap[cmd.Path]; ok {
 			logger.LogFatal(
 				"[%s] contains a duplicate command path [%s]",
 				"Is it possible you were testing something and accidentally duplicated a command?",
-				cmdTree.Name,
+				cmdData.Name,
 				cmd.Path,
 			)
 		}
