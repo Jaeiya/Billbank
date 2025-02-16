@@ -12,15 +12,15 @@ import (
 )
 
 const MsgMissingArgFuncErr = `
-If a command path requires an argument, then it should also validate
+If a command path can accept an argument, then it should also validate
 that argument. It's recommended to validate the arg inside this
 function because it can notify the user on error.`
 
 const MsgIsCmdItself = `
 Models with default commands (commands executed just by their alias),
-that take arguments, do not support extra commands. For instance, if
-your model has a "view" alias that takes an argument for the kind of
-view to display:
+that can take arguments, do not support extra commands. For instance,
+if your model has a "view" alias that takes an argument for the kind
+of view to display:
 
 [view 1] or [view 2]
 
@@ -49,8 +49,8 @@ Where loadCmd and loadView are functions that take your command model
 as an argument. This will allow the execution of the model aliases,
 as if they were commands themselves.
 
-Be aware though, that if you set an empty path's "NeedArg" to true,
-you can't add any more commands to that model.`
+Be aware though, that if you set its ArgType to optional or required,
+you'll no longer be able to add any more commands to that model.`
 
 type ArgType int
 
