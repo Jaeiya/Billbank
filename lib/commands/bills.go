@@ -5,13 +5,13 @@ import (
 	"github.com/jaeiya/billbank/lib/cmdmodel"
 )
 
-func NewBillsCmd() cmdmodel.CommandModel {
+func NewBillsCmd() cmdmodel.Model {
 	//
 	// Anything that needs to be initialized should be here
 	// so that it can be passed to your model.
 	//
 	m := billsModel{
-		BaseModel: cmdmodel.NewBaseModel(cmdmodel.BaseCmdData[billsModel]{
+		ModelCmdBase: cmdmodel.NewModelCmdBase(cmdmodel.BaseCmdData[billsModel]{
 			Name:    "Bills",
 			Aliases: []string{"bills", "b"},
 			Commands: []cmdmodel.BaseCommand[billsModel]{
@@ -24,14 +24,14 @@ func NewBillsCmd() cmdmodel.CommandModel {
 }
 
 type billsModel struct {
-	*cmdmodel.BaseModel[billsModel]
+	*cmdmodel.ModelCmdBase[billsModel]
 }
 
-func (m billsModel) Update(msg tea.Msg) (cmdmodel.Model, tea.Cmd) {
+func (m billsModel) Update(msg tea.Msg) (cmdmodel.ModelCommand, tea.Cmd) {
 	var teaCmd tea.Cmd
 	var teaCmds []tea.Cmd
 
-	m, teaCmd = m.BaseModel.Update(m, msg)
+	m, teaCmd = m.ModelCmdBase.Update(m, msg)
 	teaCmds = append(teaCmds, teaCmd)
 
 	// switch msg := msg.(type) {
@@ -49,7 +49,7 @@ func (m billsModel) Update(msg tea.Msg) (cmdmodel.Model, tea.Cmd) {
 }
 
 func (m billsModel) View() string {
-	return m.BaseModel.View(m)
+	return m.ModelCmdBase.View(m)
 }
 
 func loadBills(m billsModel) billsModel {

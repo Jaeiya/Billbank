@@ -20,7 +20,7 @@ type UpdateStatusMsg struct {
 }
 
 type UpdateCmdMsg struct {
-	Model         Model
+	Model         ModelCommand
 	CommandStatus Status
 }
 
@@ -32,17 +32,17 @@ const (
 	HIGH
 )
 
-type CmdInputModel struct {
+type InputModel struct {
 	CommandInput textinput.Model
 	CmdHistory   *utils.InputHistory
-	commands     []CommandModel
-	currCmd      CommandModel
-	lastCmd      CommandModel
+	commands     []Model
+	currCmd      Model
+	lastCmd      Model
 	aliases      []string
 	statusText   string
 }
 
-type CmdInputOption func(*CmdInputModel)
+type InputOption func(*InputModel)
 
 var statusStyle = lipgloss.NewStyle().
 	Width(100).
@@ -66,8 +66,8 @@ var commanderInput textinput.Model = func() textinput.Model {
 }()
 
 // TODO - Use an interface to define input history methods
-func NewInput(h *utils.InputHistory, options ...CmdInputOption) CmdInputModel {
-	model := CmdInputModel{
+func NewInputModel(h *utils.InputHistory, options ...InputOption) InputModel {
+	model := InputModel{
 		aliases: []string{},
 	}
 	model.CmdHistory = h
@@ -80,8 +80,8 @@ func NewInput(h *utils.InputHistory, options ...CmdInputOption) CmdInputModel {
 	return model
 }
 
-func With(cmds ...CommandModel) CmdInputOption {
-	return func(m *CmdInputModel) {
+func With(cmds ...Model) InputOption {
+	return func(m *InputModel) {
 		aliasStore := map[string]bool{}
 
 		for _, cmd := range cmds {
@@ -98,11 +98,11 @@ func With(cmds ...CommandModel) CmdInputOption {
 	}
 }
 
-func (m CmdInputModel) Init() tea.Cmd {
+func (m InputModel) Init() tea.Cmd {
 	return textinput.Blink
 }
 
-func (m CmdInputModel) Update(msg tea.Msg) (CmdInputModel, tea.Cmd) {
+func (m InputModel) Update(msg tea.Msg) (InputModel, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
 
@@ -161,12 +161,12 @@ func (m CmdInputModel) Update(msg tea.Msg) (CmdInputModel, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m CmdInputModel) View() string {
+func (m InputModel) View() string {
 	s := fmt.Sprintf("%s\n%s", statusStyle.Render(m.statusText), m.CommandInput.View())
 	return s
 }
 
-func tryEnterCmd(m CmdInputModel) (CmdInputModel, tea.Cmd) {
+func tryEnterCmd(m InputModel) (InputModel, tea.Cmd) {
 	// Empty commands will not yet have been parsed.
 	if m.CommandInput.Value() == "" {
 		m, _ = tryParseCmd(m, tea.KeyMsg{})
@@ -213,7 +213,7 @@ func tryEnterCmd(m CmdInputModel) (CmdInputModel, tea.Cmd) {
 	return m, func() tea.Msg { return teaMsg }
 }
 
-func onAnyKey(m CmdInputModel, msg tea.KeyMsg) (CmdInputModel, tea.Cmd) {
+func onAnyKey(m InputModel, msg tea.KeyMsg) (InputModel, tea.Cmd) {
 	var key string = msg.String()
 	if key[0] == 0 {
 		key = "ctrl"
@@ -225,10 +225,10 @@ func onAnyKey(m CmdInputModel, msg tea.KeyMsg) (CmdInputModel, tea.Cmd) {
 	return tryParseCmd(m, msg)
 }
 
-func tryParseCmd(m CmdInputModel, msg tea.KeyMsg) (CmdInputModel, tea.Cmd) {
+func tryParseCmd(m InputModel, msg tea.KeyMsg) (InputModel, tea.Cmd) {
 	var cmd tea.Cmd
 	m.CommandInput, cmd = m.CommandInput.Update(msg)
-	m.currCmd = CommandModel{}
+	m.currCmd = Model{}
 	for _, c := range m.commands {
 		logger.Log(
 			logger.Insane,
@@ -250,7 +250,7 @@ func tryParseCmd(m CmdInputModel, msg tea.KeyMsg) (CmdInputModel, tea.Cmd) {
 	return m, cmd
 }
 
-func isLastCharSpace(m CmdInputModel) bool {
+func isLastCharSpace(m InputModel) bool {
 	if len(m.CommandInput.Value()) == 0 {
 		return false
 	}

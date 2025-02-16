@@ -33,8 +33,8 @@ instead of: <alias arg>`
 
 var cmdId = 0
 
-type Model interface {
-	Update(tea.Msg) (Model, tea.Cmd)
+type ModelCommand interface {
+	Update(tea.Msg) (ModelCommand, tea.Cmd)
 	View() string
 	GetName() string
 	GetErrors() []error
@@ -64,7 +64,7 @@ type Command struct {
 	ValidateArg func(arg string) error
 }
 
-func New(model Model) CommandModel {
+func New(model ModelCommand) Model {
 	if model == nil {
 		panic("missing command model")
 	}
@@ -92,22 +92,22 @@ func New(model Model) CommandModel {
 	}
 
 	cmdId += 1
-	cmd := CommandModel{cmdId, model, Status{}}
+	cmd := Model{cmdId, model, Status{}}
 
 	return cmd
 }
 
-type CommandModel struct {
+type Model struct {
 	id     int
-	model  Model
+	model  ModelCommand
 	status Status
 }
 
-func (cb CommandModel) GetId() int {
+func (cb Model) GetId() int {
 	return cb.id
 }
 
-func (cb CommandModel) ParseCommand(cmdInput string) Status {
+func (cb Model) ParseCommand(cmdInput string) Status {
 	var pathParts []string = strings.Fields(cmdInput)
 	if len(pathParts) == 0 {
 		return Status{Error: ErrEmptyCommand}

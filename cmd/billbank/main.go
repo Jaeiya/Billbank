@@ -3,7 +3,7 @@ package main
 import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/jaeiya/billbank/lib"
-	"github.com/jaeiya/billbank/lib/cmd"
+	"github.com/jaeiya/billbank/lib/cmdmodel"
 	"github.com/jaeiya/billbank/lib/commands"
 	"github.com/jaeiya/billbank/lib/logger"
 	"github.com/jaeiya/billbank/lib/utils"
@@ -26,9 +26,9 @@ func main() {
 	vp := lib.ViewPort{}
 	h := utils.NewCmdHistory()
 
-	vp.CommandInput = cmd.NewInput(
+	vp.CommandInput = cmdmodel.NewInputModel(
 		h,
-		cmd.With(
+		cmdmodel.With(
 			commands.NewDebugCmd(h),
 			commands.NewBillsCmd(),
 		),

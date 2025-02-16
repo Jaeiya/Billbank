@@ -56,7 +56,7 @@ var (
 		Width(30)
 )
 
-func NewDebugCmd(h *utils.InputHistory) cmdmodel.CommandModel {
+func NewDebugCmd(h *utils.InputHistory) cmdmodel.Model {
 	vp := viewport.New(0, 0)
 	vp.KeyMap.Down = key.NewBinding()
 	vp.KeyMap.Up = key.NewBinding()
@@ -66,7 +66,7 @@ func NewDebugCmd(h *utils.InputHistory) cmdmodel.CommandModel {
 	vp.KeyMap.HalfPageDown = key.NewBinding(key.WithKeys("ctrl+j"))
 
 	m := debugModel{
-		BaseModel: cmdmodel.NewBaseModel(cmdmodel.BaseCmdData[debugModel]{
+		ModelCmdBase: cmdmodel.NewModelCmdBase(cmdmodel.BaseCmdData[debugModel]{
 			Name:    "Debug",
 			Aliases: []string{"/"},
 			Commands: []cmdmodel.BaseCommand[debugModel]{
@@ -86,7 +86,7 @@ func NewDebugCmd(h *utils.InputHistory) cmdmodel.CommandModel {
 }
 
 type debugModel struct {
-	*cmdmodel.BaseModel[debugModel]
+	*cmdmodel.ModelCmdBase[debugModel]
 	history debugHistory
 	log     debugLog
 	slog    debugSlog
@@ -125,11 +125,11 @@ type debugSlog struct {
 	lastRenderDur time.Duration
 }
 
-func (m debugModel) Update(msg tea.Msg) (cmdmodel.Model, tea.Cmd) {
+func (m debugModel) Update(msg tea.Msg) (cmdmodel.ModelCommand, tea.Cmd) {
 	var teaCmd tea.Cmd
 	var teaCmds []tea.Cmd
 
-	m, teaCmd = m.BaseModel.Update(m, msg)
+	m, teaCmd = m.ModelCmdBase.Update(m, msg)
 	teaCmds = append(teaCmds, teaCmd)
 
 	switch msg := msg.(type) {
@@ -152,7 +152,7 @@ func (m debugModel) Update(msg tea.Msg) (cmdmodel.Model, tea.Cmd) {
 }
 
 func (m debugModel) View() string {
-	return m.BaseModel.View(m)
+	return m.ModelCmdBase.View(m)
 }
 
 func loadHistory(m debugModel) debugModel {
