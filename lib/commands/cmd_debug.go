@@ -71,7 +71,6 @@ func NewDebugCmd(h *utils.InputHistory) cmdmodel.Model {
 			Aliases: []string{"/"},
 			Commands: []cmdmodel.BaseCommand[debugModel]{
 				{Path: "history", Run: loadHistory, View: viewHistory},
-				{Path: "log", Run: loadLog, View: viewLog},
 				{
 					Path:    "slog",
 					Run:     loadSlog,
@@ -132,7 +131,7 @@ type debugLog struct {
 }
 
 type debugSlog struct {
-	debugLog
+	view          string
 	viewPort      viewport.Model
 	lastRenderDur time.Duration
 }
@@ -210,10 +209,6 @@ func loadLog(m debugModel) debugModel {
 	return m
 }
 
-func viewLog(m debugModel) string {
-	return m.log.view
-}
-
 func clearLog(m debugModel) debugModel {
 	path := filepath.Join(utils.GetWorkingDir(), "log.txt")
 	err := os.Truncate(path, 0)
@@ -225,7 +220,6 @@ func clearLog(m debugModel) debugModel {
 	m.log.lineCount = 0
 	// No reason to hold stale slog info
 	m.slog.view = ""
-	m.slog.lineCount = 0
 	return m
 }
 
@@ -263,7 +257,7 @@ func loadSlog(m debugModel) debugModel {
 
 		switch tag {
 		case "[NFO]":
-			tag = infoLogStyle.Render(tag)
+			tag = infoLogStyle.Render("tag")
 			subjectStyle = infoLogStyle
 		case "[ATN]":
 			tag = attnLogStyle.Render(tag)
@@ -304,7 +298,6 @@ func loadSlog(m debugModel) debugModel {
 	))
 
 	m.slog.lastRenderDur = time.Since(now)
-	m.slog.lineCount = m.log.lineCount
 	m.slog.view = content
 
 	// The terminal can be resized at any time
@@ -319,7 +312,6 @@ func loadSlog(m debugModel) debugModel {
 }
 
 func clearSlog(m debugModel) debugModel {
-	m.slog.lineCount = 0
 	m.slog.view = ""
 	return m
 }
