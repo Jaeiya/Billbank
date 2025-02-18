@@ -147,7 +147,8 @@ func (m InputModel) Update(msg tea.Msg) (InputModel, tea.Cmd) {
 		case "enter":
 			m, cmd = tryEnterCmd(m)
 			if m.currCmd.status.Error != nil {
-				msg := fmt.Sprintf("%s::[%s]", m.currCmd.status.Error.Error(), m.currCmd.status.Path)
+				cmdErr := "command parse error:"
+				msg := fmt.Sprintf("%s [%s]", cmdErr, m.currCmd.status.Error)
 				logger.Log(logger.Attention, "%s", msg)
 			}
 			cmds = append(cmds, cmd)
@@ -173,7 +174,7 @@ func tryEnterCmd(m InputModel) (InputModel, tea.Cmd) {
 	}
 	cmd := m.currCmd
 
-	logger.Log(logger.Info, "entering command [%+v]", cmd.status)
+	logger.Log(logger.Info, "entering command [%s]", m.CommandInput.Value())
 
 	cmdErr := cmd.status.Error
 	if cmdErr != nil {
@@ -195,7 +196,7 @@ func tryEnterCmd(m InputModel) (InputModel, tea.Cmd) {
 		m.CommandInput.Reset()
 		logger.Log(
 			logger.Debug,
-			"sending command [status] update [%s]",
+			"sending command [%s] status update",
 			cmd.status.Path,
 		)
 		return m, func() tea.Msg { return UpdateCmdMsg{nil, cmd.status} }
@@ -205,7 +206,7 @@ func tryEnterCmd(m InputModel) (InputModel, tea.Cmd) {
 	m.CommandInput.Reset()
 	logger.Log(
 		logger.Debug,
-		"sending command [model & status] update [%s]",
+		"sending [%s] model & status update msg",
 		cmd.status.Path,
 	)
 
