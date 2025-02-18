@@ -233,9 +233,9 @@ func (m *ModelBase[T]) ClearErrors() {
 }
 
 func (m ModelBase[T]) GetCmdData() CommandData {
-	var commands []ModelCommand
+	var commands []Command
 	for _, cmd := range m.cmdData.Commands {
-		commands = append(commands, newModelCommand(cmd))
+		commands = append(commands, newCommand(cmd))
 	}
 
 	return CommandData{

@@ -38,23 +38,23 @@ type Status struct {
 
 type CommandData struct {
 	Aliases  []string
-	Commands []ModelCommand
+	Commands []Command
 }
 
-type ModelCommand struct {
+type Command struct {
 	Path        string
 	PathParts   []string
 	ArgType     ArgType
 	ValidateArg func(arg string) error
 }
 
-func newModelCommand[T any](baseCmd BaseCommand[T]) ModelCommand {
+func newCommand[T any](baseCmd BaseCommand[T]) Command {
 	var pathParts []string
 	if baseCmd.Path != "" {
 		pathParts = strings.Split(baseCmd.Path, " ")
 	}
 
-	return ModelCommand{
+	return Command{
 		baseCmd.Path,
 		pathParts,
 		baseCmd.ArgType,
