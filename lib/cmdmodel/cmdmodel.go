@@ -41,6 +41,13 @@ type CommandData struct {
 	Commands []ModelCommand
 }
 
+type ModelCommand struct {
+	Path        string
+	PathParts   []string
+	ArgType     ArgType
+	ValidateArg func(arg string) error
+}
+
 func newModelCommand[T any](baseCmd BaseCommand[T]) ModelCommand {
 	var pathParts []string
 	if baseCmd.Path != "" {
@@ -55,11 +62,10 @@ func newModelCommand[T any](baseCmd BaseCommand[T]) ModelCommand {
 	}
 }
 
-type ModelCommand struct {
-	Path        string
-	PathParts   []string
-	ArgType     ArgType
-	ValidateArg func(arg string) error
+type Model struct {
+	id     int
+	model  Interface
+	status Status
 }
 
 func New(model Interface) Model {
@@ -68,12 +74,6 @@ func New(model Interface) Model {
 	}
 	cmdId += 1
 	return Model{cmdId, model, Status{}}
-}
-
-type Model struct {
-	id     int
-	model  Interface
-	status Status
 }
 
 func (cb Model) GetId() int {
