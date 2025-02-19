@@ -6,7 +6,7 @@ import (
 )
 
 type billsModel struct {
-	*cmdmodel.ModelBase[billsModel]
+	*cmdmodel.BaseModel[billsModel]
 }
 
 type billCmd = cmdmodel.BaseCommand[billsModel]
@@ -23,7 +23,7 @@ func NewBillsCmd() cmdmodel.Model {
 
 func newBillsModel(name string, aliases []string, commands []billCmd) billsModel {
 	return billsModel{
-		ModelBase: cmdmodel.NewModelBase(cmdmodel.BaseCmdData[billsModel]{
+		BaseModel: cmdmodel.NewModelBase(cmdmodel.BaseCmdData[billsModel]{
 			Name:     name,
 			Aliases:  aliases,
 			Commands: commands,
@@ -36,7 +36,7 @@ func (m billsModel) Update(msg tea.Msg) (cmdmodel.Interface, tea.Cmd) {
 	var teaCmds []tea.Cmd
 
 	//- DO NOT REMOVE; required for base model interaction
-	m, teaCmd = m.ModelBase.Update(m, msg)
+	m, teaCmd = m.BaseModel.Update(m, msg)
 	teaCmds = append(teaCmds, teaCmd)
 	//--------------------------------------------------//
 
@@ -52,7 +52,7 @@ func (m billsModel) Update(msg tea.Msg) (cmdmodel.Interface, tea.Cmd) {
 
 func (m billsModel) View() string {
 	// DO NOT REMOVE; required for base model interaction
-	return m.ModelBase.View(m)
+	return m.BaseModel.View(m)
 }
 
 //##########################################

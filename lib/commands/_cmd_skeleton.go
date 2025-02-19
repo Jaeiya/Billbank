@@ -8,7 +8,7 @@ import (
 // Main model that contains all data for your new command.
 // (rename to reflect the name of your new command)
 type skeletonModel struct {
-	*cmdmodel.ModelBase[skeletonModel]
+	*cmdmodel.BaseModel[skeletonModel]
 	thisCounter int
 	thatCounter int
 }
@@ -46,7 +46,7 @@ func NewSkeletonCmd() cmdmodel.Model {
 // (rename it to reflect the command name)
 func newSkeletonModel(name string, aliases []string, commands []skeletonCmd) skeletonModel {
 	return skeletonModel{
-		ModelBase: cmdmodel.NewModelBase(cmdmodel.BaseCmdData[skeletonModel]{
+		BaseModel: cmdmodel.BaseModel(cmdmodel.BaseCmdData[skeletonModel]{
 			Name:     name,
 			Aliases:  aliases,
 			Commands: commands,
@@ -59,7 +59,7 @@ func (m skeletonModel) Update(msg tea.Msg) (cmdmodel.Interface, tea.Cmd) {
 	var teaCmds []tea.Cmd
 
 	//- DO NOT REMOVE; required for base model interaction
-	m, teaCmd = m.ModelBase.Update(m, msg)
+	m, teaCmd = m.BaseModel.Update(m, msg)
 	teaCmds = append(teaCmds, teaCmd)
 	//--------------------------------------------------//
 
@@ -75,7 +75,7 @@ func (m skeletonModel) Update(msg tea.Msg) (cmdmodel.Interface, tea.Cmd) {
 
 func (m skeletonModel) View() string {
 	// DO NOT REMOVE; required for base model interaction
-	return m.ModelBase.View(m)
+	return m.BaseModel.View(m)
 }
 
 //##########################################
