@@ -273,7 +273,7 @@ func loadSlog(m debugModel) debugModel {
 
 		switch tag {
 		case "[NFO]":
-			tag = infoLogStyle.Render("tag")
+			tag = infoLogStyle.Render(tag)
 			subjectStyle = infoLogStyle
 		case "[ATN]":
 			tag = attnLogStyle.Render(tag)
