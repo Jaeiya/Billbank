@@ -252,7 +252,7 @@ func loadSlog(m debugModel) debugModel {
 	m = loadLog(m)
 	arg := m.GetCmdArg()
 
-	maxLines := 100
+	maxLines := 150
 	if arg != "" {
 		// Error has already been validated through cmd
 		maxLines, _ = utils.ParseInt(arg)
