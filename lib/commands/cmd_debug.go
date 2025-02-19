@@ -157,7 +157,6 @@ func (m debugModel) Update(msg tea.Msg) (cmdmodel.Interface, tea.Cmd) {
 			// Reload slog
 			if msg.String() == "ctrl+r" {
 				logger.Log(logger.Debug, "reload slog")
-				// Wait for the above log to be written
 				m = m.Exec(m)
 			}
 		}

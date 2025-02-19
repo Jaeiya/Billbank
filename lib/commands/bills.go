@@ -16,11 +16,7 @@ func NewBillsCmd() cmdmodel.Model {
 		"Bills",
 		[]string{"bills"},
 		[]billCmd{
-			{
-				Path: "",
-				Run:  func(bm billsModel) billsModel { return bm },
-				View: func(bm billsModel) string { return "bills command" },
-			},
+			{Path: "", Run: loadBills, View: viewBills},
 		}),
 	)
 }
@@ -62,3 +58,11 @@ func (m billsModel) View() string {
 //##########################################
 //     Custom Functions Go Below Here
 //##########################################
+
+func loadBills(m billsModel) billsModel {
+	return m
+}
+
+func viewBills(m billsModel) string {
+	return ""
+}
