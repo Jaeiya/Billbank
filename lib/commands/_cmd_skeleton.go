@@ -23,21 +23,20 @@ func NewSkeletonCmd() cmdmodel.Model {
 	//
 	// Do NOT put initialization code here
 	//
-	return cmdmodel.New(
-		newSkeletonModel(
-			// Command Name
-			"Skeleton",
-			// Aliases
-			[]string{"test"},
-			// Commands
-			[]skeletonCmd{
-				// Default command (cmd executed by itself)
-				{Path: "", Run: loadDefaultCmd, View: loadDefaultView},
-				// Creates "test this" command
-				{Path: "this", Run: loadThis, View: thisView},
-				// Creates "test that" command
-				{Path: "that", Run: loadThat, View: thatView},
-			}),
+	return cmdmodel.New(newSkeletonModel(
+		// Command Name
+		"Skeleton",
+		// Aliases
+		[]string{"test"},
+		// Commands
+		[]skeletonCmd{
+			// Default command (cmd executed by itself)
+			{Path: "", Run: loadDefaultCmd, View: loadDefaultView},
+			// Creates "test this" command
+			{Path: "this", Run: loadThis, View: thisView},
+			// Creates "test that" command
+			{Path: "that", Run: loadThat, View: thatView},
+		}),
 	)
 }
 

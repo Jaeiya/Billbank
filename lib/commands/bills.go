@@ -12,17 +12,16 @@ type billsModel struct {
 type billCmd = cmdmodel.BaseCommand[billsModel]
 
 func NewBillsCmd() cmdmodel.Model {
-	return cmdmodel.New(
-		newBillsModel(
-			"Bills",
-			[]string{"bills"},
-			[]billCmd{
-				{
-					Path: "",
-					Run:  func(bm billsModel) billsModel { return bm },
-					View: func(bm billsModel) string { return "bills command" },
-				},
-			}),
+	return cmdmodel.New(newBillsModel(
+		"Bills",
+		[]string{"bills"},
+		[]billCmd{
+			{
+				Path: "",
+				Run:  func(bm billsModel) billsModel { return bm },
+				View: func(bm billsModel) string { return "bills command" },
+			},
+		}),
 	)
 }
 
