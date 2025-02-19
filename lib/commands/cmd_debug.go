@@ -56,45 +56,7 @@ var (
 		Width(30)
 )
 
-func NewDebugCmd(h *utils.InputHistory) cmdmodel.Model {
-	vp := viewport.New(0, 0)
-	vp.KeyMap.Down = key.NewBinding()
-	vp.KeyMap.Up = key.NewBinding()
-	vp.KeyMap.PageDown = key.NewBinding()
-	vp.KeyMap.PageUp = key.NewBinding()
-	vp.KeyMap.HalfPageUp = key.NewBinding(key.WithKeys("ctrl+k"))
-	vp.KeyMap.HalfPageDown = key.NewBinding(key.WithKeys("ctrl+j"))
-
-	m := debugModel{
-		ModelBase: cmdmodel.NewModelBase(cmdmodel.BaseCmdData[debugModel]{
-			Name:    "Debug",
-			Aliases: []string{"/"},
-			Commands: []cmdmodel.BaseCommand[debugModel]{
-				{Path: "history", Run: loadHistory, View: viewHistory},
-				{
-					Path:    "slog",
-					Run:     loadSlog,
-					View:    viewSlog,
-					ArgType: cmdmodel.ArgOptional,
-					ValidateArg: func(arg string) error {
-						_, err := utils.ParseInt(arg)
-						if err != nil {
-							return fmt.Errorf("[%s] is not a valid number of lines", arg)
-						}
-						return nil
-					},
-				},
-				{Path: "stats", Run: loadStats, View: viewStats},
-				{Path: "clear log", Run: clearLog, View: clearLogView},
-				{Path: "clear slog", Run: clearSlog, View: clearSlogView},
-			},
-		}),
-		history: debugHistory{data: h},
-		slog:    debugSlog{viewPort: vp},
-	}
-
-	return cmdmodel.New(m)
-}
+type debugCmd = cmdmodel.BaseCommand[debugModel]
 
 type debugModel struct {
 	*cmdmodel.ModelBase[debugModel]
@@ -105,6 +67,52 @@ type debugModel struct {
 		data       debugStats
 		memStats   runtime.MemStats
 		renderTime time.Time
+	}
+}
+
+func NewDebugCmd(h *utils.InputHistory) cmdmodel.Model {
+	return cmdmodel.New(newDebugModel(
+		"Debug",
+		[]string{"/"},
+		[]debugCmd{
+			{Path: "history", Run: loadHistory, View: viewHistory},
+			{
+				Path:        "slog",
+				Run:         loadSlog,
+				View:        viewSlog,
+				ArgType:     cmdmodel.ArgOptional,
+				ValidateArg: validateSlogInput,
+			},
+			{Path: "stats", Run: loadStats, View: viewStats},
+			{Path: "clear log", Run: clearLog, View: clearLogView},
+			{Path: "clear slog", Run: clearSlog, View: clearSlogView},
+		},
+		h,
+	))
+}
+
+func newDebugModel(
+	name string,
+	aliases []string,
+	commands []debugCmd,
+	h *utils.InputHistory,
+) debugModel {
+	vp := viewport.New(0, 0)
+	vp.KeyMap.Down = key.NewBinding()
+	vp.KeyMap.Up = key.NewBinding()
+	vp.KeyMap.PageDown = key.NewBinding()
+	vp.KeyMap.PageUp = key.NewBinding()
+	vp.KeyMap.HalfPageUp = key.NewBinding(key.WithKeys("ctrl+k"))
+	vp.KeyMap.HalfPageDown = key.NewBinding(key.WithKeys("ctrl+j"))
+
+	return debugModel{
+		ModelBase: cmdmodel.NewModelBase(cmdmodel.BaseCmdData[debugModel]{
+			Name:     name,
+			Aliases:  aliases,
+			Commands: commands,
+		}),
+		history: debugHistory{data: h},
+		slog:    debugSlog{viewPort: vp},
 	}
 }
 
@@ -230,6 +238,14 @@ func clearLogView(m debugModel) string {
 		"The log has been successfully cleared!",
 		w, h,
 	)
+}
+
+func validateSlogInput(arg string) error {
+	_, err := utils.ParseInt(arg)
+	if err != nil {
+		return fmt.Errorf("[%s] is not a valid number of lines", arg)
+	}
+	return nil
 }
 
 func loadSlog(m debugModel) debugModel {
