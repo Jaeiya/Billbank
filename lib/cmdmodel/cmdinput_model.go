@@ -14,6 +14,11 @@ import (
 	"github.com/jaeiya/billbank/lib/utils"
 )
 
+const MsgDuplicateAliasErr = `
+Check to make sure you don't already have a command with
+that alias. You may also have accidentally added the
+command more than once.`
+
 type UpdateStatusMsg struct {
 	String   string
 	Severity StatusSeverity
@@ -87,7 +92,11 @@ func With(cmds ...Model) InputOption {
 		for _, cmd := range cmds {
 			for _, a := range cmd.model.GetCmdData().Aliases {
 				if aliasStore[a] {
-					panic("command alias already exists")
+					logger.LogFatal(
+						"command alias [%s] already exists",
+						MsgDuplicateAliasErr,
+						a,
+					)
 				}
 				aliasStore[a] = true
 				m.aliases = append(m.aliases, a)
