@@ -184,6 +184,7 @@ func tryEnterCmd(m InputModel) (InputModel, tea.Cmd) {
 	cmd := m.currCmd
 
 	logger.Log(logger.Info, "entering command [%s]", m.CommandInput.Value())
+	logger.Log(logger.Debug, "command status [%+v]", cmd.status)
 
 	cmdErr := cmd.status.Error
 	if cmdErr != nil {
@@ -218,7 +219,6 @@ func tryEnterCmd(m InputModel) (InputModel, tea.Cmd) {
 		"sending [%s] model & status update msg",
 		cmd.status.Path,
 	)
-
 	teaMsg := UpdateCmdMsg{cmd.model, cmd.status}
 	return m, func() tea.Msg { return teaMsg }
 }
