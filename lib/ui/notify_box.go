@@ -46,10 +46,7 @@ func NewInfoBox(title, msg string, width, height int) string {
 
 func newBox(width, height int, title, msg string, color boxColor) string {
 	maxWidth := 60
-	centerWidth := width / 2
-	if centerWidth > maxWidth {
-		centerWidth = maxWidth
-	}
+	centerWidth := min(width/2, maxWidth)
 	return lipgloss.Place(
 		width,
 		height,
