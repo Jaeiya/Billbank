@@ -45,11 +45,16 @@ func (vp ViewPort) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		logger.Log(logger.Hot, "[WindowSizeMsg] sending viewport size [%d:%d]", vp.width, vp.height)
 		teaCmds = append(teaCmds, vp.sendViewportSize)
 
+	case cmdmodel.ReleaseInputMsg:
+		vp.CommandStatus.CaptureInput = false
+		teaCmds = append(teaCmds, func() tea.Msg { return textinput.Blink() })
+
 	case cmdmodel.UpdateCmdMsg:
 		if msg.Model != nil {
 			vp.CurrentCmdModel = msg.Model
 			logger.Log(logger.Debug, "storing new command model [%s]", msg.CommandStatus.Path)
 		}
+		vp.CommandStatus = msg.CommandStatus
 		logger.Log(logger.Debug, "[UpdateCmdMsg] sending viewport size [%d:%d]", vp.width, vp.height)
 		teaCmds = append(teaCmds, vp.sendViewportSize)
 
@@ -57,8 +62,11 @@ func (vp ViewPort) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		teaCmds = append(teaCmds, vp.sendStatusMsg(msg.String, msg.Severity))
 	}
 
-	vp.CommandInput, teaCmd = vp.CommandInput.Update(msg)
-	teaCmds = append(teaCmds, teaCmd)
+	// Give up keyboard control to current command
+	if !vp.CommandStatus.CaptureInput {
+		vp.CommandInput, teaCmd = vp.CommandInput.Update(msg)
+		teaCmds = append(teaCmds, teaCmd)
+	}
 
 	if vp.CurrentCmdModel != nil {
 		vp.CurrentCmdModel, teaCmd = vp.CurrentCmdModel.Update(msg)
@@ -77,24 +85,41 @@ func (vp ViewPort) View() string {
 		cmdView = vp.CurrentCmdModel.View()
 	}
 
-	return lipgloss.JoinVertical(
-		lipgloss.Top,
-		lipgloss.NewStyle().Foreground(ui.FgColor).Render(
+	getCmdView := func(withoutTextInput bool) string {
+		if withoutTextInput {
+			h = 0
+		}
+		return lipgloss.NewStyle().Foreground(ui.FgColor).Render(
 			lipgloss.Place(
 				vp.width,
 				vp.height-h,
 				lipgloss.Left,
 				lipgloss.Top,
 				cmdView,
-			),
+			))
+	}
+
+	// Do not display text-input when command has exclusive control
+	if vp.CommandStatus.CaptureInput {
+		return getCmdView(true)
+	}
+
+	return lipgloss.JoinVertical(
+		lipgloss.Top,
+		lipgloss.NewStyle().Foreground(ui.FgColor).Render(
+			getCmdView(false),
 		),
 		cmdrStr,
 	)
 }
 
 func (vp ViewPort) sendViewportSize() tea.Msg {
+	offsetHeight := lipgloss.Height(vp.CommandInput.View())
+	if vp.CommandStatus.CaptureInput {
+		offsetHeight = 0
+	}
 	return cmdmodel.ViewportSizeMsg{
-		Height: vp.height - lipgloss.Height(vp.CommandInput.View()),
+		Height: vp.height - offsetHeight,
 		Width:  vp.width,
 	}
 }

@@ -52,6 +52,8 @@ as if they were commands themselves.
 Be aware though, that if you set its ArgType to optional or required,
 you'll no longer be able to add any more commands to that model.`
 
+type ReleaseInputMsg struct{}
+
 type (
 	ViewportSizeMsg struct {
 		Width  int
@@ -66,11 +68,12 @@ type BaseCmdData[T any] struct {
 }
 
 type BaseCommand[T any] struct {
-	Path        string
-	ArgType     ArgType
-	ValidateArg func(arg string) error
-	Run         func(T) T
-	View        func(T) string
+	Path         string
+	Run          func(T) T
+	View         func(T) string
+	CaptureInput bool
+	ArgType      ArgType
+	ValidateArg  func(arg string) error
 }
 
 type BaseModel[T any] struct {
@@ -138,6 +141,13 @@ func (bc *BaseModel[T]) Update(model T, msg tea.Msg) (T, tea.Cmd) {
 	defer func() { bc.isFirstMsg = false }()
 
 	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		if msg.String() == "esc" && bc.cmdStatus.CaptureInput {
+			logger.Log(logger.Debug, "[OnEsc] releasing input back to input commander")
+			bc.cmdStatus.CaptureInput = false
+			teaCmds = append(teaCmds, func() tea.Msg { return ReleaseInputMsg{} })
+		}
+
 	case ViewportSizeMsg:
 		logger.Log(logger.Hot, "setting viewport size [%dx%d]", msg.Width, msg.Height)
 		bc.viewHeight = msg.Height

@@ -42,6 +42,7 @@ type Status struct {
 	IsCommand       bool
 	PathSuggestions []string
 	Path            string
+	CaptureInput    bool
 	Arg             string
 	Error           error
 }
@@ -52,10 +53,11 @@ type CommandData struct {
 }
 
 type Command struct {
-	Path        string
-	PathParts   []string
-	ArgType     ArgType
-	ValidateArg func(arg string) error
+	Path         string
+	PathParts    []string
+	CaptureInput bool
+	ArgType      ArgType
+	ValidateArg  func(arg string) error
 }
 
 func newCommand[T any](baseCmd BaseCommand[T]) Command {
@@ -65,10 +67,11 @@ func newCommand[T any](baseCmd BaseCommand[T]) Command {
 	}
 
 	return Command{
-		baseCmd.Path,
-		pathParts,
-		baseCmd.ArgType,
-		baseCmd.ValidateArg,
+		Path:         baseCmd.Path,
+		PathParts:    pathParts,
+		CaptureInput: baseCmd.CaptureInput,
+		ArgType:      baseCmd.ArgType,
+		ValidateArg:  baseCmd.ValidateArg,
 	}
 }
 
@@ -116,9 +119,10 @@ func (cb Model) ParseCommand(cmdInput string) Status {
 				err = ErrUnimplementedCmd
 			}
 			return Status{
-				IsCommand: true,
-				Path:      strings.TrimSpace(alias + " " + cmd.Path),
-				Error:     err,
+				IsCommand:    true,
+				CaptureInput: cmd.CaptureInput,
+				Path:         strings.TrimSpace(alias + " " + cmd.Path),
+				Error:        err,
 			}
 		}
 
@@ -140,10 +144,11 @@ func (cb Model) ParseCommand(cmdInput string) Status {
 				arg := inputParts[len(inputParts)-1]
 				err := cmd.ValidateArg(arg)
 				return Status{
-					IsCommand: true,
-					Path:      strings.TrimSpace(alias + " " + cmd.Path),
-					Arg:       inputParts[len(inputParts)-1],
-					Error:     err,
+					IsCommand:    true,
+					CaptureInput: cmd.CaptureInput,
+					Path:         strings.TrimSpace(alias + " " + cmd.Path),
+					Arg:          inputParts[len(inputParts)-1],
+					Error:        err,
 				}
 			}
 		}
