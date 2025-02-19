@@ -43,4 +43,10 @@ func main() {
 	if _, err := p1.Run(); err != nil {
 		panic(err)
 	}
+
+	logger.Log(logger.Info, "exiting billbank")
+	err := logger.CloseLog()
+	if err != nil {
+		panic(err)
+	}
 }

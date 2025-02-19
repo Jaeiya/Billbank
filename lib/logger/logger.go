@@ -51,11 +51,13 @@ type LogMsg struct {
 }
 
 var (
-	isReady   = false
-	logLevel  = None
-	logChan   = make(chan LogMsg, 50)
-	stdLogger *log.Logger
-	once      sync.Once
+	isReady    = false
+	logLevel   = None
+	logChan    = make(chan LogMsg, 50)
+	doneChan   = make(chan struct{})
+	stdLogger  *log.Logger
+	fileHandle *os.File
+	once       sync.Once
 )
 
 func Log(ll LogLevel, msg string, vars ...any) {
@@ -146,8 +148,10 @@ func GetLogLevel() LogLevel {
 	return logLevel
 }
 
-func CloseLog() {
+func CloseLog() error {
 	close(logChan)
+	<-doneChan
+	return fileHandle.Close()
 }
 
 func initLog() {
@@ -167,7 +171,7 @@ func initLog() {
 			panic(err)
 		}
 
-		stdLogger = log.New(file, "", 0)
+		stdLogger = log.New(fileHandle, "", 0)
 		go logMessages()
 		isReady = true
 	})
@@ -188,6 +192,7 @@ func logMessages() {
 			stdLogger.Printf(msg, log.vars...)
 		}
 	}
+	close(doneChan)
 }
 
 func getStack() string {
