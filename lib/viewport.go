@@ -1,6 +1,7 @@
 package lib
 
 import (
+	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/jaeiya/billbank/lib/cmdmodel"
@@ -30,7 +31,7 @@ type ViewPort struct {
 }
 
 func (vp ViewPort) Init() tea.Cmd {
-	return nil
+	return textinput.Blink
 }
 
 func (vp ViewPort) Update(msg tea.Msg) (tea.Model, tea.Cmd) {

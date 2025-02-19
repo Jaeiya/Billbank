@@ -108,7 +108,7 @@ func With(cmds ...Model) InputOption {
 }
 
 func (m InputModel) Init() tea.Cmd {
-	return textinput.Blink
+	return nil
 }
 
 func (m InputModel) Update(msg tea.Msg) (InputModel, tea.Cmd) {
