@@ -9,10 +9,12 @@ import (
 )
 
 var (
-	ErrNotCommand       = fmt.Errorf("unrecognized command")
-	ErrIncompleteCmd    = fmt.Errorf("incomplete command")
-	ErrMissingArgument  = fmt.Errorf("missing argument")
-	ErrEmptyCommand     = fmt.Errorf("empty command")
+	ErrNotCommand = fmt.Errorf("unrecognized command")
+	// Command is valid, but entered incorrectly
+	ErrIncompleteCmd   = fmt.Errorf("invalid command entry")
+	ErrMissingArgument = fmt.Errorf("missing argument")
+	ErrEmptyCommand    = fmt.Errorf("empty command")
+	// Command is missing an execution path
 	ErrUnimplementedCmd = fmt.Errorf("unimplemented command")
 )
 
