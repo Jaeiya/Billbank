@@ -157,7 +157,12 @@ func initLog() {
 		}
 		path := filepath.Join(utils.GetWorkingDir(), "log.txt")
 
-		file, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC|os.O_APPEND, 0o644)
+		var err error
+		fileHandle, err = os.OpenFile(
+			path,
+			os.O_CREATE|os.O_WRONLY|os.O_TRUNC,
+			0o644,
+		)
 		if err != nil {
 			panic(err)
 		}
