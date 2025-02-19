@@ -8,6 +8,14 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+type ArgType int
+
+const (
+	ArgNone = ArgType(iota)
+	ArgOptional
+	ArgRequired
+)
+
 var (
 	ErrNotCommand = fmt.Errorf("unrecognized command")
 	// Command is valid, but entered incorrectly

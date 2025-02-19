@@ -52,14 +52,6 @@ as if they were commands themselves.
 Be aware though, that if you set its ArgType to optional or required,
 you'll no longer be able to add any more commands to that model.`
 
-type ArgType int
-
-const (
-	ArgNone = ArgType(iota)
-	ArgOptional
-	ArgRequired
-)
-
 type (
 	ViewportSizeMsg struct {
 		Width  int
