@@ -15,8 +15,6 @@ import (
 	"github.com/jaeiya/billbank/lib/utils"
 )
 
-type LogLevel int
-
 const (
 	Insane = LogLevel(iota)
 	Hot
@@ -26,6 +24,23 @@ const (
 	Error
 	None
 )
+
+var levelTags = []string{
+	"∞∞∞", "HOT", "DBG", "NFO", "ATN", "ERR", "None",
+}
+
+type LogLevel int
+
+func (ll LogLevel) String() string {
+	return levelTags[ll]
+}
+
+func (ll LogLevel) IsValid() bool {
+	if ll < Insane || ll > None {
+		LogFatal("log level not found [%d]", "This should not happen!", ll)
+	}
+	return true
+}
 
 type LogMsg struct {
 	msg   string
@@ -50,14 +65,16 @@ func Log(ll LogLevel, msg string, vars ...any) {
 		return
 	}
 
-	initLog()
+	if ll.IsValid() {
+		initLog()
 
-	if ll < logLevel {
-		return
+		if ll < logLevel {
+			return
+		}
+
+		_, file, line, _ := runtime.Caller(1)
+		logChan <- LogMsg{msg, ll, file, line, vars}
 	}
-
-	_, file, line, _ := runtime.Caller(1)
-	logChan <- LogMsg{msg, ll, file, line, vars}
 }
 
 // LogFunc executes the msgFn and passes its result to the
@@ -120,7 +137,9 @@ func LogFatal(errMsg string, description string, vars ...any) {
 }
 
 func SetLogLevel(ll LogLevel) {
-	logLevel = ll
+	if ll.IsValid() {
+		logLevel = ll
+	}
 }
 
 func GetLogLevel() LogLevel {
@@ -154,7 +173,7 @@ func logMessages() {
 		msg := fmt.Sprintf(
 			"%s [%s] [%s:%d]: %s\n",
 			time.Now().Format("03:04:05.000 PM MST"),
-			getLogLevelStr(log.level),
+			log.level,
 			filepath.Base(log.file), log.line,
 			log.msg,
 		)
@@ -163,25 +182,6 @@ func logMessages() {
 		} else {
 			stdLogger.Printf(msg, log.vars...)
 		}
-	}
-}
-
-func getLogLevelStr(ll LogLevel) string {
-	switch ll {
-	case Info:
-		return "NFO"
-	case Attention:
-		return "ATN"
-	case Error:
-		return "ERR"
-	case Debug:
-		return "DBG"
-	case Hot:
-		return "HOT"
-	case Insane:
-		return "∞∞∞"
-	default:
-		panic("invalid log level")
 	}
 }
 
