@@ -193,7 +193,7 @@ func (sdb SqliteDb) QueryTransfers(qm QueryMap) ([]TransferRecord, error) {
 	}
 
 	if len(records) == 0 {
-		return records, fmt.Errorf("no data found")
+		return records, ErrTransfersNotFound
 	}
 
 	return records, nil

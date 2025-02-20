@@ -22,15 +22,6 @@ type SqliteDb struct {
 //go:embed sql/init_db.sqlite
 var initBankSQL string
 
-var (
-	ErrForeignKey          = fmt.Errorf("foreign key failed validation")
-	ErrDueDayInvalid       = fmt.Errorf("failed to validate due_day constraint")
-	ErrTransferTypeInvalid = fmt.Errorf("failed to valid transfer_type constraint")
-	ErrAmountInvalid       = fmt.Errorf("failed to validate amount constraint")
-	ErrMonthInvalid        = fmt.Errorf("failed to validate month constraint")
-	ErrUniqueName          = fmt.Errorf("failed unique 'name' constraint requirement")
-)
-
 func NewSqliteDb(filePath string, cc lib.CurrencyCode) *SqliteDb {
 	_, err := os.ReadDir(filepath.Dir(filePath))
 	if err != nil {

@@ -1,8 +1,6 @@
 package sqlite
 
 import (
-	"fmt"
-
 	"github.com/jaeiya/billbank/lib"
 	"github.com/jaeiya/billbank/lib/utils"
 )
@@ -63,7 +61,7 @@ func (sdb SqliteDb) QueryBills(qm QueryMap) ([]BillRecord, error) {
 	}
 
 	if len(records) == 0 {
-		return []BillRecord{}, fmt.Errorf("no query results")
+		return []BillRecord{}, ErrBillsNotFound
 	}
 
 	return records, nil
@@ -124,7 +122,7 @@ func (sdb SqliteDb) QueryBillHistory(qm QueryMap) ([]BillHistoryRecord, error) {
 	}
 
 	if len(records) == 0 {
-		return nil, fmt.Errorf("no results from query")
+		return nil, ErrBillHistoryNotFound
 	}
 
 	return records, nil

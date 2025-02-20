@@ -154,7 +154,7 @@ func (sdb SqliteDb) QueryCreditCards(
 	}
 
 	if len(records) == 0 {
-		return []CreditCardRecord{}, fmt.Errorf("no results found")
+		return []CreditCardRecord{}, ErrCreditCardsNotFound
 	}
 
 	return records, nil
@@ -220,7 +220,7 @@ func (sdb SqliteDb) QueryCreditCardHistory(qm QueryMap) ([]CardHistoryRecord, er
 	}
 
 	if len(records) == 0 {
-		return []CardHistoryRecord{}, fmt.Errorf("no query results")
+		return []CardHistoryRecord{}, ErrCreditCardHistoryNotFound
 	}
 
 	return records, nil

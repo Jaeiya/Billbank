@@ -91,7 +91,7 @@ func (sdb SqliteDb) QueryIncome(qm QueryMap) ([]IncomeRecord, error) {
 	}
 
 	if len(records) == 0 {
-		return []IncomeRecord{}, fmt.Errorf("table is empty")
+		return []IncomeRecord{}, ErrIncomeNotFound
 	}
 
 	return records, nil
@@ -125,7 +125,7 @@ func (sdb SqliteDb) QueryIncomeHistory(qm QueryMap) ([]IncomeHistoryRecord, erro
 	}
 
 	if len(records) == 0 {
-		return []IncomeHistoryRecord{}, fmt.Errorf("query returned no results")
+		return []IncomeHistoryRecord{}, ErrIncomeHistoryNotFound
 	}
 
 	return records, nil
@@ -163,7 +163,7 @@ func (sdb SqliteDb) QueryAffixIncome(qm QueryMap) ([]AffixIncomeRecord, error) {
 	}
 
 	if len(records) == 0 {
-		return []AffixIncomeRecord{}, fmt.Errorf("no results from query")
+		return []AffixIncomeRecord{}, ErrAffixedIncomeNotFound
 	}
 
 	return records, nil

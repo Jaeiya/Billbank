@@ -48,7 +48,7 @@ func (sdb SqliteDb) QueryMonths(qm QueryMap) ([]MonthRecord, error) {
 	}
 
 	if len(records) == 0 {
-		return []MonthRecord{}, fmt.Errorf("empty month table")
+		return []MonthRecord{}, ErrMonthNotFound
 	}
 
 	return records, nil
