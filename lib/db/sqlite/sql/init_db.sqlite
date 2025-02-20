@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS income_history (
     FOREIGN KEY (month_id) REFERENCES months (id)
 );
 
+
 -- When income has been raised through bonuses, overtime, etc..
 CREATE TABLE IF NOT EXISTS income_affixes (
     id         INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
@@ -111,6 +112,7 @@ CREATE TABLE IF NOT EXISTS credit_card_history (
     FOREIGN KEY (month_id) REFERENCES months (id)
 );
 
+
 CREATE TABLE IF NOT EXISTS bills (
     id      INTEGER PRIMARY KEY AUTOINCREMENT,
     name    VARCHAR(50) NOT NULL UNIQUE,
@@ -121,6 +123,7 @@ CREATE TABLE IF NOT EXISTS bills (
         period='monthly'
     )
 );
+
 
 CREATE TABLE IF NOT EXISTS bill_history (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
