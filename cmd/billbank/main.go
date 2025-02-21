@@ -29,10 +29,9 @@ func main() {
 
 	vp.CommandInput = cmdmodel.NewInputModel(
 		h,
-		cmdmodel.With(
-			commands.NewDebugCmd(h),
-			commands.NewBillsCmd(),
-		),
+		"bills",
+		commands.NewBillsCmd(db),
+		commands.NewDebugCmd(h),
 	)
 
 	p1 := tea.NewProgram(

@@ -19,6 +19,13 @@ Check to make sure you don't already have a command with
 that alias. You may also have accidentally added the
 command more than once.`
 
+const MsgInvalidHomeCmdPath = `
+Make sure you've entered the entire command path, including the alias.
+You also cannot set a home path that requires arguments.
+`
+
+type GoHomeMsg struct{}
+
 type UpdateStatusMsg struct {
 	String   string
 	Severity StatusSeverity
@@ -40,6 +47,7 @@ const (
 type InputModel struct {
 	CommandInput textinput.Model
 	CmdHistory   *utils.InputHistory
+	homeCmdPath  string
 	commands     []Model
 	currCmd      Model
 	lastCmd      Model
@@ -71,44 +79,46 @@ var commanderInput textinput.Model = func() textinput.Model {
 }()
 
 // TODO - Use an interface to define input history methods
-func NewInputModel(h *utils.InputHistory, options ...InputOption) InputModel {
-	model := InputModel{
-		aliases: []string{},
-	}
-	model.CmdHistory = h
-	model.CommandInput = commanderInput
-
-	for _, addCmd := range options {
-		addCmd(&model)
+func NewInputModel(h *utils.InputHistory, homeCmdPath string, cmdModels ...Model) InputModel {
+	inputModel := InputModel{
+		aliases:      []string{},
+		homeCmdPath:  homeCmdPath,
+		CmdHistory:   h,
+		CommandInput: commanderInput,
 	}
 
-	return model
-}
+	aliasStore := make(map[string]struct{}, len(cmdModels))
 
-func With(cmds ...Model) InputOption {
-	return func(m *InputModel) {
-		aliasStore := map[string]bool{}
-
-		for _, cmd := range cmds {
-			for _, a := range cmd.model.GetCmdData().Aliases {
-				if aliasStore[a] {
-					logger.LogFatal(
-						"command alias [%s] already exists",
-						MsgDuplicateAliasErr,
-						a,
-					)
-				}
-				aliasStore[a] = true
-				m.aliases = append(m.aliases, a)
+	for _, cmdModel := range cmdModels {
+		for _, a := range cmdModel.model.GetCmdData().Aliases {
+			if _, ok := aliasStore[a]; ok {
+				logger.LogFatal(
+					"command alias [%s] already exists",
+					MsgDuplicateAliasErr,
+					a,
+				)
 			}
+			aliasStore[a] = struct{}{}
+			inputModel.aliases = append(inputModel.aliases, a)
 		}
-
-		m.commands = append(m.commands, cmds...)
+		inputModel.commands = append(inputModel.commands, cmdModel)
 	}
+
+	if homeCmdPath != "" {
+		if _, ok := aliasStore[homeCmdPath]; !ok {
+			logger.LogFatal(
+				"cannot find home command path [%s]",
+				MsgInvalidHomeCmdPath,
+				homeCmdPath,
+			)
+		}
+	}
+
+	return inputModel
 }
 
 func (m InputModel) Init() tea.Cmd {
-	return nil
+	return func() tea.Msg { return GoHomeMsg{} }
 }
 
 func (m InputModel) Update(msg tea.Msg) (InputModel, tea.Cmd) {
@@ -119,6 +129,15 @@ func (m InputModel) Update(msg tea.Msg) (InputModel, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		statusStyle = statusStyle.Width(msg.Width)
 		m.CommandInput.Width = msg.Width
+
+	case GoHomeMsg:
+		if m.homeCmdPath != "" {
+			m.CommandInput.SetValue(m.homeCmdPath)
+			m, _ = tryParseCmd(m, tea.KeyMsg{})
+			m, cmd = tryEnterCmd(m)
+			m.CommandInput.Reset()
+			return m, cmd
+		}
 
 	case UpdateStatusMsg:
 		color := ui.FgSuccessColor
