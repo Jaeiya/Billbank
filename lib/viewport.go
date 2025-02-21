@@ -31,7 +31,11 @@ type ViewPort struct {
 }
 
 func (vp ViewPort) Init() tea.Cmd {
-	return textinput.Blink
+	teaCmds := []tea.Cmd{
+		textinput.Blink,
+		vp.CommandInput.Init(),
+	}
+	return tea.Batch(teaCmds...)
 }
 
 func (vp ViewPort) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
