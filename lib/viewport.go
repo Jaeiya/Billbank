@@ -26,6 +26,7 @@ type ViewPort struct {
 	CommandInput    cmdmodel.InputModel
 	CurrentCmdModel cmdmodel.Interface
 	CommandStatus   cmdmodel.Status
+	hasHiddenInput  bool
 	height          int
 	width           int
 }
@@ -44,30 +45,41 @@ func (vp ViewPort) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		vp.height = msg.Height
-		vp.width = msg.Width
 		logger.Log(logger.Hot, "[WindowSizeMsg] sending viewport size [%d:%d]", vp.width, vp.height)
-		teaCmds = append(teaCmds, vp.sendViewportSize)
+		teaCmds = append(teaCmds, vp.setupViewport(msg))
+
+	case tea.KeyMsg:
+		// Emergency exit
+		if msg.String() == "alt+`" {
+			return vp, tea.Quit
+		}
+
+		if msg.String() == "`" {
+			logger.Log(logger.Debug, "[OnGrave] toggling viewport input")
+			return vp.toggleInput()
+		}
 
 	case cmdmodel.ReleaseInputMsg:
-		vp.CommandStatus.CaptureInput = false
-		teaCmds = append(teaCmds, func() tea.Msg { return textinput.Blink() })
+		logger.Log(
+			logger.Debug,
+			"[ReleaseInputMsg] releasing input control to viewport from [%s]",
+			vp.CurrentCmdModel.GetName(),
+		)
+		teaCmds = append(teaCmds, vp.releaseInput())
 
 	case cmdmodel.UpdateCmdMsg:
-		if msg.Model != nil {
-			vp.CurrentCmdModel = msg.Model
-			logger.Log(logger.Debug, "storing new command model [%s]", msg.CommandStatus.Path)
-		}
-		vp.CommandStatus = msg.CommandStatus
-		logger.Log(logger.Debug, "[UpdateCmdMsg] sending viewport size [%d:%d]", vp.width, vp.height)
-		teaCmds = append(teaCmds, vp.sendViewportSize)
+		teaCmds = append(teaCmds, vp.updateCommand(msg))
+		logger.Log(logger.Debug,
+			"[UpdateCmdMsg] sending viewport size [%d:%d]",
+			vp.width, vp.height,
+		)
 
 	case CommanderStatusMsg:
 		teaCmds = append(teaCmds, vp.sendStatusMsg(msg.String, msg.Severity))
 	}
 
 	// Give up keyboard control to current command
-	if !vp.CommandStatus.CaptureInput {
+	if !vp.hasHiddenInput {
 		vp.CommandInput, teaCmd = vp.CommandInput.Update(msg)
 		teaCmds = append(teaCmds, teaCmd)
 	}
@@ -104,7 +116,7 @@ func (vp ViewPort) View() string {
 	}
 
 	// Do not display text-input when command has exclusive control
-	if vp.CommandStatus.CaptureInput {
+	if vp.hasHiddenInput {
 		return getCmdView(true)
 	}
 
@@ -115,6 +127,40 @@ func (vp ViewPort) View() string {
 		),
 		cmdrStr,
 	)
+}
+
+func (vp *ViewPort) setupViewport(msg tea.WindowSizeMsg) tea.Cmd {
+	vp.height = msg.Height
+	vp.width = msg.Width
+	return vp.sendViewportSize
+}
+
+func (vp *ViewPort) updateCommand(msg cmdmodel.UpdateCmdMsg) tea.Cmd {
+	if msg.Model != nil {
+		vp.CurrentCmdModel = msg.Model
+		logger.Log(logger.Debug, "storing new command model [%s]", msg.CommandStatus.Path)
+	}
+	vp.CommandStatus = msg.CommandStatus
+	if vp.CommandStatus.CaptureInput {
+		vp.hasHiddenInput = true
+	}
+	return vp.sendViewportSize
+}
+
+func (vp ViewPort) toggleInput() (ViewPort, tea.Cmd) {
+	vp.hasHiddenInput = !vp.hasHiddenInput
+	if !vp.hasHiddenInput {
+		return vp, func() tea.Msg { return cmdmodel.ReleaseInputMsg{} }
+	}
+	return vp, vp.sendViewportSize
+}
+
+func (vp *ViewPort) releaseInput() tea.Cmd {
+	vp.hasHiddenInput = false
+	vp.CommandStatus.CaptureInput = vp.hasHiddenInput
+	return func() tea.Msg {
+		return textinput.Blink()
+	}
 }
 
 func (vp ViewPort) sendViewportSize() tea.Msg {
