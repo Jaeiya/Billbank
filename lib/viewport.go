@@ -56,7 +56,8 @@ func (vp ViewPort) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		if msg.String() == "`" {
 			logger.Log(logger.Debug, "[OnGrave] toggling viewport input")
-			return vp.toggleInput()
+			vp, teaCmds = vp.toggleInput()
+			return vp, tea.Batch(teaCmds...)
 		}
 
 	case cmdmodel.ReleaseInputMsg:
@@ -147,12 +148,12 @@ func (vp *ViewPort) updateCommand(msg cmdmodel.UpdateCmdMsg) tea.Cmd {
 	return vp.sendViewportSize
 }
 
-func (vp ViewPort) toggleInput() (ViewPort, tea.Cmd) {
+func (vp ViewPort) toggleInput() (ViewPort, []tea.Cmd) {
 	vp.hasHiddenInput = !vp.hasHiddenInput
 	if !vp.hasHiddenInput {
-		return vp, func() tea.Msg { return cmdmodel.ReleaseInputMsg{} }
+		return vp, []tea.Cmd{func() tea.Msg { return cmdmodel.ReleaseInputMsg{} }, vp.sendViewportSize}
 	}
-	return vp, vp.sendViewportSize
+	return vp, []tea.Cmd{vp.sendViewportSize}
 }
 
 func (vp *ViewPort) releaseInput() tea.Cmd {
@@ -165,7 +166,7 @@ func (vp *ViewPort) releaseInput() tea.Cmd {
 
 func (vp ViewPort) sendViewportSize() tea.Msg {
 	offsetHeight := lipgloss.Height(vp.CommandInput.View())
-	if vp.CommandStatus.CaptureInput {
+	if vp.hasHiddenInput {
 		offsetHeight = 0
 	}
 	return cmdmodel.ViewportSizeMsg{
