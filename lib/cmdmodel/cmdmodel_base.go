@@ -141,13 +141,6 @@ func (bc *BaseModel[T]) Update(model T, msg tea.Msg) (T, tea.Cmd) {
 	defer func() { bc.isFirstMsg = false }()
 
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		if msg.String() == "esc" && bc.cmdStatus.CaptureInput {
-			logger.Log(logger.Debug, "[OnEsc] releasing input back to input commander")
-			bc.cmdStatus.CaptureInput = false
-			teaCmds = append(teaCmds, func() tea.Msg { return ReleaseInputMsg{} })
-		}
-
 	case ViewportSizeMsg:
 		logger.Log(logger.Hot, "setting viewport size [%dx%d]", msg.Width, msg.Height)
 		bc.viewHeight = msg.Height
