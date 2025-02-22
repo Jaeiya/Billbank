@@ -58,7 +58,7 @@ func (m skeletonModel) Update(msg tea.Msg) (cmdmodel.Interface, tea.Cmd) {
 	var teaCmd tea.Cmd
 	var teaCmds []tea.Cmd
 
-	//- DO NOT REMOVE; required for base model interaction
+	//- DO NOT REMOVE or MODIFY; required for base model interaction
 	m, teaCmd = m.BaseModel.Update(m, msg)
 	teaCmds = append(teaCmds, teaCmd)
 	//--------------------------------------------------//
@@ -73,8 +73,8 @@ func (m skeletonModel) Update(msg tea.Msg) (cmdmodel.Interface, tea.Cmd) {
 	return m, tea.Batch(teaCmds...)
 }
 
+// DO NOT REMOVE or MODIFY; required for base model interaction
 func (m skeletonModel) View() string {
-	// DO NOT REMOVE; required for base model interaction
 	return m.BaseModel.View(m)
 }
 
