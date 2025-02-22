@@ -82,8 +82,11 @@ func (vp ViewPort) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	if vp.CurrentCmdModel != nil {
-		vp.CurrentCmdModel, teaCmd = vp.CurrentCmdModel.Update(msg)
-		teaCmds = append(teaCmds, teaCmd)
+		_, isKey := msg.(tea.KeyMsg)
+		if isKey && vp.hasHiddenInput || !isKey {
+			vp.CurrentCmdModel, teaCmd = vp.CurrentCmdModel.Update(msg)
+			teaCmds = append(teaCmds, teaCmd)
+		}
 	}
 
 	return vp, tea.Batch(teaCmds...)
