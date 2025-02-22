@@ -68,12 +68,37 @@ type BaseCmdData[T any] struct {
 }
 
 type BaseCommand[T any] struct {
-	Path         string
-	Run          func(T) T
-	View         func(T) string
+	// A list of words that execute a specific
+	// command function, when entered into the
+	// command input. Empty paths refer to
+	// the command alias itself as a command.
+	Path string
+
+	// Executes the logic of the command, which
+	// updates the command model.
+	Run func(T) T
+
+	// The main display function for the command.
+	View func(T) string
+
+	// Hides the command input, which relinquishes
+	// keyboard control to the command. This is
+	// necessary for commands which control the
+	// UI using the keyboard.
 	CaptureInput bool
-	ArgType      ArgType
-	ValidateArg  func(arg string) error
+
+	// The type of arguments that the command
+	// requires. ArgNone is the default.
+	//
+	//	ArgNone
+	//	ArgOptional
+	//	ArgRequired
+	ArgType ArgType
+
+	// Function to validate the argument passed to the
+	// command. This function is required if the arg
+	// type is NOT ArgNone.
+	ValidateArg func(arg string) error
 }
 
 type BaseModel[T any] struct {
