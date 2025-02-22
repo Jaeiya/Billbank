@@ -84,8 +84,7 @@ func NewDebugCmd(h *utils.InputHistory) cmdmodel.Model {
 				ValidateArg: validateSlogInput,
 			},
 			{Path: "stats", Run: loadStats, View: viewStats},
-			{Path: "clear log", Run: clearLog, View: clearLogView},
-			{Path: "clear slog", Run: clearSlog, View: clearSlogView},
+			{Path: "clear slog", Run: clearLog, View: clearSlogView},
 		},
 		h,
 	))
@@ -224,18 +223,8 @@ func clearLog(m debugModel) debugModel {
 	}
 	m.log.view = ""
 	m.log.lineCount = 0
-	// No reason to hold stale slog info
 	m.slog.view = ""
 	return m
-}
-
-func clearLogView(m debugModel) string {
-	w, h := m.GetViewSize()
-	return ui.NewInfoBox(
-		"Clear Log",
-		"The log has been successfully cleared!",
-		w, h,
-	)
 }
 
 func validateSlogInput(arg string) error {
@@ -322,11 +311,6 @@ func loadSlog(m debugModel) debugModel {
 	fixedWidthContent := lipgloss.NewStyle().Width(w - 1).Render(m.slog.view)
 	m.slog.viewPort.SetContent(fixedWidthContent)
 	m.slog.viewPort.GotoBottom()
-	return m
-}
-
-func clearSlog(m debugModel) debugModel {
-	m.slog.view = ""
 	return m
 }
 
