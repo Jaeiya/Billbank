@@ -70,10 +70,6 @@ func (vp ViewPort) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case cmdmodel.UpdateCmdMsg:
 		teaCmds = append(teaCmds, vp.updateCommand(msg))
-		logger.Log(logger.Debug,
-			"[UpdateCmdMsg] sending viewport size [%d:%d]",
-			vp.width, vp.height,
-		)
 
 	case CommanderStatusMsg:
 		teaCmds = append(teaCmds, vp.sendStatusMsg(msg.String, msg.Severity))
@@ -145,6 +141,12 @@ func (vp *ViewPort) updateCommand(msg cmdmodel.UpdateCmdMsg) tea.Cmd {
 	if vp.CommandStatus.CaptureInput {
 		vp.hasHiddenInput = true
 	}
+	logger.Log(
+		logger.Debug,
+		"[UpdateCommand] sending viewport size [%d:%d]",
+		vp.width,
+		vp.height,
+	)
 	return vp.sendViewportSize
 }
 
