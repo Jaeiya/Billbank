@@ -153,7 +153,10 @@ func (vp *ViewPort) updateCommand(msg cmdmodel.UpdateCmdMsg) tea.Cmd {
 func (vp ViewPort) toggleInput() (ViewPort, []tea.Cmd) {
 	vp.hasHiddenInput = !vp.hasHiddenInput
 	if !vp.hasHiddenInput {
-		return vp, []tea.Cmd{func() tea.Msg { return cmdmodel.ReleaseInputMsg{} }, vp.sendViewportSize}
+		return vp, []tea.Cmd{
+			func() tea.Msg { return cmdmodel.ReleaseInputMsg{} },
+			vp.sendViewportSize,
+		}
 	}
 	return vp, []tea.Cmd{vp.sendViewportSize}
 }
