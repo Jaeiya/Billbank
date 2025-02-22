@@ -17,15 +17,6 @@ type MockAddSubtract struct {
 	totalSubtracted   string
 }
 
-type MockAddSubCurrency struct {
-	should             string
-	currencyAdded      []*Currency
-	totalAdded         string
-	initialCurrency    *Currency
-	currencySubtracted []*Currency
-	totalSubtracted    string
-}
-
 func TestCurrency(t *testing.T) {
 	mockTable := []MockAddSubtract{
 		{
