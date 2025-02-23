@@ -258,27 +258,7 @@ func loadSlog(m debugModel) debugModel {
 		var tag string = parts[3]
 		var subjectStyle lipgloss.Style
 
-		switch tag {
-		case "[NFO]":
-			tag = infoLogStyle.Render(tag)
-			subjectStyle = infoLogStyle
-		case "[ATN]":
-			tag = attnLogStyle.Render(tag)
-			subjectStyle = attnLogStyle
-		case "[ERR]":
-			tag = errLogStyle.Render(tag)
-			subjectStyle = errLogStyle
-		case "[DBG]":
-			tag = debugLogStyle.Render(tag)
-			subjectStyle = debugLogStyle
-		case "[HOT]":
-			tag = hotLogStyle.Render(tag)
-			subjectStyle = hotLogStyle
-		case "[∞∞∞]":
-			tag = insaneLogStyle.Render(tag)
-			subjectStyle = insaneLogStyle
-		}
-
+		tag, subjectStyle = getTagStyle(tag)
 		tagBuilder.WriteString(fmt.Sprintf("%s \n", tag))
 
 		var words []string = parts[5:]
@@ -312,6 +292,34 @@ func loadSlog(m debugModel) debugModel {
 	m.slog.viewPort.SetContent(fixedWidthContent)
 	m.slog.viewPort.GotoBottom()
 	return m
+}
+
+func getTagStyle(tag string) (string, lipgloss.Style) {
+	var subjectStyle lipgloss.Style
+
+	switch tag {
+	case "[NFO]":
+		tag = infoLogStyle.Render(tag)
+		subjectStyle = infoLogStyle
+	case "[ATN]":
+		tag = attnLogStyle.Render(tag)
+		subjectStyle = attnLogStyle
+	case "[ERR]":
+		tag = errLogStyle.Render(tag)
+		subjectStyle = errLogStyle
+	case "[DBG]":
+		tag = debugLogStyle.Render(tag)
+		subjectStyle = debugLogStyle
+	case "[HOT]":
+		tag = hotLogStyle.Render(tag)
+		subjectStyle = hotLogStyle
+	case "[∞∞∞]":
+		tag = insaneLogStyle.Render(tag)
+		subjectStyle = insaneLogStyle
+	}
+
+	return tag, subjectStyle
+
 }
 
 func clearSlogView(m debugModel) string {
