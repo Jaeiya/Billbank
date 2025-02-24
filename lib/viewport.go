@@ -61,11 +61,6 @@ func (vp ViewPort) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case cmdmodel.ReleaseInputMsg:
-		logger.Log(
-			logger.Debug,
-			"[ReleaseInputMsg] releasing input control to viewport from [%s]",
-			vp.CurrentCmdModel.GetName(),
-		)
 		teaCmds = append(teaCmds, vp.releaseInput())
 
 	case cmdmodel.UpdateCmdMsg:
