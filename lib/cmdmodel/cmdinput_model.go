@@ -22,6 +22,9 @@ command more than once.`
 const MsgInvalidHomeCmdPath = `
 Make sure you've entered the entire command path, including the alias.
 You also cannot set a home path that requires arguments.
+
+Double check the command paths of the command model you're trying to
+access and make sure the path exists.
 `
 
 type GoHomeMsg struct{}
