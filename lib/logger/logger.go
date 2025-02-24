@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/charmbracelet/lipgloss"
@@ -51,32 +50,31 @@ type LogMsg struct {
 }
 
 var (
-	isReady    = false
-	logLevel   = None
-	logChan    = make(chan LogMsg, 50)
-	doneChan   = make(chan struct{})
-	stdLogger  *log.Logger
-	fileHandle *os.File
-	once       sync.Once
-	timeFormat = "03:04:05.000 PM MST"
+	_logChan    chan LogMsg
+	_doneChan   = make(chan struct{})
+	_isReady    = false
+	_logLevel   = None
+	_stdLogger  *log.Logger
+	_fileHandle *os.File
+	_timeFormat = "03:04:05.000000 PM MST"
 )
 
 func Log(ll LogLevel, msg string, vars ...any) {
 	// Removes side-effects when testing code that is
 	// using the logger.
-	if logLevel == None {
+	if _logLevel == None {
 		return
 	}
 
 	if ll.IsValid() {
 		initLog()
 
-		if ll < logLevel {
+		if ll < _logLevel {
 			return
 		}
 
 		_, file, line, _ := runtime.Caller(1)
-		logChan <- LogMsg{msg, ll, file, line, vars}
+		_logChan <- LogMsg{msg, ll, file, line, vars}
 	}
 }
 
@@ -89,23 +87,23 @@ func Log(ll LogLevel, msg string, vars ...any) {
 func LogFunc(ll LogLevel, msgFn func() string, vars ...any) {
 	// Removes side-effects when testing code that is
 	// using the logger.
-	if logLevel == None {
+	if _logLevel == None {
 		return
 	}
 
-	if ll < logLevel {
+	if ll < _logLevel {
 		return
 	}
 
 	if ll.IsValid() {
 		initLog()
 
-		if ll < logLevel {
+		if ll < _logLevel {
 			return
 		}
 
 		_, file, line, _ := runtime.Caller(1)
-		logChan <- LogMsg{msgFn(), ll, file, line, vars}
+		_logChan <- LogMsg{msgFn(), ll, file, line, vars}
 	}
 }
 
@@ -155,65 +153,81 @@ func LogFatal(errMsg string, description string, vars ...any) {
 	)
 }
 
+func Reset() error {
+	ll := _logLevel
+
+	// Do not allow any calls to log during reset
+	_logLevel = None
+
+	// Init should be called once reset is done
+	_isReady = false
+
+	err := CloseLog()
+	if err != nil {
+		return err
+	}
+	_logLevel = ll
+	return nil
+}
+
 func SetLogLevel(ll LogLevel) {
 	if ll.IsValid() {
-		logLevel = ll
+		_logLevel = ll
 	}
 }
 
 func GetLogLevel() LogLevel {
-	return logLevel
+	return _logLevel
 }
 
 func GetTimeFormat() string {
-	return timeFormat
+	return _timeFormat
 }
 
 func CloseLog() error {
-	close(logChan)
-	<-doneChan
-	return fileHandle.Close()
+	close(_logChan)
+	<-_doneChan
+	return _fileHandle.Close()
 }
 
 func initLog() {
-	once.Do(func() {
-		if isReady {
-			return
-		}
-		path := filepath.Join(utils.GetWorkingDir(), "log.txt")
+	if _isReady {
+		return
+	}
+	path := filepath.Join(utils.GetWorkingDir(), "log.txt")
+	_logChan = make(chan LogMsg, 50)
 
-		var err error
-		fileHandle, err = os.OpenFile(
-			path,
-			os.O_CREATE|os.O_WRONLY|os.O_TRUNC,
-			0o644,
-		)
-		if err != nil {
-			panic(err)
-		}
+	var err error
+	_fileHandle, err = os.OpenFile(
+		path,
+		os.O_CREATE|os.O_WRONLY|os.O_TRUNC,
+		0o644,
+	)
+	if err != nil {
+		panic(err)
+	}
 
-		stdLogger = log.New(fileHandle, "", 0)
-		go logMessages()
-		isReady = true
-	})
+	_stdLogger = log.New(_fileHandle, "", 0)
+	go logMessages()
+	_isReady = true
 }
 
 func logMessages() {
-	for log := range logChan {
+	for log := range _logChan {
 		msg := fmt.Sprintf(
 			"%s [%s] [%s:%d]: %s\n",
-			time.Now().Format("03:04:05.000 PM MST"),
+			time.Now().Format(_timeFormat),
 			log.level,
 			filepath.Base(log.file), log.line,
 			log.msg,
 		)
 		if len(log.vars) == 0 {
-			stdLogger.Print(msg)
+			_stdLogger.Print(msg)
 		} else {
-			stdLogger.Printf(msg, log.vars...)
+			_stdLogger.Printf(msg, log.vars...)
 		}
 	}
-	close(doneChan)
+	close(_doneChan)
 }
 
 func getStack() string {
