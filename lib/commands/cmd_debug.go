@@ -165,7 +165,6 @@ func (m debugModel) Update(msg tea.Msg) (cmdmodel.Interface, tea.Cmd) {
 
 	m.slog.viewPort, teaCmd = m.slog.viewPort.Update(msg)
 	teaCmds = append(teaCmds, teaCmd)
-
 	return m, tea.Batch(teaCmds...)
 }
 
@@ -272,7 +271,7 @@ func loadSlog(m debugModel) debugModel {
 			timeDiff = time.Duration(0)
 		}
 		lastTimeStamp = timeStamp
-		timeBuilder.WriteString(fmt.Sprintf("%s \n", timeDiff.Round(100*time.Microsecond)))
+		timeBuilder.WriteString(fmt.Sprintf("%s \n", timeDiff.Round(10*time.Microsecond)))
 
 		tag, subjectStyle = getTagStyle(tag)
 		tagBuilder.WriteString(fmt.Sprintf("%s \n", tag))
