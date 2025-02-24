@@ -5,10 +5,8 @@ import (
 )
 
 type InputHistory struct {
-	cmds          []string
-	pos           int
-	lastView      string
-	lastViewedLen int
+	cmds []string
+	pos  int
 }
 
 func NewCmdHistory() *InputHistory {
