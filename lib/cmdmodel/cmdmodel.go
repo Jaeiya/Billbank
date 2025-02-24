@@ -34,6 +34,7 @@ type Interface interface {
 	GetName() string
 	GetErrors() []error
 	GetCmdData() CommandData
+	GetCmdPaths() []string
 	IsSupported(cmdPath string) bool
 	IsInitialized() bool
 }

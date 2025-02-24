@@ -3,6 +3,7 @@ package cmdmodel
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -91,28 +92,31 @@ func NewInputModel(h *utils.InputHistory, homeCmdPath string, cmdModels ...Model
 	}
 
 	aliasStore := make(map[string]struct{}, len(cmdModels))
+	cmdPaths := []string{}
 
 	for _, cmdModel := range cmdModels {
-		for _, a := range cmdModel.command.GetCmdData().Aliases {
-			if _, ok := aliasStore[a]; ok {
+		cmdData := cmdModel.command.GetCmdData()
+		for _, alias := range cmdData.Aliases {
+			if _, ok := aliasStore[alias]; ok {
 				logger.LogFatal(
 					"command alias [%s] already exists",
 					MsgDuplicateAliasErr,
-					a,
+					alias,
 				)
 			}
-			aliasStore[a] = struct{}{}
-			inputModel.aliases = append(inputModel.aliases, a)
+			aliasStore[alias] = struct{}{}
+			inputModel.aliases = append(inputModel.aliases, alias)
 		}
+		cmdPaths = append(cmdPaths, cmdModel.command.GetCmdPaths()...)
 		inputModel.commands = append(inputModel.commands, cmdModel)
 	}
 
 	if homeCmdPath != "" {
-		if _, ok := aliasStore[homeCmdPath]; !ok {
+		if !slices.Contains(cmdPaths, homeCmdPath) {
 			logger.LogFatal(
-				"cannot find home command path [%s] available [%+v]",
+				"cannot find home command path [%s]",
 				MsgInvalidHomeCmdPath,
-				homeCmdPath, aliasStore,
+				homeCmdPath,
 			)
 		}
 	}
