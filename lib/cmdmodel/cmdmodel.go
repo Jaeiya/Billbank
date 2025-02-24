@@ -89,11 +89,11 @@ func New(model Interface) Model {
 	return Model{cmdId, model, Status{}}
 }
 
-func (cb Model) GetId() int {
-	return cb.id
+func (m Model) GetId() int {
+	return m.id
 }
 
-func (cb Model) ParseCommand(cmdInput string) Status {
+func (m Model) ParseCommand(cmdInput string) Status {
 	var inputParts []string = strings.Fields(cmdInput)
 	if len(inputParts) == 0 {
 		return Status{Error: ErrEmptyCommand}
@@ -103,7 +103,7 @@ func (cb Model) ParseCommand(cmdInput string) Status {
 	var cmdPathParts []string = inputParts[1:]
 	var cmdPaths []string
 
-	cmdData := cb.command.GetCmdData()
+	cmdData := m.command.GetCmdData()
 
 	if !slices.Contains(cmdData.Aliases, alias) {
 		return Status{Error: ErrNotCommand}
@@ -115,7 +115,7 @@ func (cb Model) ParseCommand(cmdInput string) Status {
 
 		if cmd.ArgType < ArgRequired && cmdPath == cmd.Path {
 			var err error
-			if !cb.command.IsSupported(cmdInput) {
+			if !m.command.IsSupported(cmdInput) {
 				err = ErrUnimplementedCmd
 			}
 			return Status{
