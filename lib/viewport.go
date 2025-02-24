@@ -46,8 +46,11 @@ func (vp ViewPort) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		logger.Log(logger.Hot, "[WindowSizeMsg] sending viewport size [%d:%d]", vp.width, vp.height)
-		teaCmds = append(teaCmds, vp.setupViewport(msg))
+		// Don't update unless we have a new size
+		if msg.Height != vp.height || msg.Width != vp.width {
+			teaCmds = append(teaCmds, vp.setupViewport(msg))
+			logger.Log(logger.Hot, "[WindowSizeMsg] sending viewport size [%d:%d]", vp.width, vp.height)
+		}
 
 	case tea.KeyMsg:
 		// Emergency exit
