@@ -127,9 +127,9 @@ type debugStats struct {
 }
 
 type debugHistory struct {
+	data    *utils.InputHistory
 	view    string
 	lastLen int
-	data    *utils.InputHistory
 }
 
 type debugLog struct {
@@ -138,9 +138,9 @@ type debugLog struct {
 }
 
 type debugSlog struct {
-	view          string
 	viewPort      viewport.Model
 	lastRenderDur time.Duration
+	view          string
 }
 
 func (m debugModel) Update(msg tea.Msg) (cmdmodel.Interface, tea.Cmd) {

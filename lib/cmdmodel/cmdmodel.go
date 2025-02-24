@@ -39,12 +39,12 @@ type Interface interface {
 }
 
 type Status struct {
-	IsCommand       bool
 	PathSuggestions []string
 	Path            string
-	CaptureInput    bool
 	Arg             string
 	Error           error
+	IsCommand       bool
+	CaptureInput    bool
 }
 
 type CommandData struct {
@@ -55,9 +55,9 @@ type CommandData struct {
 type Command struct {
 	Path         string
 	PathParts    []string
-	CaptureInput bool
 	ArgType      ArgType
 	ValidateArg  func(arg string) error
+	CaptureInput bool
 }
 
 func newCommand[T any](baseCmd BaseCommand[T]) Command {

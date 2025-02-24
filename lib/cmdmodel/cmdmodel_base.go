@@ -107,12 +107,12 @@ type BaseModel[T any] struct {
 	cmdStatus    Status
 	cmdErrors    []error
 	lastCmdError error
-	isFirstMsg   bool
-	viewWidth    int
-	viewHeight   int
-	hasStaleView bool
 	staleView    string
 	stalePath    string
+	viewWidth    int
+	viewHeight   int
+	isFirstMsg   bool
+	hasStaleView bool
 	// Whether or not a tea.Msg is an interrupt which
 	// we'll use to prevent things like log spamming.
 	isInterrupt bool
