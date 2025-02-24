@@ -217,8 +217,7 @@ func loadLog(m debugModel) debugModel {
 }
 
 func clearLog(m debugModel) debugModel {
-	path := filepath.Join(utils.GetWorkingDir(), "log.txt")
-	err := os.Truncate(path, 0)
+	err := logger.Reset()
 	if err != nil {
 		m.AddError(err)
 		return m
