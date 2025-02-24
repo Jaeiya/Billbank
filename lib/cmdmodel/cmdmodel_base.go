@@ -5,7 +5,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/cursor"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/jaeiya/billbank/lib/logger"
 	"github.com/jaeiya/billbank/lib/ui"
@@ -51,6 +50,12 @@ as if they were commands themselves.
 
 Be aware though, that if you set its ArgType to optional or required,
 you'll no longer be able to add any more commands to that model.`
+
+type CmdStatusUpdateMsg struct {
+	Status         Status
+	ViewportWidth  int
+	ViewportHeight int
+}
 
 type ReleaseInputMsg struct{}
 
@@ -107,15 +112,9 @@ type BaseModel[T any] struct {
 	cmdStatus    Status
 	cmdErrors    []error
 	lastCmdError error
-	staleView    string
-	stalePath    string
 	viewWidth    int
 	viewHeight   int
 	isFirstMsg   bool
-	hasStaleView bool
-	// Whether or not a tea.Msg is an interrupt which
-	// we'll use to prevent things like log spamming.
-	isInterrupt bool
 }
 
 func NewModelBase[T any](cmdData BaseCmdData[T]) *BaseModel[T] {
@@ -170,24 +169,18 @@ func (bc *BaseModel[T]) Update(model T, msg tea.Msg) (T, tea.Cmd) {
 		logger.Log(logger.Hot, "setting viewport size [%dx%d]", msg.Width, msg.Height)
 		bc.viewHeight = msg.Height
 		bc.viewWidth = msg.Width
-		bc.hasStaleView = false
+		if bc.cmdStatus.Path != "" {
+			model = bc.Exec(model)
+			logger.Log(logger.Hot, "finished executing [%s]", bc.cmdStatus.Path)
+		}
+
+	case CmdStatusUpdateMsg:
+		bc.cmdStatus = msg.Status
+		bc.viewWidth = msg.ViewportWidth
+		bc.viewHeight = msg.ViewportHeight
 		model = bc.Exec(model)
+		logger.Log(logger.Debug, "[UpdateCmdStatus] finished executing command [%s]", bc.cmdStatus.Path)
 
-	case UpdateCmdMsg:
-		// The command path won't be executed until the next model update
-		// therefore we need to mark the view as stale, so it won't
-		// try to view uninitialized model data.
-		oldPath := bc.cmdStatus.Path
-		bc.hasStaleView = true
-		bc.cmdStatus = msg.CommandStatus
-		logger.Log(logger.Debug,
-			"updated command path [%s] to [%s]",
-			oldPath,
-			bc.cmdStatus.Path,
-		)
-
-	case cursor.BlinkMsg, tea.MouseMsg:
-		bc.isInterrupt = true
 	}
 
 	return model, tea.Batch(teaCmds...)
@@ -196,19 +189,6 @@ func (bc *BaseModel[T]) Update(model T, msg tea.Msg) (T, tea.Cmd) {
 func (bc *BaseModel[T]) View(model T) string {
 	cmdPath := bc.cmdStatus.Path
 	cmd := bc.cmdMap[cmdPath]
-
-	if bc.hasStaleView {
-		logger.Log(logger.Hot, "loading [stale] view [%s]", bc.stalePath)
-		return bc.staleView
-	}
-
-	if !bc.isInterrupt {
-		logger.Log(
-			logger.Hot,
-			"loading [current] view [%s]",
-			bc.cmdStatus.Path,
-		)
-	}
 
 	errs := bc.GetErrors()
 	if len(errs) > 0 {
@@ -220,8 +200,6 @@ func (bc *BaseModel[T]) View(model T) string {
 		)
 	}
 
-	bc.staleView = cmd.View(model)
-	bc.stalePath = bc.cmdStatus.Path
 	return cmd.View(model)
 }
 
@@ -264,6 +242,13 @@ func (m BaseModel[T]) GetCmdData() CommandData {
 	}
 }
 
+func (m BaseModel[T]) GetCmdPaths() (paths []string) {
+	for k := range m.cmdMap {
+		paths = append(paths, k)
+	}
+	return paths
+}
+
 func (m BaseModel[T]) IsActivePath(cmdPath string) bool {
 	return m.cmdStatus.Path == cmdPath
 }
@@ -283,7 +268,6 @@ func (m BaseModel[T]) IsInitialized() bool {
 // Exec executes the current command path in the context of the
 // passed model. All detected errors are logged and stored.
 func (m *BaseModel[T]) Exec(model T) T {
-	m.isInterrupt = false
 	cmdPath := m.cmdStatus.Path
 	cmd := m.cmdMap[cmdPath]
 

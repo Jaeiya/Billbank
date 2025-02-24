@@ -137,7 +137,7 @@ func (vp *ViewPort) setupViewport(msg tea.WindowSizeMsg) tea.Cmd {
 func (vp *ViewPort) updateCommand(msg cmdmodel.UpdateCmdMsg) tea.Cmd {
 	if msg.Model != nil {
 		vp.CurrentCmdModel = msg.Model
-		logger.Log(logger.Debug, "storing new command model [%s]", msg.CommandStatus.Path)
+		logger.Log(logger.Debug, "storing command model [%s]", msg.Model.GetName())
 	}
 	vp.CommandStatus = msg.CommandStatus
 	if vp.CommandStatus.CaptureInput {
@@ -145,11 +145,17 @@ func (vp *ViewPort) updateCommand(msg cmdmodel.UpdateCmdMsg) tea.Cmd {
 	}
 	logger.Log(
 		logger.Debug,
-		"[UpdateCommand] sending viewport size [%d:%d]",
+		"[UpdateCommand] sending status & viewport size [%d:%d]",
 		vp.width,
 		vp.height,
 	)
-	return vp.sendViewportSize
+	return func() tea.Msg {
+		return cmdmodel.CmdStatusUpdateMsg{
+			Status:         msg.CommandStatus,
+			ViewportWidth:  vp.width,
+			ViewportHeight: vp.height,
+		}
+	}
 }
 
 func (vp ViewPort) toggleInput() (ViewPort, []tea.Cmd) {
