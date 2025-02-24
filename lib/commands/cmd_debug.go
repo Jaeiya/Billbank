@@ -272,7 +272,7 @@ func loadSlog(m debugModel) debugModel {
 			timeDiff = time.Duration(0)
 		}
 		lastTimeStamp = timeStamp
-		timeBuilder.WriteString(fmt.Sprintf("%s \n", timeDiff.Round(time.Millisecond)))
+		timeBuilder.WriteString(fmt.Sprintf("%s \n", timeDiff.Round(100*time.Microsecond)))
 
 		tag, subjectStyle = getTagStyle(tag)
 		tagBuilder.WriteString(fmt.Sprintf("%s \n", tag))
