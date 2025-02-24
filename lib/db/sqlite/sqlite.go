@@ -22,33 +22,33 @@ type SqliteDb struct {
 //go:embed sql/init_db.sqlite
 var initBankSQL string
 
-func NewSqliteDb(filePath string, cc lib.CurrencyCode) *SqliteDb {
+func NewSqliteDb(filePath string, cc lib.CurrencyCode) (*SqliteDb, error) {
 	_, err := os.ReadDir(filepath.Dir(filePath))
 	if err != nil {
-		panic(fmt.Errorf("cannot load database: %w", err))
+		return nil, fmt.Errorf("cannot load database: %w", err)
 	}
 
 	db, err := sql.Open("sqlite", filePath)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	_, err = db.Exec(initBankSQL)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	_, err = db.Exec("PRAGMA foreign_keys = ON;")
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	_, err = db.Exec("PRAGMA user_version = 1;")
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
-	return &SqliteDb{db, cc}
+	return &SqliteDb{db, cc}, nil
 }
 
 func (sdb SqliteDb) InsertInto(t Table, values ...any) string {
