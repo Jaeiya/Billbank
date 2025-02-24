@@ -42,7 +42,8 @@ func TestCreateMonth(t *testing.T) {
 			a := assert.New(t)
 			r := require.New(t)
 
-			db := NewSqliteDb(filepath.Join(dir, "mock.db"), lib.USD)
+			db, err := NewSqliteDb(filepath.Join(dir, "mock.db"), lib.USD)
+			r.NoError(err)
 			defer db.Close()
 
 			if mock.expectedError != nil {

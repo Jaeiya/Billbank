@@ -55,7 +55,8 @@ func TestCreateIncome(t *testing.T) {
 			a := assert.New(t)
 			r := require.New(t)
 
-			db := NewSqliteDb(filepath.Join(dir, "mock.db"), lib.USD)
+			db, err := NewSqliteDb(filepath.Join(dir, "mock.db"), lib.USD)
+			r.NoError(err)
 			defer db.Close()
 
 			if mock.expectedError != nil {
@@ -82,8 +83,10 @@ func TestCreateIncome(t *testing.T) {
 		t.Parallel()
 		dir := t.TempDir()
 		a := assert.New(t)
+		r := require.New(t)
 
-		db := NewSqliteDb(filepath.Join(dir, "mock.db"), lib.USD)
+		db, err := NewSqliteDb(filepath.Join(dir, "mock.db"), lib.USD)
+		r.NoError(err)
 		defer db.Close()
 
 		db.CreateIncome(IncomeConfig{
@@ -189,7 +192,8 @@ func TestCreateIncomeHistory(t *testing.T) {
 			a := assert.New(t)
 			r := require.New(t)
 
-			db := NewSqliteDb(filepath.Join(dir, "mock.db"), lib.USD)
+			db, err := NewSqliteDb(filepath.Join(dir, "mock.db"), lib.USD)
+			r.NoError(err)
 			defer db.Close()
 
 			db.CreateMonth(time.Date(2024, 1, 1, 0, 0, 0, 0, time.Local))

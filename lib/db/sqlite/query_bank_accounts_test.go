@@ -130,7 +130,8 @@ func TestCreateBankAccount(t *testing.T) {
 			r := require.New(t)
 			dir := t.TempDir()
 
-			db := NewSqliteDb(filepath.Join(dir, "mock.db"), lib.USD)
+			db, err := NewSqliteDb(filepath.Join(dir, "mock.db"), lib.USD)
+			r.NoError(err)
 			defer db.Close()
 
 			for _, acct := range mock.actual {
@@ -160,9 +161,11 @@ func TestCreateBankAccount(t *testing.T) {
 	t.Run("should error when passing nil password & sensitive data", func(t *testing.T) {
 		t.Parallel()
 		a := assert.New(t)
+		r := require.New(t)
 		dir := t.TempDir()
 
-		db := NewSqliteDb(filepath.Join(dir, "mock.db"), lib.USD)
+		db, err := NewSqliteDb(filepath.Join(dir, "mock.db"), lib.USD)
+		r.NoError(err)
 		defer db.Close()
 
 		a.PanicsWithValue(lib.ErrEncryptWithoutPassword, func() {
@@ -292,7 +295,8 @@ func TestBankAccountHistory(t *testing.T) {
 			r := require.New(t)
 			dir := t.TempDir()
 
-			db := NewSqliteDb(filepath.Join(dir, "mock.db"), lib.USD)
+			db, err := NewSqliteDb(filepath.Join(dir, "mock.db"), lib.USD)
+			r.NoError(err)
 			defer db.Close()
 
 			db.CreateMonth(time.Date(2024, 1, 1, 0, 0, 0, 0, time.Local))
@@ -450,7 +454,8 @@ func TestBankTransfers(t *testing.T) {
 			r := assert.New(t)
 			dir := t.TempDir()
 
-			db := NewSqliteDb(filepath.Join(dir, "mock.db"), lib.USD)
+			db, err := NewSqliteDb(filepath.Join(dir, "mock.db"), lib.USD)
+			r.NoError(err)
 			defer db.Close()
 
 			db.CreateMonth(time.Date(2024, 1, 1, 0, 0, 0, 0, time.Local))
