@@ -51,7 +51,7 @@ type LogMsg struct {
 
 var (
 	_logChan    chan LogMsg
-	_doneChan   = make(chan struct{})
+	_doneChan   chan struct{}
 	_isReady    = false
 	_logLevel   = None
 	_stdLogger  *log.Logger
@@ -196,6 +196,7 @@ func initLog() {
 	}
 	path := filepath.Join(utils.GetWorkingDir(), "log.txt")
 	_logChan = make(chan LogMsg, 50)
+	_doneChan = make(chan struct{})
 
 	var err error
 	_fileHandle, err = os.OpenFile(
