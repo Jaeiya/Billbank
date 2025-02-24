@@ -36,6 +36,7 @@ func (vp ViewPort) Init() tea.Cmd {
 		textinput.Blink,
 		vp.CommandInput.Init(),
 	}
+	logger.Log(logger.Info, "loaded viewport")
 	return tea.Batch(teaCmds...)
 }
 
