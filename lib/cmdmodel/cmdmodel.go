@@ -76,9 +76,9 @@ func newCommand[T any](baseCmd BaseCommand[T]) Command {
 }
 
 type Model struct {
-	id     int
-	model  Interface
-	status Status
+	id      int
+	command Interface
+	status  Status
 }
 
 func New(model Interface) Model {
@@ -103,7 +103,7 @@ func (cb Model) ParseCommand(cmdInput string) Status {
 	var cmdPathParts []string = inputParts[1:]
 	var cmdPaths []string
 
-	cmdData := cb.model.GetCmdData()
+	cmdData := cb.command.GetCmdData()
 
 	if !slices.Contains(cmdData.Aliases, alias) {
 		return Status{Error: ErrNotCommand}
@@ -115,7 +115,7 @@ func (cb Model) ParseCommand(cmdInput string) Status {
 
 		if cmd.ArgType < ArgRequired && cmdPath == cmd.Path {
 			var err error
-			if !cb.model.IsSupported(cmdInput) {
+			if !cb.command.IsSupported(cmdInput) {
 				err = ErrUnimplementedCmd
 			}
 			return Status{

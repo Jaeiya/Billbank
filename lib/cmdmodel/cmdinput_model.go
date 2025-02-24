@@ -90,7 +90,7 @@ func NewInputModel(h *utils.InputHistory, homeCmdPath string, cmdModels ...Model
 	aliasStore := make(map[string]struct{}, len(cmdModels))
 
 	for _, cmdModel := range cmdModels {
-		for _, a := range cmdModel.model.GetCmdData().Aliases {
+		for _, a := range cmdModel.command.GetCmdData().Aliases {
 			if _, ok := aliasStore[a]; ok {
 				logger.LogFatal(
 					"command alias [%s] already exists",
@@ -107,9 +107,9 @@ func NewInputModel(h *utils.InputHistory, homeCmdPath string, cmdModels ...Model
 	if homeCmdPath != "" {
 		if _, ok := aliasStore[homeCmdPath]; !ok {
 			logger.LogFatal(
-				"cannot find home command path [%s]",
+				"cannot find home command path [%s] available [%+v]",
 				MsgInvalidHomeCmdPath,
-				homeCmdPath,
+				homeCmdPath, aliasStore,
 			)
 		}
 	}
@@ -238,7 +238,7 @@ func tryEnterCmd(m InputModel) (InputModel, tea.Cmd) {
 		"sending [%s] model & status update msg",
 		cmd.status.Path,
 	)
-	teaMsg := UpdateCmdMsg{cmd.model, cmd.status}
+	teaMsg := UpdateCmdMsg{cmd.command, cmd.status}
 	return m, func() tea.Msg { return teaMsg }
 }
 
@@ -263,7 +263,7 @@ func tryParseCmd(m InputModel, msg tea.KeyMsg) (InputModel, tea.Cmd) {
 			logger.Insane,
 			"test if [%s] is a [%s] command",
 			m.CommandInput.Value(),
-			cmd.model.GetName(),
+			cmd.command.GetName(),
 		)
 		cmdStatus := cmd.ParseCommand(m.CommandInput.Value())
 		m.currCmd = cmd
