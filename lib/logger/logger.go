@@ -58,6 +58,7 @@ var (
 	stdLogger  *log.Logger
 	fileHandle *os.File
 	once       sync.Once
+	timeFormat = "03:04:05.000 PM MST"
 )
 
 func Log(ll LogLevel, msg string, vars ...any) {
@@ -162,6 +163,10 @@ func SetLogLevel(ll LogLevel) {
 
 func GetLogLevel() LogLevel {
 	return logLevel
+}
+
+func GetTimeFormat() string {
+	return timeFormat
 }
 
 func CloseLog() error {

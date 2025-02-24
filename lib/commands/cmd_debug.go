@@ -245,18 +245,33 @@ func loadSlog(m debugModel) debugModel {
 		maxLines, _ = utils.ParseInt(arg)
 	}
 
-	var tagBuilder, subjBuilder, wordBuilder strings.Builder
+	var tagBuilder, subjBuilder, wordBuilder, timeBuilder strings.Builder
 	now := time.Now()
 
 	lines := strings.Split(m.log.view, "\n")
 	lines = lines[max(len(lines)-maxLines, 0):]
-	for _, line := range lines {
+	var lastTimeStamp time.Time = time.Now()
+	for i, line := range lines {
 		if line == "" {
 			continue
 		}
+		var err error
 		var parts []string = strings.Split(line, " ")
 		var tag string = parts[3]
 		var subjectStyle lipgloss.Style
+		var timeStamp time.Time
+
+		timeStamp, err = time.Parse(logger.GetTimeFormat(), strings.Join(parts[:3], " "))
+		if err != nil {
+			logger.Log(logger.Error, err.Error())
+		}
+
+		timeDiff := timeStamp.Sub(lastTimeStamp)
+		if i == 0 {
+			timeDiff = time.Duration(0)
+		}
+		lastTimeStamp = timeStamp
+		timeBuilder.WriteString(fmt.Sprintf("%s \n", timeDiff.Round(time.Millisecond)))
 
 		tag, subjectStyle = getTagStyle(tag)
 		tagBuilder.WriteString(fmt.Sprintf("%s \n", tag))
@@ -273,12 +288,13 @@ func loadSlog(m debugModel) debugModel {
 		)
 	}
 
-	content := strings.TrimSpace(lipgloss.JoinHorizontal(
+	content := lipgloss.JoinHorizontal(
 		lipgloss.Left,
+		slogPathStyle.Render(timeBuilder.String()),
 		tagBuilder.String(),
 		slogPathStyle.Render(subjBuilder.String()),
 		wordBuilder.String(),
-	))
+	)
 
 	m.slog.lastRenderDur = time.Since(now)
 	m.slog.view = content
@@ -319,7 +335,6 @@ func getTagStyle(tag string) (string, lipgloss.Style) {
 	}
 
 	return tag, subjectStyle
-
 }
 
 func clearSlogView(m debugModel) string {
