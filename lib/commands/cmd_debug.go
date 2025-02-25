@@ -85,6 +85,25 @@ func NewDebugCmd(h *utils.InputHistory) cmdmodel.Model {
 			},
 			{Path: "stats", Run: loadStats, View: viewStats},
 			{Path: "clear slog", Run: clearLog, View: clearSlogView},
+			{
+				Path:    "loglevel",
+				Run:     setLogLevel,
+				View:    viewLogLevel,
+				ArgType: cmdmodel.ArgRequired,
+				ValidateArg: func(arg string) error {
+					v, err := utils.ParseInt(arg)
+					if err != nil {
+						return fmt.Errorf("'%s' is not a valid number", arg)
+					}
+
+					ll := logger.LogLevel(v)
+					if !ll.IsValid() {
+						return fmt.Errorf("'%s' is not a valid log level", arg)
+					}
+
+					return nil
+				},
+			},
 		},
 		h,
 	))
@@ -468,5 +487,21 @@ func viewStats(m debugModel) string {
 			" ",
 			lipgloss.JoinVertical(lipgloss.Left, memHeader, memStats),
 		),
+	)
+}
+
+func setLogLevel(m debugModel) debugModel {
+	arg := m.GetCmdArg()
+	ll, _ := utils.ParseInt(arg)
+	_ = logger.SetLogLevel(logger.LogLevel(ll))
+	return m
+}
+
+func viewLogLevel(m debugModel) string {
+	w, h := m.GetViewSize()
+	return ui.NewInfoBox(
+		"Set Log Level",
+		fmt.Sprintf("Log level has been set to %s", logger.GetLogLevel()),
+		w, h,
 	)
 }
