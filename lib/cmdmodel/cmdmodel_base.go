@@ -166,12 +166,12 @@ func (bc *BaseModel[T]) Update(model T, msg tea.Msg) (T, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case ViewportSizeMsg:
-		logger.Log(logger.Hot, "setting viewport size [%dx%d]", msg.Width, msg.Height)
+		logger.Log(logger.Hot, "[ViewportSizeMsg] setting viewport size [%dx%d]", msg.Width, msg.Height)
 		bc.viewHeight = msg.Height
 		bc.viewWidth = msg.Width
 		if bc.cmdStatus.Path != "" {
 			model = bc.Exec(model)
-			logger.Log(logger.Hot, "finished executing [%s]", bc.cmdStatus.Path)
+			logger.Log(logger.Hot, "[ViewportSizeMsg] finished executing [%s]", bc.cmdStatus.Path)
 		}
 
 	case CmdStatusUpdateMsg:
