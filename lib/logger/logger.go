@@ -36,7 +36,7 @@ func (ll LogLevel) String() string {
 
 func (ll LogLevel) IsValid() bool {
 	if ll < Insane || ll > None {
-		LogFatal("log level not found [%d]", "This should not happen!", ll)
+		return false
 	}
 	return true
 }
@@ -66,16 +66,14 @@ func Log(ll LogLevel, msg string, vars ...any) {
 		return
 	}
 
-	if ll.IsValid() {
-		initLog()
+	tryInitLog()
 
-		if ll < _logLevel {
-			return
-		}
-
-		_, file, line, _ := runtime.Caller(1)
-		_logChan <- LogMsg{msg, ll, file, line, vars}
+	if ll < _logLevel {
+		return
 	}
+
+	_, file, line, _ := runtime.Caller(1)
+	_logChan <- LogMsg{msg, ll, file, line, vars}
 }
 
 // LogFunc executes the msgFn and passes its result to the
@@ -95,16 +93,14 @@ func LogFunc(ll LogLevel, msgFn func() string, vars ...any) {
 		return
 	}
 
-	if ll.IsValid() {
-		initLog()
+	tryInitLog()
 
-		if ll < _logLevel {
-			return
-		}
-
-		_, file, line, _ := runtime.Caller(1)
-		_logChan <- LogMsg{msgFn(), ll, file, line, vars}
+	if ll < _logLevel {
+		return
 	}
+
+	_, file, line, _ := runtime.Caller(1)
+	_logChan <- LogMsg{msgFn(), ll, file, line, vars}
 }
 
 func LogFatal(errMsg string, description string, vars ...any) {
@@ -170,10 +166,12 @@ func Reset() error {
 	return nil
 }
 
-func SetLogLevel(ll LogLevel) {
-	if ll.IsValid() {
-		_logLevel = ll
+func SetLogLevel(ll LogLevel) error {
+	if !ll.IsValid() {
+		return fmt.Errorf("invalid log level::%d", ll)
 	}
+	_logLevel = ll
+	return nil
 }
 
 func GetLogLevel() LogLevel {
@@ -190,7 +188,7 @@ func CloseLog() error {
 	return _fileHandle.Close()
 }
 
-func initLog() {
+func tryInitLog() {
 	if _isReady {
 		return
 	}
