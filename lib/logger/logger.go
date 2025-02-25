@@ -60,17 +60,11 @@ var (
 )
 
 func Log(ll LogLevel, msg string, vars ...any) {
-	// Removes side-effects when testing code that is
-	// using the logger.
-	if _logLevel == None {
+	if _logLevel == None || ll < _logLevel {
 		return
 	}
 
 	tryInitLog()
-
-	if ll < _logLevel {
-		return
-	}
 
 	_, file, line, _ := runtime.Caller(1)
 	_logChan <- LogMsg{msg, ll, file, line, vars}
@@ -83,13 +77,7 @@ func Log(ll LogLevel, msg string, vars ...any) {
 // processing, but only want that processing to occur at
 // a specific log level.
 func LogFunc(ll LogLevel, msgFn func() string, vars ...any) {
-	// Removes side-effects when testing code that is
-	// using the logger.
-	if _logLevel == None {
-		return
-	}
-
-	if ll < _logLevel {
+	if _logLevel == None || ll < _logLevel {
 		return
 	}
 
