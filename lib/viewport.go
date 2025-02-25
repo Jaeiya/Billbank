@@ -17,7 +17,7 @@ type (
 	}
 )
 
-type ViewportSizeMsg struct {
+type ViewportSize struct {
 	Width  int
 	Height int
 }
@@ -143,18 +143,30 @@ func (vp *ViewPort) updateCommand(msg cmdmodel.UpdateCmdMsg) tea.Cmd {
 	if vp.CommandStatus.CaptureInput {
 		vp.hasHiddenInput = true
 	}
+	vpSize := vp.getSize()
 	logger.Log(
 		logger.Debug,
-		"[UpdateCommand] sending status & viewport size [%d:%d]",
-		vp.width,
-		vp.height,
+		"updating command status & viewport size [%d:%d]",
+		vpSize.Width,
+		vpSize.Height,
 	)
 	return func() tea.Msg {
 		return cmdmodel.CmdStatusUpdateMsg{
 			Status:         msg.CommandStatus,
-			ViewportWidth:  vp.width,
-			ViewportHeight: vp.height,
+			ViewportWidth:  vpSize.Width,
+			ViewportHeight: vpSize.Height,
 		}
+	}
+}
+
+func (vp ViewPort) getSize() ViewportSize {
+	offsetHeight := lipgloss.Height(vp.CommandInput.View())
+	if vp.hasHiddenInput {
+		offsetHeight = 0
+	}
+	return ViewportSize{
+		Height: vp.height - offsetHeight,
+		Width:  vp.width,
 	}
 }
 
@@ -178,13 +190,10 @@ func (vp *ViewPort) releaseInput() tea.Cmd {
 }
 
 func (vp ViewPort) sendViewportSize() tea.Msg {
-	offsetHeight := lipgloss.Height(vp.CommandInput.View())
-	if vp.hasHiddenInput {
-		offsetHeight = 0
-	}
+	vpSize := vp.getSize()
 	return cmdmodel.ViewportSizeMsg{
-		Height: vp.height - offsetHeight,
-		Width:  vp.width,
+		Width:  vpSize.Width,
+		Height: vpSize.Height,
 	}
 }
 
