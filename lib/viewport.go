@@ -10,7 +10,6 @@ import (
 )
 
 type (
-	ActiveCmdMsg       string
 	CommanderStatusMsg struct {
 		String   string
 		Severity cmdmodel.StatusSeverity
@@ -25,7 +24,6 @@ type ViewportSize struct {
 type ViewPort struct {
 	CommandInput    cmdmodel.InputModel
 	CurrentCmdModel cmdmodel.Interface
-	CommandStatus   cmdmodel.Status
 	hasHiddenInput  bool
 	height          int
 	width           int
@@ -48,13 +46,15 @@ func (vp ViewPort) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		// Don't update unless we have a new size
 		if msg.Height != vp.height || msg.Width != vp.width {
-			teaCmds = append(teaCmds, vp.setupViewport(msg))
+			vp.height = msg.Height
+			vp.width = msg.Width
 			logger.Log(logger.Hot, "[WindowSizeMsg] sending viewport size [%d:%d]", vp.width, vp.height)
 		}
 
 	case tea.KeyMsg:
 		// Emergency exit
 		if msg.String() == "alt+`" {
+			logger.Log(logger.Debug, "used emergency exit")
 			return vp, tea.Quit
 		}
 
@@ -125,35 +125,15 @@ func (vp ViewPort) View() string {
 	)
 }
 
-func (vp *ViewPort) setupViewport(msg tea.WindowSizeMsg) tea.Cmd {
-	vp.height = msg.Height
-	vp.width = msg.Width
-	return vp.sendViewportSize
-}
-
 func (vp *ViewPort) updateCommand(msg cmdmodel.UpdateCmdMsg) tea.Cmd {
 	if msg.Model != nil {
 		vp.CurrentCmdModel = msg.Model
 		logger.Log(logger.Debug, "storing command model [%s]", msg.Model.GetName())
 	}
-	vp.CommandStatus = msg.CommandStatus
-	if vp.CommandStatus.CaptureInput {
+	if vp.CurrentCmdModel.GetStatus().CaptureInput {
 		vp.hasHiddenInput = true
 	}
-	vpSize := vp.getSize()
-	logger.Log(
-		logger.Debug,
-		"updating command status & viewport size [%d:%d]",
-		vpSize.Width,
-		vpSize.Height,
-	)
-	return func() tea.Msg {
-		return cmdmodel.CmdStatusUpdateMsg{
-			Status:         msg.CommandStatus,
-			ViewportWidth:  vpSize.Width,
-			ViewportHeight: vpSize.Height,
-		}
-	}
+	return vp.sendViewportSize
 }
 
 func (vp ViewPort) getSize() ViewportSize {
@@ -179,6 +159,7 @@ func (vp ViewPort) toggleInput() (ViewPort, tea.Cmd) {
 
 func (vp ViewPort) sendViewportSize() tea.Msg {
 	vpSize := vp.getSize()
+	logger.Log(logger.Hot, "sending viewport size msg [%d:%d]", vpSize.Width, vpSize.Height)
 	return cmdmodel.ViewportSizeMsg{
 		Width:  vpSize.Width,
 		Height: vpSize.Height,
@@ -187,7 +168,7 @@ func (vp ViewPort) sendViewportSize() tea.Msg {
 
 func (vp ViewPort) sendStatusMsg(msg string, s cmdmodel.StatusSeverity) func() tea.Msg {
 	return func() tea.Msg {
-		return cmdmodel.UpdateStatusMsg{
+		return cmdmodel.StatusBarMsg{
 			String:   msg,
 			Severity: s,
 		}

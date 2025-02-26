@@ -19,6 +19,34 @@ import (
 	"github.com/jaeiya/billbank/lib/utils"
 )
 
+type debugStats struct {
+	historySize     uint64
+	renderedLogSize uint64
+	logSize         uint64
+	slogSize        uint64
+	memAlloc        uint64
+	memTotal        uint64
+	memWorking      uint64
+	memGcCount      uint64
+}
+
+type debugHistory struct {
+	data    *utils.InputHistory
+	view    string
+	lastLen int
+}
+
+type debugLog struct {
+	view      string
+	lineCount int
+}
+
+type debugSlog struct {
+	viewPort      viewport.Model
+	lastRenderDur time.Duration
+	view          string
+}
+
 var (
 	infoLogStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#29DEFF"))
 	attnLogStyle = lipgloss.NewStyle().Background(ui.BgDarkColor).Foreground(ui.FgWarnColor)
@@ -56,65 +84,52 @@ var (
 		Width(30)
 )
 
-type debugCmd = cmdmodel.BaseCommand[debugModel]
+var debugCommands = []debugCmd{
+	{Path: "history", Run: loadHistory, View: viewHistory},
+	{
+		Path:        "slog",
+		Run:         loadSlog,
+		View:        viewSlog,
+		ArgType:     cmdmodel.ArgOptional,
+		ValidateArg: validateSlogInput,
+	},
+	{Path: "stats", Run: loadStats, View: viewStats},
+	{Path: "clear slog", Run: clearLog, View: clearSlogView},
+	{
+		Path:    "loglevel",
+		Run:     setLogLevel,
+		View:    viewLogLevel,
+		ArgType: cmdmodel.ArgRequired,
+		ValidateArg: func(arg string) error {
+			v, err := utils.ParseInt(arg)
+			if err != nil {
+				return fmt.Errorf("'%s' is not a valid number", arg)
+			}
+
+			ll := logger.LogLevel(v)
+			if !ll.IsValid() {
+				return fmt.Errorf("'%s' is not a valid log level", arg)
+			}
+
+			return nil
+		},
+	},
+}
+
+type debugCmd = cmdmodel.Command[debugModel]
 
 type debugModel struct {
-	*cmdmodel.BaseModel[debugModel]
+	*cmdmodel.Model[debugModel]
 	history debugHistory
 	log     debugLog
 	slog    debugSlog
 	stats   struct {
-		data       debugStats
-		memStats   runtime.MemStats
-		renderTime time.Time
+		data     debugStats
+		memStats runtime.MemStats
 	}
 }
 
-func NewDebugCmd(h *utils.InputHistory) cmdmodel.Model {
-	return cmdmodel.New(newDebugModel(
-		"Debug",
-		[]string{"/"},
-		[]debugCmd{
-			{Path: "history", Run: loadHistory, View: viewHistory},
-			{
-				Path:        "slog",
-				Run:         loadSlog,
-				View:        viewSlog,
-				ArgType:     cmdmodel.ArgOptional,
-				ValidateArg: validateSlogInput,
-			},
-			{Path: "stats", Run: loadStats, View: viewStats},
-			{Path: "clear slog", Run: clearLog, View: clearSlogView},
-			{
-				Path:    "loglevel",
-				Run:     setLogLevel,
-				View:    viewLogLevel,
-				ArgType: cmdmodel.ArgRequired,
-				ValidateArg: func(arg string) error {
-					v, err := utils.ParseInt(arg)
-					if err != nil {
-						return fmt.Errorf("'%s' is not a valid number", arg)
-					}
-
-					ll := logger.LogLevel(v)
-					if !ll.IsValid() {
-						return fmt.Errorf("'%s' is not a valid log level", arg)
-					}
-
-					return nil
-				},
-			},
-		},
-		h,
-	))
-}
-
-func newDebugModel(
-	name string,
-	aliases []string,
-	commands []debugCmd,
-	h *utils.InputHistory,
-) debugModel {
+func NewDebugCmd(h *utils.InputHistory) debugModel {
 	vp := viewport.New(0, 0)
 	vp.KeyMap.Down = key.NewBinding()
 	vp.KeyMap.Up = key.NewBinding()
@@ -124,49 +139,21 @@ func newDebugModel(
 	vp.KeyMap.HalfPageDown = key.NewBinding(key.WithKeys("ctrl+j"))
 
 	return debugModel{
-		BaseModel: cmdmodel.NewModelBase(cmdmodel.BaseCmdData[debugModel]{
-			Name:     name,
-			Aliases:  aliases,
-			Commands: commands,
+		Model: cmdmodel.NewModel(cmdmodel.CommandData[debugModel]{
+			Name:     "Debug",
+			Aliases:  []string{"/"},
+			Commands: debugCommands,
 		}),
 		history: debugHistory{data: h},
 		slog:    debugSlog{viewPort: vp},
 	}
 }
 
-type debugStats struct {
-	historySize     uint64
-	renderedLogSize uint64
-	logSize         uint64
-	slogSize        uint64
-	memAlloc        uint64
-	memTotal        uint64
-	memWorking      uint64
-	memGcCount      uint64
-}
-
-type debugHistory struct {
-	data    *utils.InputHistory
-	view    string
-	lastLen int
-}
-
-type debugLog struct {
-	view      string
-	lineCount int
-}
-
-type debugSlog struct {
-	viewPort      viewport.Model
-	lastRenderDur time.Duration
-	view          string
-}
-
 func (m debugModel) Update(msg tea.Msg) (cmdmodel.Interface, tea.Cmd) {
 	var teaCmd tea.Cmd
 	var teaCmds []tea.Cmd
 
-	m, teaCmd = m.BaseModel.Update(m, msg)
+	m, teaCmd = m.Model.Update(m, msg)
 	teaCmds = append(teaCmds, teaCmd)
 
 	switch msg := msg.(type) {
@@ -188,7 +175,7 @@ func (m debugModel) Update(msg tea.Msg) (cmdmodel.Interface, tea.Cmd) {
 }
 
 func (m debugModel) View() string {
-	return m.BaseModel.View(m)
+	return m.Model.View(m)
 }
 
 func loadHistory(m debugModel) debugModel {

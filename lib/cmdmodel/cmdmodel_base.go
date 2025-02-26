@@ -10,72 +10,32 @@ import (
 	"github.com/jaeiya/billbank/lib/ui"
 )
 
-const MsgMissingArgFuncErr = `
-If a command path can accept an argument, then it should also validate
-that argument. It's recommended to validate the arg inside this
-function because it can notify the user on error.`
+var _modelId = 0
 
-const MsgIsCmdItself = `
-Models with default commands (commands executed just by their alias),
-that can take arguments, do not support extra commands. For instance,
-if your model has a "view" alias that takes an argument for the kind
-of view to display:
-
-[view 1] or [view 2]
-
-You're limited to just a single command path, the default path. You
-cannot then create more commands that take a more specific view type
-like so:
-
-[view details] or [view list]
-
-The above second-order commands will be ignored as if they don't exist.
-Either setup your model to accept args directly or commands, but not
-both. You can also setup your model to execute a default command without
-args, allowing you to add extra commands.
-`
-
-const MsgUsingAliasInCmdPath = `
-Command-paths do not need to include the alias of their parent model.
-
-If you're trying to setup a default command (a command executed by its
-aliases alone) then just add a command with an empty string for its path
-like so:
-
-{ Path: "", Run: loadCmd, View: loadView }
-
-Where loadCmd and loadView are functions that take your command model
-as an argument. This will allow the execution of the model aliases,
-as if they were commands themselves.
-
-Be aware though, that if you set its ArgType to optional or required,
-you'll no longer be able to add any more commands to that model.`
-
-type CmdStatusUpdateMsg struct {
-	Status         Status
-	ViewportWidth  int
-	ViewportHeight int
-}
-
-type (
-	ViewportSizeMsg struct {
-		Width  int
-		Height int
-	}
-)
-
-type BaseCmdData[T any] struct {
+type CommandData[T any] struct {
 	Name     string
 	Aliases  []string
-	Commands []BaseCommand[T]
+	Commands []Command[T]
 }
 
-type BaseCommand[T any] struct {
+type ArgType int
+
+const (
+	ArgNone = ArgType(iota)
+	ArgOptional
+	ArgRequired
+)
+
+type Command[T any] struct {
 	// A list of words that execute a specific
 	// command function, when entered into the
 	// command input. Empty paths refer to
 	// the command alias itself as a command.
 	Path string
+
+	// The path split by its words without the
+	// alias.
+	pathParts []string
 
 	// Executes the logic of the command, which
 	// updates the command model.
@@ -104,22 +64,25 @@ type BaseCommand[T any] struct {
 	ValidateArg func(arg string) error
 }
 
-type BaseModel[T any] struct {
-	cmdMap       map[string]BaseCommand[T]
-	cmdData      BaseCmdData[T]
-	cmdStatus    Status
-	cmdErrors    []error
-	lastCmdError error
-	viewWidth    int
-	viewHeight   int
-	isFirstMsg   bool
+type Model[T any] struct {
+	cmdMap     map[string]Command[T]
+	name       string
+	aliases    []string
+	commands   []Command[T]
+	status     Status
+	errors     []error
+	lastError  error
+	id         int
+	viewWidth  int
+	viewHeight int
+	isFirstMsg bool
 }
 
-func NewModelBase[T any](cmdData BaseCmdData[T]) *BaseModel[T] {
+func NewModel[T any](cmdData CommandData[T]) *Model[T] {
 	validateCmdData(cmdData)
 
-	cmdMap := map[string]BaseCommand[T]{}
-	for _, cmd := range cmdData.Commands {
+	cmdMap := map[string]Command[T]{}
+	for i, cmd := range cmdData.Commands {
 		leaves := strings.Split(cmd.Path, " ")
 		path := strings.Join(leaves, " ")
 		for _, alias := range cmdData.Aliases {
@@ -129,7 +92,11 @@ func NewModelBase[T any](cmdData BaseCmdData[T]) *BaseModel[T] {
 				"binding command [%s] to [%s] as [%s]",
 				path, alias, fullCmdPath,
 			)
+			if cmd.Path != "" {
+				cmd.pathParts = strings.Split(cmd.Path, " ")
+			}
 			cmdMap[fullCmdPath] = cmd
+			cmdData.Commands[i] = cmd
 		}
 
 	}
@@ -150,43 +117,43 @@ func NewModelBase[T any](cmdData BaseCmdData[T]) *BaseModel[T] {
 		return fmt.Sprintf("command [%s] loaded %s", cmdData.Name, pathStrings)
 	})
 
-	return &BaseModel[T]{
-		cmdMap:       cmdMap,
-		cmdData:      cmdData,
-		lastCmdError: fmt.Errorf(""),
-		isFirstMsg:   true,
+	_modelId += 1
+	return &Model[T]{
+		id:         _modelId,
+		cmdMap:     cmdMap,
+		name:       cmdData.Name,
+		aliases:    cmdData.Aliases,
+		commands:   cmdData.Commands,
+		lastError:  fmt.Errorf(""),
+		isFirstMsg: true,
 	}
 }
 
-func (bc *BaseModel[T]) Update(model T, msg tea.Msg) (T, tea.Cmd) {
+func (bc *Model[T]) Update(model T, msg tea.Msg) (T, tea.Cmd) {
 	var teaCmds []tea.Cmd
 	defer func() { bc.isFirstMsg = false }()
 
 	switch msg := msg.(type) {
 	case ViewportSizeMsg:
-		logger.Log(logger.Hot, "[ViewportSizeMsg] setting viewport size [%dx%d]", msg.Width, msg.Height)
+		logger.Log(logger.Hot, "setting viewport size [%dx%d]", msg.Width, msg.Height)
 		bc.viewHeight = msg.Height
 		bc.viewWidth = msg.Width
-		if bc.cmdStatus.Path != "" {
+		if bc.status.Path != "" {
 			model = bc.Exec(model)
-			logger.Log(logger.Hot, "[ViewportSizeMsg] finished executing [%s]", bc.cmdStatus.Path)
+			logger.Log(logger.Hot, "finished executing [%s]", bc.status.Path)
 		}
-
-	case CmdStatusUpdateMsg:
-		bc.cmdStatus = msg.Status
-		bc.viewWidth = msg.ViewportWidth
-		bc.viewHeight = msg.ViewportHeight
-		model = bc.Exec(model)
-		logger.Log(logger.Debug, "[UpdateCmdStatus] finished executing command [%s]", bc.cmdStatus.Path)
-
 	}
 
 	return model, tea.Batch(teaCmds...)
 }
 
-func (bc *BaseModel[T]) View(model T) string {
-	cmdPath := bc.cmdStatus.Path
-	cmd := bc.cmdMap[cmdPath]
+func (bc *Model[T]) View(model T) string {
+	cmdPath := bc.status.Path
+
+	cmd, ok := bc.cmdMap[cmdPath]
+	if !ok {
+		bc.AddError(fmt.Errorf("could not find command [%s]", bc.status.Path))
+	}
 
 	errs := bc.GetErrors()
 	if len(errs) > 0 {
@@ -197,76 +164,149 @@ func (bc *BaseModel[T]) View(model T) string {
 			bc.viewHeight,
 		)
 	}
-
 	return cmd.View(model)
 }
 
-func (m BaseModel[T]) GetViewSize() (int, int) {
+func (m Model[T]) ParseCommand(cmdInput string) Status {
+	var inputParts []string = strings.Fields(cmdInput)
+	if len(inputParts) == 0 {
+		return Status{Error: ErrEmptyCommand}
+	}
+
+	var alias string = inputParts[0]
+	var cmdPathParts []string = inputParts[1:]
+	var cmdPaths []string
+
+	if !slices.Contains(m.aliases, alias) {
+		return Status{Error: ErrNotCommand}
+	}
+
+	for _, cmd := range m.commands {
+		cmdPath := strings.Join(cmdPathParts, " ")
+		cmdPaths = append(cmdPaths, fmt.Sprintf("%s %s", alias, cmd.Path))
+
+		if cmd.ArgType < ArgRequired && cmdPath == cmd.Path {
+			var err error
+			if !m.IsSupported(cmdInput) {
+				err = ErrUnimplementedCmd
+			}
+			return Status{
+				IsCommand:    true,
+				CaptureInput: cmd.CaptureInput,
+				Path:         strings.TrimSpace(alias + " " + cmd.Path),
+				Error:        err,
+			}
+		}
+
+		hasArg := len(cmdPathParts) == len(cmd.pathParts)+1
+
+		if cmd.ArgType > ArgNone && !hasArg && cmdPath == cmd.Path {
+			return Status{
+				IsCommand: true,
+				Error: fmt.Errorf(
+					"expected value after '%s'",
+					inputParts[len(inputParts)-1],
+				),
+			}
+		}
+
+		if cmd.ArgType > ArgNone && hasArg {
+			cmdPath = strings.Join(cmdPathParts[:len(cmdPathParts)-1], " ")
+			if cmdPath == cmd.Path {
+				arg := inputParts[len(inputParts)-1]
+				err := cmd.ValidateArg(arg)
+				return Status{
+					IsCommand:    true,
+					CaptureInput: cmd.CaptureInput,
+					Path:         strings.TrimSpace(alias + " " + cmd.Path),
+					Arg:          inputParts[len(inputParts)-1],
+					Error:        err,
+				}
+			}
+		}
+	}
+
+	return Status{
+		IsCommand:   true,
+		Error:       ErrIncompleteCmd,
+		Suggestions: populateSuggestions(cmdPaths, inputParts),
+		Path:        cmdInput,
+	}
+}
+
+func (m Model[T]) GetViewSize() (int, int) {
 	return m.viewWidth, m.viewHeight
 }
 
-func (m BaseModel[T]) GetCmdArg() string {
-	return m.cmdStatus.Arg
+func (m Model[T]) GetId() int {
+	return m.id
 }
 
-func (m BaseModel[T]) GetName() string {
-	return m.cmdData.Name
+func (m Model[T]) GetStatus() Status {
+	return m.status
 }
 
-func (m *BaseModel[T]) AddError(err error) {
-	m.cmdErrors = append(m.cmdErrors, err)
+func (m *Model[T]) SetStatus(s Status) {
+	m.status = s
 }
 
-func (m BaseModel[T]) GetErrors() []error {
-	return m.cmdErrors
+func (m Model[T]) GetCmdArg() string {
+	return m.status.Arg
 }
 
-func (m *BaseModel[T]) ClearErrors() {
-	if len(m.cmdErrors) > 0 {
-		m.lastCmdError = fmt.Errorf("")
-		m.cmdErrors = nil
+func (m Model[T]) GetName() string {
+	return m.name
+}
+
+func (m *Model[T]) AddError(err error) {
+	m.errors = append(m.errors, err)
+}
+
+func (m Model[T]) GetErrors() []error {
+	return m.errors
+}
+
+func (m *Model[T]) ClearErrors() {
+	if len(m.errors) > 0 {
+		m.lastError = fmt.Errorf("")
+		m.errors = nil
 	}
 }
 
-func (m BaseModel[T]) GetCmdData() CommandData {
-	var commands []Command
-	for _, cmd := range m.cmdData.Commands {
-		commands = append(commands, newCommand(cmd))
-	}
-
-	return CommandData{
-		Aliases:  m.cmdData.Aliases,
-		Commands: commands,
-	}
+func (m Model[T]) GetAliases() []string {
+	aliases := make([]string, len(m.aliases))
+	copy(aliases, m.aliases)
+	return aliases
 }
 
-func (m BaseModel[T]) GetCmdPaths() (paths []string) {
+func (m Model[T]) GetCmdPaths() (paths []string) {
 	for k := range m.cmdMap {
 		paths = append(paths, k)
 	}
 	return paths
 }
 
-func (m BaseModel[T]) IsActivePath(cmdPath string) bool {
-	return m.cmdStatus.Path == cmdPath
+func (m Model[T]) IsActivePath(cmdPath string) bool {
+	return m.status.Path == cmdPath
 }
 
-func (m BaseModel[T]) IsSupported(cmdPath string) bool {
+func (m Model[T]) IsSupported(cmdPath string) bool {
 	_, ok := m.cmdMap[cmdPath]
 	return ok
 }
 
 // IsInitialized checks to make sure that various expected values
 // are set.
-func (m BaseModel[T]) IsInitialized() bool {
-	return len(m.cmdMap) > 0 && len(m.cmdStatus.Path) > 0 && m.viewWidth > 0 &&
+func (m Model[T]) IsInitialized() bool {
+	b := len(m.cmdMap) > 0 && len(m.status.Path) > 0 && m.viewWidth > 0 &&
 		m.viewHeight > 0
+	return b
 }
 
 // Exec executes the current command path in the context of the
 // passed model. All detected errors are logged and stored.
-func (m *BaseModel[T]) Exec(model T) T {
-	cmdPath := m.cmdStatus.Path
+func (m *Model[T]) Exec(model T) T {
+	cmdPath := m.status.Path
 	cmd := m.cmdMap[cmdPath]
 
 	m.ClearErrors()
@@ -275,9 +315,9 @@ func (m *BaseModel[T]) Exec(model T) T {
 
 	if cmd.Run == nil {
 		err := fmt.Errorf("[%s] tried to execute missing implementation func()", cmdPath)
-		if m.lastCmdError.Error() != err.Error() {
+		if m.lastError.Error() != err.Error() {
 			logger.Log(logger.Error, "%s", err)
-			m.lastCmdError = err
+			m.lastError = err
 			m.AddError(err)
 		}
 		return model
@@ -285,9 +325,9 @@ func (m *BaseModel[T]) Exec(model T) T {
 
 	if cmd.View == nil {
 		err := fmt.Errorf("[%s] tried to execute missing view func()", cmdPath)
-		if m.lastCmdError.Error() != err.Error() {
+		if m.lastError.Error() != err.Error() {
 			logger.Log(logger.Error, "%s", err)
-			m.lastCmdError = err
+			m.lastError = err
 			m.AddError(err)
 		}
 		return model
@@ -296,16 +336,16 @@ func (m *BaseModel[T]) Exec(model T) T {
 	model = cmd.Run(model)
 	errs := m.GetErrors()
 	if len(errs) > 0 {
-		if m.lastCmdError.Error() != errs[0].Error() {
+		if m.lastError.Error() != errs[0].Error() {
 			logger.Log(logger.Error, "%s", errs[0].Error())
 		}
-		m.lastCmdError = errs[0]
+		m.lastError = errs[0]
 	}
 
 	return model
 }
 
-func validateCmdData[T any](cmdData BaseCmdData[T]) {
+func validateCmdData[T any](cmdData CommandData[T]) {
 	if len(cmdData.Commands) == 0 {
 		logger.LogFatal(
 			"Command [%s] has no command paths",
@@ -323,7 +363,7 @@ func validateCmdData[T any](cmdData BaseCmdData[T]) {
 		if hasAlias {
 			logger.LogFatal(
 				"[%s] command path [%s] does not need to include the command-alias [%s]",
-				MsgUsingAliasInCmdPath,
+				MsgUsingAliasInCmdPathErr,
 				cmdData.Name, cmd.Path, leaves[0],
 			)
 		}
@@ -334,7 +374,7 @@ func validateCmdData[T any](cmdData BaseCmdData[T]) {
 		if cmd.Path == "" && cmd.ArgType == ArgRequired && len(cmdData.Commands) > 1 {
 			logger.LogFatal(
 				"[%s] has been initialized as a default command with args, but contains extra commands",
-				MsgIsCmdItself,
+				MsgIsCmdItselfErr,
 				cmdData.Name,
 			)
 		}
@@ -356,4 +396,18 @@ func validateCmdData[T any](cmdData BaseCmdData[T]) {
 		}
 		cmdMap[cmd.Path] = struct{}{}
 	}
+}
+
+func populateSuggestions(cmdPaths, pathParts []string) []string {
+	var suggestions []string
+	for _, path := range cmdPaths {
+		cmdPathParts := strings.Fields(path)
+		if len(cmdPathParts) >= len(pathParts) {
+			suggestions = append(
+				suggestions,
+				strings.Join(cmdPathParts[:len(pathParts)], " "),
+			)
+		}
+	}
+	return suggestions
 }

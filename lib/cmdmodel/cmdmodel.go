@@ -2,18 +2,62 @@ package cmdmodel
 
 import (
 	"fmt"
-	"slices"
-	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-type ArgType int
-
 const (
-	ArgNone = ArgType(iota)
-	ArgOptional
-	ArgRequired
+	MsgMissingArgFuncErr = `
+If a command path can accept an argument, then it should also validate
+that argument. It's recommended to validate the arg inside this
+function because it can notify the user on error.`
+
+	MsgIsCmdItselfErr = `
+Models with default commands (commands executed just by their alias),
+that can take arguments, do not support extra commands. For instance,
+if your model has a "view" alias that takes an argument for the kind
+of view to display:
+
+[view 1] or [view 2]
+
+You're limited to just a single command path, the default path. You
+cannot then create more commands that take a more specific view type
+like so:
+
+[view details] or [view list]
+
+The above second-order commands will be ignored as if they don't exist.
+Either setup your model to accept args directly or commands, but not
+both. You can also setup your model to execute a default command without
+args, allowing you to add extra commands.`
+
+	MsgUsingAliasInCmdPathErr = `
+Command-paths do not need to include the alias of their parent model.
+
+If you're trying to setup a default command (a command executed by its
+aliases alone) then just add a command with an empty string for its path
+like so:
+
+{ Path: "", Run: loadCmd, View: loadView }
+
+Where loadCmd and loadView are functions that take your command model
+as an argument. This will allow the execution of the model aliases,
+as if they were commands themselves.
+
+Be aware though, that if you set its ArgType to optional or required,
+you'll no longer be able to add any more commands to that model.`
+
+	MsgDuplicateAliasErr = `
+Check to make sure you don't already have a command with
+that alias. You may also have accidentally added the
+command more than once.`
+
+	MsgInvalidHomeCmdPathErr = `
+Make sure you've entered the entire command path, including the alias.
+You also cannot set a home path that requires arguments.
+
+Double check the command paths of the command model you're trying to
+access and make sure the path exists.`
 )
 
 var (
@@ -26,153 +70,42 @@ var (
 	ErrUnimplementedCmd = fmt.Errorf("unimplemented command")
 )
 
-var cmdId = 0
-
 type Interface interface {
 	Update(tea.Msg) (Interface, tea.Cmd)
 	View() string
 	GetName() string
-	GetErrors() []error
-	GetCmdData() CommandData
+	GetAliases() []string
+	GetId() int
 	GetCmdPaths() []string
-	IsSupported(cmdPath string) bool
+	ParseCommand(string) Status
+	GetStatus() Status
+	SetStatus(Status)
 	IsInitialized() bool
 }
 
 type Status struct {
-	PathSuggestions []string
-	Path            string
-	Arg             string
-	Error           error
-	IsCommand       bool
-	CaptureInput    bool
-}
-
-type CommandData struct {
-	Aliases  []string
-	Commands []Command
-}
-
-type Command struct {
+	Suggestions  []string
 	Path         string
-	PathParts    []string
-	ArgType      ArgType
-	ValidateArg  func(arg string) error
+	Arg          string
+	Error        error
+	IsCommand    bool
 	CaptureInput bool
 }
 
-func newCommand[T any](baseCmd BaseCommand[T]) Command {
-	var pathParts []string
-	if baseCmd.Path != "" {
-		pathParts = strings.Split(baseCmd.Path, " ")
+type (
+	HomeMsg struct{}
+
+	StatusBarMsg struct {
+		String   string
+		Severity StatusSeverity
 	}
 
-	return Command{
-		Path:         baseCmd.Path,
-		PathParts:    pathParts,
-		CaptureInput: baseCmd.CaptureInput,
-		ArgType:      baseCmd.ArgType,
-		ValidateArg:  baseCmd.ValidateArg,
-	}
-}
-
-type Model struct {
-	id      int
-	command Interface
-	status  Status
-}
-
-func New(model Interface) Model {
-	if model == nil {
-		panic("missing command model")
-	}
-	cmdId += 1
-	return Model{cmdId, model, Status{}}
-}
-
-func (m Model) GetId() int {
-	return m.id
-}
-
-func (m Model) ParseCommand(cmdInput string) Status {
-	var inputParts []string = strings.Fields(cmdInput)
-	if len(inputParts) == 0 {
-		return Status{Error: ErrEmptyCommand}
+	ViewportSizeMsg struct {
+		Width  int
+		Height int
 	}
 
-	var alias string = inputParts[0]
-	var cmdPathParts []string = inputParts[1:]
-	var cmdPaths []string
-
-	cmdData := m.command.GetCmdData()
-
-	if !slices.Contains(cmdData.Aliases, alias) {
-		return Status{Error: ErrNotCommand}
+	UpdateCmdMsg struct {
+		Model Interface
 	}
-
-	for _, cmd := range cmdData.Commands {
-		cmdPath := strings.Join(cmdPathParts, " ")
-		cmdPaths = append(cmdPaths, fmt.Sprintf("%s %s", alias, cmd.Path))
-
-		if cmd.ArgType < ArgRequired && cmdPath == cmd.Path {
-			var err error
-			if !m.command.IsSupported(cmdInput) {
-				err = ErrUnimplementedCmd
-			}
-			return Status{
-				IsCommand:    true,
-				CaptureInput: cmd.CaptureInput,
-				Path:         strings.TrimSpace(alias + " " + cmd.Path),
-				Error:        err,
-			}
-		}
-
-		hasArg := len(cmdPathParts) == len(cmd.PathParts)+1
-
-		if cmd.ArgType > ArgNone && !hasArg && cmdPath == cmd.Path {
-			return Status{
-				IsCommand: true,
-				Error: fmt.Errorf(
-					"expected value after '%s'",
-					inputParts[len(inputParts)-1],
-				),
-			}
-		}
-
-		if cmd.ArgType > ArgNone && hasArg {
-			cmdPath = strings.Join(cmdPathParts[:len(cmdPathParts)-1], " ")
-			if cmdPath == cmd.Path {
-				arg := inputParts[len(inputParts)-1]
-				err := cmd.ValidateArg(arg)
-				return Status{
-					IsCommand:    true,
-					CaptureInput: cmd.CaptureInput,
-					Path:         strings.TrimSpace(alias + " " + cmd.Path),
-					Arg:          inputParts[len(inputParts)-1],
-					Error:        err,
-				}
-			}
-		}
-	}
-
-	return Status{
-		IsCommand:       true,
-		Error:           ErrIncompleteCmd,
-		PathSuggestions: populateSuggestions(cmdPaths, inputParts),
-		Path:            cmdInput,
-	}
-}
-
-func populateSuggestions(cmdPaths, pathParts []string) []string {
-	var suggestions []string
-	for _, path := range cmdPaths {
-		cmdPathParts := strings.Fields(path)
-		if len(cmdPathParts) >= len(pathParts) {
-			suggestions = append(
-				suggestions,
-				strings.Join(cmdPathParts[:len(pathParts)], " "),
-			)
-		}
-	}
-	return suggestions
-}
+)

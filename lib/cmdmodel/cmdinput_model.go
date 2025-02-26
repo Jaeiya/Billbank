@@ -15,31 +15,6 @@ import (
 	"github.com/jaeiya/billbank/lib/utils"
 )
 
-const MsgDuplicateAliasErr = `
-Check to make sure you don't already have a command with
-that alias. You may also have accidentally added the
-command more than once.`
-
-const MsgInvalidHomeCmdPath = `
-Make sure you've entered the entire command path, including the alias.
-You also cannot set a home path that requires arguments.
-
-Double check the command paths of the command model you're trying to
-access and make sure the path exists.
-`
-
-type GoHomeMsg struct{}
-
-type UpdateStatusMsg struct {
-	String   string
-	Severity StatusSeverity
-}
-
-type UpdateCmdMsg struct {
-	Model         Interface
-	CommandStatus Status
-}
-
 type StatusSeverity int
 
 const (
@@ -49,14 +24,17 @@ const (
 )
 
 type InputModel struct {
-	CommandInput textinput.Model
-	CmdHistory   *utils.InputHistory
-	homeCmdPath  string
-	commands     []Model
-	currCmd      Model
-	lastCmd      Model
-	aliases      []string
-	statusText   string
+	input    textinput.Model
+	history  *utils.InputHistory
+	homePath string
+	commands []Interface
+	lastCmd  Interface
+	state    struct {
+		cmdStatus Status
+		activeCmd Interface
+	}
+	aliases    []string
+	statusText string
 }
 
 type InputOption func(*InputModel)
@@ -89,20 +67,19 @@ var commanderInput textinput.Model = func() textinput.Model {
 }()
 
 // TODO - Use an interface to define input history methods
-func NewInputModel(h *utils.InputHistory, homeCmdPath string, cmdModels ...Model) InputModel {
+func NewInputModel(h *utils.InputHistory, homePath string, cmdModels ...Interface) InputModel {
 	inputModel := InputModel{
-		aliases:      []string{},
-		homeCmdPath:  homeCmdPath,
-		CmdHistory:   h,
-		CommandInput: commanderInput,
+		aliases:  []string{},
+		homePath: homePath,
+		history:  h,
+		input:    commanderInput,
 	}
 
 	aliasStore := make(map[string]struct{}, len(cmdModels))
 	cmdPaths := []string{}
 
 	for _, cmdModel := range cmdModels {
-		cmdData := cmdModel.command.GetCmdData()
-		for _, alias := range cmdData.Aliases {
+		for _, alias := range cmdModel.GetAliases() {
 			if _, ok := aliasStore[alias]; ok {
 				logger.LogFatal(
 					"command alias [%s] already exists",
@@ -113,16 +90,16 @@ func NewInputModel(h *utils.InputHistory, homeCmdPath string, cmdModels ...Model
 			aliasStore[alias] = struct{}{}
 			inputModel.aliases = append(inputModel.aliases, alias)
 		}
-		cmdPaths = append(cmdPaths, cmdModel.command.GetCmdPaths()...)
+		cmdPaths = append(cmdPaths, cmdModel.GetCmdPaths()...)
 		inputModel.commands = append(inputModel.commands, cmdModel)
 	}
 
-	if homeCmdPath != "" {
-		if !slices.Contains(cmdPaths, homeCmdPath) {
+	if homePath != "" {
+		if !slices.Contains(cmdPaths, homePath) {
 			logger.LogFatal(
 				"cannot find home command path [%s]",
-				MsgInvalidHomeCmdPath,
-				homeCmdPath,
+				MsgInvalidHomeCmdPathErr,
+				homePath,
 			)
 		}
 	}
@@ -131,7 +108,7 @@ func NewInputModel(h *utils.InputHistory, homeCmdPath string, cmdModels ...Model
 }
 
 func (m InputModel) Init() tea.Cmd {
-	return func() tea.Msg { return GoHomeMsg{} }
+	return func() tea.Msg { return HomeMsg{} }
 }
 
 func (m InputModel) Update(msg tea.Msg) (InputModel, tea.Cmd) {
@@ -141,18 +118,18 @@ func (m InputModel) Update(msg tea.Msg) (InputModel, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		statusStyle = statusStyle.Width(msg.Width)
-		m.CommandInput.Width = msg.Width
+		m.input.Width = msg.Width
 
-	case GoHomeMsg:
-		if m.homeCmdPath != "" {
-			m.CommandInput.SetValue(m.homeCmdPath)
+	case HomeMsg:
+		if m.homePath != "" {
+			m.input.SetValue(m.homePath)
 			m, _ = tryParseCmd(m, tea.KeyMsg{})
 			m, cmd = tryEnterCmd(m)
-			m.CommandInput.Reset()
+			m.input.Reset()
 			return m, cmd
 		}
 
-	case UpdateStatusMsg:
+	case StatusBarMsg:
 		color := ui.FgSuccessColor
 		if msg.Severity == MED {
 			color = ui.FgWarnColor
@@ -168,12 +145,12 @@ func (m InputModel) Update(msg tea.Msg) (InputModel, tea.Cmd) {
 			return m, tea.Quit
 
 		case "up", "down", "alt+j", "alt+k":
-			val, reset := m.CmdHistory.Cycle(msg)
+			val, reset := m.history.Cycle(msg)
 			if reset {
-				m.CommandInput.Reset()
+				m.input.Reset()
 			} else if len(val) > 0 {
-				m.CommandInput.SetValue(val)
-				m.CommandInput.CursorEnd()
+				m.input.SetValue(val)
+				m.input.CursorEnd()
 				return tryParseCmd(m, tea.KeyMsg{})
 			}
 
@@ -187,9 +164,9 @@ func (m InputModel) Update(msg tea.Msg) (InputModel, tea.Cmd) {
 
 		case "enter":
 			m, cmd = tryEnterCmd(m)
-			if m.currCmd.status.Error != nil {
+			if m.state.cmdStatus.Error != nil {
 				cmdErr := "command parse error:"
-				msg := fmt.Sprintf("%s [%s]", cmdErr, m.currCmd.status.Error)
+				msg := fmt.Sprintf("%s [%s]", cmdErr, m.state.cmdStatus.Error)
 				logger.Log(logger.Attention, "%s", msg)
 			}
 			cmds = append(cmds, cmd)
@@ -198,7 +175,7 @@ func (m InputModel) Update(msg tea.Msg) (InputModel, tea.Cmd) {
 			return onAnyKey(m, msg)
 		}
 	}
-	m.CommandInput, cmd = m.CommandInput.Update(msg)
+	m.input, cmd = m.input.Update(msg)
 	cmds = append(cmds, cmd)
 	return m, tea.Batch(cmds...)
 }
@@ -211,21 +188,22 @@ func (m InputModel) View() string {
 
 	line := lipgloss.JoinHorizontal(lipgloss.Left, status, version)
 
-	s := fmt.Sprintf("%s\n%s", line, m.CommandInput.View())
+	s := fmt.Sprintf("%s\n%s", line, m.input.View())
 	return s
 }
 
 func tryEnterCmd(m InputModel) (InputModel, tea.Cmd) {
 	// Empty commands will not yet have been parsed.
-	if m.CommandInput.Value() == "" {
+	if m.input.Value() == "" {
 		m, _ = tryParseCmd(m, tea.KeyMsg{})
 	}
-	cmd := m.currCmd
+	cmd := m.state.activeCmd
+	cmdStatus := m.state.cmdStatus
 
-	logger.Log(logger.Info, "entering command [%s]", m.CommandInput.Value())
-	logger.Log(logger.Debug, "command status [%+v]", cmd.status)
+	logger.Log(logger.Info, "entering command [%s]", m.input.Value())
+	logger.Log(logger.Debug, "command status [%+v]", cmdStatus)
 
-	cmdErr := cmd.status.Error
+	cmdErr := cmdStatus.Error
 	if cmdErr != nil {
 		m.statusText = cmdErr.Error()
 		statusStyle = statusStyle.Foreground(ui.FgErrColor)
@@ -236,29 +214,30 @@ func tryEnterCmd(m InputModel) (InputModel, tea.Cmd) {
 	}
 
 	statusStyle = statusStyle.Foreground(ui.FgSuccessColor)
-	m.statusText = fmt.Sprintf("Executing Command: %s", cmd.status.Path)
+	m.statusText = fmt.Sprintf("Executing Command: %s", cmdStatus.Path)
 
-	m.CmdHistory.Add(m.CommandInput.Value())
+	m.history.Add(m.input.Value())
 
-	lastCmd := m.lastCmd
-	if lastCmd.GetId() == cmd.GetId() {
-		m.CommandInput.Reset()
+	if m.lastCmd != nil && m.lastCmd.GetId() == cmd.GetId() {
+		m.input.Reset()
 		logger.Log(
 			logger.Debug,
 			"sending command [%s] status update",
-			cmd.status.Path,
+			cmdStatus.Path,
 		)
-		return m, func() tea.Msg { return UpdateCmdMsg{nil, cmd.status} }
+		cmd.SetStatus(cmdStatus)
+		return m, func() tea.Msg { return UpdateCmdMsg{nil} }
 	}
 
 	m.lastCmd = cmd
-	m.CommandInput.Reset()
+	m.input.Reset()
 	logger.Log(
 		logger.Debug,
-		"sending [%s] model & status update msg",
-		cmd.status.Path,
+		"sending [%s] model update msg",
+		cmdStatus.Path,
 	)
-	teaMsg := UpdateCmdMsg{cmd.command, cmd.status}
+	cmd.SetStatus(cmdStatus)
+	teaMsg := UpdateCmdMsg{cmd}
 	return m, func() tea.Msg { return teaMsg }
 }
 
@@ -268,41 +247,43 @@ func onAnyKey(m InputModel, msg tea.KeyMsg) (InputModel, tea.Cmd) {
 		key = "ctrl"
 	}
 	m.statusText = ""
-	cmdStatus := m.currCmd.status
-	logger.Log(logger.Insane, "[onAnyKey] command status [%+v]", cmdStatus)
+	logger.Log(logger.Insane, "[onAnyKey] command status [%+v]", m.state.cmdStatus)
 	logger.Log(logger.Hot, "[onAnyKey] try parse command on [%s]", key)
 	return tryParseCmd(m, msg)
 }
 
 func tryParseCmd(m InputModel, msg tea.KeyMsg) (InputModel, tea.Cmd) {
 	var cmd tea.Cmd
-	m.CommandInput, cmd = m.CommandInput.Update(msg)
-	m.currCmd = Model{}
+	m.input, cmd = m.input.Update(msg)
+	m.state = struct {
+		cmdStatus Status
+		activeCmd Interface
+	}{cmdStatus: Status{}, activeCmd: nil}
 	for _, cmd := range m.commands {
 		logger.Log(
 			logger.Insane,
 			"test if [%s] is a [%s] command",
-			m.CommandInput.Value(),
-			cmd.command.GetName(),
+			m.input.Value(),
+			cmd.GetName(),
 		)
-		cmdStatus := cmd.ParseCommand(m.CommandInput.Value())
-		m.currCmd = cmd
-		m.currCmd.status = cmdStatus
-		if cmdStatus.IsCommand {
-			if errors.Is(cmdStatus.Error, ErrIncompleteCmd) {
-				m.CommandInput.SetSuggestions(cmdStatus.PathSuggestions)
+		status := cmd.ParseCommand(m.input.Value())
+		m.state.cmdStatus = status
+		m.state.activeCmd = cmd
+		if status.IsCommand {
+			if errors.Is(status.Error, ErrIncompleteCmd) {
+				m.input.SetSuggestions(status.Suggestions)
 			}
 			break
 		}
-		m.CommandInput.SetSuggestions(m.aliases)
+		m.input.SetSuggestions(m.aliases)
 	}
 	return m, cmd
 }
 
 func isLastCharSpace(m InputModel) bool {
-	if len(m.CommandInput.Value()) == 0 {
+	if len(m.input.Value()) == 0 {
 		return false
 	}
-	lastChar := m.CommandInput.Value()[len(m.CommandInput.Value())-1]
+	lastChar := m.input.Value()[len(m.input.Value())-1]
 	return lastChar == ' '
 }
