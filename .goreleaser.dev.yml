@@ -13,8 +13,8 @@ builds:
       - "all=-B -l=120"
     ldflags:
       - -s -w
-      - -X github.com/jaeiya/billbank/lib.appVersion={{ .Version }}
-      - -X github.com/jaeiya/billbank/lib.commitSha={{ .ShortCommit }}
+      - -X github.com/jaeiya/billbank/lib/utils.appVersion={{ .Version }}
+      - -X github.com/jaeiya/billbank/lib/utils.commitSha={{ .ShortCommit }}
     goos:
       - windows
     goarch:
@@ -35,8 +35,8 @@ builds:
       - "all=-B -l=120"
     ldflags:
       - -s -w
-      - -X github.com/jaeiya/billbank/lib.appVersion={{ .Version }}
-      - -X github.com/jaeiya/billbank/lib.commitSha={{ .ShortCommit }}
+      - -X github.com/jaeiya/billbank/lib/utils.appVersion={{ .Version }}
+      - -X github.com/jaeiya/billbank/lib/utils.commitSha={{ .ShortCommit }}
     goos:
       - linux
       - darwin
@@ -59,8 +59,8 @@ builds:
       - "all=-B -l=120"
     ldflags:
       - -s -w
-      - -X github.com/jaeiya/billbank/lib.appVersion={{ .Version }}
-      - -X github.com/jaeiya/billbank/lib.commitSha={{ .ShortCommit }}
+      - -X github.com/jaeiya/billbank/lib/utils.appVersion={{ .Version }}
+      - -X github.com/jaeiya/billbank/lib/utils.commitSha={{ .ShortCommit }}
     goos:
       - windows
     goarch:
@@ -85,8 +85,8 @@ builds:
       - "all=-B -l=120"
     ldflags:
       - -s -w
-      - -X github.com/jaeiya/billbank/lib.appVersion={{ .Version }}
-      - -X github.com/jaeiya/billbank/lib.commitSha={{ .ShortCommit }}
+      - -X github.com/jaeiya/billbank/lib/utils.appVersion={{ .Version }}
+      - -X github.com/jaeiya/billbank/lib/utils.commitSha={{ .ShortCommit }}
     goos:
       - linux
       - darwin
