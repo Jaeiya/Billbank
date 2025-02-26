@@ -20,8 +20,10 @@ import (
 // defer db.Close()
 
 func main() {
-
-	logger.SetLogLevel(logger.Info)
+	err := logger.SetLogLevel(logger.Info)
+	if err != nil {
+		panic(err)
+	}
 	logger.Log(logger.Info, "Starting BillBank")
 
 	vp := lib.ViewPort{}
@@ -44,7 +46,7 @@ func main() {
 	}
 
 	logger.Log(logger.Info, "exiting billbank")
-	err := logger.CloseLog()
+	err = logger.CloseLog()
 	if err != nil {
 		panic(err)
 	}
