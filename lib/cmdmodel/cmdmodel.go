@@ -19,7 +19,7 @@ const (
 var (
 	ErrNotCommand = fmt.Errorf("unrecognized command")
 	// Command is valid, but entered incorrectly
-	ErrIncompleteCmd   = fmt.Errorf("invalid command entry")
+	ErrIncompleteCmd   = fmt.Errorf("improper command entry")
 	ErrMissingArgument = fmt.Errorf("missing argument")
 	ErrEmptyCommand    = fmt.Errorf("empty command")
 	// Command is missing an execution path
