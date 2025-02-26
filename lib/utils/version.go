@@ -21,7 +21,7 @@ func GetVersion() string {
 		}
 		return fmt.Sprintf("%s-%s", codeName, commitSha[:8])
 	}
-	return appVersion
+	return fmt.Sprintf("%s-%s", codeName, appVersion)
 }
 
 func GetGoVersion() string {
