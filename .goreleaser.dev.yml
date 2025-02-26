@@ -4,7 +4,7 @@ builds:
   - id: "windows"
     main: ./cmd/billbank
     binary: >-
-      billbank{{ .ShortCommit }}
+      billbank_{{ .ShortCommit }}
     env:
       - CGO_ENABLED=0
     flags:
@@ -26,7 +26,7 @@ builds:
   - id: "unix"
     main: ./cmd/billbank
     binary: >-
-      billbank{{ .ShortCommit }}_{{ .Os }}
+      billbank_{{ .ShortCommit }}_{{ .Os }}
     env:
       - CGO_ENABLED=0
     flags:
@@ -50,7 +50,7 @@ builds:
     main: ./cmd/billbank
     skip: true # Set false if you want UPX for windows binaries
     binary: >-
-      billbank{{ .ShortCommit }}_upx
+      billbank_{{ .ShortCommit }}_upx
     env:
       - CGO_ENABLED=0
     flags:
@@ -76,7 +76,7 @@ builds:
     main: ./cmd/billbank
     skip: true # Set false if you want UPX for unix (linux, darwin) binaries
     binary: >-
-      billbank{{ .ShortCommit }}_{{ .Os }}_upx
+      billbank_{{ .ShortCommit }}_{{ .Os }}_upx
     env:
       - CGO_ENABLED=0
     flags:
@@ -106,4 +106,4 @@ checksum:
   disable: true
 
 archives:
-  - format: binary
+  - formats: ['binary']

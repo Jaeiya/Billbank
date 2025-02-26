@@ -65,7 +65,7 @@ archives:
       {{- if not (eq .Amd64 "v2") }}_{{ .Amd64 }}{{ end }}
     format_overrides:
       - goos: windows
-        format: zip
+        formats: ['zip']
 
 changelog:
   sort: asc
