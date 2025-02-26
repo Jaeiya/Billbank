@@ -290,11 +290,10 @@ func (m *Model[T]) Exec(model T) T {
 	cmd := m.cmdMap[cmdPath]
 
 	m.clearErrors()
-
 	logger.Log(logger.Hot, "executing command path [%s]", cmdPath)
 
 	if cmd.Run == nil {
-		err := fmt.Errorf("[%s] tried to execute missing implementation func()", cmdPath)
+		err := fmt.Errorf("[%s] has an unimplemented Run func()", cmdPath)
 		if m.lastError.Error() != err.Error() {
 			logger.Log(logger.Error, "%s", err)
 			m.lastError = err
@@ -304,7 +303,7 @@ func (m *Model[T]) Exec(model T) T {
 	}
 
 	if cmd.View == nil {
-		err := fmt.Errorf("[%s] tried to execute missing view func()", cmdPath)
+		err := fmt.Errorf("[%s] has an unimplemented View func()", cmdPath)
 		if m.lastError.Error() != err.Error() {
 			logger.Log(logger.Error, "%s", err)
 			m.lastError = err
