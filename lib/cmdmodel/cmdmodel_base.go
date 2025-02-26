@@ -186,15 +186,11 @@ func (m Model[T]) ParseCommand(cmdInput string) Status {
 		cmdPaths = append(cmdPaths, fmt.Sprintf("%s %s", alias, cmd.Path))
 
 		if cmd.ArgType < ArgRequired && cmdPath == cmd.Path {
-			var err error
-			if !m.isSupported(cmdInput) {
-				err = ErrUnimplementedCmd
-			}
 			return Status{
 				IsCommand:    true,
 				CaptureInput: cmd.CaptureInput,
 				Path:         strings.TrimSpace(alias + " " + cmd.Path),
-				Error:        err,
+				Error:        nil,
 			}
 		}
 
@@ -338,11 +334,6 @@ func (m *Model[T]) clearErrors() {
 		m.lastError = fmt.Errorf("")
 		m.errors = nil
 	}
-}
-
-func (m Model[T]) isSupported(cmdPath string) bool {
-	_, ok := m.cmdMap[cmdPath]
-	return ok
 }
 
 func validateCmdData[T any](cmdData CommandData[T]) {
