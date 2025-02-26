@@ -155,7 +155,7 @@ func (bc *Model[T]) View(model T) string {
 		bc.AddError(fmt.Errorf("could not find command [%s]", bc.status.Path))
 	}
 
-	errs := bc.GetErrors()
+	errs := bc.getErrors()
 	if len(errs) > 0 {
 		return ui.NewErrorBox(
 			"Command Error",
@@ -187,7 +187,7 @@ func (m Model[T]) ParseCommand(cmdInput string) Status {
 
 		if cmd.ArgType < ArgRequired && cmdPath == cmd.Path {
 			var err error
-			if !m.IsSupported(cmdInput) {
+			if !m.isSupported(cmdInput) {
 				err = ErrUnimplementedCmd
 			}
 			return Status{
@@ -262,17 +262,6 @@ func (m *Model[T]) AddError(err error) {
 	m.errors = append(m.errors, err)
 }
 
-func (m Model[T]) GetErrors() []error {
-	return m.errors
-}
-
-func (m *Model[T]) ClearErrors() {
-	if len(m.errors) > 0 {
-		m.lastError = fmt.Errorf("")
-		m.errors = nil
-	}
-}
-
 func (m Model[T]) GetAliases() []string {
 	aliases := make([]string, len(m.aliases))
 	copy(aliases, m.aliases)
@@ -290,11 +279,6 @@ func (m Model[T]) IsActivePath(cmdPath string) bool {
 	return m.status.Path == cmdPath
 }
 
-func (m Model[T]) IsSupported(cmdPath string) bool {
-	_, ok := m.cmdMap[cmdPath]
-	return ok
-}
-
 // IsInitialized checks to make sure that various expected values
 // are set.
 func (m Model[T]) IsInitialized() bool {
@@ -309,7 +293,7 @@ func (m *Model[T]) Exec(model T) T {
 	cmdPath := m.status.Path
 	cmd := m.cmdMap[cmdPath]
 
-	m.ClearErrors()
+	m.clearErrors()
 
 	logger.Log(logger.Hot, "executing command path [%s]", cmdPath)
 
@@ -334,7 +318,7 @@ func (m *Model[T]) Exec(model T) T {
 	}
 
 	model = cmd.Run(model)
-	errs := m.GetErrors()
+	errs := m.getErrors()
 	if len(errs) > 0 {
 		if m.lastError.Error() != errs[0].Error() {
 			logger.Log(logger.Error, "%s", errs[0].Error())
@@ -343,6 +327,22 @@ func (m *Model[T]) Exec(model T) T {
 	}
 
 	return model
+}
+
+func (m Model[T]) getErrors() []error {
+	return m.errors
+}
+
+func (m *Model[T]) clearErrors() {
+	if len(m.errors) > 0 {
+		m.lastError = fmt.Errorf("")
+		m.errors = nil
+	}
+}
+
+func (m Model[T]) isSupported(cmdPath string) bool {
+	_, ok := m.cmdMap[cmdPath]
+	return ok
 }
 
 func validateCmdData[T any](cmdData CommandData[T]) {
