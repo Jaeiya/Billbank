@@ -42,7 +42,7 @@ func (ll LogLevel) IsValid() bool {
 }
 
 type LogMsg struct {
-	msg   string
+	msg   func() string
 	level LogLevel
 	file  string
 	line  int
@@ -67,15 +67,16 @@ func Log(ll LogLevel, msg string, vars ...any) {
 	tryInitLog()
 
 	_, file, line, _ := runtime.Caller(1)
-	_logChan <- LogMsg{msg, ll, file, line, vars}
+	_logChan <- LogMsg{func() string { return msg }, ll, file, line, vars}
 }
 
 // LogFunc executes the msgFn and passes its result to the
 // default log func, if the specified log level is active.
 //
-// This is useful if you need a log that does some heavy
-// processing, but only want that processing to occur at
-// a specific log level.
+// This is useful if a log requires some heavier processing
+// but you don't want it to affect the runtime of your
+// application. The processing will happen inside the
+// logger thread instead.
 func LogFunc(ll LogLevel, msgFn func() string, vars ...any) {
 	if _logLevel == None || ll < _logLevel {
 		return
@@ -88,7 +89,7 @@ func LogFunc(ll LogLevel, msgFn func() string, vars ...any) {
 	}
 
 	_, file, line, _ := runtime.Caller(1)
-	_logChan <- LogMsg{msgFn(), ll, file, line, vars}
+	_logChan <- LogMsg{msgFn, ll, file, line, vars}
 }
 
 func LogFatal(errMsg string, description string, vars ...any) {
@@ -206,7 +207,7 @@ func logMessages() {
 			time.Now().Format(_timeFormat),
 			log.level,
 			filepath.Base(log.file), log.line,
-			log.msg,
+			log.msg(),
 		)
 		if len(log.vars) == 0 {
 			_stdLogger.Print(msg)
