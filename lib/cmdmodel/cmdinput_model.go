@@ -67,6 +67,12 @@ var statusStyle = lipgloss.NewStyle().
 	Background(ui.BgDarkColor).
 	Foreground(ui.FgColor)
 
+var versionStyle = lipgloss.NewStyle().
+	PaddingLeft(1).
+	PaddingRight(1).
+	Background(lipgloss.Color("#330072")).
+	Foreground(ui.BrightMagenta)
+
 var commanderInput textinput.Model = func() textinput.Model {
 	m := textinput.New()
 	m.Prompt = ""
@@ -198,7 +204,14 @@ func (m InputModel) Update(msg tea.Msg) (InputModel, tea.Cmd) {
 }
 
 func (m InputModel) View() string {
-	s := fmt.Sprintf("%s\n%s", statusStyle.Render(m.statusText), m.CommandInput.View())
+	version := versionStyle.Render(utils.GetVersion())
+	vWidth := lipgloss.Width(version)
+	statusWidth := statusStyle.GetWidth()
+	status := statusStyle.Width(statusWidth - vWidth).Render(m.statusText)
+
+	line := lipgloss.JoinHorizontal(lipgloss.Left, status, version)
+
+	s := fmt.Sprintf("%s\n%s", line, m.CommandInput.View())
 	return s
 }
 
