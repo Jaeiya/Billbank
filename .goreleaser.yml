@@ -55,8 +55,7 @@ archives:
   - id: unix
     name_template: >-
       {{ .Binary }}_
-      {{- if .IsSnapshot }}
-      {{ .ShortCommit }}_
+      {{- if .IsSnapshot }}{{ .ShortCommit }}_
       {{- else }}{{ .Tag }}_
       {{- end }}
       {{- .Os }}_
