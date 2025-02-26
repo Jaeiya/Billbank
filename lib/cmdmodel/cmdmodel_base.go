@@ -57,8 +57,6 @@ type CmdStatusUpdateMsg struct {
 	ViewportHeight int
 }
 
-type ReleaseInputMsg struct{}
-
 type (
 	ViewportSizeMsg struct {
 		Width  int

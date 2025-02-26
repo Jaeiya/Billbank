@@ -60,12 +60,9 @@ func (vp ViewPort) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		if msg.String() == "`" {
 			logger.Log(logger.Hot, "[OnGrave] toggling viewport input")
-			vp, teaCmds = vp.toggleInput()
-			return vp, tea.Batch(teaCmds...)
+			vp, teaCmd = vp.toggleInput()
+			return vp, teaCmd
 		}
-
-	case cmdmodel.ReleaseInputMsg:
-		teaCmds = append(teaCmds, vp.releaseInput())
 
 	case cmdmodel.UpdateCmdMsg:
 		teaCmds = append(teaCmds, vp.updateCommand(msg))
@@ -170,23 +167,14 @@ func (vp ViewPort) getSize() ViewportSize {
 	}
 }
 
-func (vp ViewPort) toggleInput() (ViewPort, []tea.Cmd) {
+func (vp ViewPort) toggleInput() (ViewPort, tea.Cmd) {
+	var teaCmd tea.Cmd
 	vp.hasHiddenInput = !vp.hasHiddenInput
 	if !vp.hasHiddenInput {
-		return vp, []tea.Cmd{
-			func() tea.Msg { return cmdmodel.ReleaseInputMsg{} },
-			vp.sendViewportSize,
-		}
+		teaCmd = textinput.Blink
 	}
-	return vp, []tea.Cmd{vp.sendViewportSize}
-}
-
-func (vp *ViewPort) releaseInput() tea.Cmd {
-	vp.hasHiddenInput = false
-	vp.CommandStatus.CaptureInput = vp.hasHiddenInput
-	return func() tea.Msg {
-		return textinput.Blink()
-	}
+	vp.CurrentCmdModel, _ = vp.CurrentCmdModel.Update(vp.sendViewportSize())
+	return vp, teaCmd
 }
 
 func (vp ViewPort) sendViewportSize() tea.Msg {
