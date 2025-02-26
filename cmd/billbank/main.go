@@ -32,7 +32,7 @@ func main() {
 	vp.CommandInput = cmdmodel.NewInputModel(
 		h,
 		"bills",
-		commands.NewBillsCmd(db),
+		commands.NewBillsCmd(),
 		commands.NewDebugCmd(h),
 	)
 
