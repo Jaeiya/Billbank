@@ -247,12 +247,12 @@ func (m *Base[T]) SetStatus(s Status) {
 	m.status = s
 }
 
-// GetCmdArg will return the value of a parsed command argument.
+// GetArg will return the value of a parsed command argument.
 //
 // 🟡 If a command argument is optional, then the arg can
 // be nil, however if an argument is required, then it
 // will never be nil.
-func (m Base[T]) GetCmdArg() any {
+func (m Base[T]) GetArg() any {
 	return m.status.Arg
 }
 

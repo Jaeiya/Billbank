@@ -245,7 +245,7 @@ func loadSlog(m debugModel) debugModel {
 	m = loadLog(m)
 
 	maxLines := 150
-	arg := m.GetCmdArg()
+	arg := m.GetArg()
 	if arg != nil {
 		if arg, isType := arg.(int); isType {
 			maxLines = arg
@@ -479,7 +479,7 @@ func viewStats(m debugModel) string {
 }
 
 func setLogLevel(m debugModel) debugModel {
-	ll, isType := m.GetCmdArg().(logger.LogLevel)
+	ll, isType := m.GetArg().(logger.LogLevel)
 	if !isType {
 		m.AddError(fmt.Errorf("'%+v' is not a valid argument for log level", ll))
 		return m
