@@ -75,7 +75,6 @@ type Model[T any] struct {
 	id         int
 	viewWidth  int
 	viewHeight int
-	isFirstMsg bool
 }
 
 func NewModel[T any](cmdData CommandData[T]) *Model[T] {
@@ -119,19 +118,17 @@ func NewModel[T any](cmdData CommandData[T]) *Model[T] {
 
 	_modelId += 1
 	return &Model[T]{
-		id:         _modelId,
-		cmdMap:     cmdMap,
-		name:       cmdData.Name,
-		aliases:    cmdData.Aliases,
-		commands:   cmdData.Commands,
-		lastError:  fmt.Errorf(""),
-		isFirstMsg: true,
+		id:        _modelId,
+		cmdMap:    cmdMap,
+		name:      cmdData.Name,
+		aliases:   cmdData.Aliases,
+		commands:  cmdData.Commands,
+		lastError: fmt.Errorf(""),
 	}
 }
 
 func (bc *Model[T]) Update(model T, msg tea.Msg) (T, tea.Cmd) {
 	var teaCmds []tea.Cmd
-	defer func() { bc.isFirstMsg = false }()
 
 	switch msg := msg.(type) {
 	case ViewportSizeMsg:
