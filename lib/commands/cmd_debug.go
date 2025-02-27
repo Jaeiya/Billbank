@@ -247,9 +247,12 @@ func loadSlog(m debugModel) debugModel {
 	maxLines := 150
 	arg := m.GetArg()
 	if arg != nil {
-		if arg, isType := arg.(int); isType {
-			maxLines = arg
+		arg, isType := arg.(int)
+		if !isType {
+			m.AddArgTypeError(m.GetArg(), "int")
+			return m
 		}
+		maxLines = arg
 	}
 
 	var tagBuilder, subjBuilder, wordBuilder, timeBuilder strings.Builder
