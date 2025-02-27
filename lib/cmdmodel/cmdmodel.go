@@ -67,7 +67,8 @@ var (
 	ErrMissingArgument = fmt.Errorf("missing argument")
 	ErrEmptyCommand    = fmt.Errorf("empty command")
 	// Command is missing an execution path
-	ErrUnimplementedCmd = fmt.Errorf("unimplemented command")
+	ErrUnimplementedCmd       = fmt.Errorf("unimplemented command")
+	ErrMisconfiguredArgParser = fmt.Errorf("command arg parsing is misconfigured")
 )
 
 type Interface interface {

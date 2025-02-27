@@ -209,8 +209,8 @@ func (m Base[T]) ParseCommand(cmdInput string) Status {
 			if cmdPath == cmd.Path {
 				arg := inputParts[len(inputParts)-1]
 				v, err := cmd.ParseArg(arg)
-				if v == nil {
-					err = fmt.Errorf("command arg parsing is misconfigured")
+				if v == nil && err == nil {
+					err = ErrMisconfiguredArgParser
 				}
 				return Status{
 					IsCommand:    true,
