@@ -96,7 +96,7 @@ var debugCommands = []debugCmd{
 	{Path: "stats", Run: loadStats, View: viewStats},
 	{Path: "clear slog", Run: clearLog, View: clearSlogView},
 	{
-		Path:    "loglevel",
+		Path:    "log_level",
 		Run:     setLogLevel,
 		View:    viewLogLevel,
 		ArgType: cmdmodel.ArgRequired,
