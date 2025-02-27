@@ -119,7 +119,7 @@ var debugCommands = []debugCmd{
 type debugCmd = cmdmodel.Command[debugModel]
 
 type debugModel struct {
-	*cmdmodel.Model[debugModel]
+	*cmdmodel.Base[debugModel]
 	history debugHistory
 	log     debugLog
 	slog    debugSlog
@@ -139,7 +139,7 @@ func NewDebugCmd(h *utils.InputHistory) debugModel {
 	vp.KeyMap.HalfPageDown = key.NewBinding(key.WithKeys("ctrl+j"))
 
 	return debugModel{
-		Model: cmdmodel.NewModel(cmdmodel.CommandData[debugModel]{
+		Base: cmdmodel.NewBaseModel(cmdmodel.CommandData[debugModel]{
 			Name:     "Debug",
 			Aliases:  []string{"/"},
 			Commands: debugCommands,
@@ -153,7 +153,7 @@ func (m debugModel) Update(msg tea.Msg) (cmdmodel.Interface, tea.Cmd) {
 	var teaCmd tea.Cmd
 	var teaCmds []tea.Cmd
 
-	m, teaCmd = m.Model.Update(m, msg)
+	m, teaCmd = m.Base.Update(m, msg)
 	teaCmds = append(teaCmds, teaCmd)
 
 	switch msg := msg.(type) {
@@ -175,7 +175,7 @@ func (m debugModel) Update(msg tea.Msg) (cmdmodel.Interface, tea.Cmd) {
 }
 
 func (m debugModel) View() string {
-	return m.Model.View(m)
+	return m.Base.View(m)
 }
 
 func loadHistory(m debugModel) debugModel {

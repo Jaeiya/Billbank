@@ -64,7 +64,7 @@ type Command[T any] struct {
 	ValidateArg func(arg string) error
 }
 
-type Model[T any] struct {
+type Base[T any] struct {
 	cmdMap     map[string]Command[T]
 	name       string
 	aliases    []string
@@ -77,7 +77,7 @@ type Model[T any] struct {
 	viewHeight int
 }
 
-func NewModel[T any](cmdData CommandData[T]) *Model[T] {
+func NewBaseModel[T any](cmdData CommandData[T]) *Base[T] {
 	validateCmdData(cmdData)
 
 	cmdMap := map[string]Command[T]{}
@@ -117,7 +117,7 @@ func NewModel[T any](cmdData CommandData[T]) *Model[T] {
 	})
 
 	_modelId += 1
-	return &Model[T]{
+	return &Base[T]{
 		id:        _modelId,
 		cmdMap:    cmdMap,
 		name:      cmdData.Name,
@@ -127,7 +127,7 @@ func NewModel[T any](cmdData CommandData[T]) *Model[T] {
 	}
 }
 
-func (bc *Model[T]) Update(model T, msg tea.Msg) (T, tea.Cmd) {
+func (bc *Base[T]) Update(model T, msg tea.Msg) (T, tea.Cmd) {
 	var teaCmds []tea.Cmd
 
 	switch msg := msg.(type) {
@@ -144,7 +144,7 @@ func (bc *Model[T]) Update(model T, msg tea.Msg) (T, tea.Cmd) {
 	return model, tea.Batch(teaCmds...)
 }
 
-func (bc *Model[T]) View(model T) string {
+func (bc *Base[T]) View(model T) string {
 	cmdPath := bc.status.Path
 
 	cmd, ok := bc.cmdMap[cmdPath]
@@ -164,7 +164,7 @@ func (bc *Model[T]) View(model T) string {
 	return cmd.View(model)
 }
 
-func (m Model[T]) ParseCommand(cmdInput string) Status {
+func (m Base[T]) ParseCommand(cmdInput string) Status {
 	var inputParts []string = strings.Fields(cmdInput)
 	if len(inputParts) == 0 {
 		return Status{Error: ErrEmptyCommand}
@@ -227,54 +227,54 @@ func (m Model[T]) ParseCommand(cmdInput string) Status {
 	}
 }
 
-func (m Model[T]) GetViewSize() (int, int) {
+func (m Base[T]) GetViewSize() (int, int) {
 	return m.viewWidth, m.viewHeight
 }
 
-func (m Model[T]) GetId() int {
+func (m Base[T]) GetId() int {
 	return m.id
 }
 
-func (m Model[T]) GetStatus() Status {
+func (m Base[T]) GetStatus() Status {
 	return m.status
 }
 
-func (m *Model[T]) SetStatus(s Status) {
+func (m *Base[T]) SetStatus(s Status) {
 	m.status = s
 }
 
-func (m Model[T]) GetCmdArg() string {
+func (m Base[T]) GetCmdArg() string {
 	return m.status.Arg
 }
 
-func (m Model[T]) GetName() string {
+func (m Base[T]) GetName() string {
 	return m.name
 }
 
-func (m *Model[T]) AddError(err error) {
+func (m *Base[T]) AddError(err error) {
 	m.errors = append(m.errors, err)
 }
 
-func (m Model[T]) GetAliases() []string {
+func (m Base[T]) GetAliases() []string {
 	aliases := make([]string, len(m.aliases))
 	copy(aliases, m.aliases)
 	return aliases
 }
 
-func (m Model[T]) GetCmdPaths() (paths []string) {
+func (m Base[T]) GetCmdPaths() (paths []string) {
 	for k := range m.cmdMap {
 		paths = append(paths, k)
 	}
 	return paths
 }
 
-func (m Model[T]) IsActivePath(cmdPath string) bool {
+func (m Base[T]) IsActivePath(cmdPath string) bool {
 	return m.status.Path == cmdPath
 }
 
 // IsInitialized checks to make sure that various expected values
 // are set.
-func (m Model[T]) IsInitialized() bool {
+func (m Base[T]) IsInitialized() bool {
 	b := len(m.cmdMap) > 0 && len(m.status.Path) > 0 && m.viewWidth > 0 &&
 		m.viewHeight > 0
 	return b
@@ -282,7 +282,7 @@ func (m Model[T]) IsInitialized() bool {
 
 // Exec executes the current command path in the context of the
 // passed model. All detected errors are logged and stored.
-func (m *Model[T]) Exec(model T) T {
+func (m *Base[T]) Exec(model T) T {
 	cmdPath := m.status.Path
 	cmd := m.cmdMap[cmdPath]
 
@@ -321,11 +321,11 @@ func (m *Model[T]) Exec(model T) T {
 	return model
 }
 
-func (m Model[T]) getErrors() []error {
+func (m Base[T]) getErrors() []error {
 	return m.errors
 }
 
-func (m *Model[T]) clearErrors() {
+func (m *Base[T]) clearErrors() {
 	if len(m.errors) > 0 {
 		m.lastError = fmt.Errorf("")
 		m.errors = nil

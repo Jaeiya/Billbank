@@ -6,27 +6,21 @@ import (
 )
 
 type billsModel struct {
-	*cmdmodel.Model[billsModel]
+	*cmdmodel.Base[billsModel]
 }
 
 type billCmd = cmdmodel.Command[billsModel]
 
-func NewBillsCmd() billsModel {
-	return newBillsModel(
-		"Bills",
-		[]string{"bills"},
-		[]billCmd{
-			{Path: "", Run: loadBills, View: viewBills},
-		},
-	)
+var billCommands = []billCmd{
+	{Path: "", Run: loadBills, View: viewBills},
 }
 
-func newBillsModel(name string, aliases []string, commands []billCmd) billsModel {
+func NewBillsCmd() billsModel {
 	return billsModel{
-		Model: cmdmodel.NewModel(cmdmodel.CommandData[billsModel]{
-			Name:     name,
-			Aliases:  aliases,
-			Commands: commands,
+		Base: cmdmodel.NewBaseModel(cmdmodel.CommandData[billsModel]{
+			Name:     "Bills",
+			Aliases:  []string{"bills"},
+			Commands: billCommands,
 		}),
 	}
 }
@@ -36,7 +30,7 @@ func (m billsModel) Update(msg tea.Msg) (cmdmodel.Interface, tea.Cmd) {
 	var teaCmds []tea.Cmd
 
 	//- DO NOT REMOVE or MODIFY; required for base model interaction
-	m, teaCmd = m.Model.Update(m, msg)
+	m, teaCmd = m.Base.Update(m, msg)
 	teaCmds = append(teaCmds, teaCmd)
 	//--------------------------------------------------//
 
@@ -52,7 +46,7 @@ func (m billsModel) Update(msg tea.Msg) (cmdmodel.Interface, tea.Cmd) {
 
 // DO NOT REMOVE or MODIFY; required for base model interaction
 func (m billsModel) View() string {
-	return m.Model.View(m)
+	return m.Base.View(m)
 }
 
 //##########################################

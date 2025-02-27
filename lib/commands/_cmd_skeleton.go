@@ -8,48 +8,41 @@ import (
 // Main model that contains all data for your new command.
 // (rename to reflect the name of your new command)
 type skeletonModel struct {
-	*cmdmodel.BaseModel[skeletonModel]
+	*cmdmodel.Base[skeletonModel]
 	thisCounter int
 	thatCounter int
 }
 
-// Shorten type for convenience
+// Shortened type for convenience
 // (rename it to reflect the command name)
-type skeletonCmd = cmdmodel.BaseCommand[skeletonModel]
+type skeletonCmd = cmdmodel.Command[skeletonModel]
 
-// Creates a new command using the base model
+// Hook up all the commands to the command model
 // (rename it to reflect the command name)
-func NewSkeletonCmd() cmdmodel.Model {
-	//
-	// Do NOT put initialization code here
-	//
-	return cmdmodel.New(newSkeletonModel(
-		// Command Name
-		"Skeleton",
-		// Aliases
-		[]string{"test"},
-		// Commands
-		[]skeletonCmd{
-			// Default command (cmd executed by itself)
-			{Path: "", Run: loadDefaultCmd, View: loadDefaultView},
-			// Creates "test this" command
-			{Path: "this", Run: loadThis, View: thisView},
-			// Creates "test that" command
-			{Path: "that", Run: loadThat, View: thatView},
-		}),
-	)
+var skeletonCommands = []skeletonCmd{
+	// Default command (cmd executed by itself)
+	{Path: "", Run: loadDefaultCmd, View: loadDefaultView},
+	// Creates "test this" command
+	{Path: "this", Run: loadThis, View: thisView},
+	// Creates "test that" command
+	{Path: "that", Run: loadThat, View: thatView},
 }
 
 // newSkeletonModel demonstrates how to initialize a new
 // command model. All initialization code for your model
 // should go in here.
 // (rename it to reflect the command name)
-func newSkeletonModel(name string, aliases []string, commands []skeletonCmd) skeletonModel {
+func NewSkeletonCmd() skeletonModel {
+	//
+	// Any initialization code should go here
+	//
 	return skeletonModel{
-		BaseModel: cmdmodel.BaseModel(cmdmodel.BaseCmdData[skeletonModel]{
-			Name:     name,
-			Aliases:  aliases,
-			Commands: commands,
+		Base: cmdmodel.NewBaseModel(cmdmodel.CommandData[skeletonModel]{
+			// Command name (should be unique)
+			Name: "Skeleton",
+			// Prefixes all command paths ("test <cmd_path>")
+			Aliases:  []string{"test"},
+			Commands: skeletonCommands,
 		}),
 	}
 }
@@ -59,7 +52,7 @@ func (m skeletonModel) Update(msg tea.Msg) (cmdmodel.Interface, tea.Cmd) {
 	var teaCmds []tea.Cmd
 
 	//- DO NOT REMOVE or MODIFY; required for base model interaction
-	m, teaCmd = m.BaseModel.Update(m, msg)
+	m, teaCmd = m.Base.Update(m, msg)
 	teaCmds = append(teaCmds, teaCmd)
 	//--------------------------------------------------//
 
@@ -75,7 +68,7 @@ func (m skeletonModel) Update(msg tea.Msg) (cmdmodel.Interface, tea.Cmd) {
 
 // DO NOT REMOVE or MODIFY; required for base model interaction
 func (m skeletonModel) View() string {
-	return m.BaseModel.View(m)
+	return m.Base.View(m)
 }
 
 //##########################################
