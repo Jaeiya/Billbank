@@ -481,7 +481,7 @@ func viewStats(m debugModel) string {
 func setLogLevel(m debugModel) debugModel {
 	ll, isType := m.GetArg().(logger.LogLevel)
 	if !isType {
-		m.AddError(fmt.Errorf("'%+v' is not a valid argument for log level", ll))
+		m.AddArgTypeError(m.GetArg(), "LogLevel")
 		return m
 	}
 

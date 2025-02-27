@@ -2,6 +2,7 @@ package cmdmodel
 
 import (
 	"fmt"
+	"reflect"
 	"slices"
 	"strings"
 
@@ -262,6 +263,18 @@ func (m Base[T]) GetName() string {
 
 func (m *Base[T]) AddError(err error) {
 	m.errors = append(m.errors, err)
+}
+
+func (m *Base[T]) AddArgTypeError(arg any, expectedType string) {
+	m.errors = append(
+		m.errors,
+		fmt.Errorf(
+			"[%s] has a misconfigured arg type: [%s] expected [%s]",
+			m.status.Path,
+			reflect.TypeOf(arg),
+			expectedType,
+		),
+	)
 }
 
 func (m Base[T]) GetAliases() []string {
