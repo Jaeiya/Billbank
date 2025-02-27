@@ -61,7 +61,7 @@ type Command[T any] struct {
 	// Function to validate the argument passed to the
 	// command. This function is required if the arg
 	// type is NOT ArgNone.
-	ValidateArg func(arg string) error
+	ValidateArg func(arg string) (any, error)
 }
 
 type Base[T any] struct {
@@ -207,12 +207,12 @@ func (m Base[T]) ParseCommand(cmdInput string) Status {
 			cmdPath = strings.Join(cmdPathParts[:len(cmdPathParts)-1], " ")
 			if cmdPath == cmd.Path {
 				arg := inputParts[len(inputParts)-1]
-				err := cmd.ValidateArg(arg)
+				v, err := cmd.ValidateArg(arg)
 				return Status{
 					IsCommand:    true,
 					CaptureInput: cmd.CaptureInput,
 					Path:         strings.TrimSpace(alias + " " + cmd.Path),
-					Arg:          inputParts[len(inputParts)-1],
+					Arg:          v,
 					Error:        err,
 				}
 			}
@@ -243,7 +243,7 @@ func (m *Base[T]) SetStatus(s Status) {
 	m.status = s
 }
 
-func (m Base[T]) GetCmdArg() string {
+func (m Base[T]) GetCmdArg() any {
 	return m.status.Arg
 }
 

@@ -100,18 +100,18 @@ var debugCommands = []debugCmd{
 		Run:     setLogLevel,
 		View:    viewLogLevel,
 		ArgType: cmdmodel.ArgRequired,
-		ValidateArg: func(arg string) error {
+		ValidateArg: func(arg string) (any, error) {
 			v, err := utils.ParseInt(arg)
 			if err != nil {
-				return fmt.Errorf("'%s' is not a valid number", arg)
+				return nil, fmt.Errorf("'%s' is not a valid number", arg)
 			}
 
 			ll := logger.LogLevel(v)
 			if !ll.IsValid() {
-				return fmt.Errorf("'%s' is not a valid log level", arg)
+				return nil, fmt.Errorf("'%s' is not a valid log level", arg)
 			}
 
-			return nil
+			return ll, nil
 		},
 	},
 }
@@ -233,22 +233,23 @@ func clearLog(m debugModel) debugModel {
 	return m
 }
 
-func validateSlogInput(arg string) error {
-	_, err := utils.ParseInt(arg)
+func validateSlogInput(arg string) (any, error) {
+	v, err := utils.ParseInt(arg)
 	if err != nil {
-		return fmt.Errorf("[%s] is not a valid number of lines", arg)
+		return nil, fmt.Errorf("[%s] is not a valid number of lines", arg)
 	}
-	return nil
+	return v, nil
 }
 
 func loadSlog(m debugModel) debugModel {
 	m = loadLog(m)
-	arg := m.GetCmdArg()
 
 	maxLines := 150
-	if arg != "" {
-		// Error has already been validated through cmd
-		maxLines, _ = utils.ParseInt(arg)
+	arg := m.GetCmdArg()
+	if arg != nil {
+		if v, ok := arg.(int); ok {
+			maxLines = v
+		}
 	}
 
 	var tagBuilder, subjBuilder, wordBuilder, timeBuilder strings.Builder
@@ -479,8 +480,18 @@ func viewStats(m debugModel) string {
 
 func setLogLevel(m debugModel) debugModel {
 	arg := m.GetCmdArg()
-	ll, _ := utils.ParseInt(arg)
-	_ = logger.SetLogLevel(logger.LogLevel(ll))
+	var ll logger.LogLevel
+	if arg == nil {
+		m.AddError(fmt.Errorf("missing argument for log level"))
+		return m
+	}
+
+	if v, ok := arg.(logger.LogLevel); ok {
+		logger.Log(logger.Info, "setting log level to [%s]", v)
+		ll = v
+	}
+
+	_ = logger.SetLogLevel(ll)
 	return m
 }
 

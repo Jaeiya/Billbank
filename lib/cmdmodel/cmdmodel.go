@@ -86,7 +86,7 @@ type Interface interface {
 type Status struct {
 	Suggestions  []string
 	Path         string
-	Arg          string
+	Arg          any
 	Error        error
 	IsCommand    bool
 	CaptureInput bool
