@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/charmbracelet/lipgloss"
@@ -57,6 +58,7 @@ var (
 	_stdLogger  *log.Logger
 	_fileHandle *os.File
 	_timeFormat = "03:04:05.000000 PM MST"
+	_mux        sync.Mutex
 )
 
 func Log(ll LogLevel, msg string, vars ...any) {
@@ -139,13 +141,14 @@ func LogFatal(errMsg string, description string, vars ...any) {
 }
 
 func Reset() error {
+	_mux.Lock()
 	ll := _logLevel
-
 	// Do not allow any calls to log during reset
 	_logLevel = None
 
 	// Init should be called once reset is done
 	_isReady = false
+	_mux.Unlock()
 
 	err := CloseLog()
 	if err != nil {
