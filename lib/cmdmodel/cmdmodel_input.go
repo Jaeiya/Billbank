@@ -124,7 +124,7 @@ func (m InputModel) Update(msg tea.Msg) (InputModel, tea.Cmd) {
 		if m.homePath != "" {
 			m.input.SetValue(m.homePath)
 			m, _ = tryParseCmd(m, tea.KeyMsg{})
-			m, cmd = tryEnterCmd(m)
+			m, cmd = m.tryEnterCmd()
 			m.input.Reset()
 			return m, cmd
 		}
@@ -163,12 +163,7 @@ func (m InputModel) Update(msg tea.Msg) (InputModel, tea.Cmd) {
 			}
 
 		case "enter":
-			m, cmd = tryEnterCmd(m)
-			if m.state.cmdStatus.Error != nil {
-				cmdErr := "command parse error:"
-				msg := fmt.Sprintf("%s [%s]", cmdErr, m.state.cmdStatus.Error)
-				logger.Log(logger.Attention, "%s", msg)
-			}
+			m, cmd = m.onEnter()
 			cmds = append(cmds, cmd)
 
 		default:
@@ -192,7 +187,26 @@ func (m InputModel) View() string {
 	return s
 }
 
-func tryEnterCmd(m InputModel) (InputModel, tea.Cmd) {
+func (m InputModel) onEnter() (InputModel, tea.Cmd) {
+	var cmd tea.Cmd
+	m, cmd = m.tryEnterCmd()
+	if m.state.cmdStatus.Error != nil {
+		if errors.Is(ErrMisconfiguredArgParser, m.state.cmdStatus.Error) {
+			logger.Log(logger.Error,
+				"command [%s] path [%s] has a misconfigured arg parser func",
+				m.state.activeCmd.GetName(),
+				m.state.cmdStatus.Path,
+			)
+		} else {
+			cmdErr := "command parse error:"
+			msg := fmt.Sprintf("%s [%s]", cmdErr, m.state.cmdStatus.Error)
+			logger.Log(logger.Attention, "%s", msg)
+		}
+	}
+	return m, cmd
+}
+
+func (m InputModel) tryEnterCmd() (InputModel, tea.Cmd) {
 	// Empty commands will not yet have been parsed.
 	if m.input.Value() == "" {
 		m, _ = tryParseCmd(m, tea.KeyMsg{})
