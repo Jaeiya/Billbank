@@ -58,10 +58,10 @@ type Command[T any] struct {
 	//	ArgRequired
 	ArgType ArgType
 
-	// Function to validate the argument passed to the
+	// Function to parse the argument passed to the
 	// command. This function is required if the arg
 	// type is NOT ArgNone.
-	ValidateArg func(arg string) (any, error)
+	ParseArg func(arg string) (any, error)
 }
 
 type Base[T any] struct {
@@ -187,6 +187,7 @@ func (m Base[T]) ParseCommand(cmdInput string) Status {
 				IsCommand:    true,
 				CaptureInput: cmd.CaptureInput,
 				Path:         strings.TrimSpace(alias + " " + cmd.Path),
+				Arg:          nil,
 				Error:        nil,
 			}
 		}
@@ -207,7 +208,10 @@ func (m Base[T]) ParseCommand(cmdInput string) Status {
 			cmdPath = strings.Join(cmdPathParts[:len(cmdPathParts)-1], " ")
 			if cmdPath == cmd.Path {
 				arg := inputParts[len(inputParts)-1]
-				v, err := cmd.ValidateArg(arg)
+				v, err := cmd.ParseArg(arg)
+				if v == nil {
+					err = fmt.Errorf("command arg parsing is misconfigured")
+				}
 				return Status{
 					IsCommand:    true,
 					CaptureInput: cmd.CaptureInput,
@@ -243,6 +247,11 @@ func (m *Base[T]) SetStatus(s Status) {
 	m.status = s
 }
 
+// GetCmdArg will return the value of a parsed command argument.
+//
+// 🟡 If a command argument is optional, then the arg can
+// be nil, however if an argument is required, then it
+// will never be nil.
 func (m Base[T]) GetCmdArg() any {
 	return m.status.Arg
 }
@@ -366,7 +375,7 @@ func validateCmdData[T any](cmdData CommandData[T]) {
 			)
 		}
 
-		if cmd.ArgType > ArgNone && cmd.ValidateArg == nil {
+		if cmd.ArgType > ArgNone && cmd.ParseArg == nil {
 			logger.LogFatal(
 				"[%s] command path [%s] is missing an arg validation function.",
 				MsgMissingArgFuncErr,

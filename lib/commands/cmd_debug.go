@@ -87,11 +87,11 @@ var (
 var debugCommands = []debugCmd{
 	{Path: "history", Run: loadHistory, View: viewHistory},
 	{
-		Path:        "slog",
-		Run:         loadSlog,
-		View:        viewSlog,
-		ArgType:     cmdmodel.ArgOptional,
-		ValidateArg: validateSlogInput,
+		Path:     "slog",
+		Run:      loadSlog,
+		View:     viewSlog,
+		ArgType:  cmdmodel.ArgOptional,
+		ParseArg: validateSlogInput,
 	},
 	{Path: "stats", Run: loadStats, View: viewStats},
 	{Path: "clear slog", Run: clearLog, View: clearSlogView},
@@ -100,7 +100,7 @@ var debugCommands = []debugCmd{
 		Run:     setLogLevel,
 		View:    viewLogLevel,
 		ArgType: cmdmodel.ArgRequired,
-		ValidateArg: func(arg string) (any, error) {
+		ParseArg: func(arg string) (any, error) {
 			v, err := utils.ParseInt(arg)
 			if err != nil {
 				return nil, fmt.Errorf("'%s' is not a valid number", arg)
@@ -247,8 +247,8 @@ func loadSlog(m debugModel) debugModel {
 	maxLines := 150
 	arg := m.GetCmdArg()
 	if arg != nil {
-		if v, ok := arg.(int); ok {
-			maxLines = v
+		if arg, isType := arg.(int); isType {
+			maxLines = arg
 		}
 	}
 
@@ -479,16 +479,10 @@ func viewStats(m debugModel) string {
 }
 
 func setLogLevel(m debugModel) debugModel {
-	arg := m.GetCmdArg()
-	var ll logger.LogLevel
-	if arg == nil {
-		m.AddError(fmt.Errorf("missing argument for log level"))
+	ll, isType := m.GetCmdArg().(logger.LogLevel)
+	if !isType {
+		m.AddError(fmt.Errorf("'%+v' is not a valid argument for log level", ll))
 		return m
-	}
-
-	if v, ok := arg.(logger.LogLevel); ok {
-		logger.Log(logger.Info, "setting log level to [%s]", v)
-		ll = v
 	}
 
 	_ = logger.SetLogLevel(ll)
