@@ -49,6 +49,7 @@ func (vp ViewPort) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			vp.height = msg.Height
 			vp.width = msg.Width
 			logger.Log(logger.Hot, "[WindowSizeMsg] sending viewport size [%d:%d]", vp.width, vp.height)
+			return vp, vp.sendViewportSize
 		}
 
 	case tea.KeyMsg:
