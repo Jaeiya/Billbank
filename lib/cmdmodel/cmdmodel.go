@@ -117,6 +117,20 @@ type (
 	}
 )
 
+// GetArgAs will try to cast a command argument to the specified
+// type. Returns the argument of the command, cast to the specified
+// type, along with true to indicate type-cast success. False will
+// be returned if the type-case fails.
+//
+// 🔴 Failed type-casts are assumed to be catastrophic and will
+// propagate an arg-type-error to the base view.
+//
+// 🟠 Retrieving an argument from a command that does not support
+// arguments, is considered catastrophic and will propagate an
+// error to the base view.
+//
+// 🟡 False will be returned for nil arguments, without error
+// propagation; optional arguments can be nil.
 func GetArgAs[T, E any](m *Base[E]) (T, bool) {
 	var zero T
 	cmd := m.cmdMap[m.status.Path]
