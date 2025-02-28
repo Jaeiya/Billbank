@@ -118,10 +118,15 @@ type (
 )
 
 func GetArgAs[T, E any](m *Base[E]) (T, bool) {
+	var zero T
+	if m.status.Arg == nil {
+		return zero, false
+	}
+
 	if v, isType := m.status.Arg.(T); isType {
 		return v, true
 	}
-	var zero T
+
 	m.AddArgTypeError(m.status.Arg, reflect.TypeOf(zero).Name())
 	return zero, false
 }
