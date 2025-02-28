@@ -201,24 +201,24 @@ func viewHistory(m debugModel) string {
 	return histStyle.Render(m.history.view)
 }
 
-func loadLog(m debugModel) debugModel {
+func loadLog(m debugModel) (debugModel, bool) {
 	path := filepath.Join(utils.GetWorkingDir(), "log.txt")
 	fileInfo, err := os.Stat(path)
 	if err != nil {
 		m.AddError(err)
-		return m
+		return m, false
 	}
 	if fileInfo.Size() == int64(len(m.log.view)+1) {
-		return m
+		return m, true
 	}
 	bytes, err := os.ReadFile(path)
 	if err != nil {
 		m.AddError(err)
-		return m
+		return m, false
 	}
 	m.log.view = strings.TrimSpace(string(bytes))
 	m.log.lineCount = strings.Count(m.log.view, "\n")
-	return m
+	return m, false
 }
 
 func clearLog(m debugModel) debugModel {
@@ -242,7 +242,10 @@ func validateSlogInput(arg string) (any, error) {
 }
 
 func loadSlog(m debugModel) debugModel {
-	m = loadLog(m)
+	m, isCached := loadLog(m)
+	if isCached {
+		return m
+	}
 
 	maxLines := 150
 	arg := m.GetArg()
@@ -314,8 +317,7 @@ func loadSlog(m debugModel) debugModel {
 	m.slog.viewPort.Width = w
 	m.slog.viewPort.Height = h - 2
 
-	fixedWidthContent := lipgloss.NewStyle().Width(w - 1).Render(m.slog.view)
-	m.slog.viewPort.SetContent(fixedWidthContent)
+	m.slog.viewPort.SetContent(m.slog.view)
 	m.slog.viewPort.GotoBottom()
 	return m
 }
@@ -357,6 +359,10 @@ func clearSlogView(m debugModel) string {
 }
 
 func viewSlog(m debugModel) string {
+	w, h := m.GetViewSize()
+	m.slog.viewPort.Width = w
+	m.slog.viewPort.Height = h - 2
+
 	content := fmt.Sprintf(
 		"%s\nTook: %s",
 		m.slog.viewPort.View(),
