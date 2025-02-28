@@ -2,6 +2,7 @@ package cmdmodel
 
 import (
 	"fmt"
+	"reflect"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -115,3 +116,12 @@ type (
 		Model Interface
 	}
 )
+
+func GetArgAs[T, E any](m *Base[E]) (T, bool) {
+	if v, isType := m.status.Arg.(T); isType {
+		return v, true
+	}
+	var zero T
+	m.AddArgTypeError(m.status.Arg, reflect.TypeOf(zero).Name())
+	return zero, false
+}
