@@ -27,9 +27,9 @@ like so:
 [view details] or [view list]
 
 The above second-order commands will be ignored as if they don't exist.
-Either setup your model to accept args directly or commands, but not
-both. You can also setup your model to execute a default command without
-args, allowing you to add extra commands.`
+Either setup your model to accept args or command paths, but not both.
+You can also setup your model to execute a default command without args,
+which still allows you to add extra command paths.`
 
 	MsgUsingAliasInCmdPathErr = `
 Command-paths do not need to include the alias of their parent model.
