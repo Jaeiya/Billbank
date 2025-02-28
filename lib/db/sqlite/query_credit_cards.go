@@ -88,7 +88,7 @@ func (chr CardHistoryRecord) String() string {
 	)
 }
 
-func (sdb SqliteDb) CreateCreditCard(config CreditCardConfig) {
+func (sdb SqliteDb) CreateCreditCard(config CreditCardConfig) error {
 	creditLimit := utils.TryDeref(config.CreditLimit)
 	if creditLimit != nil {
 		creditLimit = config.CreditLimit.GetStoredValue()
@@ -96,15 +96,15 @@ func (sdb SqliteDb) CreateCreditCard(config CreditCardConfig) {
 
 	encCardNum, err := lib.EncryptNonNil(config.CardNumber, config.Password)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	encNotes, err := lib.EncryptNonNil(config.Notes, config.Password)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
-	if _, err := sdb.handle.Exec(
+	_, err = sdb.handle.Exec(
 		sdb.InsertInto(
 			CREDIT_CARDS,
 			config.Name,
@@ -113,10 +113,11 @@ func (sdb SqliteDb) CreateCreditCard(config CreditCardConfig) {
 			encCardNum,
 			config.LastFourDigits,
 			encNotes,
-		),
-	); err != nil {
-		panicOnExecErr(err)
+		))
+	if err != nil {
+		return getExecError(err)
 	}
+	return nil
 }
 
 func (sdb SqliteDb) QueryCreditCards(
@@ -140,7 +141,7 @@ func (sdb SqliteDb) QueryCreditCards(
 			&record.LastFourDigits,
 			&record.Notes,
 		); err != nil {
-			panic(err)
+			return []CreditCardRecord{}, err
 		}
 
 		if creditLimit != nil {
@@ -150,13 +151,13 @@ func (sdb SqliteDb) QueryCreditCards(
 
 		if password != nil && record.CardNumber != nil {
 			if record.CardNumber, err = lib.DecryptNonNil(record.CardNumber, *password); err != nil {
-				panic(err)
+				return []CreditCardRecord{}, err
 			}
 		}
 
 		if password != nil && record.Notes != nil {
 			if record.Notes, err = lib.DecryptNonNil(record.Notes, *password); err != nil {
-				panic(err)
+				return []CreditCardRecord{}, err
 			}
 		}
 
@@ -170,12 +171,12 @@ func (sdb SqliteDb) QueryCreditCards(
 	return records, nil
 }
 
-func (sdb SqliteDb) CreateCreditCardHistory(config CreditCardHistoryConfig) {
+func (sdb SqliteDb) CreateCreditCardHistory(config CreditCardHistoryConfig) error {
 	creditLimit := utils.TryDeref(config.CreditLimit)
 	if creditLimit != nil {
 		creditLimit = config.CreditLimit.GetStoredValue()
 	}
-	if _, err := sdb.handle.Exec(
+	_, err := sdb.handle.Exec(
 		sdb.InsertInto(
 			CREDIT_CARD_HISTORY,
 			config.CreditCardID,
@@ -186,10 +187,11 @@ func (sdb SqliteDb) CreateCreditCardHistory(config CreditCardHistoryConfig) {
 			nil, // paid date
 			config.DueDay,
 			MONTHLY,
-		),
-	); err != nil {
-		panicOnExecErr(err)
+		))
+	if err != nil {
+		return getExecError(err)
 	}
+	return nil
 }
 
 func (sdb SqliteDb) QueryCreditCardHistory(qm QueryMap) ([]CardHistoryRecord, error) {
@@ -216,7 +218,7 @@ func (sdb SqliteDb) QueryCreditCardHistory(qm QueryMap) ([]CardHistoryRecord, er
 			&record.DueDay,
 			&record.Period,
 		); err != nil {
-			panic(err)
+			return []CardHistoryRecord{}, err
 		}
 
 		if creditLimit != nil {
@@ -267,7 +269,7 @@ func (sdb SqliteDb) SetCreditCardHistory(historyID int, fieldMap CCFieldMap) err
 	)
 
 	if _, err := sdb.handle.Exec(query); err != nil {
-		panic(err)
+		return err
 	}
 	return nil
 }

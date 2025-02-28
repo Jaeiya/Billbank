@@ -59,27 +59,24 @@ type TransferRecord struct {
 	ID int
 }
 
-func (sdb SqliteDb) CreateBankAccount(config BankAccountConfig) {
+func (sdb SqliteDb) CreateBankAccount(config BankAccountConfig) error {
 	encAccountNum, err := lib.EncryptNonNil(config.AccountNumber, config.Password)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	encNotes, err := lib.EncryptNonNil(config.Notes, config.Password)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
-	if _, err := sdb.handle.Exec(
-		sdb.InsertInto(
-			BANK_ACCOUNTS,
-			config.Name,
-			encAccountNum,
-			encNotes,
-		),
-	); err != nil {
-		panicOnExecErr(err)
+	_, err = sdb.handle.Exec(
+		sdb.InsertInto(BANK_ACCOUNTS, config.Name, encAccountNum, encNotes),
+	)
+	if err != nil {
+		return getExecError(err)
 	}
+	return nil
 }
 
 func (sdb SqliteDb) QueryBankAccounts(qm QueryMap, password *string) ([]BankRecord, error) {
@@ -96,18 +93,18 @@ func (sdb SqliteDb) QueryBankAccounts(qm QueryMap, password *string) ([]BankReco
 			&record.AccountNumber,
 			&record.Notes,
 		); err != nil {
-			panic(err)
+			return []BankRecord{}, err
 		}
 
 		if password != nil && record.AccountNumber != nil {
 			if record.AccountNumber, err = lib.DecryptNonNil(record.AccountNumber, *password); err != nil {
-				panic(err)
+				return []BankRecord{}, err
 			}
 		}
 
 		if password != nil && record.Notes != nil {
 			if record.Notes, err = lib.DecryptNonNil(record.Notes, *password); err != nil {
-				panic(err)
+				return []BankRecord{}, err
 			}
 		}
 
@@ -121,17 +118,19 @@ func (sdb SqliteDb) QueryBankAccounts(qm QueryMap, password *string) ([]BankReco
 	return records, nil
 }
 
-func (sdb SqliteDb) CreateBankAccountHistory(config BankHistoryConfig) {
-	if _, err := sdb.handle.Exec(
+func (sdb SqliteDb) CreateBankAccountHistory(config BankHistoryConfig) error {
+	_, err := sdb.handle.Exec(
 		sdb.InsertInto(
 			BANK_ACCOUNT_HISTORY,
 			config.BankAccountID,
 			config.MonthID,
 			config.Balance.GetStoredValue(),
 		),
-	); err != nil {
-		panicOnExecErr(err)
+	)
+	if err != nil {
+		return getExecError(err)
 	}
+	return nil
 }
 
 func (sdb SqliteDb) QueryBankAccountHistory(qm QueryMap) ([]BankHistoryRecord, error) {
@@ -147,7 +146,7 @@ func (sdb SqliteDb) QueryBankAccountHistory(qm QueryMap) ([]BankHistoryRecord, e
 			&record.MonthID,
 			&balance,
 		); err != nil {
-			panic(err)
+			return []BankHistoryRecord{}, err
 		}
 
 		record.Balance = lib.NewCurrencyFromStore(balance, sdb.currencyCode)
@@ -161,8 +160,8 @@ func (sdb SqliteDb) QueryBankAccountHistory(qm QueryMap) ([]BankHistoryRecord, e
 	return records, nil
 }
 
-func (sdb SqliteDb) CreateTransfer(td TransferConfig) {
-	execStr := sdb.InsertInto(
+func (sdb SqliteDb) CreateTransfer(td TransferConfig) error {
+	_, err := sdb.handle.Exec(sdb.InsertInto(
 		TRANSFERS,
 		td.HistoryID,
 		td.MonthID,
@@ -172,10 +171,11 @@ func (sdb SqliteDb) CreateTransfer(td TransferConfig) {
 		td.TransferType,
 		utils.TryDeref(td.ToWhom),
 		utils.TryDeref(td.FromWhom),
-	)
-	if _, err := sdb.handle.Exec(execStr); err != nil {
-		panicOnExecErr(err)
+	))
+	if err != nil {
+		return getExecError(err)
 	}
+	return nil
 }
 
 func (sdb SqliteDb) QueryTransfers(qm QueryMap) ([]TransferRecord, error) {
@@ -196,7 +196,7 @@ func (sdb SqliteDb) QueryTransfers(qm QueryMap) ([]TransferRecord, error) {
 			&record.ToWhom,
 			&record.FromWhom,
 		); err != nil {
-			panic(err)
+			return []TransferRecord{}, err
 		}
 		record.Amount = lib.NewCurrencyFromStore(amount, sdb.currencyCode)
 		records = append(records, record)

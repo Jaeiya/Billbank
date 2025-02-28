@@ -32,12 +32,13 @@ type BillHistoryRecord struct {
 	BillHistoryConfig
 }
 
-func (sdb SqliteDb) CreateNewBill(cfg BillsConfig) {
+func (sdb SqliteDb) CreateNewBill(cfg BillsConfig) error {
 	if _, err := sdb.handle.Exec(
 		sdb.InsertInto(BILLS, cfg.Name, cfg.Amount.GetStoredValue(), cfg.DueDay, cfg.Period),
 	); err != nil {
-		panicOnExecErr(err)
+		return getExecError(err)
 	}
+	return nil
 }
 
 func (sdb SqliteDb) QueryBills(qm QueryMap) ([]BillRecord, error) {
@@ -54,7 +55,7 @@ func (sdb SqliteDb) QueryBills(qm QueryMap) ([]BillRecord, error) {
 			&record.DueDay,
 			&record.Period,
 		); err != nil {
-			panic(err)
+			return []BillRecord{}, err
 		}
 		record.Amount = lib.NewCurrencyFromStore(amount, sdb.currencyCode)
 		records = append(records, record)
@@ -67,7 +68,7 @@ func (sdb SqliteDb) QueryBills(qm QueryMap) ([]BillRecord, error) {
 	return records, nil
 }
 
-func (sdb SqliteDb) CreateBillHistory(cfg BillHistoryConfig) {
+func (sdb SqliteDb) CreateBillHistory(cfg BillHistoryConfig) error {
 	paidAmount := utils.TryDeref(cfg.PaidAmount)
 	if paidAmount != nil {
 		paidAmount = cfg.PaidAmount.GetStoredValue()
@@ -85,8 +86,9 @@ func (sdb SqliteDb) CreateBillHistory(cfg BillHistoryConfig) {
 			utils.TryDeref(cfg.Notes),
 		),
 	); err != nil {
-		panicOnExecErr(err)
+		return getExecError(err)
 	}
+	return nil
 }
 
 func (sdb SqliteDb) QueryBillHistory(qm QueryMap) ([]BillHistoryRecord, error) {
@@ -108,7 +110,7 @@ func (sdb SqliteDb) QueryBillHistory(qm QueryMap) ([]BillHistoryRecord, error) {
 			&record.DueDay,
 			&record.Notes,
 		); err != nil {
-			panic(err)
+			return []BillHistoryRecord{}, err
 		}
 
 		record.Amount = lib.NewCurrencyFromStore(amount, sdb.currencyCode)

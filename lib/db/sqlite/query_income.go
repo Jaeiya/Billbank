@@ -46,29 +46,30 @@ type AffixIncomeRecord struct {
 	Amount          lib.Currency
 }
 
-func (sdb SqliteDb) CreateIncome(config IncomeConfig) int64 {
+func (sdb SqliteDb) CreateIncome(config IncomeConfig) (int64, error) {
 	res, err := sdb.handle.Exec(
 		sdb.InsertInto(INCOME, config.Name, config.Amount.GetStoredValue(), config.Period),
 	)
 	if err != nil {
-		panicOnExecErr(err)
+		return 0, getExecError(err)
 	}
 
 	id, err := res.LastInsertId()
 	if err != nil {
-		panic(err)
+		return 0, err
 	}
 
-	return id
+	return id, nil
 }
 
-func (sdb SqliteDb) SetIncome(id int, amount lib.Currency) {
+func (sdb SqliteDb) SetIncome(id int, amount lib.Currency) error {
 	_, err := sdb.handle.Exec(
 		fmt.Sprintf("UPDATE income SET amount=%d WHERE id=%d", amount.GetStoredValue(), id),
 	)
 	if err != nil {
-		panic(err)
+		return err
 	}
+	return nil
 }
 
 func (sdb SqliteDb) QueryIncome(qm QueryMap) ([]IncomeRecord, error) {
@@ -84,7 +85,7 @@ func (sdb SqliteDb) QueryIncome(qm QueryMap) ([]IncomeRecord, error) {
 			&amount,
 			&record.Period,
 		); err != nil {
-			panic(err)
+			return []IncomeRecord{}, err
 		}
 		record.Amount = lib.NewCurrencyFromStore(amount, sdb.currencyCode)
 		records = append(records, record)
@@ -97,12 +98,19 @@ func (sdb SqliteDb) QueryIncome(qm QueryMap) ([]IncomeRecord, error) {
 	return records, nil
 }
 
-func (sdb SqliteDb) CreateIncomeHistory(config IncomeHistoryConfig) {
-	if _, err := sdb.handle.Exec(
-		sdb.InsertInto(INCOME_HISTORY, config.IncomeID, config.MonthID, config.Amount.GetStoredValue()),
-	); err != nil {
-		panicOnExecErr(err)
+func (sdb SqliteDb) CreateIncomeHistory(config IncomeHistoryConfig) error {
+	_, err := sdb.handle.Exec(
+		sdb.InsertInto(
+			INCOME_HISTORY,
+			config.IncomeID,
+			config.MonthID,
+			config.Amount.GetStoredValue(),
+		),
+	)
+	if err != nil {
+		return getExecError(err)
 	}
+	return nil
 }
 
 func (sdb SqliteDb) QueryIncomeHistory(qm QueryMap) ([]IncomeHistoryRecord, error) {
@@ -118,7 +126,7 @@ func (sdb SqliteDb) QueryIncomeHistory(qm QueryMap) ([]IncomeHistoryRecord, erro
 			&record.MonthID,
 			&amount,
 		); err != nil {
-			panic(err)
+			return []IncomeHistoryRecord{}, err
 		}
 		record.Amount = lib.NewCurrencyFromStore(amount, sdb.currencyCode)
 		records = append(records, record)
@@ -135,12 +143,14 @@ func (sdb SqliteDb) QueryIncomeHistory(qm QueryMap) ([]IncomeHistoryRecord, erro
 AffixIncome tracks an appended amount to an existing income. This could
 be a bonus or overtime amount.
 */
-func (sdb SqliteDb) AffixIncome(historyID int, name string, amount lib.Currency) {
-	if _, err := sdb.handle.Exec(
+func (sdb SqliteDb) AffixIncome(historyID int, name string, amount lib.Currency) error {
+	_, err := sdb.handle.Exec(
 		sdb.InsertInto(INCOME_AFFIXES, historyID, name, amount.GetStoredValue()),
-	); err != nil {
-		panic(err)
+	)
+	if err != nil {
+		return err
 	}
+	return nil
 }
 
 func (sdb SqliteDb) QueryAffixIncome(qm QueryMap) ([]AffixIncomeRecord, error) {
@@ -156,7 +166,7 @@ func (sdb SqliteDb) QueryAffixIncome(qm QueryMap) ([]AffixIncomeRecord, error) {
 			&record.Name,
 			&amount,
 		); err != nil {
-			panic(err)
+			return []AffixIncomeRecord{}, err
 		}
 		record.Amount = lib.NewCurrencyFromStore(amount, sdb.currencyCode)
 		records = append(records, record)

@@ -11,6 +11,7 @@ import (
 )
 
 func TestCreateMonth(t *testing.T) {
+	t.Parallel()
 	type MockTable struct {
 		should        string
 		actual        time.Time
@@ -47,9 +48,8 @@ func TestCreateMonth(t *testing.T) {
 			defer db.Close()
 
 			if mock.expectedError != nil {
-				a.PanicsWithValue(mock.expectedError, func() {
-					db.CreateMonth(mock.actual)
-				})
+				err := db.CreateMonth(mock.actual)
+				a.ErrorIs(err, mock.expectedError, "expected to get correct error")
 				return
 			}
 			db.CreateMonth(mock.actual)

@@ -11,6 +11,7 @@ import (
 )
 
 func TestCreateIncome(t *testing.T) {
+	t.Parallel()
 	type MockTable struct {
 		should        string
 		actual        []IncomeConfig
@@ -61,15 +62,15 @@ func TestCreateIncome(t *testing.T) {
 
 			if mock.expectedError != nil {
 				for _, iConfig := range mock.actual {
-					a.PanicsWithValue(mock.expectedError, func() {
-						db.CreateIncome(iConfig)
-					})
+					_, err = db.CreateIncome(iConfig)
+					a.ErrorIs(err, mock.expectedError)
 				}
 				return
 			}
 
 			for _, iConfig := range mock.actual {
-				db.CreateIncome(iConfig)
+				_, err = db.CreateIncome(iConfig)
+				r.NoError(err)
 			}
 
 			res, err := db.QueryIncome(QueryMap{})
@@ -89,23 +90,24 @@ func TestCreateIncome(t *testing.T) {
 		r.NoError(err)
 		defer db.Close()
 
-		db.CreateIncome(IncomeConfig{
+		_, err = db.CreateIncome(IncomeConfig{
 			Name:   "name",
 			Amount: lib.NewCurrency("13.37", lib.USD),
 			Period: MONTHLY,
 		})
+		r.NoError(err)
 
-		a.PanicsWithValue(ErrUniqueName, func() {
-			db.CreateIncome(IncomeConfig{
-				Name:   "name",
-				Amount: lib.NewCurrency("133.7", lib.USD),
-				Period: MONTHLY,
-			})
+		_, err = db.CreateIncome(IncomeConfig{
+			Name:   "name",
+			Amount: lib.NewCurrency("133.7", lib.USD),
+			Period: MONTHLY,
 		})
+		a.ErrorIs(err, ErrUniqueName)
 	})
 }
 
 func TestCreateIncomeHistory(t *testing.T) {
+	t.Parallel()
 	type MockTable struct {
 		should        string
 		incomes       []IncomeConfig
@@ -196,23 +198,25 @@ func TestCreateIncomeHistory(t *testing.T) {
 			r.NoError(err)
 			defer db.Close()
 
-			db.CreateMonth(time.Date(2024, 1, 1, 0, 0, 0, 0, time.Local))
+			err = db.CreateMonth(time.Date(2024, 1, 1, 0, 0, 0, 0, time.Local))
+			r.NoError(err)
 
 			for _, iConfig := range mock.incomes {
-				db.CreateIncome(iConfig)
+				_, err = db.CreateIncome(iConfig)
+				r.NoError(err)
 			}
 
 			if mock.expectedError != nil {
 				for _, ihConfig := range mock.actual {
-					a.PanicsWithValue(mock.expectedError, func() {
-						db.CreateIncomeHistory(ihConfig)
-					})
+					err = db.CreateIncomeHistory(ihConfig)
+					a.ErrorIs(err, mock.expectedError)
 				}
 				return
 			}
 
 			for _, ihConfig := range mock.actual {
-				db.CreateIncomeHistory(ihConfig)
+				err = db.CreateIncomeHistory(ihConfig)
+				r.NoError(err)
 			}
 
 			res, err := db.QueryIncomeHistory(QueryMap{})

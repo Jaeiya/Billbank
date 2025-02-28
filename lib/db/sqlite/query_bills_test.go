@@ -12,6 +12,7 @@ import (
 )
 
 func TestQueryBills(t *testing.T) {
+	t.Parallel()
 	type MockTable struct {
 		should        string
 		actual        []BillsConfig
@@ -118,9 +119,8 @@ func TestQueryBills(t *testing.T) {
 
 			if mock.expectedError != nil {
 				for _, bill := range mock.actual {
-					a.PanicsWithValue(ErrDueDayInvalid, func() {
-						db.CreateNewBill(bill)
-					})
+					err = db.CreateNewBill(bill)
+					a.ErrorIs(err, mock.expectedError, "expected specific error")
 				}
 				return
 			}
@@ -146,25 +146,26 @@ func TestQueryBills(t *testing.T) {
 		r.NoError(err)
 		defer db.Close()
 
-		db.CreateNewBill(BillsConfig{
+		err = db.CreateNewBill(BillsConfig{
 			Name:   "name",
 			Amount: lib.NewCurrency("13.37", lib.USD),
 			DueDay: 3,
 			Period: MONTHLY,
 		})
+		r.NoError(err, "expected to successfully create test bill")
 
-		a.PanicsWithValue(ErrUniqueName, func() {
-			db.CreateNewBill(BillsConfig{
-				Name:   "name",
-				Amount: lib.NewCurrency("133.7", lib.USD),
-				DueDay: 7,
-				Period: MONTHLY,
-			})
+		err = db.CreateNewBill(BillsConfig{
+			Name:   "name",
+			Amount: lib.NewCurrency("133.7", lib.USD),
+			DueDay: 7,
+			Period: MONTHLY,
 		})
+		a.ErrorIs(err, ErrUniqueName, "expected error when creating duplicate bill name")
 	})
 }
 
 func TestCreateBillHistory(t *testing.T) {
+	t.Parallel()
 	type Mock struct {
 		should        string
 		bills         []BillsConfig
@@ -309,7 +310,8 @@ func TestCreateBillHistory(t *testing.T) {
 			r.NoError(err)
 			defer db.Close()
 
-			db.CreateMonth(time.Date(2024, 1, 1, 0, 0, 0, 0, time.Local))
+			err = db.CreateMonth(time.Date(2024, 1, 1, 0, 0, 0, 0, time.Local))
+			r.NoError(err, "expected month to be created successfully")
 
 			for _, b := range mock.bills {
 				db.CreateNewBill(b)
@@ -318,9 +320,8 @@ func TestCreateBillHistory(t *testing.T) {
 			if mock.expectedError != nil {
 				for _, history := range mock.actual {
 					if mock.expectedError != nil {
-						a.PanicsWithValue(ErrForeignKey, func() {
-							db.CreateBillHistory(history)
-						})
+						err = db.CreateBillHistory(history)
+						a.ErrorIs(err, ErrForeignKey)
 					}
 				}
 				return

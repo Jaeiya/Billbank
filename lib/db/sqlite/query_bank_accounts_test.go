@@ -14,6 +14,7 @@ import (
 )
 
 func TestCreateBankAccount(t *testing.T) {
+	t.Parallel()
 	type MockTable struct {
 		should   string
 		actual   []BankAccountConfig
@@ -135,7 +136,8 @@ func TestCreateBankAccount(t *testing.T) {
 			defer db.Close()
 
 			for _, acct := range mock.actual {
-				db.CreateBankAccount(acct)
+				err = db.CreateBankAccount(acct)
+				r.NoError(err)
 			}
 
 			res, err := db.QueryBankAccounts(QueryMap{}, mock.password)
@@ -168,12 +170,11 @@ func TestCreateBankAccount(t *testing.T) {
 		r.NoError(err)
 		defer db.Close()
 
-		a.PanicsWithValue(lib.ErrEncryptWithoutPassword, func() {
-			db.CreateBankAccount(BankAccountConfig{
-				Name:          "Test",
-				AccountNumber: utils.NewPointer("1823842"),
-			})
+		err = db.CreateBankAccount(BankAccountConfig{
+			Name:          "Test",
+			AccountNumber: utils.NewPointer("1823842"),
 		})
+		a.ErrorIs(err, lib.ErrEncryptWithoutPassword)
 	})
 }
 
@@ -302,17 +303,18 @@ func TestBankAccountHistory(t *testing.T) {
 			db.CreateMonth(time.Date(2024, 1, 1, 0, 0, 0, 0, time.Local))
 
 			for _, acct := range mock.accounts {
-				db.CreateBankAccount(acct)
+				err = db.CreateBankAccount(acct)
+				r.NoError(err)
 			}
 
 			for _, history := range mock.actual {
 				if mock.expectError != nil {
-					a.PanicsWithValue(ErrForeignKey, func() {
-						db.CreateBankAccountHistory(history)
-					})
+					err = db.CreateBankAccountHistory(history)
+					a.ErrorIs(err, ErrForeignKey)
 					return
 				}
-				db.CreateBankAccountHistory(history)
+				err = db.CreateBankAccountHistory(history)
+				a.NoError(err)
 			}
 
 			res, err := db.QueryBankAccountHistory(QueryMap{})
@@ -323,6 +325,7 @@ func TestBankAccountHistory(t *testing.T) {
 }
 
 func TestBankTransfers(t *testing.T) {
+	t.Parallel()
 	type MockTable struct {
 		should      string
 		accounts    []BankAccountConfig
@@ -458,23 +461,26 @@ func TestBankTransfers(t *testing.T) {
 			r.NoError(err)
 			defer db.Close()
 
-			db.CreateMonth(time.Date(2024, 1, 1, 0, 0, 0, 0, time.Local))
+			err = db.CreateMonth(time.Date(2024, 1, 1, 0, 0, 0, 0, time.Local))
+			r.NoError(err)
 
 			for _, acct := range mock.accounts {
-				db.CreateBankAccount(acct)
+				err = db.CreateBankAccount(acct)
+				r.NoError(err)
 			}
 
 			for _, history := range mock.history {
-				db.CreateBankAccountHistory(history)
+				err = db.CreateBankAccountHistory(history)
+				r.NoError(err)
 			}
 
 			for _, transfer := range mock.actual {
 				if mock.expectError != nil {
-					a.PanicsWithValue(mock.expectError, func() {
-						db.CreateTransfer(transfer)
-					})
+					err = db.CreateTransfer(transfer)
+					a.ErrorIs(err, mock.expectError)
 				} else {
-					db.CreateTransfer(transfer)
+					err = db.CreateTransfer(transfer)
+					r.NoError(err)
 				}
 			}
 

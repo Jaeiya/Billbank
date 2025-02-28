@@ -12,6 +12,7 @@ import (
 )
 
 func TestCreateCreditCards(t *testing.T) {
+	t.Parallel()
 	type MockTable struct {
 		should        string
 		actual        []CreditCardConfig
@@ -134,15 +135,15 @@ func TestCreateCreditCards(t *testing.T) {
 
 			if mock.expectedError != nil {
 				for _, cardConfig := range mock.actual {
-					a.PanicsWithValue(ErrDueDayInvalid, func() {
-						db.CreateCreditCard(cardConfig)
-					})
+					err = db.CreateCreditCard(cardConfig)
+					a.ErrorIs(err, ErrDueDayInvalid)
 				}
 				return
 			}
 
 			for _, cardConfig := range mock.actual {
-				db.CreateCreditCard(cardConfig)
+				err = db.CreateCreditCard(cardConfig)
+				r.NoError(err)
 			}
 
 			res, err := db.QueryCreditCards(QueryMap{}, mock.password)
@@ -162,23 +163,24 @@ func TestCreateCreditCards(t *testing.T) {
 		r.NoError(err)
 		defer db.Close()
 
-		db.CreateCreditCard(CreditCardConfig{
+		err = db.CreateCreditCard(CreditCardConfig{
 			Name:           "test",
 			DueDay:         5,
 			LastFourDigits: "1234",
 		})
+		r.NoError(err)
 
-		a.PanicsWithValue(ErrUniqueName, func() {
-			db.CreateCreditCard(CreditCardConfig{
-				Name:           "test",
-				DueDay:         5,
-				LastFourDigits: "1234",
-			})
+		err = db.CreateCreditCard(CreditCardConfig{
+			Name:           "test",
+			DueDay:         5,
+			LastFourDigits: "1234",
 		})
+		a.ErrorIs(err, ErrUniqueName)
 	})
 }
 
 func TestCreateCreditCardHistory(t *testing.T) {
+	t.Parallel()
 	type MockTable struct {
 		should        string
 		cards         []CreditCardConfig
@@ -316,23 +318,25 @@ func TestCreateCreditCardHistory(t *testing.T) {
 			r.NoError(err)
 			defer db.Close()
 
-			db.CreateMonth(time.Date(2024, 1, 1, 0, 0, 0, 0, time.Local))
+			err = db.CreateMonth(time.Date(2024, 1, 1, 0, 0, 0, 0, time.Local))
+			r.NoError(err)
 
 			for _, cardConfig := range mock.cards {
-				db.CreateCreditCard(cardConfig)
+				err = db.CreateCreditCard(cardConfig)
+				r.NoError(err)
 			}
 
 			if mock.expectedError != nil {
 				for _, histConfig := range mock.actual {
-					a.PanicsWithValue(mock.expectedError, func() {
-						db.CreateCreditCardHistory(histConfig)
-					})
+					err = db.CreateCreditCardHistory(histConfig)
+					a.ErrorIs(err, mock.expectedError)
 				}
 				return
 			}
 
 			for _, histConfig := range mock.actual {
-				db.CreateCreditCardHistory(histConfig)
+				err = db.CreateCreditCardHistory(histConfig)
+				r.NoError(err)
 			}
 
 			res, err := db.QueryCreditCardHistory(QueryMap{})
@@ -344,6 +348,7 @@ func TestCreateCreditCardHistory(t *testing.T) {
 }
 
 func TestSetCreditCardHistory(t *testing.T) {
+	t.Parallel()
 	type MockTable struct {
 		should              string
 		actual              CCFieldMap
@@ -428,20 +433,23 @@ func TestSetCreditCardHistory(t *testing.T) {
 			r.NoError(err)
 			defer db.Close()
 
-			db.CreateMonth(time.Date(2024, 1, 1, 0, 0, 0, 0, time.Local))
+			err = db.CreateMonth(time.Date(2024, 1, 1, 0, 0, 0, 0, time.Local))
+			r.NoError(err)
 
-			db.CreateCreditCard(CreditCardConfig{
+			err = db.CreateCreditCard(CreditCardConfig{
 				Name:           "test",
 				DueDay:         1,
 				LastFourDigits: "1234",
 			})
+			r.NoError(err)
 
-			db.CreateCreditCardHistory(CreditCardHistoryConfig{
+			err = db.CreateCreditCardHistory(CreditCardHistoryConfig{
 				CreditCardID: 1,
 				MonthID:      1,
 				Balance:      lib.NewCurrency("0", lib.USD),
 				DueDay:       1,
 			})
+			r.NoError(err)
 
 			if mock.expectedErrContains != nil {
 				err := db.SetCreditCardHistory(1, mock.actual)
@@ -450,7 +458,8 @@ func TestSetCreditCardHistory(t *testing.T) {
 				return
 			}
 
-			db.SetCreditCardHistory(1, mock.actual)
+			err = db.SetCreditCardHistory(1, mock.actual)
+			r.NoError(err)
 
 			res, err := db.QueryCreditCardHistory(QueryMap{})
 			r.NoError(err)

@@ -187,25 +187,26 @@ func buildQueryStr(t Table, fm FieldMap) string {
 	return fmt.Sprintf("SELECT * FROM %s WHERE %s", t, strings.Join(conditions, " AND "))
 }
 
-func panicOnExecErr(err error) {
+func getExecError(err error) error {
 	if strings.Contains(err.Error(), "FOREIGN KEY constraint failed") {
-		panic(ErrForeignKey)
+		return ErrForeignKey
 	}
 	if strings.Contains(err.Error(), "CHECK constraint failed: due_day") {
-		panic(ErrDueDayInvalid)
+		return ErrDueDayInvalid
 	}
 	if strings.Contains(err.Error(), "CHECK constraint failed: transfer_type") {
-		panic(ErrTransferTypeInvalid)
+		return ErrTransferTypeInvalid
 	}
 	if strings.Contains(err.Error(), "CHECK constraint failed: amount") {
-		panic(ErrAmountInvalid)
+		return ErrAmountInvalid
 	}
 	if strings.Contains(err.Error(), "CHECK constraint failed: month") {
-		panic(ErrMonthInvalid)
+		return ErrMonthInvalid
 	}
 	if strings.Contains(err.Error(), "UNIQUE constraint failed") &&
 		strings.Contains(err.Error(), ".name (") {
-		panic(ErrUniqueName)
+		return ErrUniqueName
 	}
-	panic(err)
+
+	return err
 }

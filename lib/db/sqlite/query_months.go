@@ -13,7 +13,7 @@ type MonthRecord struct {
 	Month int
 }
 
-func (sdb SqliteDb) CreateMonth(t time.Time) {
+func (sdb SqliteDb) CreateMonth(t time.Time) error {
 	// Make sure any prior date arithmetic, used a clean date
 	isClean := t.Day() == 1 &&
 		t.Hour() == 0 &&
@@ -22,13 +22,12 @@ func (sdb SqliteDb) CreateMonth(t time.Time) {
 		t.Nanosecond() == 0
 
 	if !isClean {
-		panic(ErrDirtyDate)
+		return ErrDirtyDate
 	}
-	if _, err := sdb.handle.Exec(
-		sdb.InsertInto(MONTHS, t.Year(), t.Month()),
-	); err != nil {
-		panicOnExecErr(err)
+	if _, err := sdb.handle.Exec(sdb.InsertInto(MONTHS, t.Year(), t.Month())); err != nil {
+		return getExecError(err)
 	}
+	return nil
 }
 
 func (sdb SqliteDb) QueryMonths(qm QueryMap) ([]MonthRecord, error) {
@@ -42,7 +41,7 @@ func (sdb SqliteDb) QueryMonths(qm QueryMap) ([]MonthRecord, error) {
 			&record.Year,
 			&record.Month,
 		); err != nil {
-			panic(err)
+			return []MonthRecord{}, err
 		}
 		records = append(records, record)
 	}
