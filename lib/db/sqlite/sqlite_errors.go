@@ -22,6 +22,10 @@ var (
 	ErrIncomeNotFound            = errors.New(setNotFound("income"))
 	ErrIncomeHistoryNotFound     = errors.New(setNotFound("income history"))
 	ErrAffixedIncomeNotFound     = errors.New(setNotFound("affixed income"))
+
+	ErrUnsupportedTable    = fmt.Errorf("unsupported table for inserting into")
+	ErrMismatchColsValues  = fmt.Errorf("too many or too few values for provided table")
+	ErrUnsupportedFieldMap = fmt.Errorf("unsupported field map")
 )
 
 func setNotFound(s string) string {

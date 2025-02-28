@@ -124,10 +124,13 @@ func (sdb SqliteDb) QueryCreditCards(
 	qm QueryMap,
 	password *string,
 ) ([]CreditCardRecord, error) {
-	rows := sdb.query(CREDIT_CARDS, qm)
+	rows, err := sdb.query(CREDIT_CARDS, qm)
+	if err != nil {
+		return []CreditCardRecord{}, err
+	}
+
 	var creditLimit *int
 	var records []CreditCardRecord
-
 	for rows.Next() {
 		var record CreditCardRecord
 		var err error
@@ -195,7 +198,10 @@ func (sdb SqliteDb) CreateCreditCardHistory(config CreditCardHistoryConfig) erro
 }
 
 func (sdb SqliteDb) QueryCreditCardHistory(qm QueryMap) ([]CardHistoryRecord, error) {
-	rows := sdb.query(CREDIT_CARD_HISTORY, qm)
+	rows, err := sdb.query(CREDIT_CARD_HISTORY, qm)
+	if err != nil {
+		return []CardHistoryRecord{}, err
+	}
 
 	var (
 		balance     int

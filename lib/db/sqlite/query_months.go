@@ -31,9 +31,12 @@ func (sdb SqliteDb) CreateMonth(t time.Time) error {
 }
 
 func (sdb SqliteDb) QueryMonths(qm QueryMap) ([]MonthRecord, error) {
-	rows := sdb.query(MONTHS, qm)
-	var records []MonthRecord
+	rows, err := sdb.query(MONTHS, qm)
+	if err != nil {
+		return []MonthRecord{}, err
+	}
 
+	var records []MonthRecord
 	for rows.Next() {
 		var record MonthRecord
 		if err := rows.Scan(

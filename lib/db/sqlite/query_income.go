@@ -78,10 +78,13 @@ func (sdb SqliteDb) SetIncome(id int, amount lib.Currency) error {
 }
 
 func (sdb SqliteDb) QueryIncome(qm QueryMap) ([]IncomeRecord, error) {
-	rows := sdb.query(INCOME, qm)
+	rows, err := sdb.query(INCOME, qm)
+	if err != nil {
+		return []IncomeRecord{}, err
+	}
+
 	var amount int
 	var records []IncomeRecord
-
 	for rows.Next() {
 		var record IncomeRecord
 		if err := rows.Scan(
@@ -119,10 +122,13 @@ func (sdb SqliteDb) CreateIncomeHistory(config IncomeHistoryConfig) error {
 }
 
 func (sdb SqliteDb) QueryIncomeHistory(qm QueryMap) ([]IncomeHistoryRecord, error) {
-	rows := sdb.query(INCOME_HISTORY, qm)
+	rows, err := sdb.query(INCOME_HISTORY, qm)
+	if err != nil {
+		return []IncomeHistoryRecord{}, err
+	}
+
 	var amount int
 	var records []IncomeHistoryRecord
-
 	for rows.Next() {
 		var record IncomeHistoryRecord
 		if err := rows.Scan(
@@ -159,10 +165,13 @@ func (sdb SqliteDb) AffixIncome(historyID int, name string, amount lib.Currency)
 }
 
 func (sdb SqliteDb) QueryAffixIncome(qm QueryMap) ([]AffixIncomeRecord, error) {
-	rows := sdb.query(INCOME_AFFIXES, qm)
+	rows, err := sdb.query(INCOME_AFFIXES, qm)
+	if err != nil {
+		return []AffixIncomeRecord{}, err
+	}
+
 	var amount int
 	var records []AffixIncomeRecord
-
 	for rows.Next() {
 		var record AffixIncomeRecord
 		if err := rows.Scan(

@@ -52,14 +52,14 @@ func NewSqliteDb(filePath string, cc lib.CurrencyCode) (*SqliteDb, error) {
 	return &SqliteDb{db, cc}, nil
 }
 
-func (sdb SqliteDb) ToInsertIntoStr(t Table, values ...any) string {
+func (sdb SqliteDb) ToInsertIntoStr(t Table, values ...any) (string, error) {
 	columns, exists := tableData[t]
 	if !exists {
-		panic("unsupported table")
+		return "", ErrUnsupportedTable
 	}
 
 	if len(columns) != len(values) {
-		panic(fmt.Sprintf("expected %d values, but got %d", len(columns), len(values)))
+		return "", ErrMismatchColsValues
 	}
 
 	var realCols []string
@@ -86,81 +86,91 @@ func (sdb SqliteDb) ToInsertIntoStr(t Table, values ...any) string {
 		t,
 		strings.Join(realCols, ","),
 		strings.Join(realValues, ","),
-	)
+	), nil
 }
 
 func (sdb SqliteDb) Close() {
 	_ = sdb.handle.Close()
 }
 
-func (sdb SqliteDb) query(t Table, qm QueryMap) *sql.Rows {
+func (sdb SqliteDb) query(t Table, qm QueryMap) (*sql.Rows, error) {
 	var fm FieldMap
+	var err error
+
 	whereIDOrMonthID := WHERE_ID | WHERE_MONTH_ID
 	switch t {
 	case MONTHS:
-		fm = buildFieldMap(WHERE_ID|WHERE_MONTH|WHERE_YEAR, qm)
+		fm, err = buildFieldMap(WHERE_ID|WHERE_MONTH|WHERE_YEAR, qm)
 
 	case BANK_ACCOUNTS, INCOME, BILLS:
-		fm = buildFieldMap(WHERE_ID, qm)
+		fm, err = buildFieldMap(WHERE_ID, qm)
 
 	case BANK_ACCOUNT_HISTORY:
-		fm = buildFieldMap(whereIDOrMonthID|WHERE_BANK_ACCOUNT_ID, qm)
+		fm, err = buildFieldMap(whereIDOrMonthID|WHERE_BANK_ACCOUNT_ID, qm)
 
 	case TRANSFERS:
-		fm = buildFieldMap(whereIDOrMonthID|WHERE_BANK_ACCOUNT_ID, qm)
+		fm, err = buildFieldMap(whereIDOrMonthID|WHERE_BANK_ACCOUNT_ID, qm)
 
 	case CREDIT_CARDS:
-		fm = buildFieldMap(WHERE_ID|WHERE_NAME, qm)
+		fm, err = buildFieldMap(WHERE_ID|WHERE_NAME, qm)
 
 	case CREDIT_CARD_HISTORY:
-		fm = buildFieldMap(whereIDOrMonthID|WHERE_CREDIT_CARD_ID, qm)
+		fm, err = buildFieldMap(whereIDOrMonthID|WHERE_CREDIT_CARD_ID, qm)
 
 	case INCOME_HISTORY:
-		fm = buildFieldMap(whereIDOrMonthID|WHERE_INCOME_ID, qm)
+		fm, err = buildFieldMap(whereIDOrMonthID|WHERE_INCOME_ID, qm)
 
 	case INCOME_AFFIXES:
-		fm = buildFieldMap(WHERE_ID|WHERE_INCOME_ID, qm)
+		fm, err = buildFieldMap(WHERE_ID|WHERE_INCOME_ID, qm)
 
 	case BILL_HISTORY:
-		fm = buildFieldMap(whereIDOrMonthID|WHERE_BILL_ID, qm)
+		fm, err = buildFieldMap(whereIDOrMonthID|WHERE_BILL_ID, qm)
 
 	default:
-		panic(fmt.Sprintf("unsupported table: %s", t))
+		err = fmt.Errorf("unsupported table: %s", t)
 	}
 
-	queryStr := buildQueryStr(t, fm)
+	if err != nil {
+		return nil, err
+	}
+
+	queryStr, err := buildQueryStr(t, fm)
+	if err != nil {
+		return nil, err
+	}
+
 	rows, err := sdb.handle.Query(queryStr)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
-	return rows
+	return rows, nil
 }
 
-func buildFieldMap(allowedFields WhereFlag, qm QueryMap) FieldMap {
+func buildFieldMap(allowedFields WhereFlag, qm QueryMap) (FieldMap, error) {
 	fm := FieldMap{}
 	for ff, fieldValue := range qm {
 		field, fieldExists := WhereFieldMap[ff]
 		if !fieldExists {
-			panic("unsupported field")
+			return FieldMap{}, ErrUnsupportedFieldMap
 		}
 		if allowedFields&ff == 0 {
-			panic(fmt.Sprintf("field not allowed: %v", WhereFieldMap[ff]))
+			return FieldMap{}, fmt.Errorf("field not allowed: %v", WhereFieldMap[ff])
 		}
 		fm[field] = fieldValue
 	}
 
-	return fm
+	return fm, nil
 }
 
-func buildQueryStr(t Table, fm FieldMap) string {
+func buildQueryStr(t Table, fm FieldMap) (string, error) {
 	td, ok := tableData[t]
 	if !ok {
-		panic("table does not exist")
+		return "", fmt.Errorf("table does not exist [%s]", t)
 	}
 
 	var conditions []string
 	if len(fm) == 0 {
-		return fmt.Sprintf("SELECT * FROM %s", t)
+		return fmt.Sprintf("SELECT * FROM %s", t), nil
 	}
 
 	for field, val := range fm {
@@ -168,7 +178,11 @@ func buildQueryStr(t Table, fm FieldMap) string {
 		// automatically by SQL.
 		if field != "id" {
 			if !slices.Contains(td, field) {
-				panic(fmt.Sprintf("%s is an unsupported field for the table: %s", field, t))
+				return "", fmt.Errorf(
+					"[%s] is an unsupported field for the table [%s]",
+					field,
+					t,
+				)
 			}
 		}
 
@@ -180,11 +194,11 @@ func buildQueryStr(t Table, fm FieldMap) string {
 		case lib.Currency:
 			conditions = append(conditions, fmt.Sprintf("%s=%d", field, realVal.GetStoredValue()))
 		default:
-			panic(fmt.Sprintf("unsupported type: %T", val))
+			return "", fmt.Errorf("unsupported type [%T]", val)
 		}
 	}
 
-	return fmt.Sprintf("SELECT * FROM %s WHERE %s", t, strings.Join(conditions, " AND "))
+	return fmt.Sprintf("SELECT * FROM %s WHERE %s", t, strings.Join(conditions, " AND ")), nil
 }
 
 func getExecError(err error) error {

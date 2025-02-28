@@ -80,9 +80,12 @@ func (sdb SqliteDb) CreateBankAccount(config BankAccountConfig) error {
 }
 
 func (sdb SqliteDb) QueryBankAccounts(qm QueryMap, password *string) ([]BankRecord, error) {
-	rows := sdb.query(BANK_ACCOUNTS, qm)
-	var records []BankRecord
+	rows, err := sdb.query(BANK_ACCOUNTS, qm)
+	if err != nil {
+		return []BankRecord{}, err
+	}
 
+	var records []BankRecord
 	for rows.Next() {
 		var record BankRecord
 		var err error
@@ -134,10 +137,13 @@ func (sdb SqliteDb) CreateBankAccountHistory(config BankHistoryConfig) error {
 }
 
 func (sdb SqliteDb) QueryBankAccountHistory(qm QueryMap) ([]BankHistoryRecord, error) {
-	rows := sdb.query(BANK_ACCOUNT_HISTORY, qm)
+	rows, err := sdb.query(BANK_ACCOUNT_HISTORY, qm)
+	if err != nil {
+		return []BankHistoryRecord{}, err
+	}
+
 	var balance int
 	var records []BankHistoryRecord
-
 	for rows.Next() {
 		var record BankHistoryRecord
 		if err := rows.Scan(
@@ -179,10 +185,13 @@ func (sdb SqliteDb) CreateTransfer(td TransferConfig) error {
 }
 
 func (sdb SqliteDb) QueryTransfers(qm QueryMap) ([]TransferRecord, error) {
-	rows := sdb.query(TRANSFERS, qm)
+	rows, err := sdb.query(TRANSFERS, qm)
+	if err != nil {
+		return []TransferRecord{}, err
+	}
+
 	var amount int
 	var records []TransferRecord
-
 	for rows.Next() {
 		var record TransferRecord
 		if err := rows.Scan(

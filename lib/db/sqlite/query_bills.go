@@ -42,10 +42,13 @@ func (sdb SqliteDb) CreateNewBill(cfg BillsConfig) error {
 }
 
 func (sdb SqliteDb) QueryBills(qm QueryMap) ([]BillRecord, error) {
-	rows := sdb.query(BILLS, qm)
+	rows, err := sdb.query(BILLS, qm)
+	if err != nil {
+		return []BillRecord{}, err
+	}
+
 	var amount int
 	var records []BillRecord
-
 	for rows.Next() {
 		var record BillRecord
 		if err := rows.Scan(
@@ -92,7 +95,10 @@ func (sdb SqliteDb) CreateBillHistory(cfg BillHistoryConfig) error {
 }
 
 func (sdb SqliteDb) QueryBillHistory(qm QueryMap) ([]BillHistoryRecord, error) {
-	rows := sdb.query(BILL_HISTORY, qm)
+	rows, err := sdb.query(BILL_HISTORY, qm)
+	if err != nil {
+		return []BillHistoryRecord{}, err
+	}
 
 	var amount int
 	var paidAmount *int
