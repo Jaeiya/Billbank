@@ -72,14 +72,15 @@ func (vp ViewPort) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		teaCmds = append(teaCmds, vp.sendStatusMsg(msg.String, msg.Severity))
 	}
 
+	_, isKey := msg.(tea.KeyMsg)
+
 	// Give up keyboard control to current command
-	if !vp.hasHiddenInput {
+	if !vp.hasHiddenInput || !isKey {
 		vp.CommandInput, teaCmd = vp.CommandInput.Update(msg)
 		teaCmds = append(teaCmds, teaCmd)
 	}
 
 	if vp.CommandModel != nil {
-		_, isKey := msg.(tea.KeyMsg)
 		// Ignore key input unless command has exclusive control
 		if isKey && vp.hasHiddenInput || !isKey {
 			vp.CommandModel, teaCmd = vp.CommandModel.Update(msg)
