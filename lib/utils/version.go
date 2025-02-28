@@ -15,13 +15,15 @@ If the binary is a dev build, then it returns a truncated version
 of the latest commit hash.
 */
 func GetVersion() string {
-	if appVersion == "" {
-		if commitSha == "" {
-			return "invalid version"
-		}
+	if appVersion != "" {
+		return fmt.Sprintf("%s-%s", codeName, appVersion)
+	}
+
+	if commitSha != "" {
 		return fmt.Sprintf("%s-%s", codeName, commitSha[:8])
 	}
-	return fmt.Sprintf("%s-%s", codeName, appVersion)
+
+	return "invalid version"
 }
 
 func GetGoVersion() string {
