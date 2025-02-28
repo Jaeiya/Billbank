@@ -248,13 +248,8 @@ func loadSlog(m debugModel) debugModel {
 	}
 
 	maxLines := 150
-	arg := m.GetArg()
-	if arg != nil {
-		arg, isType := arg.(int)
-		if !isType {
-			m.AddArgTypeError(m.GetArg(), "int")
-			return m
-		}
+	arg, isValid := cmdmodel.GetArgAs[int](m.Base)
+	if isValid {
 		maxLines = arg
 	}
 
@@ -374,6 +369,11 @@ func viewSlog(m debugModel) string {
 func loadStats(m debugModel) debugModel {
 	var err error
 
+	ll, isValid := cmdmodel.GetArgAs[logger.LogLevel](m.Base)
+	if !isValid {
+		return m
+	}
+	_ = ll
 	path := filepath.Join(utils.GetWorkingDir(), "log.txt")
 	fileInfo, err := os.Stat(path)
 	if err != nil {
@@ -488,9 +488,8 @@ func viewStats(m debugModel) string {
 }
 
 func setLogLevel(m debugModel) debugModel {
-	ll, isType := m.GetArg().(logger.LogLevel)
-	if !isType {
-		m.AddArgTypeError(m.GetArg(), "LogLevel")
+	ll, isValid := cmdmodel.GetArgAs[logger.LogLevel](m.Base)
+	if !isValid {
 		return m
 	}
 
