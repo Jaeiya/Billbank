@@ -18,6 +18,7 @@ type MockAddSubtract struct {
 }
 
 func TestCurrency(t *testing.T) {
+	t.Parallel()
 	mockTable := []MockAddSubtract{
 		{
 			should: "add dollars and cents together",
