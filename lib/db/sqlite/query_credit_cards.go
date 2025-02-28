@@ -105,7 +105,7 @@ func (sdb SqliteDb) CreateCreditCard(config CreditCardConfig) error {
 	}
 
 	_, err = sdb.handle.Exec(
-		sdb.InsertInto(
+		sdb.ToInsertIntoStr(
 			CREDIT_CARDS,
 			config.Name,
 			config.DueDay,
@@ -177,7 +177,7 @@ func (sdb SqliteDb) CreateCreditCardHistory(config CreditCardHistoryConfig) erro
 		creditLimit = config.CreditLimit.GetStoredValue()
 	}
 	_, err := sdb.handle.Exec(
-		sdb.InsertInto(
+		sdb.ToInsertIntoStr(
 			CREDIT_CARD_HISTORY,
 			config.CreditCardID,
 			config.MonthID,

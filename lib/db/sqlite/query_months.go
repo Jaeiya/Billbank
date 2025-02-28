@@ -24,7 +24,7 @@ func (sdb SqliteDb) CreateMonth(t time.Time) error {
 	if !isClean {
 		return ErrDirtyDate
 	}
-	if _, err := sdb.handle.Exec(sdb.InsertInto(MONTHS, t.Year(), t.Month())); err != nil {
+	if _, err := sdb.handle.Exec(sdb.ToInsertIntoStr(MONTHS, t.Year(), t.Month())); err != nil {
 		return getExecError(err)
 	}
 	return nil

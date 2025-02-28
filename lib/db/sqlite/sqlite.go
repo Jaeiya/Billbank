@@ -52,7 +52,7 @@ func NewSqliteDb(filePath string, cc lib.CurrencyCode) (*SqliteDb, error) {
 	return &SqliteDb{db, cc}, nil
 }
 
-func (sdb SqliteDb) InsertInto(t Table, values ...any) string {
+func (sdb SqliteDb) ToInsertIntoStr(t Table, values ...any) string {
 	columns, exists := tableData[t]
 	if !exists {
 		panic("unsupported table")
