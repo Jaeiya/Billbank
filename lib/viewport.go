@@ -22,11 +22,11 @@ type ViewportSize struct {
 }
 
 type ViewPort struct {
-	CommandInput    cmdmodel.InputModel
-	CurrentCmdModel cmdmodel.Interface
-	hasHiddenInput  bool
-	height          int
-	width           int
+	CommandInput   cmdmodel.InputModel
+	CommandModel   cmdmodel.Interface
+	hasHiddenInput bool
+	height         int
+	width          int
 }
 
 func (vp ViewPort) Init() tea.Cmd {
@@ -49,7 +49,7 @@ func (vp ViewPort) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			vp.height = msg.Height
 			vp.width = msg.Width
 			logger.Log(logger.Hot, "[WindowSizeMsg] sending viewport size [%d:%d]", vp.width, vp.height)
-			teaCmds = append(teaCmds, vp.sendViewportSize)
+			teaCmds = append(teaCmds, vp.sendViewportSize(cmdmodel.WindowSizeMsg{}))
 		}
 
 	case tea.KeyMsg:
@@ -78,10 +78,11 @@ func (vp ViewPort) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		teaCmds = append(teaCmds, teaCmd)
 	}
 
-	if vp.CurrentCmdModel != nil {
+	if vp.CommandModel != nil {
 		_, isKey := msg.(tea.KeyMsg)
+		// Ignore key input unless command has exclusive control
 		if isKey && vp.hasHiddenInput || !isKey {
-			vp.CurrentCmdModel, teaCmd = vp.CurrentCmdModel.Update(msg)
+			vp.CommandModel, teaCmd = vp.CommandModel.Update(msg)
 			teaCmds = append(teaCmds, teaCmd)
 		}
 	}
@@ -94,8 +95,8 @@ func (vp ViewPort) View() string {
 	h := lipgloss.Height(cmdrStr)
 	cmdView := ""
 
-	if vp.CurrentCmdModel != nil && vp.CurrentCmdModel.IsInitialized() {
-		cmdView = vp.CurrentCmdModel.View()
+	if vp.CommandModel != nil && vp.CommandModel.IsInitialized() {
+		cmdView = vp.CommandModel.View()
 	}
 
 	getCmdView := func(withoutTextInput bool) string {
@@ -128,13 +129,13 @@ func (vp ViewPort) View() string {
 
 func (vp *ViewPort) updateCommand(msg cmdmodel.UpdateCmdMsg) tea.Cmd {
 	if msg.Model != nil {
-		vp.CurrentCmdModel = msg.Model
+		vp.CommandModel = msg.Model
 		logger.Log(logger.Debug, "storing command model [%s]", msg.Model.GetName())
 	}
-	if vp.CurrentCmdModel.GetStatus().CaptureInput {
+	if vp.CommandModel.GetStatus().CaptureInput {
 		vp.hasHiddenInput = true
 	}
-	return vp.sendViewportSize
+	return vp.sendViewportSize(cmdmodel.ViewportSizeMsg{})
 }
 
 func (vp ViewPort) getSize() ViewportSize {
@@ -154,16 +155,30 @@ func (vp ViewPort) toggleInput() (ViewPort, tea.Cmd) {
 	if !vp.hasHiddenInput {
 		teaCmd = textinput.Blink
 	}
-	vp.CurrentCmdModel, _ = vp.CurrentCmdModel.Update(vp.sendViewportSize())
+	// Updating directly, Avoids UI jumping around
+	vp.CommandModel, _ = vp.CommandModel.Update(cmdmodel.ViewportSizeMsg(vp.getSize()))
 	return vp, teaCmd
 }
 
-func (vp ViewPort) sendViewportSize() tea.Msg {
+func (vp ViewPort) sendViewportSize(msgType tea.Msg) tea.Cmd {
+	var msg tea.Msg
 	vpSize := vp.getSize()
-	logger.Log(logger.Hot, "sending viewport size msg [%d:%d]", vpSize.Width, vpSize.Height)
-	return cmdmodel.ViewportSizeMsg{
-		Width:  vpSize.Width,
-		Height: vpSize.Height,
+	logger.Log(logger.Hot, "sending viewport size [%d:%d]", vpSize.Width, vpSize.Height)
+
+	switch msgType.(type) {
+	case cmdmodel.ViewportSizeMsg:
+		msg = cmdmodel.ViewportSizeMsg(vpSize)
+
+	case cmdmodel.WindowSizeMsg:
+		msg = cmdmodel.WindowSizeMsg(vpSize)
+
+	default:
+		// This should never happen
+		panic("invalid viewport message type")
+	}
+
+	return func() tea.Msg {
+		return msg
 	}
 }
 

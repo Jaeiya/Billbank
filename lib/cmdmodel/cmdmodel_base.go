@@ -132,8 +132,13 @@ func (bc *Base[T]) Update(model T, msg tea.Msg) (T, tea.Cmd) {
 	var teaCmds []tea.Cmd
 
 	switch msg := msg.(type) {
+	case WindowSizeMsg:
+		logger.Log(logger.Hot, "window size event triggered [%d:%d]", msg.Width, msg.Height)
+		bc.viewHeight = msg.Height
+		bc.viewWidth = msg.Width
+
 	case ViewportSizeMsg:
-		logger.Log(logger.Hot, "setting viewport size [%dx%d]", msg.Width, msg.Height)
+		logger.Log(logger.Hot, "viewport size event triggered [%d:%d]", msg.Width, msg.Height)
 		bc.viewHeight = msg.Height
 		bc.viewWidth = msg.Width
 		if bc.status.Path != "" {

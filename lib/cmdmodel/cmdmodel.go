@@ -106,6 +106,11 @@ type (
 		Height int
 	}
 
+	WindowSizeMsg struct {
+		Width  int
+		Height int
+	}
+
 	UpdateCmdMsg struct {
 		Model Interface
 	}
