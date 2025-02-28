@@ -49,7 +49,7 @@ func ValidatePassword(password string, storedPass string) (bool, error) {
 	return bytes.Equal(hash, newHash), nil
 }
 
-func EncryptData(data string, password string) string {
+func EncryptData(data string, password string) (string, error) {
 	salt := make([]byte, 16)
 	if _, err := io.ReadFull(rand.Reader, salt); err != nil {
 		panic(err)
@@ -58,31 +58,31 @@ func EncryptData(data string, password string) string {
 
 	cBlock, err := aes.NewCipher(key)
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 
 	aesGCM, err := cipher.NewGCM(cBlock)
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 
 	nonce := make([]byte, aesGCM.NonceSize())
 	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
-		panic(err)
+		return "", err
 	}
 
 	cipherText := aesGCM.Seal(nonce, nonce, []byte(data), nil)
 
-	return base64.StdEncoding.EncodeToString(append(salt, cipherText...))
+	return base64.StdEncoding.EncodeToString(append(salt, cipherText...)), nil
 }
 
 /*
 EncryptNonNil encrypts data using the password and returns the encrypted
 string; however if data is nil it returns nil.
 */
-func EncryptNonNil(data *string, password *string) any /* nil|string */ {
+func EncryptNonNil(data *string, password *string) (any, error) /* nil|string */ {
 	if data == nil {
-		return nil
+		return nil, nil
 	}
 	if password == nil {
 		panic(ErrEncryptWithoutPassword)

@@ -60,12 +60,22 @@ type TransferRecord struct {
 }
 
 func (sdb SqliteDb) CreateBankAccount(config BankAccountConfig) {
+	encAccountNum, err := lib.EncryptNonNil(config.AccountNumber, config.Password)
+	if err != nil {
+		panic(err)
+	}
+
+	encNotes, err := lib.EncryptNonNil(config.Notes, config.Password)
+	if err != nil {
+		panic(err)
+	}
+
 	if _, err := sdb.handle.Exec(
 		sdb.InsertInto(
 			BANK_ACCOUNTS,
 			config.Name,
-			lib.EncryptNonNil(config.AccountNumber, config.Password),
-			lib.EncryptNonNil(config.Notes, config.Password),
+			encAccountNum,
+			encNotes,
 		),
 	); err != nil {
 		panicOnExecErr(err)

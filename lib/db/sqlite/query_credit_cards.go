@@ -94,15 +94,25 @@ func (sdb SqliteDb) CreateCreditCard(config CreditCardConfig) {
 		creditLimit = config.CreditLimit.GetStoredValue()
 	}
 
+	encCardNum, err := lib.EncryptNonNil(config.CardNumber, config.Password)
+	if err != nil {
+		panic(err)
+	}
+
+	encNotes, err := lib.EncryptNonNil(config.Notes, config.Password)
+	if err != nil {
+		panic(err)
+	}
+
 	if _, err := sdb.handle.Exec(
 		sdb.InsertInto(
 			CREDIT_CARDS,
 			config.Name,
 			config.DueDay,
 			creditLimit,
-			lib.EncryptNonNil(config.CardNumber, config.Password),
+			encCardNum,
 			config.LastFourDigits,
-			lib.EncryptNonNil(config.Notes, config.Password),
+			encNotes,
 		),
 	); err != nil {
 		panicOnExecErr(err)
