@@ -59,9 +59,12 @@ type Command[T any] struct {
 	//	ArgRequired
 	ArgType ArgType
 
-	// Function to parse the argument passed to the
-	// command. This function is required if the arg
-	// type is NOT ArgNone.
+	// Parses the argument passed to the command.
+	// It should return a user-readable error
+	// if it fails to parse.
+	//
+	// This function is required if the arg type
+	// is NOT ArgNone.
 	ParseArg func(arg string) (any, error)
 }
 
