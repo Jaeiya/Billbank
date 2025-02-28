@@ -119,6 +119,12 @@ type (
 
 func GetArgAs[T, E any](m *Base[E]) (T, bool) {
 	var zero T
+	cmd := m.cmdMap[m.status.Path]
+	if cmd.ArgType == ArgNone {
+		m.AddError(fmt.Errorf("[%s] is trying to get an arg it does not support", cmd.Path))
+		return zero, false
+	}
+
 	if m.status.Arg == nil {
 		return zero, false
 	}
