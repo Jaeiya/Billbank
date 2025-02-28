@@ -385,9 +385,9 @@ func validateCmdData[T any](cmdData CommandData[T]) {
 
 	cmdMap := map[string]struct{}{}
 	for _, cmd := range cmdData.Commands {
-		if cmd.Path == "" && cmd.ArgType == ArgRequired && len(cmdData.Commands) > 1 {
+		if cmd.Path == "" && cmd.ArgType > ArgNone && len(cmdData.Commands) > 1 {
 			logger.LogFatal(
-				"[%s] has been initialized as a default command with args, but contains extra commands",
+				"[%s] has been initialized as a default command with args, but also has other command paths",
 				MsgIsCmdItselfErr,
 				cmdData.Name,
 			)
