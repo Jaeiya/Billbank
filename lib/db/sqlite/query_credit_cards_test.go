@@ -318,7 +318,7 @@ func TestCreateCreditCardHistory(t *testing.T) {
 			r.NoError(err)
 			defer db.Close()
 
-			err = db.CreateMonth(time.Date(2024, 1, 1, 0, 0, 0, 0, time.Local))
+			err = db.CreateMonth(NewMonth(2024, time.January))
 			r.NoError(err)
 
 			for _, cardConfig := range mock.cards {
@@ -433,7 +433,7 @@ func TestSetCreditCardHistory(t *testing.T) {
 			r.NoError(err)
 			defer db.Close()
 
-			err = db.CreateMonth(time.Date(2024, 1, 1, 0, 0, 0, 0, time.Local))
+			err = db.CreateMonth(NewMonth(2024, time.January))
 			r.NoError(err)
 
 			err = db.CreateCreditCard(CreditCardConfig{

@@ -7,13 +7,21 @@ import (
 
 var ErrDirtyDate = fmt.Errorf("not a clean date")
 
+type Month time.Time
+
+func NewMonth(year int, m time.Month) Month {
+	return Month(time.Date(year, m, 1, 0, 0, 0, 0, time.Local))
+}
+
 type MonthRecord struct {
 	ID    int
 	Year  int
 	Month int
 }
 
-func (sdb SqliteDb) CreateMonth(t time.Time) error {
+func (sdb SqliteDb) CreateMonth(m Month) error {
+	t := time.Time(m)
+
 	// Make sure any prior date arithmetic, used a clean date
 	isClean := t.Day() == 1 &&
 		t.Hour() == 0 &&

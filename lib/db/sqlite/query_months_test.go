@@ -14,7 +14,7 @@ func TestCreateMonth(t *testing.T) {
 	t.Parallel()
 	type MockTable struct {
 		should        string
-		actual        time.Time
+		actual        Month
 		expected      MonthRecord
 		expectedError error
 	}
@@ -22,7 +22,7 @@ func TestCreateMonth(t *testing.T) {
 	table := []MockTable{
 		{
 			should: "create a month record",
-			actual: time.Date(2024, 1, 1, 0, 0, 0, 0, time.Local),
+			actual: NewMonth(2024, time.January),
 			expected: MonthRecord{
 				ID:    1,
 				Year:  2024,
@@ -31,7 +31,7 @@ func TestCreateMonth(t *testing.T) {
 		},
 		{
 			should:        "panic on dirty date",
-			actual:        time.Now(),
+			actual:        Month(time.Now()),
 			expectedError: ErrDirtyDate,
 		},
 	}

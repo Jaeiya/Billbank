@@ -310,7 +310,7 @@ func TestCreateBillHistory(t *testing.T) {
 			r.NoError(err)
 			defer db.Close()
 
-			err = db.CreateMonth(time.Date(2024, 1, 1, 0, 0, 0, 0, time.Local))
+			err = db.CreateMonth(NewMonth(2024, time.January))
 			r.NoError(err, "expected month to be created successfully")
 
 			for _, b := range mock.bills {
