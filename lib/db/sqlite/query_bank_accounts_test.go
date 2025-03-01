@@ -461,7 +461,7 @@ func TestBankTransfers(t *testing.T) {
 			r.NoError(err)
 			defer db.Close()
 
-			err = db.CreateMonth(NewMonth(2024, time.January))
+			_, err = db.CreateMonth(NewMonth(2024, time.January))
 			r.NoError(err)
 
 			for _, acct := range mock.accounts {

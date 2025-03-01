@@ -19,7 +19,7 @@ type MonthRecord struct {
 	Month int
 }
 
-func (sdb SqliteDb) CreateMonth(m Month) error {
+func (sdb SqliteDb) CreateMonth(m Month) (int64, error) {
 	t := time.Time(m)
 
 	// New months should just contain a modified year & month
@@ -30,12 +30,20 @@ func (sdb SqliteDb) CreateMonth(m Month) error {
 		t.Nanosecond() == 0
 
 	if !isClean {
-		return ErrDirtyDate
+		return 0, ErrDirtyDate
 	}
-	if _, err := sdb.handle.Exec(sdb.ToInsertIntoStr(MONTHS, t.Year(), t.Month())); err != nil {
-		return getExecError(err)
+
+	res, err := sdb.handle.Exec(sdb.ToInsertIntoStr(MONTHS, t.Year(), t.Month()))
+	if err != nil {
+		return 0, getExecError(err)
 	}
-	return nil
+
+	id, err := res.LastInsertId()
+	if err != nil {
+		return 0, err
+	}
+
+	return id, nil
 }
 
 func (sdb SqliteDb) QueryMonths(qm QueryMap) ([]MonthRecord, error) {

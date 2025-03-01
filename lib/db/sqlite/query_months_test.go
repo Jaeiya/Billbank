@@ -48,7 +48,7 @@ func TestCreateMonth(t *testing.T) {
 			defer db.Close()
 
 			if mock.expectedError != nil {
-				err := db.CreateMonth(mock.actual)
+				_, err := db.CreateMonth(mock.actual)
 				a.ErrorIs(err, mock.expectedError, "expected to get correct error")
 				return
 			}
