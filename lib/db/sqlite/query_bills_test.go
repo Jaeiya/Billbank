@@ -187,8 +187,8 @@ func TestCreateBillHistory(t *testing.T) {
 			},
 			actual: []BillHistoryConfig{
 				{
-					BillID:     1,
 					MonthID:    1,
+					Name:       "b1",
 					Amount:     lib.NewCurrency("13.37", lib.USD),
 					DueDay:     3,
 					PaidAmount: utils.NewPointer(lib.NewCurrency("5", lib.USD)),
@@ -198,8 +198,8 @@ func TestCreateBillHistory(t *testing.T) {
 				{
 					ID: 1,
 					BillHistoryConfig: BillHistoryConfig{
-						BillID:     1,
 						MonthID:    1,
+						Name:       "b1",
 						Amount:     lib.NewCurrency("13.37", lib.USD),
 						DueDay:     3,
 						PaidAmount: utils.NewPointer(lib.NewCurrency("5", lib.USD)),
@@ -211,7 +211,7 @@ func TestCreateBillHistory(t *testing.T) {
 			should: "default to a zero paid amount",
 			bills: []BillsConfig{
 				{
-					Name:   "b1",
+					Name:   "b2",
 					Amount: lib.NewCurrency("1337", lib.USD),
 					DueDay: 3,
 					Period: MONTHLY,
@@ -219,8 +219,8 @@ func TestCreateBillHistory(t *testing.T) {
 			},
 			actual: []BillHistoryConfig{
 				{
-					BillID:  1,
 					MonthID: 1,
+					Name:    "b2",
 					Amount:  lib.NewCurrency("1337", lib.USD),
 					DueDay:  3,
 				},
@@ -229,8 +229,8 @@ func TestCreateBillHistory(t *testing.T) {
 				{
 					ID: 1,
 					BillHistoryConfig: BillHistoryConfig{
-						BillID:     1,
 						MonthID:    1,
+						Name:       "b2",
 						Amount:     lib.NewCurrency("1337", lib.USD),
 						DueDay:     3,
 						PaidAmount: utils.NewPointer(lib.NewCurrency("0", lib.USD)),
@@ -242,7 +242,7 @@ func TestCreateBillHistory(t *testing.T) {
 			should: "allow nullable fields to be nil",
 			bills: []BillsConfig{
 				{
-					Name:   "b1",
+					Name:   "b3",
 					Amount: lib.NewCurrency("1337", lib.USD),
 					DueDay: 3,
 					Period: MONTHLY,
@@ -250,8 +250,8 @@ func TestCreateBillHistory(t *testing.T) {
 			},
 			actual: []BillHistoryConfig{
 				{
-					BillID:  1,
 					MonthID: 1,
+					Name:    "b3",
 					Amount:  lib.NewCurrency("1337", lib.USD),
 					DueDay:  3,
 				},
@@ -260,8 +260,8 @@ func TestCreateBillHistory(t *testing.T) {
 				{
 					ID: 1,
 					BillHistoryConfig: BillHistoryConfig{
-						BillID:     1,
 						MonthID:    1,
+						Name:       "b3",
 						Amount:     lib.NewCurrency("1337", lib.USD),
 						DueDay:     3,
 						PaidAmount: utils.NewPointer(lib.NewCurrency("0", lib.USD)),
@@ -272,10 +272,10 @@ func TestCreateBillHistory(t *testing.T) {
 			},
 		},
 		{
-			should: "panic with foreign key violations",
+			should: "error with foreign key violations",
 			bills: []BillsConfig{
 				{
-					Name:   "b1",
+					Name:   "b4",
 					Amount: lib.NewCurrency("1337", lib.USD),
 					DueDay: 3,
 					Period: MONTHLY,
@@ -283,16 +283,10 @@ func TestCreateBillHistory(t *testing.T) {
 			},
 			actual: []BillHistoryConfig{
 				{
-					BillID:  2,
-					MonthID: 1,
+					MonthID: 2,
+					Name:    "b4",
 					Amount:  lib.NewCurrency("1337", lib.USD),
 					DueDay:  3,
-				},
-				{
-					BillID:  1,
-					MonthID: 2,
-					Amount:  lib.NewCurrency("13.37", lib.USD),
-					DueDay:  7,
 				},
 			},
 			expectedError: ErrForeignKey,
@@ -314,7 +308,8 @@ func TestCreateBillHistory(t *testing.T) {
 			r.NoError(err, "expected month to be created successfully")
 
 			for _, b := range mock.bills {
-				db.CreateNewBill(b)
+				err = db.CreateNewBill(b)
+				r.NoError(err)
 			}
 
 			if mock.expectedError != nil {

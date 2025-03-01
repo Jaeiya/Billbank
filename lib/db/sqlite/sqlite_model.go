@@ -60,8 +60,8 @@ var tableData = TableFields{
 		"period",
 	},
 	BILL_HISTORY: {
-		"bill_id",
 		"month_id",
+		"name",
 		"amount",
 		"paid_amount",
 		"paid_date",

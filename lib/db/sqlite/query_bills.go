@@ -18,8 +18,8 @@ type BillRecord struct {
 }
 
 type BillHistoryConfig struct {
-	BillID     int
 	MonthID    int
+	Name       string
 	Amount     lib.Currency
 	DueDay     int
 	PaidAmount *lib.Currency
@@ -80,8 +80,8 @@ func (sdb SqliteDb) CreateBillHistory(cfg BillHistoryConfig) error {
 	if _, err := sdb.handle.Exec(
 		sdb.ToInsertIntoStr(
 			BILL_HISTORY,
-			cfg.BillID,
 			cfg.MonthID,
+			cfg.Name,
 			cfg.Amount.GetStoredValue(),
 			paidAmount,
 			utils.TryDeref(cfg.PaidDate),
@@ -108,8 +108,8 @@ func (sdb SqliteDb) QueryBillHistory(qm QueryMap) ([]BillHistoryRecord, error) {
 		var record BillHistoryRecord
 		if err := rows.Scan(
 			&record.ID,
-			&record.BillID,
 			&record.MonthID,
+			&record.Name,
 			&amount,
 			&paidAmount,
 			&record.PaidDate,
