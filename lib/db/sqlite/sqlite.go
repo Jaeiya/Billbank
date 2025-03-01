@@ -33,18 +33,18 @@ func NewSqliteDb(filePath string, cc lib.CurrencyCode) (*SqliteDb, error) {
 		return nil, err
 	}
 
-	// Creates the physical db file
-	_, err = db.Exec(initBankSQL)
-	if err != nil {
-		return nil, err
-	}
-
 	_, err = db.Exec("PRAGMA foreign_keys = ON;")
 	if err != nil {
 		return nil, err
 	}
 
 	_, err = db.Exec("PRAGMA user_version = 1;")
+	if err != nil {
+		return nil, err
+	}
+
+	// Creates the physical db file
+	_, err = db.Exec(initBankSQL)
 	if err != nil {
 		return nil, err
 	}
