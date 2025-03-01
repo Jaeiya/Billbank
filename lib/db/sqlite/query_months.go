@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-var ErrDirtyDate = fmt.Errorf("not a clean date")
+var ErrDirtyDate = fmt.Errorf("found dirty date; use NewMonth() to create the date")
 
 type Month time.Time
 
@@ -22,7 +22,7 @@ type MonthRecord struct {
 func (sdb SqliteDb) CreateMonth(m Month) error {
 	t := time.Time(m)
 
-	// Make sure any prior date arithmetic, used a clean date
+	// New months should just contain a modified year & month
 	isClean := t.Day() == 1 &&
 		t.Hour() == 0 &&
 		t.Minute() == 0 &&
