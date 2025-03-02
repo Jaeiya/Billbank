@@ -13,7 +13,7 @@ const (
 	CREDIT_CARDS         = Table("credit_cards")
 	CREDIT_CARD_HISTORY  = Table("credit_card_history")
 	BILLS                = Table("bills")
-	BILL_HISTORY         = Table("bill_history")
+	BILLS_HISTORY        = Table("bills_history")
 )
 
 type TableFields = map[Table][]string
@@ -59,7 +59,7 @@ var tableData = TableFields{
 		"due_day",
 		"period",
 	},
-	BILL_HISTORY: {
+	BILLS_HISTORY: {
 		"month_id",
 		"name",
 		"amount",

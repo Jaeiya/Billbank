@@ -79,7 +79,7 @@ func (sdb SqliteDb) CreateBillHistory(cfg BillHistoryConfig) error {
 
 	if _, err := sdb.handle.Exec(
 		sdb.ToInsertIntoStr(
-			BILL_HISTORY,
+			BILLS_HISTORY,
 			cfg.MonthID,
 			cfg.Name,
 			cfg.Amount.GetStoredValue(),
@@ -95,7 +95,7 @@ func (sdb SqliteDb) CreateBillHistory(cfg BillHistoryConfig) error {
 }
 
 func (sdb SqliteDb) QueryBillHistory(qm QueryMap) ([]BillHistoryRecord, error) {
-	rows, err := sdb.query(BILL_HISTORY, qm)
+	rows, err := sdb.query(BILLS_HISTORY, qm)
 	if err != nil {
 		return []BillHistoryRecord{}, err
 	}

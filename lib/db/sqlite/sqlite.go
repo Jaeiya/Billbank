@@ -123,7 +123,7 @@ func (sdb SqliteDb) query(t Table, qm QueryMap) (*sql.Rows, error) {
 	case INCOME_AFFIXES:
 		fm, err = buildFieldMap(WHERE_ID|WHERE_INCOME_ID, qm)
 
-	case BILL_HISTORY:
+	case BILLS_HISTORY:
 		fm, err = buildFieldMap(whereIDOrMonthID|WHERE_BILL_ID, qm)
 
 	default:
