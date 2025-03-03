@@ -1,7 +1,8 @@
 CREATE TABLE IF NOT EXISTS bank (
     id               TINYINT NOT NULL PRIMARY KEY UNIQUE,
     currency_code    VARCHAR(3) NOT NULL CHECK (currency_code='USD'),
-    current_month_id INT
+    month_id INTEGER NOT NULL,
+    version          VARCHAR(5)
 );
 
 
