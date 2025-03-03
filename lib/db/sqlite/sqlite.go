@@ -93,6 +93,14 @@ func (sdb SqliteDb) Close() {
 	_ = sdb.handle.Close()
 }
 
+func (sdb SqliteDb) queryAll(t Table) (*sql.Rows, error) {
+	rows, err := sdb.handle.Query(fmt.Sprintf("SELECT * FROM %s", t))
+	if err != nil {
+		return nil, err
+	}
+	return rows, nil
+}
+
 func (sdb SqliteDb) query(t Table, qm QueryMap) (*sql.Rows, error) {
 	var fm FieldMap
 	var err error
