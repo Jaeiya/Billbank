@@ -14,6 +14,7 @@ const (
 	CREDIT_CARD_HISTORY  = Table("credit_card_history")
 	BILLS                = Table("bills")
 	BILLS_HISTORY        = Table("bills_history")
+	BILL_TYPES           = Table("bill_types")
 )
 
 type TableFields = map[Table][]string
@@ -54,6 +55,7 @@ var tableData = TableFields{
 		"period",
 	},
 	BILLS: {
+		"type_id",
 		"name",
 		"amount",
 		"due_day",
@@ -61,11 +63,14 @@ var tableData = TableFields{
 	},
 	BILLS_HISTORY: {
 		"month_id",
+		"type_id",
 		"name",
 		"amount",
-		"paid_amount",
-		"paid_date",
 		"due_day",
+		"paid_amount",
+		"paid_day",
+		"paid_how",
+		"cleared_on",
 		"notes",
 	},
 }

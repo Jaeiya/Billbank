@@ -1,11 +1,15 @@
 package sqlite
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/jaeiya/billbank/lib"
 	"github.com/jaeiya/billbank/lib/utils"
 )
 
 type BillsConfig struct {
+	TypeID int
 	Name   string
 	Amount lib.Currency
 	DueDay int
@@ -18,13 +22,16 @@ type BillRecord struct {
 }
 
 type BillHistoryConfig struct {
-	MonthID    int
-	Name       string
-	Amount     lib.Currency
-	DueDay     int
-	PaidAmount *lib.Currency
-	PaidDate   *string
-	Notes      *string
+	MonthID      int
+	TypeID       int
+	Name         string
+	Amount       lib.Currency
+	DueDay       int
+	PaidAmount   *lib.Currency
+	PaidDay      *int
+	PaidHow      *string
+	ClearedOnDay *int
+	Notes        *string
 }
 
 type BillHistoryRecord struct {
@@ -33,9 +40,19 @@ type BillHistoryRecord struct {
 }
 
 func (sdb SqliteDb) CreateNewBill(cfg BillsConfig) error {
-	if _, err := sdb.handle.Exec(
-		sdb.ToInsertIntoStr(BILLS, cfg.Name, cfg.Amount.GetStoredValue(), cfg.DueDay, cfg.Period),
-	); err != nil {
+	insStr, err := sdb.ToInsertIntoStr(
+		BILLS,
+		cfg.TypeID,
+		cfg.Name,
+		cfg.Amount.GetStoredValue(),
+		cfg.DueDay,
+		cfg.Period,
+	)
+	if err != nil {
+		return err
+	}
+
+	if _, err := sdb.handle.Exec(insStr); err != nil {
 		return getExecError(err)
 	}
 	return nil
@@ -53,6 +70,7 @@ func (sdb SqliteDb) QueryBills(qm QueryMap) ([]BillRecord, error) {
 		var record BillRecord
 		if err := rows.Scan(
 			&record.ID,
+			&record.TypeID,
 			&record.Name,
 			&amount,
 			&record.DueDay,
@@ -77,18 +95,24 @@ func (sdb SqliteDb) CreateBillHistory(cfg BillHistoryConfig) error {
 		paidAmount = cfg.PaidAmount.GetStoredValue()
 	}
 
-	if _, err := sdb.handle.Exec(
-		sdb.ToInsertIntoStr(
-			BILLS_HISTORY,
-			cfg.MonthID,
-			cfg.Name,
-			cfg.Amount.GetStoredValue(),
-			paidAmount,
-			utils.TryDeref(cfg.PaidDate),
-			cfg.DueDay,
-			utils.TryDeref(cfg.Notes),
-		),
-	); err != nil {
+	insStr, err := sdb.ToInsertIntoStr(
+		BILLS_HISTORY,
+		cfg.MonthID,
+		cfg.TypeID,
+		cfg.Name,
+		cfg.Amount.GetStoredValue(),
+		cfg.DueDay,
+		paidAmount,
+		utils.TryDeref(cfg.PaidDay),
+		utils.TryDeref(cfg.PaidHow),
+		utils.TryDeref(cfg.ClearedOnDay),
+		utils.TryDeref(cfg.Notes),
+	)
+	if err != nil {
+		return err
+	}
+
+	if _, err := sdb.handle.Exec(insStr); err != nil {
 		return getExecError(err)
 	}
 	return nil
@@ -109,11 +133,14 @@ func (sdb SqliteDb) QueryBillHistory(qm QueryMap) ([]BillHistoryRecord, error) {
 		if err := rows.Scan(
 			&record.ID,
 			&record.MonthID,
+			&record.TypeID,
 			&record.Name,
 			&amount,
-			&paidAmount,
-			&record.PaidDate,
 			&record.DueDay,
+			&paidAmount,
+			&record.PaidDay,
+			&record.PaidHow,
+			&record.ClearedOnDay,
 			&record.Notes,
 		); err != nil {
 			return []BillHistoryRecord{}, err
@@ -134,4 +161,37 @@ func (sdb SqliteDb) QueryBillHistory(qm QueryMap) ([]BillHistoryRecord, error) {
 	}
 
 	return records, nil
+}
+
+func (sdb SqliteDb) CreateBillTypes(names []string) error {
+	var sb strings.Builder
+	sb.WriteString("INSERT INTO bill_types (name) VALUES ")
+	for _, n := range names {
+		sb.WriteString(fmt.Sprintf("('%s'),", n))
+	}
+	insStr := sb.String()
+	_, err := sdb.handle.Exec(insStr[:len(insStr)-1] + ";")
+	if err != nil {
+		return getExecError(err)
+	}
+	return nil
+}
+
+func (sdb SqliteDb) QueryBillTypes() (types []string, err error) {
+	rows, err := sdb.queryAll(BILL_TYPES)
+	if err != nil {
+		return []string{}, err
+	}
+	var name *string
+	var id *int
+	for rows.Next() {
+		if err = rows.Scan(
+			&id,
+			&name,
+		); err != nil {
+			return []string{}, err
+		}
+		types = append(types, *name)
+	}
+	return types, nil
 }

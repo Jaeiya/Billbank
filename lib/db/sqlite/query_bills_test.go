@@ -26,24 +26,28 @@ func TestQueryBills(t *testing.T) {
 			actual: []BillsConfig{
 				{
 					Name:   "t1",
+					TypeID: 1,
 					Amount: lib.NewCurrency("19.99", lib.USD),
 					DueDay: 5,
 					Period: MONTHLY,
 				},
 				{
 					Name:   "t2",
+					TypeID: 1,
 					Amount: lib.NewCurrency("39.99", lib.USD),
 					DueDay: 27,
 					Period: MONTHLY,
 				},
 				{
 					Name:   "t3",
+					TypeID: 1,
 					Amount: lib.NewCurrency("10.45", lib.USD),
 					DueDay: 11,
 					Period: MONTHLY,
 				},
 				{
 					Name:   "t4",
+					TypeID: 1,
 					Amount: lib.NewCurrency("2.99", lib.USD),
 					DueDay: 8,
 					Period: MONTHLY,
@@ -54,6 +58,7 @@ func TestQueryBills(t *testing.T) {
 					ID: 1,
 					BillsConfig: BillsConfig{
 						Name:   "t1",
+						TypeID: 1,
 						Amount: lib.NewCurrency("19.99", lib.USD),
 						DueDay: 5,
 						Period: MONTHLY,
@@ -63,6 +68,7 @@ func TestQueryBills(t *testing.T) {
 					ID: 2,
 					BillsConfig: BillsConfig{
 						Name:   "t2",
+						TypeID: 1,
 						Amount: lib.NewCurrency("39.99", lib.USD),
 						DueDay: 27,
 						Period: MONTHLY,
@@ -72,6 +78,7 @@ func TestQueryBills(t *testing.T) {
 					ID: 3,
 					BillsConfig: BillsConfig{
 						Name:   "t3",
+						TypeID: 1,
 						Amount: lib.NewCurrency("10.45", lib.USD),
 						DueDay: 11,
 						Period: MONTHLY,
@@ -81,6 +88,7 @@ func TestQueryBills(t *testing.T) {
 					ID: 4,
 					BillsConfig: BillsConfig{
 						Name:   "t4",
+						TypeID: 1,
 						Amount: lib.NewCurrency("2.99", lib.USD),
 						DueDay: 8,
 						Period: MONTHLY,
@@ -93,16 +101,31 @@ func TestQueryBills(t *testing.T) {
 			actual: []BillsConfig{
 				{
 					Name:   "t1",
+					TypeID: 1,
 					Amount: lib.NewCurrency("133.7", lib.USD),
 					DueDay: 32,
 				},
 				{
 					Name:   "t2",
+					TypeID: 1,
 					Amount: lib.NewCurrency("133.7", lib.USD),
 					DueDay: 0,
 				},
 			},
 			expectedError: ErrDueDayInvalid,
+		},
+		{
+			should: "panic on foreign key type_id constraint",
+			actual: []BillsConfig{
+				{
+					Name:   "t1",
+					TypeID: 2,
+					Amount: lib.NewCurrency("123.4", lib.USD),
+					DueDay: 12,
+					Period: MONTHLY,
+				},
+			},
+			expectedError: ErrForeignKey,
 		},
 	}
 
@@ -117,6 +140,9 @@ func TestQueryBills(t *testing.T) {
 			r.NoError(err)
 			defer db.Close()
 
+			err = db.CreateBillTypes([]string{"test"})
+			r.NoError(err, "expected to create bill types")
+
 			if mock.expectedError != nil {
 				for _, bill := range mock.actual {
 					err = db.CreateNewBill(bill)
@@ -126,7 +152,8 @@ func TestQueryBills(t *testing.T) {
 			}
 
 			for _, bill := range mock.actual {
-				db.CreateNewBill(bill)
+				err = db.CreateNewBill(bill)
+				r.NoError(err, "expected bill to be created properly")
 			}
 
 			bills, err := db.QueryBills(QueryMap{})
@@ -146,8 +173,12 @@ func TestQueryBills(t *testing.T) {
 		r.NoError(err)
 		defer db.Close()
 
+		err = db.CreateBillTypes([]string{"test"})
+		r.NoError(err, "expected to create bill types")
+
 		err = db.CreateNewBill(BillsConfig{
 			Name:   "name",
+			TypeID: 1,
 			Amount: lib.NewCurrency("13.37", lib.USD),
 			DueDay: 3,
 			Period: MONTHLY,
@@ -156,6 +187,7 @@ func TestQueryBills(t *testing.T) {
 
 		err = db.CreateNewBill(BillsConfig{
 			Name:   "name",
+			TypeID: 1,
 			Amount: lib.NewCurrency("133.7", lib.USD),
 			DueDay: 7,
 			Period: MONTHLY,
@@ -180,6 +212,7 @@ func TestCreateBillHistory(t *testing.T) {
 			bills: []BillsConfig{
 				{
 					Name:   "b1",
+					TypeID: 1,
 					Amount: lib.NewCurrency("13.37", lib.USD),
 					DueDay: 3,
 					Period: MONTHLY,
@@ -188,6 +221,7 @@ func TestCreateBillHistory(t *testing.T) {
 			actual: []BillHistoryConfig{
 				{
 					MonthID:    1,
+					TypeID:     1,
 					Name:       "b1",
 					Amount:     lib.NewCurrency("13.37", lib.USD),
 					DueDay:     3,
@@ -199,6 +233,7 @@ func TestCreateBillHistory(t *testing.T) {
 					ID: 1,
 					BillHistoryConfig: BillHistoryConfig{
 						MonthID:    1,
+						TypeID:     1,
 						Name:       "b1",
 						Amount:     lib.NewCurrency("13.37", lib.USD),
 						DueDay:     3,
@@ -212,6 +247,7 @@ func TestCreateBillHistory(t *testing.T) {
 			bills: []BillsConfig{
 				{
 					Name:   "b2",
+					TypeID: 1,
 					Amount: lib.NewCurrency("1337", lib.USD),
 					DueDay: 3,
 					Period: MONTHLY,
@@ -220,6 +256,7 @@ func TestCreateBillHistory(t *testing.T) {
 			actual: []BillHistoryConfig{
 				{
 					MonthID: 1,
+					TypeID:  1,
 					Name:    "b2",
 					Amount:  lib.NewCurrency("1337", lib.USD),
 					DueDay:  3,
@@ -230,6 +267,7 @@ func TestCreateBillHistory(t *testing.T) {
 					ID: 1,
 					BillHistoryConfig: BillHistoryConfig{
 						MonthID:    1,
+						TypeID:     1,
 						Name:       "b2",
 						Amount:     lib.NewCurrency("1337", lib.USD),
 						DueDay:     3,
@@ -243,6 +281,7 @@ func TestCreateBillHistory(t *testing.T) {
 			bills: []BillsConfig{
 				{
 					Name:   "b3",
+					TypeID: 1,
 					Amount: lib.NewCurrency("1337", lib.USD),
 					DueDay: 3,
 					Period: MONTHLY,
@@ -251,6 +290,7 @@ func TestCreateBillHistory(t *testing.T) {
 			actual: []BillHistoryConfig{
 				{
 					MonthID: 1,
+					TypeID:  1,
 					Name:    "b3",
 					Amount:  lib.NewCurrency("1337", lib.USD),
 					DueDay:  3,
@@ -261,21 +301,23 @@ func TestCreateBillHistory(t *testing.T) {
 					ID: 1,
 					BillHistoryConfig: BillHistoryConfig{
 						MonthID:    1,
+						TypeID:     1,
 						Name:       "b3",
 						Amount:     lib.NewCurrency("1337", lib.USD),
 						DueDay:     3,
 						PaidAmount: utils.NewPointer(lib.NewCurrency("0", lib.USD)),
-						PaidDate:   nil,
+						PaidDay:    nil,
 						Notes:      nil,
 					},
 				},
 			},
 		},
 		{
-			should: "error with foreign key violations",
+			should: "error with foreign key month id violation",
 			bills: []BillsConfig{
 				{
 					Name:   "b4",
+					TypeID: 1,
 					Amount: lib.NewCurrency("1337", lib.USD),
 					DueDay: 3,
 					Period: MONTHLY,
@@ -283,7 +325,30 @@ func TestCreateBillHistory(t *testing.T) {
 			},
 			actual: []BillHistoryConfig{
 				{
-					MonthID: 2,
+					MonthID: 2, // should not exist
+					TypeID:  1,
+					Name:    "b4",
+					Amount:  lib.NewCurrency("1337", lib.USD),
+					DueDay:  3,
+				},
+			},
+			expectedError: ErrForeignKey,
+		},
+		{
+			should: "error with foreign key type id violation",
+			bills: []BillsConfig{
+				{
+					Name:   "b4",
+					TypeID: 1,
+					Amount: lib.NewCurrency("1337", lib.USD),
+					DueDay: 3,
+					Period: MONTHLY,
+				},
+			},
+			actual: []BillHistoryConfig{
+				{
+					MonthID: 1,
+					TypeID:  2, // should not exist
 					Name:    "b4",
 					Amount:  lib.NewCurrency("1337", lib.USD),
 					DueDay:  3,
@@ -306,6 +371,9 @@ func TestCreateBillHistory(t *testing.T) {
 
 			_, err = db.CreateMonth(NewMonth(2024, time.January))
 			r.NoError(err, "expected month to be created successfully")
+
+			err = db.CreateBillTypes([]string{"test"})
+			r.NoError(err, "expected bill types to be created")
 
 			for _, b := range mock.bills {
 				err = db.CreateNewBill(b)
