@@ -195,3 +195,49 @@ func (sdb SqliteDb) QueryBillTypes() (types []string, err error) {
 	}
 	return types, nil
 }
+
+type MonthlyBill struct {
+	// Is ignored when creating
+	ID       int
+	BillID   int
+	IsActive bool
+}
+
+func (sdb SqliteDb) CreateMonthlyBills(bills []MonthlyBill) error {
+	var sb strings.Builder
+	sb.WriteString("INSERT INTO bills_monthly (bill_id, is_active) VALUES ")
+	for _, cfg := range bills {
+		isActiveStr := "FALSE"
+		if cfg.IsActive {
+			isActiveStr = "TRUE"
+		}
+		sb.WriteString(fmt.Sprintf("(%d, '%s'),", cfg.BillID, isActiveStr))
+	}
+	insStr := sb.String()
+	_, err := sdb.handle.Exec(insStr[:len(insStr)-1] + ";")
+	if err != nil {
+		return getExecError(err)
+	}
+	return nil
+}
+
+func (sdb SqliteDb) QueryMonthlyBills() ([]MonthlyBill, error) {
+	rows, err := sdb.queryAll(BILLS_MONTHLY)
+	if err != nil {
+		return []MonthlyBill{}, err
+	}
+
+	var id, billID int
+	var isActive bool
+	monthlyBills := make([]MonthlyBill, 0, 20)
+
+	for rows.Next() {
+		rows.Scan(&id, &billID, &isActive)
+		monthlyBills = append(
+			monthlyBills,
+			MonthlyBill{id, billID, isActive},
+		)
+	}
+
+	return monthlyBills, nil
+}

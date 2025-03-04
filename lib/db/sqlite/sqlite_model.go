@@ -14,6 +14,7 @@ const (
 	CREDIT_CARD_HISTORY  = Table("credit_card_history")
 	BILLS                = Table("bills")
 	BILLS_HISTORY        = Table("bills_history")
+	BILLS_MONTHLY        = Table("bills_monthly")
 	BILL_TYPES           = Table("bill_types")
 )
 
@@ -72,6 +73,9 @@ var tableData = TableFields{
 		"paid_how",
 		"cleared_on",
 		"notes",
+	},
+	BILLS_MONTHLY: {
+		"bill_id",
 	},
 }
 
