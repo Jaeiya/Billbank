@@ -55,3 +55,11 @@ func ParseInt(s string) (int, error) {
 	}
 	return int(newInt), nil
 }
+
+func ToAnySlice[T any](s []T) []any {
+	newSlice := make([]any, len(s))
+	for i, v := range s {
+		newSlice[i] = v
+	}
+	return newSlice
+}
