@@ -109,7 +109,7 @@ func TestCreateIncomeHistory(t *testing.T) {
 	type MockTable struct {
 		should        string
 		incomes       []IncomeRecord
-		actual        []IncomeHistoryConfig
+		actual        []IncomeHistoryRecord
 		expected      []IncomeHistoryRecord
 		expectedError error
 	}
@@ -124,7 +124,7 @@ func TestCreateIncomeHistory(t *testing.T) {
 					Period: BIWEEKLY,
 				},
 			},
-			actual: []IncomeHistoryConfig{
+			actual: []IncomeHistoryRecord{
 				{
 					IncomeID: 1,
 					MonthID:  1,
@@ -133,12 +133,10 @@ func TestCreateIncomeHistory(t *testing.T) {
 			},
 			expected: []IncomeHistoryRecord{
 				{
-					ID: 1,
-					IncomeHistoryConfig: IncomeHistoryConfig{
-						IncomeID: 1,
-						MonthID:  1,
-						Amount:   lib.NewCurrency("250", lib.USD),
-					},
+					ID:       1,
+					IncomeID: 1,
+					MonthID:  1,
+					Amount:   lib.NewCurrency("250", lib.USD),
 				},
 			},
 		},
@@ -151,7 +149,7 @@ func TestCreateIncomeHistory(t *testing.T) {
 					Period: BIWEEKLY,
 				},
 			},
-			actual: []IncomeHistoryConfig{
+			actual: []IncomeHistoryRecord{
 				{
 					IncomeID: 1,
 					MonthID:  1,
@@ -169,7 +167,7 @@ func TestCreateIncomeHistory(t *testing.T) {
 					Period: BIWEEKLY,
 				},
 			},
-			actual: []IncomeHistoryConfig{
+			actual: []IncomeHistoryRecord{
 				{
 					IncomeID: 2,
 					MonthID:  1,

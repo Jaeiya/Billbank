@@ -13,15 +13,11 @@ type IncomeRecord struct {
 	Period Period
 }
 
-type IncomeHistoryConfig struct {
+type IncomeHistoryRecord struct {
+	ID       int
 	IncomeID int
 	MonthID  int
 	Amount   lib.Currency
-}
-
-type IncomeHistoryRecord struct {
-	ID int
-	IncomeHistoryConfig
 }
 
 func (ih IncomeHistoryRecord) String() string {
@@ -100,7 +96,7 @@ func (sdb SqliteDb) QueryIncome(qm QueryMap) ([]IncomeRecord, error) {
 	return records, nil
 }
 
-func (sdb SqliteDb) CreateIncomeHistory(config IncomeHistoryConfig) error {
+func (sdb SqliteDb) CreateIncomeHistory(config IncomeHistoryRecord) error {
 	_, err := sdb.InsertInto(
 		INCOME_HISTORY,
 		config.IncomeID,
