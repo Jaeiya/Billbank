@@ -15,7 +15,7 @@ func TestQueryBills(t *testing.T) {
 	t.Parallel()
 	type MockTable struct {
 		should        string
-		actual        []BillsConfig
+		actual        []BillRecord
 		expected      []BillRecord
 		expectedError error
 	}
@@ -23,7 +23,7 @@ func TestQueryBills(t *testing.T) {
 	table := []MockTable{
 		{
 			should: "add bills to the bills table",
-			actual: []BillsConfig{
+			actual: []BillRecord{
 				{
 					Name:   "t1",
 					TypeID: 1,
@@ -55,50 +55,42 @@ func TestQueryBills(t *testing.T) {
 			},
 			expected: []BillRecord{
 				{
-					ID: 1,
-					BillsConfig: BillsConfig{
-						Name:   "t1",
-						TypeID: 1,
-						Amount: lib.NewCurrency("19.99", lib.USD),
-						DueDay: 5,
-						Period: MONTHLY,
-					},
+					ID:     1,
+					Name:   "t1",
+					TypeID: 1,
+					Amount: lib.NewCurrency("19.99", lib.USD),
+					DueDay: 5,
+					Period: MONTHLY,
 				},
 				{
-					ID: 2,
-					BillsConfig: BillsConfig{
-						Name:   "t2",
-						TypeID: 1,
-						Amount: lib.NewCurrency("39.99", lib.USD),
-						DueDay: 27,
-						Period: MONTHLY,
-					},
+					ID:     2,
+					Name:   "t2",
+					TypeID: 1,
+					Amount: lib.NewCurrency("39.99", lib.USD),
+					DueDay: 27,
+					Period: MONTHLY,
 				},
 				{
-					ID: 3,
-					BillsConfig: BillsConfig{
-						Name:   "t3",
-						TypeID: 1,
-						Amount: lib.NewCurrency("10.45", lib.USD),
-						DueDay: 11,
-						Period: MONTHLY,
-					},
+					ID:     3,
+					Name:   "t3",
+					TypeID: 1,
+					Amount: lib.NewCurrency("10.45", lib.USD),
+					DueDay: 11,
+					Period: MONTHLY,
 				},
 				{
-					ID: 4,
-					BillsConfig: BillsConfig{
-						Name:   "t4",
-						TypeID: 1,
-						Amount: lib.NewCurrency("2.99", lib.USD),
-						DueDay: 8,
-						Period: MONTHLY,
-					},
+					ID:     4,
+					Name:   "t4",
+					TypeID: 1,
+					Amount: lib.NewCurrency("2.99", lib.USD),
+					DueDay: 8,
+					Period: MONTHLY,
 				},
 			},
 		},
 		{
 			should: "panic on violated due_day constraint",
-			actual: []BillsConfig{
+			actual: []BillRecord{
 				{
 					Name:   "t1",
 					TypeID: 1,
@@ -116,7 +108,7 @@ func TestQueryBills(t *testing.T) {
 		},
 		{
 			should: "panic on foreign key type_id constraint",
-			actual: []BillsConfig{
+			actual: []BillRecord{
 				{
 					Name:   "t1",
 					TypeID: 2,
@@ -176,7 +168,7 @@ func TestQueryBills(t *testing.T) {
 		err = db.CreateBillTypes([]string{"test"})
 		r.NoError(err, "expected to create bill types")
 
-		err = db.CreateNewBill(BillsConfig{
+		err = db.CreateNewBill(BillRecord{
 			Name:   "name",
 			TypeID: 1,
 			Amount: lib.NewCurrency("13.37", lib.USD),
@@ -185,7 +177,7 @@ func TestQueryBills(t *testing.T) {
 		})
 		r.NoError(err, "expected to successfully create test bill")
 
-		err = db.CreateNewBill(BillsConfig{
+		err = db.CreateNewBill(BillRecord{
 			Name:   "name",
 			TypeID: 1,
 			Amount: lib.NewCurrency("133.7", lib.USD),
@@ -200,7 +192,7 @@ func TestCreateBillHistory(t *testing.T) {
 	t.Parallel()
 	type Mock struct {
 		should        string
-		bills         []BillsConfig
+		bills         []BillRecord
 		actual        []BillHistoryRecord
 		expected      []BillHistoryRecord
 		expectedError error
@@ -209,7 +201,7 @@ func TestCreateBillHistory(t *testing.T) {
 	table := []Mock{
 		{
 			should: "add bill history entries to table",
-			bills: []BillsConfig{
+			bills: []BillRecord{
 				{
 					Name:   "b1",
 					TypeID: 1,
@@ -242,7 +234,7 @@ func TestCreateBillHistory(t *testing.T) {
 		},
 		{
 			should: "allow nullable fields to be nil",
-			bills: []BillsConfig{
+			bills: []BillRecord{
 				{
 					Name:   "b3",
 					TypeID: 1,
@@ -276,7 +268,7 @@ func TestCreateBillHistory(t *testing.T) {
 		},
 		{
 			should: "error with foreign key month id violation",
-			bills: []BillsConfig{
+			bills: []BillRecord{
 				{
 					Name:   "b4",
 					TypeID: 1,
@@ -298,7 +290,7 @@ func TestCreateBillHistory(t *testing.T) {
 		},
 		{
 			should: "error with foreign key type id violation",
-			bills: []BillsConfig{
+			bills: []BillRecord{
 				{
 					Name:   "b4",
 					TypeID: 1,
@@ -368,7 +360,7 @@ func TestBillsMonthly(t *testing.T) {
 	t.Parallel()
 	type Mock struct {
 		should        string
-		bills         []BillsConfig
+		bills         []BillRecord
 		actual        []MonthlyBill
 		expected      []MonthlyBill
 		expectedError error
@@ -377,7 +369,7 @@ func TestBillsMonthly(t *testing.T) {
 	table := []Mock{
 		{
 			should: "create monthly bill entries",
-			bills: []BillsConfig{
+			bills: []BillRecord{
 				{
 					TypeID: 1,
 					Name:   "t1",
@@ -422,7 +414,7 @@ func TestBillsMonthly(t *testing.T) {
 		},
 		{
 			should: "panic on foreign key bill_id violation",
-			bills: []BillsConfig{
+			bills: []BillRecord{
 				{
 					TypeID: 1,
 					Name:   "hello",
@@ -486,7 +478,7 @@ func TestBillsMonthly(t *testing.T) {
 		err = db.CreateBillTypes([]string{"test"})
 		r.NoError(err, "expected to create bill types")
 
-		err = db.CreateNewBill(BillsConfig{
+		err = db.CreateNewBill(BillRecord{
 			Name:   "t1",
 			TypeID: 1,
 			Amount: lib.NewCurrency("13.37", lib.USD),

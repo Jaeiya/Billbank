@@ -5,7 +5,8 @@ import (
 	"github.com/jaeiya/billbank/lib/utils"
 )
 
-type BillsConfig struct {
+type BillRecord struct {
+	ID     int
 	TypeID int
 	Name   string
 	Amount lib.Currency
@@ -13,12 +14,7 @@ type BillsConfig struct {
 	Period Period
 }
 
-type BillRecord struct {
-	ID int
-	BillsConfig
-}
-
-func (sdb SqliteDb) CreateNewBill(cfg BillsConfig) error {
+func (sdb SqliteDb) CreateNewBill(cfg BillRecord) error {
 	_, err := sdb.InsertInto(
 		BILLS,
 		cfg.TypeID,
