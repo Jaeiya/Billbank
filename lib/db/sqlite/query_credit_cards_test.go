@@ -15,7 +15,7 @@ func TestCreateCreditCards(t *testing.T) {
 	t.Parallel()
 	type MockTable struct {
 		should        string
-		actual        []CreditCardConfig
+		actual        []CreditCardRecord
 		expected      []CreditCardRecord
 		password      *string
 		expectedError error
@@ -24,7 +24,7 @@ func TestCreateCreditCards(t *testing.T) {
 	table := []MockTable{
 		{
 			should: "create credit card records",
-			actual: []CreditCardConfig{
+			actual: []CreditCardRecord{
 				{
 					Name:           "test",
 					DueDay:         5,
@@ -32,7 +32,6 @@ func TestCreateCreditCards(t *testing.T) {
 					CardNumber:     utils.NewPointer("2382 3812 4582 5822"),
 					LastFourDigits: "5822",
 					Notes:          utils.NewPointer("some notes"),
-					Password:       utils.NewPointer("password"),
 				},
 			},
 			expected: []CreditCardRecord{
@@ -50,14 +49,13 @@ func TestCreateCreditCards(t *testing.T) {
 		},
 		{
 			should: "nullable values should be nil",
-			actual: []CreditCardConfig{
+			actual: []CreditCardRecord{
 				{
 					Name:           "test",
 					DueDay:         5,
 					CreditLimit:    utils.NewPointer(lib.NewCurrency("5000", lib.USD)),
 					CardNumber:     utils.NewPointer("2382 3812 4582 5822"),
 					LastFourDigits: "5822",
-					Password:       utils.NewPointer("password"),
 				},
 				{
 					Name:           "test2",
@@ -65,14 +63,12 @@ func TestCreateCreditCards(t *testing.T) {
 					CreditLimit:    utils.NewPointer(lib.NewCurrency("5000", lib.USD)),
 					LastFourDigits: "0023",
 					Notes:          utils.NewPointer("some notes"),
-					Password:       utils.NewPointer("password"),
 				},
 				{
 					Name:           "test3",
 					DueDay:         8,
 					CreditLimit:    utils.NewPointer(lib.NewCurrency("5000", lib.USD)),
 					LastFourDigits: "1234",
-					Password:       utils.NewPointer("password"),
 				},
 			},
 			expected: []CreditCardRecord{
@@ -108,7 +104,7 @@ func TestCreateCreditCards(t *testing.T) {
 		},
 		{
 			should: "panic on due day constraint violation",
-			actual: []CreditCardConfig{
+			actual: []CreditCardRecord{
 				{
 					Name:   "test",
 					DueDay: 0,
@@ -135,14 +131,14 @@ func TestCreateCreditCards(t *testing.T) {
 
 			if mock.expectedError != nil {
 				for _, cardConfig := range mock.actual {
-					err = db.CreateCreditCard(cardConfig)
+					err = db.CreateCreditCard(cardConfig, mock.password)
 					a.ErrorIs(err, ErrDueDayInvalid)
 				}
 				return
 			}
 
 			for _, cardConfig := range mock.actual {
-				err = db.CreateCreditCard(cardConfig)
+				err = db.CreateCreditCard(cardConfig, mock.password)
 				r.NoError(err)
 			}
 
@@ -163,18 +159,18 @@ func TestCreateCreditCards(t *testing.T) {
 		r.NoError(err)
 		defer db.Close()
 
-		err = db.CreateCreditCard(CreditCardConfig{
+		err = db.CreateCreditCard(CreditCardRecord{
 			Name:           "test",
 			DueDay:         5,
 			LastFourDigits: "1234",
-		})
+		}, nil)
 		r.NoError(err)
 
-		err = db.CreateCreditCard(CreditCardConfig{
+		err = db.CreateCreditCard(CreditCardRecord{
 			Name:           "test",
 			DueDay:         5,
 			LastFourDigits: "1234",
-		})
+		}, nil)
 		a.ErrorIs(err, ErrUniqueName)
 	})
 }
@@ -183,16 +179,16 @@ func TestCreateCreditCardHistory(t *testing.T) {
 	t.Parallel()
 	type MockTable struct {
 		should        string
-		cards         []CreditCardConfig
-		actual        []CreditCardHistoryConfig
-		expected      []CardHistoryRecord
+		cards         []CreditCardRecord
+		actual        []CreditCardHistoryRecord
+		expected      []CreditCardHistoryRecord
 		expectedError error
 	}
 
 	table := []MockTable{
 		{
 			should: "create credit card history records",
-			cards: []CreditCardConfig{
+			cards: []CreditCardRecord{
 				{
 					Name:           "test",
 					DueDay:         5,
@@ -200,7 +196,7 @@ func TestCreateCreditCardHistory(t *testing.T) {
 					LastFourDigits: "1234",
 				},
 			},
-			actual: []CreditCardHistoryConfig{
+			actual: []CreditCardHistoryRecord{
 				{
 					CreditCardID: 1,
 					MonthID:      1,
@@ -210,7 +206,7 @@ func TestCreateCreditCardHistory(t *testing.T) {
 				},
 			},
 
-			expected: []CardHistoryRecord{
+			expected: []CreditCardHistoryRecord{
 				{
 					ID:           1,
 					CreditCardID: 1,
@@ -223,7 +219,7 @@ func TestCreateCreditCardHistory(t *testing.T) {
 		},
 		{
 			should: "set nullable fields to nil",
-			cards: []CreditCardConfig{
+			cards: []CreditCardRecord{
 				{
 					Name:           "test",
 					DueDay:         5,
@@ -231,7 +227,7 @@ func TestCreateCreditCardHistory(t *testing.T) {
 					LastFourDigits: "1234",
 				},
 			},
-			actual: []CreditCardHistoryConfig{
+			actual: []CreditCardHistoryRecord{
 				{
 					CreditCardID: 1,
 					MonthID:      1,
@@ -239,7 +235,7 @@ func TestCreateCreditCardHistory(t *testing.T) {
 					DueDay:       5,
 				},
 			},
-			expected: []CardHistoryRecord{
+			expected: []CreditCardHistoryRecord{
 				{
 					ID:           1,
 					CreditCardID: 1,
@@ -255,14 +251,14 @@ func TestCreateCreditCardHistory(t *testing.T) {
 		},
 		{
 			should: "panic on foreign key violations",
-			cards: []CreditCardConfig{
+			cards: []CreditCardRecord{
 				{
 					Name:           "test",
 					DueDay:         5,
 					LastFourDigits: "1234",
 				},
 			},
-			actual: []CreditCardHistoryConfig{
+			actual: []CreditCardHistoryRecord{
 				{
 					CreditCardID: 2,
 					MonthID:      1,
@@ -280,14 +276,14 @@ func TestCreateCreditCardHistory(t *testing.T) {
 		},
 		{
 			should: "panic on due day constraint violation",
-			cards: []CreditCardConfig{
+			cards: []CreditCardRecord{
 				{
 					Name:           "test",
 					DueDay:         5,
 					LastFourDigits: "1234",
 				},
 			},
-			actual: []CreditCardHistoryConfig{
+			actual: []CreditCardHistoryRecord{
 				{
 					CreditCardID: 1,
 					MonthID:      1,
@@ -320,7 +316,7 @@ func TestCreateCreditCardHistory(t *testing.T) {
 			r.NoError(err)
 
 			for _, cardConfig := range mock.cards {
-				err = db.CreateCreditCard(cardConfig)
+				err = db.CreateCreditCard(cardConfig, nil)
 				r.NoError(err)
 			}
 
@@ -350,7 +346,7 @@ func TestSetCreditCardHistory(t *testing.T) {
 	type MockTable struct {
 		should              string
 		actual              CCFieldMap
-		expected            CardHistoryRecord
+		expected            CreditCardHistoryRecord
 		expectedErrContains *string
 	}
 
@@ -364,7 +360,7 @@ func TestSetCreditCardHistory(t *testing.T) {
 				CC_PAID_DAY:    20,
 				CC_PAID_AMOUNT: lib.NewCurrency("250", lib.USD),
 			},
-			expected: CardHistoryRecord{
+			expected: CreditCardHistoryRecord{
 				ID:           1,
 				CreditCardID: 1,
 				MonthID:      1,
@@ -433,14 +429,14 @@ func TestSetCreditCardHistory(t *testing.T) {
 			_, err = db.CreateMonth(NewMonth(2024, time.January))
 			r.NoError(err)
 
-			err = db.CreateCreditCard(CreditCardConfig{
+			err = db.CreateCreditCard(CreditCardRecord{
 				Name:           "test",
 				DueDay:         1,
 				LastFourDigits: "1234",
-			})
+			}, nil)
 			r.NoError(err)
 
-			err = db.CreateCreditCardHistory(CreditCardHistoryConfig{
+			err = db.CreateCreditCardHistory(CreditCardHistoryRecord{
 				CreditCardID: 1,
 				MonthID:      1,
 				Balance:      lib.NewCurrency("0", lib.USD),
