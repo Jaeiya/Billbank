@@ -326,7 +326,7 @@ func TestBankTransfers(t *testing.T) {
 		should      string
 		accounts    []BankAccountRecord
 		history     []BankHistoryRecord
-		actual      []TransferConfig
+		actual      []TransferRecord
 		expected    []TransferRecord
 		expectError error
 	}
@@ -338,7 +338,7 @@ func TestBankTransfers(t *testing.T) {
 			history: []BankHistoryRecord{
 				{MonthID: 1, BankAccountID: 1},
 			},
-			actual: []TransferConfig{
+			actual: []TransferRecord{
 				{
 					HistoryID:    1,
 					MonthID:      1,
@@ -352,17 +352,15 @@ func TestBankTransfers(t *testing.T) {
 			},
 			expected: []TransferRecord{
 				{
-					ID: 1,
-					TransferConfig: TransferConfig{
-						HistoryID:    1,
-						MonthID:      1,
-						Name:         "test",
-						Amount:       lib.NewCurrency("72.28", lib.USD),
-						DueDay:       5,
-						TransferType: DEPOSIT,
-						ToWhom:       utils.NewPointer("johnny"),
-						FromWhom:     utils.NewPointer("bank of america"),
-					},
+					ID:           1,
+					HistoryID:    1,
+					MonthID:      1,
+					Name:         "test",
+					Amount:       lib.NewCurrency("72.28", lib.USD),
+					DueDay:       5,
+					TransferType: DEPOSIT,
+					ToWhom:       utils.NewPointer("johnny"),
+					FromWhom:     utils.NewPointer("bank of america"),
 				},
 			},
 		},
@@ -372,7 +370,7 @@ func TestBankTransfers(t *testing.T) {
 			history: []BankHistoryRecord{
 				{MonthID: 1, BankAccountID: 1},
 			},
-			actual: []TransferConfig{
+			actual: []TransferRecord{
 				{
 					HistoryID:    1,
 					MonthID:      1,
@@ -384,17 +382,15 @@ func TestBankTransfers(t *testing.T) {
 			},
 			expected: []TransferRecord{
 				{
-					ID: 1,
-					TransferConfig: TransferConfig{
-						HistoryID:    1,
-						MonthID:      1,
-						Name:         "test",
-						Amount:       lib.NewCurrency("72.28", lib.USD),
-						DueDay:       5,
-						TransferType: DEPOSIT,
-						ToWhom:       nil,
-						FromWhom:     nil,
-					},
+					ID:           1,
+					HistoryID:    1,
+					MonthID:      1,
+					Name:         "test",
+					Amount:       lib.NewCurrency("72.28", lib.USD),
+					DueDay:       5,
+					TransferType: DEPOSIT,
+					ToWhom:       nil,
+					FromWhom:     nil,
 				},
 			},
 		},
@@ -404,7 +400,7 @@ func TestBankTransfers(t *testing.T) {
 			history: []BankHistoryRecord{
 				{MonthID: 1, BankAccountID: 1},
 			},
-			actual: []TransferConfig{
+			actual: []TransferRecord{
 				{
 					HistoryID:    1,
 					MonthID:      2,
@@ -426,7 +422,7 @@ func TestBankTransfers(t *testing.T) {
 			history: []BankHistoryRecord{
 				{MonthID: 1, BankAccountID: 1},
 			},
-			actual: []TransferConfig{
+			actual: []TransferRecord{
 				{DueDay: 32},
 				{DueDay: 0},
 			},
@@ -438,7 +434,7 @@ func TestBankTransfers(t *testing.T) {
 			history: []BankHistoryRecord{
 				{MonthID: 1, BankAccountID: 1},
 			},
-			actual: []TransferConfig{
+			actual: []TransferRecord{
 				{DueDay: 1, TransferType: "not a good type"},
 				{DueDay: 1, TransferType: "withdrawals"},
 			},

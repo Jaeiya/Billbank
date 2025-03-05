@@ -29,7 +29,8 @@ type BankHistoryRecord struct {
 	Balance       lib.Currency
 }
 
-type TransferConfig struct {
+type TransferRecord struct {
+	ID           int
 	HistoryID    int
 	MonthID      int
 	Name         string
@@ -39,11 +40,6 @@ type TransferConfig struct {
 
 	ToWhom   *string
 	FromWhom *string
-}
-
-type TransferRecord struct {
-	TransferConfig
-	ID int
 }
 
 func (sdb SqliteDb) CreateBankAccount(config BankAccountRecord, password *string) error {
@@ -149,7 +145,7 @@ func (sdb SqliteDb) QueryBankAccountHistory(qm QueryMap) ([]BankHistoryRecord, e
 	return records, nil
 }
 
-func (sdb SqliteDb) CreateTransfer(td TransferConfig) error {
+func (sdb SqliteDb) CreateTransfer(td TransferRecord) error {
 	_, err := sdb.InsertInto(
 		TRANSFERS,
 		td.HistoryID,
