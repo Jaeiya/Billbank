@@ -76,6 +76,7 @@ var tableData = TableFields{
 	},
 	BILLS_MONTHLY: {
 		"bill_id",
+		"is_active",
 	},
 }
 
