@@ -1,9 +1,6 @@
 package sqlite
 
 import (
-	"fmt"
-	"strings"
-
 	"github.com/jaeiya/billbank/lib"
 	"github.com/jaeiya/billbank/lib/utils"
 )
@@ -40,7 +37,7 @@ type BillHistoryRecord struct {
 }
 
 func (sdb SqliteDb) CreateNewBill(cfg BillsConfig) error {
-	insStr, err := sdb.ToInsertIntoStr(
+	_, err := sdb.InsertInto(
 		BILLS,
 		cfg.TypeID,
 		cfg.Name,
@@ -49,10 +46,6 @@ func (sdb SqliteDb) CreateNewBill(cfg BillsConfig) error {
 		cfg.Period,
 	)
 	if err != nil {
-		return err
-	}
-
-	if _, err := sdb.handle.Exec(insStr); err != nil {
 		return getExecError(err)
 	}
 	return nil
@@ -95,7 +88,7 @@ func (sdb SqliteDb) CreateBillHistory(cfg BillHistoryConfig) error {
 		paidAmount = cfg.PaidAmount.GetStoredValue()
 	}
 
-	insStr, err := sdb.ToInsertIntoStr(
+	_, err := sdb.InsertInto(
 		BILLS_HISTORY,
 		cfg.MonthID,
 		cfg.TypeID,
@@ -109,12 +102,9 @@ func (sdb SqliteDb) CreateBillHistory(cfg BillHistoryConfig) error {
 		utils.TryDeref(cfg.Notes),
 	)
 	if err != nil {
-		return err
-	}
-
-	if _, err := sdb.handle.Exec(insStr); err != nil {
 		return getExecError(err)
 	}
+
 	return nil
 }
 
@@ -164,16 +154,9 @@ func (sdb SqliteDb) QueryBillHistory(qm QueryMap) ([]BillHistoryRecord, error) {
 }
 
 func (sdb SqliteDb) CreateBillTypes(names []string) error {
-	var sb strings.Builder
-	sb.WriteString("INSERT INTO bill_types (name) VALUES ")
-	for _, n := range names {
-		sb.WriteString(fmt.Sprintf("('%s'),", n))
-	}
-	insStr := sb.String()
-	_, err := sdb.handle.Exec(insStr[:len(insStr)-1] + ";")
-	if err != nil {
-		return getExecError(err)
-	}
+	cols := tableData[BILL_TYPES]
+	insStr := sdb.toInsertMultiStr(string(BILL_TYPES), cols, len(names))
+	sdb.handle.Exec(insStr, utils.ToAnySlice(names)...)
 	return nil
 }
 
@@ -204,17 +187,12 @@ type MonthlyBill struct {
 }
 
 func (sdb SqliteDb) CreateMonthlyBills(bills []MonthlyBill) error {
-	var sb strings.Builder
-	sb.WriteString("INSERT INTO bills_monthly (bill_id, is_active) VALUES ")
-	for _, cfg := range bills {
-		isActiveStr := "FALSE"
-		if cfg.IsActive {
-			isActiveStr = "TRUE"
-		}
-		sb.WriteString(fmt.Sprintf("(%d, '%s'),", cfg.BillID, isActiveStr))
+	insStr := sdb.toInsertMultiStr(string(BILLS_MONTHLY), tableData[BILLS_MONTHLY], len(bills))
+	execArgs := make([]any, 0, len(bills)*2)
+	for _, bill := range bills {
+		execArgs = append(execArgs, bill.BillID, bill.IsActive)
 	}
-	insStr := sb.String()
-	_, err := sdb.handle.Exec(insStr[:len(insStr)-1] + ";")
+	_, err := sdb.handle.Exec(insStr, execArgs...)
 	if err != nil {
 		return getExecError(err)
 	}

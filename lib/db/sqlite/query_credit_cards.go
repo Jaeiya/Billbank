@@ -37,6 +37,7 @@ type CreditCardHistoryConfig struct {
 	Balance      lib.Currency
 	CreditLimit  *lib.Currency
 	DueDay       int
+	ClearedDay   *int
 }
 
 type CreditCardRecord struct {
@@ -68,10 +69,10 @@ type CardHistoryRecord struct {
 	MonthID      int
 	Balance      lib.Currency
 	CreditLimit  *lib.Currency
-	PaidAmount   lib.Currency
+	PaidAmount   *lib.Currency
 	PaidDay      *int
 	DueDay       int
-	Period       Period
+	ClearedDay   *int
 }
 
 func (chr CardHistoryRecord) String() string {
@@ -104,16 +105,15 @@ func (sdb SqliteDb) CreateCreditCard(config CreditCardConfig) error {
 		return err
 	}
 
-	_, err = sdb.handle.Exec(
-		sdb.ToInsertIntoStr(
-			CREDIT_CARDS,
-			config.Name,
-			config.DueDay,
-			creditLimit,
-			encCardNum,
-			config.LastFourDigits,
-			encNotes,
-		))
+	_, err = sdb.InsertInto(
+		CREDIT_CARDS,
+		config.Name,
+		config.DueDay,
+		creditLimit,
+		encCardNum,
+		config.LastFourDigits,
+		encNotes,
+	)
 	if err != nil {
 		return getExecError(err)
 	}
@@ -179,18 +179,17 @@ func (sdb SqliteDb) CreateCreditCardHistory(config CreditCardHistoryConfig) erro
 	if creditLimit != nil {
 		creditLimit = config.CreditLimit.GetStoredValue()
 	}
-	_, err := sdb.handle.Exec(
-		sdb.ToInsertIntoStr(
-			CREDIT_CARD_HISTORY,
-			config.CreditCardID,
-			config.MonthID,
-			config.Balance.GetStoredValue(),
-			creditLimit,
-			nil, // paid amount -- defaults to 0
-			nil, // paid date
-			config.DueDay,
-			MONTHLY,
-		))
+	_, err := sdb.InsertInto(
+		CREDIT_CARD_HISTORY,
+		config.CreditCardID,
+		config.MonthID,
+		config.Balance.GetStoredValue(),
+		creditLimit,
+		nil, // Paid amount
+		nil, // paid day
+		config.DueDay,
+		nil, // cleared day
+	)
 	if err != nil {
 		return getExecError(err)
 	}
@@ -206,7 +205,7 @@ func (sdb SqliteDb) QueryCreditCardHistory(qm QueryMap) ([]CardHistoryRecord, er
 	var (
 		balance     int
 		creditLimit *int
-		paidAmount  int
+		paidAmount  *int
 		records     []CardHistoryRecord
 	)
 
@@ -222,18 +221,23 @@ func (sdb SqliteDb) QueryCreditCardHistory(qm QueryMap) ([]CardHistoryRecord, er
 			&paidAmount,
 			&record.PaidDay,
 			&record.DueDay,
-			&record.Period,
+			&record.ClearedDay,
 		); err != nil {
 			return []CardHistoryRecord{}, err
 		}
 
 		if creditLimit != nil {
-			c := lib.NewCurrencyFromStore(*creditLimit, sdb.currencyCode)
-			record.CreditLimit = &c
+			record.CreditLimit = utils.NewPointer(
+				lib.NewCurrencyFromStore(*creditLimit, sdb.currencyCode),
+			)
 		}
 
 		record.Balance = lib.NewCurrencyFromStore(balance, sdb.currencyCode)
-		record.PaidAmount = lib.NewCurrencyFromStore(paidAmount, sdb.currencyCode)
+		if paidAmount != nil {
+			record.PaidAmount = utils.NewPointer(
+				lib.NewCurrencyFromStore(*paidAmount, sdb.currencyCode),
+			)
+		}
 		records = append(records, record)
 	}
 

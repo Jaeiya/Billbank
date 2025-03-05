@@ -70,9 +70,7 @@ func (sdb SqliteDb) CreateBankAccount(config BankAccountConfig) error {
 		return err
 	}
 
-	_, err = sdb.handle.Exec(
-		sdb.ToInsertIntoStr(BANK_ACCOUNTS, config.Name, encAccountNum, encNotes),
-	)
+	_, err = sdb.InsertInto(BANK_ACCOUNTS, config.Name, encAccountNum, encNotes)
 	if err != nil {
 		return getExecError(err)
 	}
@@ -122,13 +120,11 @@ func (sdb SqliteDb) QueryBankAccounts(qm QueryMap, password *string) ([]BankReco
 }
 
 func (sdb SqliteDb) CreateBankAccountHistory(config BankHistoryConfig) error {
-	_, err := sdb.handle.Exec(
-		sdb.ToInsertIntoStr(
-			BANK_ACCOUNT_HISTORY,
-			config.BankAccountID,
-			config.MonthID,
-			config.Balance.GetStoredValue(),
-		),
+	_, err := sdb.InsertInto(
+		BANK_ACCOUNT_HISTORY,
+		config.BankAccountID,
+		config.MonthID,
+		config.Balance.GetStoredValue(),
 	)
 	if err != nil {
 		return getExecError(err)
@@ -167,7 +163,7 @@ func (sdb SqliteDb) QueryBankAccountHistory(qm QueryMap) ([]BankHistoryRecord, e
 }
 
 func (sdb SqliteDb) CreateTransfer(td TransferConfig) error {
-	_, err := sdb.handle.Exec(sdb.ToInsertIntoStr(
+	_, err := sdb.InsertInto(
 		TRANSFERS,
 		td.HistoryID,
 		td.MonthID,
@@ -177,7 +173,7 @@ func (sdb SqliteDb) CreateTransfer(td TransferConfig) error {
 		td.TransferType,
 		utils.TryDeref(td.ToWhom),
 		utils.TryDeref(td.FromWhom),
-	))
+	)
 	if err != nil {
 		return getExecError(err)
 	}

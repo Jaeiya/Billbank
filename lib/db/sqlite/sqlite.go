@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
-	"time"
 
 	"github.com/jaeiya/billbank/lib"
 	_ "modernc.org/sqlite"
@@ -52,41 +51,74 @@ func NewSqliteDb(filePath string, cc lib.CurrencyCode) (*SqliteDb, error) {
 	return &SqliteDb{db, cc}, nil
 }
 
-func (sdb SqliteDb) ToInsertIntoStr(t Table, values ...any) (string, error) {
+func (sdb SqliteDb) InsertInto(t Table, args ...any) (sql.Result, error) {
 	columns, exists := tableData[t]
 	if !exists {
-		return "", ErrUnsupportedTable
+		return nil, ErrUnsupportedTable
 	}
 
-	if len(columns) != len(values) {
-		return "", ErrMismatchColsValues
+	if len(columns) != len(args) {
+		return nil, ErrMismatchColsValues
 	}
 
-	var realCols []string
-	var realValues []string
+	return sdb.handle.Exec(sdb.toInsertStr(string(t), columns), args...)
+}
 
-	for i, col := range columns {
-		if values[i] == nil {
-			continue
-		}
-		realCols = append(realCols, col)
+func (sdb SqliteDb) InsertMultiInto(t Table, values ...[]any) (sql.Result, error) {
+	columns, exists := tableData[t]
+	if !exists {
+		return nil, ErrUnsupportedTable
+	}
 
-		switch v := values[i].(type) {
-		case string, Period, TransferType:
-			realValues = append(realValues, fmt.Sprintf("'%v'", v))
-		case time.Month:
-			realValues = append(realValues, fmt.Sprintf("%d", v))
-		default:
-			realValues = append(realValues, fmt.Sprintf("%v", v))
+	for _, v := range values {
+		if len(v) != len(columns) {
+			return nil, ErrMismatchColsValues
 		}
 	}
 
-	return fmt.Sprintf(
-		"INSERT INTO %s (%s) VALUES (%s)",
-		t,
-		strings.Join(realCols, ","),
-		strings.Join(realValues, ","),
-	), nil
+	fmt.Println(sdb.toInsertMultiStr(string(t), columns, len(values)))
+	fmt.Printf("%+v\n", slices.Concat(values...))
+	fmt.Println("")
+
+	return sdb.handle.Exec(
+		sdb.toInsertMultiStr(string(t), columns, len(values)),
+		slices.Concat(values...)...,
+	)
+}
+
+func (sdb SqliteDb) toInsertStr(tName string, cols []string) string {
+	var sb strings.Builder
+	sb.WriteString(fmt.Sprintf("INSERT INTO %s (%s) VALUES (", tName, strings.Join(cols, ",")))
+
+	for i := range len(cols) {
+		if i > 0 {
+			sb.WriteString(",")
+		}
+		sb.WriteString("?")
+	}
+	sb.WriteString(");")
+
+	return sb.String()
+}
+
+func (sdb SqliteDb) toInsertMultiStr(tName string, cols []string, count int) string {
+	var sb strings.Builder
+	sb.WriteString(fmt.Sprintf("INSERT INTO %s (%s) VALUES ", tName, strings.Join(cols, ",")))
+
+	for i := range count {
+		if i > 0 {
+			sb.WriteString(",")
+		}
+		sb.WriteString("(")
+		for ii := range len(cols) {
+			if ii > 0 {
+				sb.WriteString(",")
+			}
+			sb.WriteString("?")
+		}
+		sb.WriteString(")")
+	}
+	return sb.String() + ";"
 }
 
 func (sdb SqliteDb) Close() {

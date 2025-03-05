@@ -71,12 +71,15 @@ var tableData = TableFields{
 		"paid_amount",
 		"paid_day",
 		"paid_how",
-		"cleared_on",
+		"cleared_day",
 		"notes",
 	},
 	BILLS_MONTHLY: {
 		"bill_id",
 		"is_active",
+	},
+	BILL_TYPES: {
+		"name",
 	},
 }
 
