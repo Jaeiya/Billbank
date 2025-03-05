@@ -178,7 +178,7 @@ func TestBankAccountHistory(t *testing.T) {
 	type MockTable struct {
 		should      string
 		accounts    []BankAccountRecord
-		actual      []BankHistoryConfig
+		actual      []BankHistoryRecord
 		expected    []BankHistoryRecord
 		expectError error
 	}
@@ -190,7 +190,7 @@ func TestBankAccountHistory(t *testing.T) {
 				{Name: "TestBank"},
 			},
 
-			actual: []BankHistoryConfig{
+			actual: []BankHistoryRecord{
 				{MonthID: 1, BankAccountID: 1, Balance: lib.NewCurrency("133.7", lib.USD)},
 			},
 			expected: []BankHistoryRecord{
@@ -211,7 +211,7 @@ func TestBankAccountHistory(t *testing.T) {
 				{Name: "1337Bank"},
 			},
 
-			actual: []BankHistoryConfig{
+			actual: []BankHistoryRecord{
 				{MonthID: 1, BankAccountID: 3, Balance: lib.NewCurrency("7242.31", lib.USD)},
 				{MonthID: 1, BankAccountID: 1, Balance: lib.NewCurrency("13.37", lib.USD)},
 				{MonthID: 1, BankAccountID: 4, Balance: lib.NewCurrency("1337.69", lib.USD)},
@@ -250,7 +250,7 @@ func TestBankAccountHistory(t *testing.T) {
 				{Name: "TestBank"},
 			},
 
-			actual: []BankHistoryConfig{
+			actual: []BankHistoryRecord{
 				{MonthID: 2, BankAccountID: 1, Balance: lib.NewCurrency("133.7", lib.USD)},
 			},
 			expectError: ErrForeignKey,
@@ -261,7 +261,7 @@ func TestBankAccountHistory(t *testing.T) {
 				{Name: "TestBank"},
 			},
 
-			actual: []BankHistoryConfig{
+			actual: []BankHistoryRecord{
 				{MonthID: 1, BankAccountID: 2, Balance: lib.NewCurrency("133.7", lib.USD)},
 			},
 			expectError: ErrForeignKey,
@@ -271,7 +271,7 @@ func TestBankAccountHistory(t *testing.T) {
 			accounts: []BankAccountRecord{
 				{Name: "TestBank"},
 			},
-			actual: []BankHistoryConfig{
+			actual: []BankHistoryRecord{
 				{MonthID: 1, BankAccountID: 1},
 			},
 			expected: []BankHistoryRecord{
@@ -325,7 +325,7 @@ func TestBankTransfers(t *testing.T) {
 	type MockTable struct {
 		should      string
 		accounts    []BankAccountRecord
-		history     []BankHistoryConfig
+		history     []BankHistoryRecord
 		actual      []TransferConfig
 		expected    []TransferRecord
 		expectError error
@@ -335,7 +335,7 @@ func TestBankTransfers(t *testing.T) {
 		{
 			should:   "record a transfer to a specific bank history",
 			accounts: []BankAccountRecord{{Name: "Test"}},
-			history: []BankHistoryConfig{
+			history: []BankHistoryRecord{
 				{MonthID: 1, BankAccountID: 1},
 			},
 			actual: []TransferConfig{
@@ -369,7 +369,7 @@ func TestBankTransfers(t *testing.T) {
 		{
 			should:   "allow nullable fields to be nil",
 			accounts: []BankAccountRecord{{Name: "Test"}},
-			history: []BankHistoryConfig{
+			history: []BankHistoryRecord{
 				{MonthID: 1, BankAccountID: 1},
 			},
 			actual: []TransferConfig{
@@ -401,7 +401,7 @@ func TestBankTransfers(t *testing.T) {
 		{
 			should:   "panic on foreign key constraint violations",
 			accounts: []BankAccountRecord{{Name: "Test"}},
-			history: []BankHistoryConfig{
+			history: []BankHistoryRecord{
 				{MonthID: 1, BankAccountID: 1},
 			},
 			actual: []TransferConfig{
@@ -423,7 +423,7 @@ func TestBankTransfers(t *testing.T) {
 		{
 			should:   "panic on due date constraint violations",
 			accounts: []BankAccountRecord{{Name: "Test"}},
-			history: []BankHistoryConfig{
+			history: []BankHistoryRecord{
 				{MonthID: 1, BankAccountID: 1},
 			},
 			actual: []TransferConfig{
@@ -435,7 +435,7 @@ func TestBankTransfers(t *testing.T) {
 		{
 			should:   "panic on transfer type constraint violations",
 			accounts: []BankAccountRecord{{Name: "Test"}},
-			history: []BankHistoryConfig{
+			history: []BankHistoryRecord{
 				{MonthID: 1, BankAccountID: 1},
 			},
 			actual: []TransferConfig{

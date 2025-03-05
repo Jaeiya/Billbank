@@ -24,12 +24,6 @@ type BankAccountRecord struct {
 
 type BankHistoryRecord struct {
 	ID            int
-	BankAccountID int
-	MonthID       int
-	Balance       lib.Currency
-}
-
-type BankHistoryConfig struct {
 	MonthID       int
 	BankAccountID int
 	Balance       lib.Currency
@@ -112,7 +106,7 @@ func (sdb SqliteDb) QueryBankAccounts(qm QueryMap, pass *string) ([]BankAccountR
 	return records, nil
 }
 
-func (sdb SqliteDb) CreateBankAccountHistory(config BankHistoryConfig) error {
+func (sdb SqliteDb) CreateBankAccountHistory(config BankHistoryRecord) error {
 	_, err := sdb.InsertInto(
 		BANK_ACCOUNT_HISTORY,
 		config.BankAccountID,
