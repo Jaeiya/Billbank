@@ -15,14 +15,7 @@ const (
 	MOVE       = TransferType("move")
 )
 
-type BankAccountConfig struct {
-	Name          string
-	Password      *string
-	AccountNumber *string
-	Notes         *string
-}
-
-type BankRecord struct {
+type BankAccountRecord struct {
 	ID            int
 	Name          string
 	AccountNumber *string
@@ -59,13 +52,13 @@ type TransferRecord struct {
 	ID int
 }
 
-func (sdb SqliteDb) CreateBankAccount(config BankAccountConfig) error {
-	encAccountNum, err := lib.EncryptNonNil(config.AccountNumber, config.Password)
+func (sdb SqliteDb) CreateBankAccount(config BankAccountRecord, password *string) error {
+	encAccountNum, err := lib.EncryptNonNil(config.AccountNumber, password)
 	if err != nil {
 		return err
 	}
 
-	encNotes, err := lib.EncryptNonNil(config.Notes, config.Password)
+	encNotes, err := lib.EncryptNonNil(config.Notes, password)
 	if err != nil {
 		return err
 	}
@@ -77,15 +70,15 @@ func (sdb SqliteDb) CreateBankAccount(config BankAccountConfig) error {
 	return nil
 }
 
-func (sdb SqliteDb) QueryBankAccounts(qm QueryMap, password *string) ([]BankRecord, error) {
+func (sdb SqliteDb) QueryBankAccounts(qm QueryMap, pass *string) ([]BankAccountRecord, error) {
 	rows, err := sdb.query(BANK_ACCOUNTS, qm)
 	if err != nil {
-		return []BankRecord{}, err
+		return []BankAccountRecord{}, err
 	}
 
-	var records []BankRecord
+	var records []BankAccountRecord
 	for rows.Next() {
-		var record BankRecord
+		var record BankAccountRecord
 		var err error
 
 		if err = rows.Scan(
@@ -94,18 +87,18 @@ func (sdb SqliteDb) QueryBankAccounts(qm QueryMap, password *string) ([]BankReco
 			&record.AccountNumber,
 			&record.Notes,
 		); err != nil {
-			return []BankRecord{}, err
+			return []BankAccountRecord{}, err
 		}
 
-		if password != nil && record.AccountNumber != nil {
-			if record.AccountNumber, err = lib.DecryptNonNil(record.AccountNumber, *password); err != nil {
-				return []BankRecord{}, err
+		if pass != nil && record.AccountNumber != nil {
+			if record.AccountNumber, err = lib.DecryptNonNil(record.AccountNumber, *pass); err != nil {
+				return []BankAccountRecord{}, err
 			}
 		}
 
-		if password != nil && record.Notes != nil {
-			if record.Notes, err = lib.DecryptNonNil(record.Notes, *password); err != nil {
-				return []BankRecord{}, err
+		if pass != nil && record.Notes != nil {
+			if record.Notes, err = lib.DecryptNonNil(record.Notes, *pass); err != nil {
+				return []BankAccountRecord{}, err
 			}
 		}
 
@@ -113,7 +106,7 @@ func (sdb SqliteDb) QueryBankAccounts(qm QueryMap, password *string) ([]BankReco
 	}
 
 	if len(records) == 0 {
-		return []BankRecord{}, fmt.Errorf("no bank accounts")
+		return []BankAccountRecord{}, fmt.Errorf("no bank accounts")
 	}
 
 	return records, nil

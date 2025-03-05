@@ -17,21 +17,21 @@ func TestCreateBankAccount(t *testing.T) {
 	t.Parallel()
 	type MockTable struct {
 		should   string
-		actual   []BankAccountConfig
-		expected []BankRecord
+		actual   []BankAccountRecord
+		expected []BankAccountRecord
 		password *string
 	}
 
 	table := []MockTable{
 		{
 			should:   "save without account number or notes",
-			actual:   []BankAccountConfig{{Name: "test"}},
-			expected: []BankRecord{{ID: 1, Name: "test"}},
+			actual:   []BankAccountRecord{{Name: "test"}},
+			expected: []BankAccountRecord{{ID: 1, Name: "test"}},
 			password: nil,
 		},
 		{
 			should: "save a bunch of records",
-			actual: []BankAccountConfig{
+			actual: []BankAccountRecord{
 				{Name: "test"},
 				{Name: "test1"},
 				{Name: "test2"},
@@ -39,7 +39,7 @@ func TestCreateBankAccount(t *testing.T) {
 				{Name: "test4"},
 				{Name: "test5"},
 			},
-			expected: []BankRecord{
+			expected: []BankAccountRecord{
 				{ID: 1, Name: "test"},
 				{ID: 2, Name: "test1"},
 				{ID: 3, Name: "test2"},
@@ -51,15 +51,14 @@ func TestCreateBankAccount(t *testing.T) {
 		},
 		{
 			should: "save account number and notes",
-			actual: []BankAccountConfig{
+			actual: []BankAccountRecord{
 				{
 					Name:          "test",
-					Password:      utils.NewPointer("test"),
 					AccountNumber: utils.NewPointer("282841"),
 					Notes:         utils.NewPointer("some notes"),
 				},
 			},
-			expected: []BankRecord{
+			expected: []BankAccountRecord{
 				{
 					ID:            1,
 					Name:          "test",
@@ -71,14 +70,13 @@ func TestCreateBankAccount(t *testing.T) {
 		},
 		{
 			should: "just save account number",
-			actual: []BankAccountConfig{
+			actual: []BankAccountRecord{
 				{
 					Name:          "test",
-					Password:      utils.NewPointer("test"),
 					AccountNumber: utils.NewPointer("1337420"),
 				},
 			},
-			expected: []BankRecord{
+			expected: []BankAccountRecord{
 				{
 					ID:            1,
 					Name:          "test",
@@ -89,14 +87,13 @@ func TestCreateBankAccount(t *testing.T) {
 		},
 		{
 			should: "just save notes",
-			actual: []BankAccountConfig{
+			actual: []BankAccountRecord{
 				{
-					Name:     "test",
-					Password: utils.NewPointer("test"),
-					Notes:    utils.NewPointer("some notes"),
+					Name:  "test",
+					Notes: utils.NewPointer("some notes"),
 				},
 			},
-			expected: []BankRecord{
+			expected: []BankAccountRecord{
 				{
 					ID:    1,
 					Name:  "test",
@@ -107,15 +104,14 @@ func TestCreateBankAccount(t *testing.T) {
 		},
 		{
 			should: "get encoded versions of protected fields",
-			actual: []BankAccountConfig{
+			actual: []BankAccountRecord{
 				{
 					Name:          "test",
-					Password:      utils.NewPointer("test"),
 					AccountNumber: utils.NewPointer("1337420"),
 					Notes:         utils.NewPointer("sevenCh"),
 				},
 			},
-			expected: []BankRecord{
+			expected: []BankAccountRecord{
 				{
 					ID:   1,
 					Name: "test",
@@ -136,7 +132,7 @@ func TestCreateBankAccount(t *testing.T) {
 			defer db.Close()
 
 			for _, acct := range mock.actual {
-				err = db.CreateBankAccount(acct)
+				err = db.CreateBankAccount(acct, utils.NewPointer("test"))
 				r.NoError(err)
 			}
 
@@ -170,10 +166,10 @@ func TestCreateBankAccount(t *testing.T) {
 		r.NoError(err)
 		defer db.Close()
 
-		err = db.CreateBankAccount(BankAccountConfig{
+		err = db.CreateBankAccount(BankAccountRecord{
 			Name:          "Test",
 			AccountNumber: utils.NewPointer("1823842"),
-		})
+		}, nil)
 		a.ErrorIs(err, lib.ErrEncryptWithoutPassword)
 	})
 }
@@ -181,7 +177,7 @@ func TestCreateBankAccount(t *testing.T) {
 func TestBankAccountHistory(t *testing.T) {
 	type MockTable struct {
 		should      string
-		accounts    []BankAccountConfig
+		accounts    []BankAccountRecord
 		actual      []BankHistoryConfig
 		expected    []BankHistoryRecord
 		expectError error
@@ -190,7 +186,7 @@ func TestBankAccountHistory(t *testing.T) {
 	table := []MockTable{
 		{
 			should: "create bank account history",
-			accounts: []BankAccountConfig{
+			accounts: []BankAccountRecord{
 				{Name: "TestBank"},
 			},
 
@@ -208,7 +204,7 @@ func TestBankAccountHistory(t *testing.T) {
 		},
 		{
 			should: "create multiple bank histories",
-			accounts: []BankAccountConfig{
+			accounts: []BankAccountRecord{
 				{Name: "TestBank"},
 				{Name: "DaddyBank"},
 				{Name: "BigBank"},
@@ -250,7 +246,7 @@ func TestBankAccountHistory(t *testing.T) {
 		},
 		{
 			should: "fail month constraint",
-			accounts: []BankAccountConfig{
+			accounts: []BankAccountRecord{
 				{Name: "TestBank"},
 			},
 
@@ -261,7 +257,7 @@ func TestBankAccountHistory(t *testing.T) {
 		},
 		{
 			should: "fail account constraint",
-			accounts: []BankAccountConfig{
+			accounts: []BankAccountRecord{
 				{Name: "TestBank"},
 			},
 
@@ -272,7 +268,7 @@ func TestBankAccountHistory(t *testing.T) {
 		},
 		{
 			should: "default balance to 0",
-			accounts: []BankAccountConfig{
+			accounts: []BankAccountRecord{
 				{Name: "TestBank"},
 			},
 			actual: []BankHistoryConfig{
@@ -303,7 +299,7 @@ func TestBankAccountHistory(t *testing.T) {
 			db.CreateMonth(NewMonth(2024, time.January))
 
 			for _, acct := range mock.accounts {
-				err = db.CreateBankAccount(acct)
+				err = db.CreateBankAccount(acct, nil)
 				r.NoError(err)
 			}
 
@@ -328,7 +324,7 @@ func TestBankTransfers(t *testing.T) {
 	t.Parallel()
 	type MockTable struct {
 		should      string
-		accounts    []BankAccountConfig
+		accounts    []BankAccountRecord
 		history     []BankHistoryConfig
 		actual      []TransferConfig
 		expected    []TransferRecord
@@ -338,7 +334,7 @@ func TestBankTransfers(t *testing.T) {
 	table := []MockTable{
 		{
 			should:   "record a transfer to a specific bank history",
-			accounts: []BankAccountConfig{{Name: "Test"}},
+			accounts: []BankAccountRecord{{Name: "Test"}},
 			history: []BankHistoryConfig{
 				{MonthID: 1, BankAccountID: 1},
 			},
@@ -372,7 +368,7 @@ func TestBankTransfers(t *testing.T) {
 		},
 		{
 			should:   "allow nullable fields to be nil",
-			accounts: []BankAccountConfig{{Name: "Test"}},
+			accounts: []BankAccountRecord{{Name: "Test"}},
 			history: []BankHistoryConfig{
 				{MonthID: 1, BankAccountID: 1},
 			},
@@ -404,7 +400,7 @@ func TestBankTransfers(t *testing.T) {
 		},
 		{
 			should:   "panic on foreign key constraint violations",
-			accounts: []BankAccountConfig{{Name: "Test"}},
+			accounts: []BankAccountRecord{{Name: "Test"}},
 			history: []BankHistoryConfig{
 				{MonthID: 1, BankAccountID: 1},
 			},
@@ -426,7 +422,7 @@ func TestBankTransfers(t *testing.T) {
 		},
 		{
 			should:   "panic on due date constraint violations",
-			accounts: []BankAccountConfig{{Name: "Test"}},
+			accounts: []BankAccountRecord{{Name: "Test"}},
 			history: []BankHistoryConfig{
 				{MonthID: 1, BankAccountID: 1},
 			},
@@ -438,7 +434,7 @@ func TestBankTransfers(t *testing.T) {
 		},
 		{
 			should:   "panic on transfer type constraint violations",
-			accounts: []BankAccountConfig{{Name: "Test"}},
+			accounts: []BankAccountRecord{{Name: "Test"}},
 			history: []BankHistoryConfig{
 				{MonthID: 1, BankAccountID: 1},
 			},
@@ -465,7 +461,7 @@ func TestBankTransfers(t *testing.T) {
 			r.NoError(err)
 
 			for _, acct := range mock.accounts {
-				err = db.CreateBankAccount(acct)
+				err = db.CreateBankAccount(acct, nil)
 				r.NoError(err)
 			}
 
