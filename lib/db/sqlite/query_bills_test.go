@@ -243,40 +243,6 @@ func TestCreateBillHistory(t *testing.T) {
 			},
 		},
 		{
-			should: "default to a zero paid amount",
-			bills: []BillsConfig{
-				{
-					Name:   "b2",
-					TypeID: 1,
-					Amount: lib.NewCurrency("1337", lib.USD),
-					DueDay: 3,
-					Period: MONTHLY,
-				},
-			},
-			actual: []BillHistoryConfig{
-				{
-					MonthID: 1,
-					TypeID:  1,
-					Name:    "b2",
-					Amount:  lib.NewCurrency("1337", lib.USD),
-					DueDay:  3,
-				},
-			},
-			expected: []BillHistoryRecord{
-				{
-					ID: 1,
-					BillHistoryConfig: BillHistoryConfig{
-						MonthID:    1,
-						TypeID:     1,
-						Name:       "b2",
-						Amount:     lib.NewCurrency("1337", lib.USD),
-						DueDay:     3,
-						PaidAmount: utils.NewPointer(lib.NewCurrency("0", lib.USD)),
-					},
-				},
-			},
-		},
-		{
 			should: "allow nullable fields to be nil",
 			bills: []BillsConfig{
 				{
@@ -305,7 +271,7 @@ func TestCreateBillHistory(t *testing.T) {
 						Name:       "b3",
 						Amount:     lib.NewCurrency("1337", lib.USD),
 						DueDay:     3,
-						PaidAmount: utils.NewPointer(lib.NewCurrency("0", lib.USD)),
+						PaidAmount: nil,
 						PaidDay:    nil,
 						Notes:      nil,
 					},
