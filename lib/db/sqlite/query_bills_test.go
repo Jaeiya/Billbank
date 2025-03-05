@@ -201,7 +201,7 @@ func TestCreateBillHistory(t *testing.T) {
 	type Mock struct {
 		should        string
 		bills         []BillsConfig
-		actual        []BillHistoryConfig
+		actual        []BillHistoryRecord
 		expected      []BillHistoryRecord
 		expectedError error
 	}
@@ -218,7 +218,7 @@ func TestCreateBillHistory(t *testing.T) {
 					Period: MONTHLY,
 				},
 			},
-			actual: []BillHistoryConfig{
+			actual: []BillHistoryRecord{
 				{
 					MonthID:    1,
 					TypeID:     1,
@@ -230,15 +230,13 @@ func TestCreateBillHistory(t *testing.T) {
 			},
 			expected: []BillHistoryRecord{
 				{
-					ID: 1,
-					BillHistoryConfig: BillHistoryConfig{
-						MonthID:    1,
-						TypeID:     1,
-						Name:       "b1",
-						Amount:     lib.NewCurrency("13.37", lib.USD),
-						DueDay:     3,
-						PaidAmount: utils.NewPointer(lib.NewCurrency("5", lib.USD)),
-					},
+					ID:         1,
+					MonthID:    1,
+					TypeID:     1,
+					Name:       "b1",
+					Amount:     lib.NewCurrency("13.37", lib.USD),
+					DueDay:     3,
+					PaidAmount: utils.NewPointer(lib.NewCurrency("5", lib.USD)),
 				},
 			},
 		},
@@ -253,7 +251,7 @@ func TestCreateBillHistory(t *testing.T) {
 					Period: MONTHLY,
 				},
 			},
-			actual: []BillHistoryConfig{
+			actual: []BillHistoryRecord{
 				{
 					MonthID: 1,
 					TypeID:  1,
@@ -264,17 +262,15 @@ func TestCreateBillHistory(t *testing.T) {
 			},
 			expected: []BillHistoryRecord{
 				{
-					ID: 1,
-					BillHistoryConfig: BillHistoryConfig{
-						MonthID:    1,
-						TypeID:     1,
-						Name:       "b3",
-						Amount:     lib.NewCurrency("1337", lib.USD),
-						DueDay:     3,
-						PaidAmount: nil,
-						PaidDay:    nil,
-						Notes:      nil,
-					},
+					ID:         1,
+					MonthID:    1,
+					TypeID:     1,
+					Name:       "b3",
+					Amount:     lib.NewCurrency("1337", lib.USD),
+					DueDay:     3,
+					PaidAmount: nil,
+					PaidDay:    nil,
+					Notes:      nil,
 				},
 			},
 		},
@@ -289,7 +285,7 @@ func TestCreateBillHistory(t *testing.T) {
 					Period: MONTHLY,
 				},
 			},
-			actual: []BillHistoryConfig{
+			actual: []BillHistoryRecord{
 				{
 					MonthID: 2, // should not exist
 					TypeID:  1,
@@ -311,7 +307,7 @@ func TestCreateBillHistory(t *testing.T) {
 					Period: MONTHLY,
 				},
 			},
-			actual: []BillHistoryConfig{
+			actual: []BillHistoryRecord{
 				{
 					MonthID: 1,
 					TypeID:  2, // should not exist

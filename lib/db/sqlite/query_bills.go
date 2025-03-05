@@ -18,24 +18,6 @@ type BillRecord struct {
 	BillsConfig
 }
 
-type BillHistoryConfig struct {
-	MonthID      int
-	TypeID       int
-	Name         string
-	Amount       lib.Currency
-	DueDay       int
-	PaidAmount   *lib.Currency
-	PaidDay      *int
-	PaidHow      *string
-	ClearedOnDay *int
-	Notes        *string
-}
-
-type BillHistoryRecord struct {
-	ID int
-	BillHistoryConfig
-}
-
 func (sdb SqliteDb) CreateNewBill(cfg BillsConfig) error {
 	_, err := sdb.InsertInto(
 		BILLS,
@@ -82,7 +64,21 @@ func (sdb SqliteDb) QueryBills(qm QueryMap) ([]BillRecord, error) {
 	return records, nil
 }
 
-func (sdb SqliteDb) CreateBillHistory(cfg BillHistoryConfig) error {
+type BillHistoryRecord struct {
+	ID           int
+	MonthID      int
+	TypeID       int
+	Name         string
+	Amount       lib.Currency
+	DueDay       int
+	PaidAmount   *lib.Currency
+	PaidDay      *int
+	PaidHow      *string
+	ClearedOnDay *int
+	Notes        *string
+}
+
+func (sdb SqliteDb) CreateBillHistory(cfg BillHistoryRecord) error {
 	paidAmount := utils.TryDeref(cfg.PaidAmount)
 	if paidAmount != nil {
 		paidAmount = cfg.PaidAmount.GetStoredValue()
