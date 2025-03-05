@@ -14,7 +14,7 @@ func TestCreateIncome(t *testing.T) {
 	t.Parallel()
 	type MockTable struct {
 		should        string
-		actual        []IncomeConfig
+		actual        []IncomeRecord
 		expected      []IncomeRecord
 		expectedError error
 	}
@@ -22,7 +22,7 @@ func TestCreateIncome(t *testing.T) {
 	table := []MockTable{
 		{
 			should: "add an income record to the table",
-			actual: []IncomeConfig{
+			actual: []IncomeRecord{
 				{
 					Name:   "test",
 					Amount: lib.NewCurrency("200", lib.USD),
@@ -31,18 +31,16 @@ func TestCreateIncome(t *testing.T) {
 			},
 			expected: []IncomeRecord{
 				{
-					ID: 1,
-					IncomeConfig: IncomeConfig{
-						Name:   "test",
-						Amount: lib.NewCurrency("200", lib.USD),
-						Period: MONTHLY,
-					},
+					ID:     1,
+					Name:   "test",
+					Amount: lib.NewCurrency("200", lib.USD),
+					Period: MONTHLY,
 				},
 			},
 		},
 		{
 			should: "panic on amount constraint violation",
-			actual: []IncomeConfig{
+			actual: []IncomeRecord{
 				{Name: "test", Amount: lib.NewCurrency("-5", lib.USD)},
 			},
 			expectedError: ErrAmountInvalid,
@@ -90,14 +88,14 @@ func TestCreateIncome(t *testing.T) {
 		r.NoError(err)
 		defer db.Close()
 
-		_, err = db.CreateIncome(IncomeConfig{
+		_, err = db.CreateIncome(IncomeRecord{
 			Name:   "name",
 			Amount: lib.NewCurrency("13.37", lib.USD),
 			Period: MONTHLY,
 		})
 		r.NoError(err)
 
-		_, err = db.CreateIncome(IncomeConfig{
+		_, err = db.CreateIncome(IncomeRecord{
 			Name:   "name",
 			Amount: lib.NewCurrency("133.7", lib.USD),
 			Period: MONTHLY,
@@ -110,7 +108,7 @@ func TestCreateIncomeHistory(t *testing.T) {
 	t.Parallel()
 	type MockTable struct {
 		should        string
-		incomes       []IncomeConfig
+		incomes       []IncomeRecord
 		actual        []IncomeHistoryConfig
 		expected      []IncomeHistoryRecord
 		expectedError error
@@ -119,7 +117,7 @@ func TestCreateIncomeHistory(t *testing.T) {
 	table := []MockTable{
 		{
 			should: "create an income history record",
-			incomes: []IncomeConfig{
+			incomes: []IncomeRecord{
 				{
 					Name:   "test",
 					Amount: lib.NewCurrency("250", lib.USD),
@@ -146,7 +144,7 @@ func TestCreateIncomeHistory(t *testing.T) {
 		},
 		{
 			should: "panic on amount constraint violation",
-			incomes: []IncomeConfig{
+			incomes: []IncomeRecord{
 				{
 					Name:   "test",
 					Amount: lib.NewCurrency("250", lib.USD),
@@ -164,7 +162,7 @@ func TestCreateIncomeHistory(t *testing.T) {
 		},
 		{
 			should: "panic on foreign key constraint violation",
-			incomes: []IncomeConfig{
+			incomes: []IncomeRecord{
 				{
 					Name:   "test",
 					Amount: lib.NewCurrency("250", lib.USD),

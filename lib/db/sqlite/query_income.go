@@ -6,15 +6,11 @@ import (
 	"github.com/jaeiya/billbank/lib"
 )
 
-type IncomeConfig struct {
+type IncomeRecord struct {
+	ID     int
 	Name   string
 	Amount lib.Currency
 	Period Period
-}
-
-type IncomeRecord struct {
-	ID int
-	IncomeConfig
 }
 
 type IncomeHistoryConfig struct {
@@ -46,7 +42,7 @@ type AffixIncomeRecord struct {
 	Amount          lib.Currency
 }
 
-func (sdb SqliteDb) CreateIncome(config IncomeConfig) (int64, error) {
+func (sdb SqliteDb) CreateIncome(config IncomeRecord) (int64, error) {
 	res, err := sdb.InsertInto(
 		INCOME,
 		config.Name,
