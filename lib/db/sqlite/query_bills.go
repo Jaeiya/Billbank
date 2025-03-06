@@ -162,12 +162,9 @@ type MonthlyBill struct {
 }
 
 func (sdb SqliteDb) CreateMonthlyBills(bills []MonthlyBill) error {
-	insStr := toInsertMultiStr(string(BILLS_MONTHLY), tableData[BILLS_MONTHLY], len(bills))
-	execArgs := make([]any, 0, len(bills)*2)
-	for _, bill := range bills {
-		execArgs = append(execArgs, bill.BillID, bill.IsActive)
-	}
-	_, err := sdb.handle.Exec(insStr, execArgs...)
+	_, err := insertMultiInto(sdb, BILLS_MONTHLY, bills, func(b MonthlyBill) []any {
+		return []any{b.BillID, b.IsActive}
+	})
 	if err != nil {
 		return getExecError(err)
 	}
