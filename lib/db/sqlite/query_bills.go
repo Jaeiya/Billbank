@@ -14,15 +14,10 @@ type BillRecord struct {
 	Period Period
 }
 
-func (sdb SqliteDb) CreateNewBill(cfg BillRecord) error {
-	_, err := sdb.insertInto(
-		BILLS,
-		cfg.TypeID,
-		cfg.Name,
-		cfg.Amount,
-		cfg.DueDay,
-		cfg.Period,
-	)
+func (sdb SqliteDb) CreateNewBills(records []BillRecord) error {
+	_, err := insertMultiInto(sdb, BILLS, records, func(r BillRecord) []any {
+		return []any{r.TypeID, r.Name, r.Amount, r.DueDay, r.Period}
+	})
 	if err != nil {
 		return getExecError(err)
 	}

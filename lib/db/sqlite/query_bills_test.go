@@ -137,14 +137,14 @@ func TestQueryBills(t *testing.T) {
 
 			if mock.expectedError != nil {
 				for _, bill := range mock.actual {
-					err = db.CreateNewBill(bill)
+					err = db.CreateNewBills([]BillRecord{bill})
 					a.ErrorIs(err, mock.expectedError, "expected specific error")
 				}
 				return
 			}
 
 			for _, bill := range mock.actual {
-				err = db.CreateNewBill(bill)
+				err = db.CreateNewBills([]BillRecord{bill})
 				r.NoError(err, "expected bill to be created properly")
 			}
 
@@ -168,21 +168,25 @@ func TestQueryBills(t *testing.T) {
 		err = db.CreateBillTypes([]string{"test"})
 		r.NoError(err, "expected to create bill types")
 
-		err = db.CreateNewBill(BillRecord{
-			Name:   "name",
-			TypeID: 1,
-			Amount: lib.NewCurrency("13.37", lib.USD),
-			DueDay: 3,
-			Period: MONTHLY,
+		err = db.CreateNewBills([]BillRecord{
+			{
+				Name:   "name",
+				TypeID: 1,
+				Amount: lib.NewCurrency("13.37", lib.USD),
+				DueDay: 3,
+				Period: MONTHLY,
+			},
 		})
 		r.NoError(err, "expected to successfully create test bill")
 
-		err = db.CreateNewBill(BillRecord{
-			Name:   "name",
-			TypeID: 1,
-			Amount: lib.NewCurrency("133.7", lib.USD),
-			DueDay: 7,
-			Period: MONTHLY,
+		err = db.CreateNewBills([]BillRecord{
+			{
+				Name:   "name",
+				TypeID: 1,
+				Amount: lib.NewCurrency("133.7", lib.USD),
+				DueDay: 7,
+				Period: MONTHLY,
+			},
 		})
 		a.ErrorIs(err, ErrUniqueName, "expected error when creating duplicate bill name")
 	})
@@ -340,7 +344,7 @@ func TestCreateBillHistory(t *testing.T) {
 			r.NoError(err, "expected bill types to be created")
 
 			for _, b := range mock.bills {
-				err = db.CreateNewBill(b)
+				err = db.CreateNewBills([]BillRecord{b})
 				r.NoError(err)
 			}
 
@@ -456,7 +460,7 @@ func TestBillsMonthly(t *testing.T) {
 			r.NoError(err, "expected bill types to be created")
 
 			for _, b := range mock.bills {
-				err = db.CreateNewBill(b)
+				err = db.CreateNewBills([]BillRecord{b})
 				r.NoError(err)
 			}
 
@@ -488,12 +492,14 @@ func TestBillsMonthly(t *testing.T) {
 		err = db.CreateBillTypes([]string{"test"})
 		r.NoError(err, "expected to create bill types")
 
-		err = db.CreateNewBill(BillRecord{
-			Name:   "t1",
-			TypeID: 1,
-			Amount: lib.NewCurrency("13.37", lib.USD),
-			DueDay: 3,
-			Period: MONTHLY,
+		err = db.CreateNewBills([]BillRecord{
+			{
+				Name:   "t1",
+				TypeID: 1,
+				Amount: lib.NewCurrency("13.37", lib.USD),
+				DueDay: 3,
+				Period: MONTHLY,
+			},
 		})
 		r.NoError(err, "expected to successfully create test bill")
 
