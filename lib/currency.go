@@ -1,6 +1,7 @@
 package lib
 
 import (
+	"database/sql/driver"
 	"fmt"
 	"math"
 	"strconv"
@@ -165,6 +166,20 @@ the raw value.
 */
 func (c Currency) GetStoredValue() int {
 	return c.amount
+}
+
+func (c Currency) Value() (driver.Value, error) {
+	return int64(c.amount), nil
+}
+
+func (c *Currency) Scan(src any) error {
+	switch v := src.(type) {
+	case int64:
+		c.amount = int(v)
+		return nil
+	default:
+		return fmt.Errorf("unsupported type for currency: %T", src)
+	}
 }
 
 /*

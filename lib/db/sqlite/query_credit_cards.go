@@ -44,11 +44,6 @@ type CreditCardHistoryRecord struct {
 }
 
 func (sdb SqliteDb) CreateCreditCard(config CreditCardRecord, pass *string) error {
-	creditLimit := utils.TryDeref(config.CreditLimit)
-	if creditLimit != nil {
-		creditLimit = config.CreditLimit.GetStoredValue()
-	}
-
 	encCardNum, err := lib.EncryptNonNil(config.CardNumber, pass)
 	if err != nil {
 		return err
@@ -63,7 +58,7 @@ func (sdb SqliteDb) CreateCreditCard(config CreditCardRecord, pass *string) erro
 		CREDIT_CARDS,
 		config.Name,
 		config.DueDay,
-		creditLimit,
+		config.CreditLimit,
 		encCardNum,
 		config.LastFourDigits,
 		encNotes,
@@ -83,7 +78,6 @@ func (sdb SqliteDb) QueryCreditCards(
 		return []CreditCardRecord{}, err
 	}
 
-	var creditLimit *int
 	var records []CreditCardRecord
 	for rows.Next() {
 		var record CreditCardRecord
@@ -93,17 +87,12 @@ func (sdb SqliteDb) QueryCreditCards(
 			&record.ID,
 			&record.Name,
 			&record.DueDay,
-			&creditLimit,
+			&record.CreditLimit,
 			&record.CardNumber,
 			&record.LastFourDigits,
 			&record.Notes,
 		); err != nil {
 			return []CreditCardRecord{}, err
-		}
-
-		if creditLimit != nil {
-			c := lib.NewCurrencyFromStore(*creditLimit, sdb.currencyCode)
-			record.CreditLimit = &c
 		}
 
 		if password != nil && record.CardNumber != nil {
@@ -129,25 +118,15 @@ func (sdb SqliteDb) QueryCreditCards(
 }
 
 func (sdb SqliteDb) CreateCreditCardHistory(config CreditCardHistoryRecord) error {
-	creditLimit := utils.TryDeref(config.CreditLimit)
-	if creditLimit != nil {
-		creditLimit = config.CreditLimit.GetStoredValue()
-	}
-
-	paidAmount := utils.TryDeref(config.PaidAmount)
-	if paidAmount != nil {
-		paidAmount = config.PaidAmount.GetStoredValue()
-	}
-
 	_, err := sdb.InsertInto(
 		CREDIT_CARD_HISTORY,
 		config.CreditCardID,
 		config.MonthID,
 		config.Balance.GetStoredValue(),
 		config.DueDay,
-		creditLimit,
+		config.CreditLimit,
 		utils.TryDeref(config.PaidDay),
-		paidAmount,
+		config.PaidAmount,
 		utils.TryDeref(config.ClearedDay),
 	)
 	if err != nil {
@@ -162,12 +141,7 @@ func (sdb SqliteDb) QueryCreditCardHistory(qm QueryMap) ([]CreditCardHistoryReco
 		return []CreditCardHistoryRecord{}, err
 	}
 
-	var (
-		balance     int
-		creditLimit *int
-		paidAmount  *int
-		records     []CreditCardHistoryRecord
-	)
+	var records []CreditCardHistoryRecord
 
 	for rows.Next() {
 		var record CreditCardHistoryRecord
@@ -176,28 +150,16 @@ func (sdb SqliteDb) QueryCreditCardHistory(qm QueryMap) ([]CreditCardHistoryReco
 			&record.ID,
 			&record.CreditCardID,
 			&record.MonthID,
-			&balance,
+			&record.Balance,
 			&record.DueDay,
-			&creditLimit,
+			&record.CreditLimit,
 			&record.PaidDay,
-			&paidAmount,
+			&record.PaidAmount,
 			&record.ClearedDay,
 		); err != nil {
 			return []CreditCardHistoryRecord{}, err
 		}
 
-		if creditLimit != nil {
-			record.CreditLimit = utils.NewPointer(
-				lib.NewCurrencyFromStore(*creditLimit, sdb.currencyCode),
-			)
-		}
-
-		record.Balance = lib.NewCurrencyFromStore(balance, sdb.currencyCode)
-		if paidAmount != nil {
-			record.PaidAmount = utils.NewPointer(
-				lib.NewCurrencyFromStore(*paidAmount, sdb.currencyCode),
-			)
-		}
 		records = append(records, record)
 	}
 

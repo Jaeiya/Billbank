@@ -107,7 +107,7 @@ func (sdb SqliteDb) CreateBankAccountHistory(config BankHistoryRecord) error {
 		BANK_ACCOUNT_HISTORY,
 		config.BankAccountID,
 		config.MonthID,
-		config.Balance.GetStoredValue(),
+		config.Balance,
 	)
 	if err != nil {
 		return getExecError(err)
@@ -121,7 +121,6 @@ func (sdb SqliteDb) QueryBankAccountHistory(qm QueryMap) ([]BankHistoryRecord, e
 		return []BankHistoryRecord{}, err
 	}
 
-	var balance int
 	var records []BankHistoryRecord
 	for rows.Next() {
 		var record BankHistoryRecord
@@ -129,12 +128,11 @@ func (sdb SqliteDb) QueryBankAccountHistory(qm QueryMap) ([]BankHistoryRecord, e
 			&record.ID,
 			&record.BankAccountID,
 			&record.MonthID,
-			&balance,
+			&record.Balance,
 		); err != nil {
 			return []BankHistoryRecord{}, err
 		}
 
-		record.Balance = lib.NewCurrencyFromStore(balance, sdb.currencyCode)
 		records = append(records, record)
 	}
 
@@ -145,17 +143,17 @@ func (sdb SqliteDb) QueryBankAccountHistory(qm QueryMap) ([]BankHistoryRecord, e
 	return records, nil
 }
 
-func (sdb SqliteDb) CreateTransfer(td TransferRecord) error {
+func (sdb SqliteDb) CreateTransfer(tr TransferRecord) error {
 	_, err := sdb.InsertInto(
 		TRANSFERS,
-		td.HistoryID,
-		td.MonthID,
-		td.Name,
-		td.Amount.GetStoredValue(),
-		td.DueDay,
-		td.TransferType,
-		utils.TryDeref(td.ToWhom),
-		utils.TryDeref(td.FromWhom),
+		tr.HistoryID,
+		tr.MonthID,
+		tr.Name,
+		tr.Amount,
+		tr.DueDay,
+		tr.TransferType,
+		utils.TryDeref(tr.ToWhom),
+		utils.TryDeref(tr.FromWhom),
 	)
 	if err != nil {
 		return getExecError(err)
@@ -169,7 +167,6 @@ func (sdb SqliteDb) QueryTransfers(qm QueryMap) ([]TransferRecord, error) {
 		return []TransferRecord{}, err
 	}
 
-	var amount int
 	var records []TransferRecord
 	for rows.Next() {
 		var record TransferRecord
@@ -178,7 +175,7 @@ func (sdb SqliteDb) QueryTransfers(qm QueryMap) ([]TransferRecord, error) {
 			&record.HistoryID,
 			&record.MonthID,
 			&record.Name,
-			&amount,
+			&record.Amount,
 			&record.DueDay,
 			&record.TransferType,
 			&record.ToWhom,
@@ -186,7 +183,6 @@ func (sdb SqliteDb) QueryTransfers(qm QueryMap) ([]TransferRecord, error) {
 		); err != nil {
 			return []TransferRecord{}, err
 		}
-		record.Amount = lib.NewCurrencyFromStore(amount, sdb.currencyCode)
 		records = append(records, record)
 	}
 

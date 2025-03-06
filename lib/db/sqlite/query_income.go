@@ -42,7 +42,7 @@ func (sdb SqliteDb) CreateIncome(config IncomeRecord) (int64, error) {
 	res, err := sdb.InsertInto(
 		INCOME,
 		config.Name,
-		config.Amount.GetStoredValue(),
+		config.Amount,
 		config.Period,
 	)
 	if err != nil {
@@ -73,19 +73,17 @@ func (sdb SqliteDb) QueryIncome(qm QueryMap) ([]IncomeRecord, error) {
 		return []IncomeRecord{}, err
 	}
 
-	var amount int
 	var records []IncomeRecord
 	for rows.Next() {
 		var record IncomeRecord
 		if err := rows.Scan(
 			&record.ID,
 			&record.Name,
-			&amount,
+			&record.Amount,
 			&record.Period,
 		); err != nil {
 			return []IncomeRecord{}, err
 		}
-		record.Amount = lib.NewCurrencyFromStore(amount, sdb.currencyCode)
 		records = append(records, record)
 	}
 
@@ -101,7 +99,7 @@ func (sdb SqliteDb) CreateIncomeHistory(config IncomeHistoryRecord) error {
 		INCOME_HISTORY,
 		config.IncomeID,
 		config.MonthID,
-		config.Amount.GetStoredValue(),
+		config.Amount,
 	)
 	if err != nil {
 		return getExecError(err)
@@ -115,7 +113,6 @@ func (sdb SqliteDb) QueryIncomeHistory(qm QueryMap) ([]IncomeHistoryRecord, erro
 		return []IncomeHistoryRecord{}, err
 	}
 
-	var amount int
 	var records []IncomeHistoryRecord
 	for rows.Next() {
 		var record IncomeHistoryRecord
@@ -123,11 +120,10 @@ func (sdb SqliteDb) QueryIncomeHistory(qm QueryMap) ([]IncomeHistoryRecord, erro
 			&record.ID,
 			&record.IncomeID,
 			&record.MonthID,
-			&amount,
+			&record.Amount,
 		); err != nil {
 			return []IncomeHistoryRecord{}, err
 		}
-		record.Amount = lib.NewCurrencyFromStore(amount, sdb.currencyCode)
 		records = append(records, record)
 	}
 
@@ -156,7 +152,6 @@ func (sdb SqliteDb) QueryAffixIncome(qm QueryMap) ([]AffixIncomeRecord, error) {
 		return []AffixIncomeRecord{}, err
 	}
 
-	var amount int
 	var records []AffixIncomeRecord
 	for rows.Next() {
 		var record AffixIncomeRecord
@@ -164,11 +159,10 @@ func (sdb SqliteDb) QueryAffixIncome(qm QueryMap) ([]AffixIncomeRecord, error) {
 			&record.ID,
 			&record.IncomeHistoryID,
 			&record.Name,
-			&amount,
+			&record.Amount,
 		); err != nil {
 			return []AffixIncomeRecord{}, err
 		}
-		record.Amount = lib.NewCurrencyFromStore(amount, sdb.currencyCode)
 		records = append(records, record)
 	}
 

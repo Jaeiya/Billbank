@@ -19,7 +19,7 @@ func (sdb SqliteDb) CreateNewBill(cfg BillRecord) error {
 		BILLS,
 		cfg.TypeID,
 		cfg.Name,
-		cfg.Amount.GetStoredValue(),
+		cfg.Amount,
 		cfg.DueDay,
 		cfg.Period,
 	)
@@ -35,7 +35,7 @@ func (sdb SqliteDb) QueryBills(qm QueryMap) ([]BillRecord, error) {
 		return []BillRecord{}, err
 	}
 
-	var amount int
+	// var amount int
 	var records []BillRecord
 	for rows.Next() {
 		var record BillRecord
@@ -43,13 +43,13 @@ func (sdb SqliteDb) QueryBills(qm QueryMap) ([]BillRecord, error) {
 			&record.ID,
 			&record.TypeID,
 			&record.Name,
-			&amount,
+			&record.Amount,
 			&record.DueDay,
 			&record.Period,
 		); err != nil {
 			return []BillRecord{}, err
 		}
-		record.Amount = lib.NewCurrencyFromStore(amount, sdb.currencyCode)
+		// record.Amount = lib.NewCurrencyFromStore(amount, sdb.currencyCode)
 		records = append(records, record)
 	}
 
@@ -75,19 +75,14 @@ type BillHistoryRecord struct {
 }
 
 func (sdb SqliteDb) CreateBillHistory(cfg BillHistoryRecord) error {
-	paidAmount := utils.TryDeref(cfg.PaidAmount)
-	if paidAmount != nil {
-		paidAmount = cfg.PaidAmount.GetStoredValue()
-	}
-
 	_, err := sdb.InsertInto(
 		BILLS_HISTORY,
 		cfg.MonthID,
 		cfg.TypeID,
 		cfg.Name,
-		cfg.Amount.GetStoredValue(),
+		cfg.Amount,
 		cfg.DueDay,
-		paidAmount,
+		cfg.PaidAmount,
 		utils.TryDeref(cfg.PaidDay),
 		utils.TryDeref(cfg.PaidHow),
 		utils.TryDeref(cfg.ClearedDay),
@@ -106,8 +101,6 @@ func (sdb SqliteDb) QueryBillHistory(qm QueryMap) ([]BillHistoryRecord, error) {
 		return []BillHistoryRecord{}, err
 	}
 
-	var amount int
-	var paidAmount *int
 	var records []BillHistoryRecord
 
 	for rows.Next() {
@@ -117,9 +110,9 @@ func (sdb SqliteDb) QueryBillHistory(qm QueryMap) ([]BillHistoryRecord, error) {
 			&record.MonthID,
 			&record.TypeID,
 			&record.Name,
-			&amount,
+			&record.Amount,
 			&record.DueDay,
-			&paidAmount,
+			&record.PaidAmount,
 			&record.PaidDay,
 			&record.PaidHow,
 			&record.ClearedDay,
@@ -127,14 +120,6 @@ func (sdb SqliteDb) QueryBillHistory(qm QueryMap) ([]BillHistoryRecord, error) {
 		); err != nil {
 			return []BillHistoryRecord{}, err
 		}
-
-		record.Amount = lib.NewCurrencyFromStore(amount, sdb.currencyCode)
-
-		if paidAmount != nil {
-			pa := lib.NewCurrencyFromStore(*paidAmount, sdb.currencyCode)
-			record.PaidAmount = &pa
-		}
-
 		records = append(records, record)
 	}
 
