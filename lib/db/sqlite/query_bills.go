@@ -61,17 +61,17 @@ func (sdb SqliteDb) QueryBills(qm QueryMap) ([]BillRecord, error) {
 }
 
 type BillHistoryRecord struct {
-	ID           int
-	MonthID      int
-	TypeID       int
-	Name         string
-	Amount       lib.Currency
-	DueDay       int
-	PaidAmount   *lib.Currency
-	PaidDay      *int
-	PaidHow      *string
-	ClearedOnDay *int
-	Notes        *string
+	ID         int
+	MonthID    int
+	TypeID     int
+	Name       string
+	Amount     lib.Currency
+	DueDay     int
+	PaidAmount *lib.Currency
+	PaidDay    *int
+	PaidHow    *string
+	ClearedDay *int
+	Notes      *string
 }
 
 func (sdb SqliteDb) CreateBillHistory(cfg BillHistoryRecord) error {
@@ -90,7 +90,7 @@ func (sdb SqliteDb) CreateBillHistory(cfg BillHistoryRecord) error {
 		paidAmount,
 		utils.TryDeref(cfg.PaidDay),
 		utils.TryDeref(cfg.PaidHow),
-		utils.TryDeref(cfg.ClearedOnDay),
+		utils.TryDeref(cfg.ClearedDay),
 		utils.TryDeref(cfg.Notes),
 	)
 	if err != nil {
@@ -122,7 +122,7 @@ func (sdb SqliteDb) QueryBillHistory(qm QueryMap) ([]BillHistoryRecord, error) {
 			&paidAmount,
 			&record.PaidDay,
 			&record.PaidHow,
-			&record.ClearedOnDay,
+			&record.ClearedDay,
 			&record.Notes,
 		); err != nil {
 			return []BillHistoryRecord{}, err
