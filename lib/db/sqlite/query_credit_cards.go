@@ -31,19 +31,6 @@ type CreditCardRecord struct {
 	Notes          *string
 }
 
-func (cr CreditCardRecord) String() string {
-	return fmt.Sprintf(
-		"\nid: %d\nname: %s\ndueDay: %d\nlimit: %s\nnum: %v\nlastFour: %v\nnotes: %v",
-		cr.ID,
-		cr.Name,
-		cr.DueDay,
-		cr.CreditLimit,
-		utils.TryDeref(cr.CardNumber),
-		cr.LastFourDigits,
-		utils.TryDeref(cr.Notes),
-	)
-}
-
 type CreditCardHistoryRecord struct {
 	ID           int
 	CreditCardID int
@@ -54,20 +41,6 @@ type CreditCardHistoryRecord struct {
 	PaidDay      *int
 	DueDay       int
 	ClearedDay   *int
-}
-
-func (chr CreditCardHistoryRecord) String() string {
-	return fmt.Sprintf(
-		"\nid: %d\nccid: %d\nmid: %d\nbal: %s\nclimit: %v\npaidA: %s\npaidD: %v\ndueday: %d",
-		chr.ID,
-		chr.CreditCardID,
-		chr.MonthID,
-		chr.Balance.String(),
-		chr.CreditLimit,
-		chr.PaidAmount.String(),
-		utils.TryDeref(chr.PaidDay),
-		chr.DueDay,
-	)
 }
 
 func (sdb SqliteDb) CreateCreditCard(config CreditCardRecord, pass *string) error {
@@ -160,16 +133,22 @@ func (sdb SqliteDb) CreateCreditCardHistory(config CreditCardHistoryRecord) erro
 	if creditLimit != nil {
 		creditLimit = config.CreditLimit.GetStoredValue()
 	}
+
+	paidAmount := utils.TryDeref(config.PaidAmount)
+	if paidAmount != nil {
+		paidAmount = config.PaidAmount.GetStoredValue()
+	}
+
 	_, err := sdb.InsertInto(
 		CREDIT_CARD_HISTORY,
 		config.CreditCardID,
 		config.MonthID,
 		config.Balance.GetStoredValue(),
-		creditLimit,
-		nil, // Paid amount
-		nil, // paid day
 		config.DueDay,
-		nil, // cleared day
+		creditLimit,
+		utils.TryDeref(config.PaidDay),
+		paidAmount,
+		utils.TryDeref(config.ClearedDay),
 	)
 	if err != nil {
 		return getExecError(err)
@@ -198,10 +177,10 @@ func (sdb SqliteDb) QueryCreditCardHistory(qm QueryMap) ([]CreditCardHistoryReco
 			&record.CreditCardID,
 			&record.MonthID,
 			&balance,
-			&creditLimit,
-			&paidAmount,
-			&record.PaidDay,
 			&record.DueDay,
+			&creditLimit,
+			&record.PaidDay,
+			&paidAmount,
 			&record.ClearedDay,
 		); err != nil {
 			return []CreditCardHistoryRecord{}, err
