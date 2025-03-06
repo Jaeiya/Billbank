@@ -64,25 +64,34 @@ func (sdb SqliteDb) InsertInto(t Table, args ...any) (sql.Result, error) {
 	return sdb.handle.Exec(sdb.toInsertStr(string(t), columns), args...)
 }
 
-func (sdb SqliteDb) InsertMultiInto(t Table, values ...[]any) (sql.Result, error) {
+// insertMultiInto inserts multiple records at once using a
+// resolve function that returns the necessary order of
+// table values to be inserted.
+func insertMultiInto[T any](
+	db SqliteDb,
+	t Table,
+	values []T,
+	res func(r T) []any,
+) (sql.Result, error) {
+	execValues := make([][]any, len(values))
+	for i, v := range values {
+		execValues[i] = res(v)
+	}
+
 	columns, exists := tableData[t]
 	if !exists {
 		return nil, ErrUnsupportedTable
 	}
 
-	for _, v := range values {
+	for _, v := range execValues {
 		if len(v) != len(columns) {
 			return nil, ErrMismatchColsValues
 		}
 	}
 
-	fmt.Println(sdb.toInsertMultiStr(string(t), columns, len(values)))
-	fmt.Printf("%+v\n", slices.Concat(values...))
-	fmt.Println("")
-
-	return sdb.handle.Exec(
-		sdb.toInsertMultiStr(string(t), columns, len(values)),
-		slices.Concat(values...)...,
+	return db.handle.Exec(
+		db.toInsertMultiStr(string(t), columns, len(values)),
+		slices.Concat(execValues...)...,
 	)
 }
 
