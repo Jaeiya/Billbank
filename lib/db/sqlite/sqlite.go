@@ -51,8 +51,8 @@ func NewSqliteDb(filePath string, cc lib.CurrencyCode) (*SqliteDb, error) {
 	return &SqliteDb{db, cc}, nil
 }
 
-func (sdb SqliteDb) Close() {
-	_ = sdb.handle.Close()
+func (sdb SqliteDb) Close() error {
+	return sdb.handle.Close()
 }
 
 func (sdb SqliteDb) insertInto(t Table, args ...any) (sql.Result, error) {
