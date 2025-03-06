@@ -33,7 +33,7 @@ func (sdb SqliteDb) CreateMonth(m Month) (int64, error) {
 		return 0, ErrDirtyDate
 	}
 
-	res, err := sdb.InsertInto(MONTHS, t.Year(), t.Month())
+	res, err := sdb.insertInto(MONTHS, t.Year(), t.Month())
 	if err != nil {
 		return 0, getExecError(err)
 	}

@@ -51,7 +51,11 @@ func NewSqliteDb(filePath string, cc lib.CurrencyCode) (*SqliteDb, error) {
 	return &SqliteDb{db, cc}, nil
 }
 
-func (sdb SqliteDb) InsertInto(t Table, args ...any) (sql.Result, error) {
+func (sdb SqliteDb) Close() {
+	_ = sdb.handle.Close()
+}
+
+func (sdb SqliteDb) insertInto(t Table, args ...any) (sql.Result, error) {
 	columns, exists := tableData[t]
 	if !exists {
 		return nil, ErrUnsupportedTable
@@ -61,77 +65,7 @@ func (sdb SqliteDb) InsertInto(t Table, args ...any) (sql.Result, error) {
 		return nil, ErrMismatchColsValues
 	}
 
-	return sdb.handle.Exec(sdb.toInsertStr(string(t), columns), args...)
-}
-
-// insertMultiInto inserts multiple records at once using a
-// resolve function that returns the necessary order of
-// table values to be inserted.
-func insertMultiInto[T any](
-	db SqliteDb,
-	t Table,
-	values []T,
-	res func(r T) []any,
-) (sql.Result, error) {
-	execValues := make([][]any, len(values))
-	for i, v := range values {
-		execValues[i] = res(v)
-	}
-
-	columns, exists := tableData[t]
-	if !exists {
-		return nil, ErrUnsupportedTable
-	}
-
-	for _, v := range execValues {
-		if len(v) != len(columns) {
-			return nil, ErrMismatchColsValues
-		}
-	}
-
-	return db.handle.Exec(
-		db.toInsertMultiStr(string(t), columns, len(values)),
-		slices.Concat(execValues...)...,
-	)
-}
-
-func (sdb SqliteDb) toInsertStr(tName string, cols []string) string {
-	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("INSERT INTO %s (%s) VALUES (", tName, strings.Join(cols, ",")))
-
-	for i := range len(cols) {
-		if i > 0 {
-			sb.WriteString(",")
-		}
-		sb.WriteString("?")
-	}
-	sb.WriteString(");")
-
-	return sb.String()
-}
-
-func (sdb SqliteDb) toInsertMultiStr(tName string, cols []string, count int) string {
-	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("INSERT INTO %s (%s) VALUES ", tName, strings.Join(cols, ",")))
-
-	for i := range count {
-		if i > 0 {
-			sb.WriteString(",")
-		}
-		sb.WriteString("(")
-		for ii := range len(cols) {
-			if ii > 0 {
-				sb.WriteString(",")
-			}
-			sb.WriteString("?")
-		}
-		sb.WriteString(")")
-	}
-	return sb.String() + ";"
-}
-
-func (sdb SqliteDb) Close() {
-	_ = sdb.handle.Close()
+	return sdb.handle.Exec(toInsertStr(string(t), columns), args...)
 }
 
 func (sdb SqliteDb) queryAll(t Table) (*sql.Rows, error) {
@@ -193,6 +127,72 @@ func (sdb SqliteDb) query(t Table, qm QueryMap) (*sql.Rows, error) {
 		return nil, err
 	}
 	return rows, nil
+}
+
+// insertMultiInto inserts multiple records at once using a
+// resolve function that returns the necessary order of
+// table values to be inserted.
+func insertMultiInto[T any](
+	db SqliteDb,
+	t Table,
+	values []T,
+	res func(r T) []any,
+) (sql.Result, error) {
+	execValues := make([][]any, len(values))
+	for i, v := range values {
+		execValues[i] = res(v)
+	}
+
+	columns, exists := tableData[t]
+	if !exists {
+		return nil, ErrUnsupportedTable
+	}
+
+	for _, v := range execValues {
+		if len(v) != len(columns) {
+			return nil, ErrMismatchColsValues
+		}
+	}
+
+	return db.handle.Exec(
+		toInsertMultiStr(string(t), columns, len(values)),
+		slices.Concat(execValues...)...,
+	)
+}
+
+func toInsertStr(tName string, cols []string) string {
+	var sb strings.Builder
+	sb.WriteString(fmt.Sprintf("INSERT INTO %s (%s) VALUES (", tName, strings.Join(cols, ",")))
+
+	for i := range len(cols) {
+		if i > 0 {
+			sb.WriteString(",")
+		}
+		sb.WriteString("?")
+	}
+	sb.WriteString(");")
+
+	return sb.String()
+}
+
+func toInsertMultiStr(tName string, cols []string, count int) string {
+	var sb strings.Builder
+	sb.WriteString(fmt.Sprintf("INSERT INTO %s (%s) VALUES ", tName, strings.Join(cols, ",")))
+
+	for i := range count {
+		if i > 0 {
+			sb.WriteString(",")
+		}
+		sb.WriteString("(")
+		for ii := range len(cols) {
+			if ii > 0 {
+				sb.WriteString(",")
+			}
+			sb.WriteString("?")
+		}
+		sb.WriteString(")")
+	}
+	return sb.String() + ";"
 }
 
 func buildFieldMap(allowedFields WhereFlag, qm QueryMap) (FieldMap, error) {

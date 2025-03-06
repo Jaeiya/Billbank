@@ -15,7 +15,7 @@ type BillRecord struct {
 }
 
 func (sdb SqliteDb) CreateNewBill(cfg BillRecord) error {
-	_, err := sdb.InsertInto(
+	_, err := sdb.insertInto(
 		BILLS,
 		cfg.TypeID,
 		cfg.Name,
@@ -75,7 +75,7 @@ type BillHistoryRecord struct {
 }
 
 func (sdb SqliteDb) CreateBillHistory(cfg BillHistoryRecord) error {
-	_, err := sdb.InsertInto(
+	_, err := sdb.insertInto(
 		BILLS_HISTORY,
 		cfg.MonthID,
 		cfg.TypeID,
@@ -132,7 +132,7 @@ func (sdb SqliteDb) QueryBillHistory(qm QueryMap) ([]BillHistoryRecord, error) {
 
 func (sdb SqliteDb) CreateBillTypes(names []string) error {
 	cols := tableData[BILL_TYPES]
-	insStr := sdb.toInsertMultiStr(string(BILL_TYPES), cols, len(names))
+	insStr := toInsertMultiStr(string(BILL_TYPES), cols, len(names))
 	sdb.handle.Exec(insStr, utils.ToAnySlice(names)...)
 	return nil
 }
@@ -164,7 +164,7 @@ type MonthlyBill struct {
 }
 
 func (sdb SqliteDb) CreateMonthlyBills(bills []MonthlyBill) error {
-	insStr := sdb.toInsertMultiStr(string(BILLS_MONTHLY), tableData[BILLS_MONTHLY], len(bills))
+	insStr := toInsertMultiStr(string(BILLS_MONTHLY), tableData[BILLS_MONTHLY], len(bills))
 	execArgs := make([]any, 0, len(bills)*2)
 	for _, bill := range bills {
 		execArgs = append(execArgs, bill.BillID, bill.IsActive)

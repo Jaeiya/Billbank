@@ -53,7 +53,7 @@ func (sdb SqliteDb) CreateBankAccount(config BankAccountRecord, password *string
 		return err
 	}
 
-	_, err = sdb.InsertInto(BANK_ACCOUNTS, config.Name, encAccountNum, encNotes)
+	_, err = sdb.insertInto(BANK_ACCOUNTS, config.Name, encAccountNum, encNotes)
 	if err != nil {
 		return getExecError(err)
 	}
@@ -103,7 +103,7 @@ func (sdb SqliteDb) QueryBankAccounts(qm QueryMap, pass *string) ([]BankAccountR
 }
 
 func (sdb SqliteDb) CreateBankAccountHistory(config BankHistoryRecord) error {
-	_, err := sdb.InsertInto(
+	_, err := sdb.insertInto(
 		BANK_ACCOUNT_HISTORY,
 		config.BankAccountID,
 		config.MonthID,
@@ -144,7 +144,7 @@ func (sdb SqliteDb) QueryBankAccountHistory(qm QueryMap) ([]BankHistoryRecord, e
 }
 
 func (sdb SqliteDb) CreateTransfer(tr TransferRecord) error {
-	_, err := sdb.InsertInto(
+	_, err := sdb.insertInto(
 		TRANSFERS,
 		tr.HistoryID,
 		tr.MonthID,

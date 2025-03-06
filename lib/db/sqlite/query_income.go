@@ -39,7 +39,7 @@ type AffixIncomeRecord struct {
 }
 
 func (sdb SqliteDb) CreateIncome(config IncomeRecord) (int64, error) {
-	res, err := sdb.InsertInto(
+	res, err := sdb.insertInto(
 		INCOME,
 		config.Name,
 		config.Amount,
@@ -95,7 +95,7 @@ func (sdb SqliteDb) QueryIncome(qm QueryMap) ([]IncomeRecord, error) {
 }
 
 func (sdb SqliteDb) CreateIncomeHistory(config IncomeHistoryRecord) error {
-	_, err := sdb.InsertInto(
+	_, err := sdb.insertInto(
 		INCOME_HISTORY,
 		config.IncomeID,
 		config.MonthID,
@@ -139,7 +139,7 @@ AffixIncome tracks an appended amount to an existing income. This could
 be a bonus or overtime amount.
 */
 func (sdb SqliteDb) AffixIncome(historyID int, name string, amount lib.Currency) error {
-	_, err := sdb.InsertInto(INCOME_AFFIXES, historyID, name, amount.GetStoredValue())
+	_, err := sdb.insertInto(INCOME_AFFIXES, historyID, name, amount.GetStoredValue())
 	if err != nil {
 		return getExecError(err)
 	}

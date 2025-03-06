@@ -54,7 +54,7 @@ func (sdb SqliteDb) CreateCreditCard(config CreditCardRecord, pass *string) erro
 		return err
 	}
 
-	_, err = sdb.InsertInto(
+	_, err = sdb.insertInto(
 		CREDIT_CARDS,
 		config.Name,
 		config.DueDay,
@@ -118,7 +118,7 @@ func (sdb SqliteDb) QueryCreditCards(
 }
 
 func (sdb SqliteDb) CreateCreditCardHistory(config CreditCardHistoryRecord) error {
-	_, err := sdb.InsertInto(
+	_, err := sdb.insertInto(
 		CREDIT_CARD_HISTORY,
 		config.CreditCardID,
 		config.MonthID,
