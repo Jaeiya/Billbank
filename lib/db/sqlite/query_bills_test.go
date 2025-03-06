@@ -351,7 +351,7 @@ func TestCreateBillHistory(t *testing.T) {
 			if mock.expectedError != nil {
 				for _, history := range mock.actual {
 					if mock.expectedError != nil {
-						err = db.CreateBillHistory(history)
+						err = db.CreateBillHistory([]BillHistoryRecord{history})
 						a.ErrorIs(err, ErrForeignKey)
 					}
 				}
@@ -359,7 +359,7 @@ func TestCreateBillHistory(t *testing.T) {
 			}
 
 			for _, history := range mock.actual {
-				db.CreateBillHistory(history)
+				db.CreateBillHistory([]BillHistoryRecord{history})
 			}
 
 			res, err := db.QueryBillHistory(QueryMap{})

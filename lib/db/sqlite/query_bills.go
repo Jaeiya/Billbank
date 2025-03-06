@@ -69,24 +69,24 @@ type BillHistoryRecord struct {
 	Notes      *string
 }
 
-func (sdb SqliteDb) CreateBillHistory(cfg BillHistoryRecord) error {
-	_, err := sdb.insertInto(
-		BILLS_HISTORY,
-		cfg.MonthID,
-		cfg.TypeID,
-		cfg.Name,
-		cfg.Amount,
-		cfg.DueDay,
-		cfg.PaidAmount,
-		utils.TryDeref(cfg.PaidDay),
-		utils.TryDeref(cfg.PaidHow),
-		utils.TryDeref(cfg.ClearedDay),
-		utils.TryDeref(cfg.Notes),
-	)
+func (sdb SqliteDb) CreateBillHistory(records []BillHistoryRecord) error {
+	_, err := insertMultiInto(sdb, BILLS_HISTORY, records, func(r BillHistoryRecord) []any {
+		return []any{
+			r.MonthID,
+			r.TypeID,
+			r.Name,
+			r.Amount,
+			r.DueDay,
+			r.PaidAmount,
+			utils.TryDeref(r.PaidDay),
+			utils.TryDeref(r.PaidHow),
+			utils.TryDeref(r.ClearedDay),
+			utils.TryDeref(r.Notes),
+		}
+	})
 	if err != nil {
 		return getExecError(err)
 	}
-
 	return nil
 }
 
