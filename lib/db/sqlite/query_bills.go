@@ -126,9 +126,12 @@ func (sdb SqliteDb) QueryBillHistory(qm QueryMap) ([]BillHistoryRecord, error) {
 }
 
 func (sdb SqliteDb) CreateBillTypes(names []string) error {
-	cols := tableData[BILL_TYPES]
-	insStr := toInsertMultiStr(string(BILL_TYPES), cols, len(names))
-	sdb.handle.Exec(insStr, utils.ToAnySlice(names)...)
+	_, err := insertMultiInto(sdb, BILL_TYPES, names, func(name string) []any {
+		return []any{name}
+	})
+	if err != nil {
+		return getExecError(err)
+	}
 	return nil
 }
 
