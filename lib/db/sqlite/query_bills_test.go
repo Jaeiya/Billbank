@@ -120,17 +120,13 @@ func TestQueryBills(t *testing.T) {
 			r.NoError(err, "expected to create bill types")
 
 			if mock.expectedError != nil {
-				for _, bill := range mock.actual {
-					err = db.CreateNewBills([]BillRecord{bill})
-					a.ErrorIs(err, mock.expectedError, "expected specific error")
-				}
+				err = db.CreateNewBills(mock.actual)
+				r.ErrorIs(err, mock.expectedError, "expected specific error")
 				return
 			}
 
-			for _, bill := range mock.actual {
-				err = db.CreateNewBills([]BillRecord{bill})
-				r.NoError(err, "expected bill to be created properly")
-			}
+			err = db.CreateNewBills(mock.actual)
+			r.NoError(err, "expected bill to be created properly")
 
 			bills, err := db.QueryBills(QueryMap{})
 			r.NoError(err)
@@ -332,24 +328,17 @@ func TestCreateBillHistory(t *testing.T) {
 			err = db.CreateBillTypes([]string{"test"})
 			r.NoError(err, "expected bill types to be created")
 
-			for _, b := range mock.bills {
-				err = db.CreateNewBills([]BillRecord{b})
-				r.NoError(err)
-			}
+			err = db.CreateNewBills(mock.bills)
+			r.NoError(err)
 
 			if mock.expectedError != nil {
-				for _, history := range mock.actual {
-					if mock.expectedError != nil {
-						err = db.CreateBillHistory([]BillHistoryRecord{history})
-						a.ErrorIs(err, ErrForeignKey)
-					}
-				}
+				err = db.CreateBillHistory(mock.actual)
+				r.ErrorIs(err, ErrForeignKey)
 				return
 			}
 
-			for _, history := range mock.actual {
-				db.CreateBillHistory([]BillHistoryRecord{history})
-			}
+			err = db.CreateBillHistory(mock.actual)
+			r.NoError(err, "expected to create bill history")
 
 			res, err := db.QueryBillHistory(QueryMap{})
 			r.NoError(err)
@@ -449,14 +438,12 @@ func TestBillsMonthly(t *testing.T) {
 			err = db.CreateBillTypes([]string{"test"})
 			r.NoError(err, "expected bill types to be created")
 
-			for _, b := range mock.bills {
-				err = db.CreateNewBills([]BillRecord{b})
-				r.NoError(err)
-			}
+			err = db.CreateNewBills(mock.bills)
+			r.NoError(err)
 
 			if mock.expectedError != nil {
 				err = db.CreateMonthlyBills(mock.actual)
-				a.ErrorIs(err, ErrForeignKey)
+				r.ErrorIs(err, ErrForeignKey)
 				return
 			}
 
