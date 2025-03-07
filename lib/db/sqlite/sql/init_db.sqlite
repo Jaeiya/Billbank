@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS income_affixes (
     id         INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     history_id INTEGER NOT NULL,
     name       VARCHAR(30) NOT NULL,
-    amount     INTEGER DEFAULT 0 CHECK (amount>0),
+    amount     INTEGER     CHECK (amount>0),
     FOREIGN KEY (history_id) REFERENCES income_history (id)
 );
 
