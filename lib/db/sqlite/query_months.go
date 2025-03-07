@@ -3,37 +3,26 @@ package sqlite
 import (
 	"fmt"
 	"time"
+
+	"github.com/jaeiya/billbank/lib/utils"
 )
 
-var ErrDirtyDate = fmt.Errorf("found dirty date; use NewMonth() to create the date")
-
-type Month time.Time
-
-func NewMonth(year int, m time.Month) Month {
-	return Month(time.Date(year, m, 1, 0, 0, 0, 0, time.Local))
-}
+var ErrCreatePastTime = fmt.Errorf("invalid year or month; cannot create past months/years")
 
 type MonthRecord struct {
-	ID    int
-	Year  int
-	Month int
+	ID   int
+	Date utils.Date
 }
 
-func (sdb SqliteDb) CreateMonth(m Month) (int64, error) {
-	t := time.Time(m)
-
-	// New months should just contain a modified year & month
-	isClean := t.Day() == 1 &&
-		t.Hour() == 0 &&
-		t.Minute() == 0 &&
-		t.Second() == 0 &&
-		t.Nanosecond() == 0
-
-	if !isClean {
-		return 0, ErrDirtyDate
+func (sdb SqliteDb) CreateMonth(year int, month time.Month) (int64, error) {
+	now := time.Now()
+	if year < now.Year() || month < now.Month() {
+		return 0, ErrCreatePastTime
 	}
 
-	res, err := sdb.insertInto(MONTHS, t.Year(), t.Month())
+	d, _ := utils.NewDate(year, month, 1)
+
+	res, err := sdb.insertInto(MONTHS, d)
 	if err != nil {
 		return 0, getExecError(err)
 	}
@@ -57,8 +46,7 @@ func (sdb SqliteDb) QueryMonths(qm QueryMap) ([]MonthRecord, error) {
 		var record MonthRecord
 		if err := rows.Scan(
 			&record.ID,
-			&record.Year,
-			&record.Month,
+			&record.Date,
 		); err != nil {
 			return []MonthRecord{}, err
 		}

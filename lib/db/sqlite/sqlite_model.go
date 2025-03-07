@@ -21,7 +21,7 @@ const (
 type TableFields = map[Table][]string
 
 var tableData = TableFields{
-	MONTHS:               {"year", "month"},
+	MONTHS:               {"date"},
 	INCOME:               {"name", "amount", "period"},
 	INCOME_HISTORY:       {"income_id", "month_id", "amount"},
 	INCOME_AFFIXES:       {"history_id", "name", "amount"},

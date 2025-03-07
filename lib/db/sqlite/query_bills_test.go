@@ -337,7 +337,8 @@ func TestCreateBillHistory(t *testing.T) {
 			r.NoError(err)
 			defer db.Close()
 
-			_, err = db.CreateMonth(NewMonth(2024, time.January))
+			now := time.Now()
+			_, err = db.CreateMonth(now.Year(), now.Month())
 			r.NoError(err, "expected month to be created successfully")
 
 			err = db.CreateBillTypes([]string{"test"})
@@ -453,7 +454,8 @@ func TestBillsMonthly(t *testing.T) {
 			r.NoError(err)
 			defer db.Close()
 
-			_, err = db.CreateMonth(NewMonth(2024, time.January))
+			now := time.Now()
+			_, err = db.CreateMonth(now.Year(), now.Month())
 			r.NoError(err, "expected month to be created successfully")
 
 			err = db.CreateBillTypes([]string{"test"})

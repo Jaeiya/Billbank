@@ -296,7 +296,8 @@ func TestBankAccountHistory(t *testing.T) {
 			r.NoError(err)
 			defer db.Close()
 
-			db.CreateMonth(NewMonth(2024, time.January))
+			now := time.Now()
+			_, err = db.CreateMonth(now.Year(), now.Month())
 
 			for _, acct := range mock.accounts {
 				err = db.CreateBankAccount(acct, nil)
@@ -453,7 +454,8 @@ func TestBankTransfers(t *testing.T) {
 			r.NoError(err)
 			defer db.Close()
 
-			_, err = db.CreateMonth(NewMonth(2024, time.January))
+			now := time.Now()
+			_, err = db.CreateMonth(now.Year(), now.Month())
 			r.NoError(err)
 
 			for _, acct := range mock.accounts {
