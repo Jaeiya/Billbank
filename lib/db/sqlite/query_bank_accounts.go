@@ -145,7 +145,7 @@ func (sdb SqliteDb) QueryBankAccountHistory(qm QueryMap) ([]BankHistoryRecord, e
 
 func (sdb SqliteDb) CreateTransfer(tr TransferRecord) error {
 	_, err := sdb.insertInto(
-		TRANSFERS,
+		BANK_TRANSFERS,
 		tr.HistoryID,
 		tr.MonthID,
 		tr.Name,
@@ -162,7 +162,7 @@ func (sdb SqliteDb) CreateTransfer(tr TransferRecord) error {
 }
 
 func (sdb SqliteDb) QueryTransfers(qm QueryMap) ([]TransferRecord, error) {
-	rows, err := sdb.query(TRANSFERS, qm)
+	rows, err := sdb.query(BANK_TRANSFERS, qm)
 	if err != nil {
 		return []TransferRecord{}, err
 	}

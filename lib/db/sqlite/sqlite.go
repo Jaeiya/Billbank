@@ -91,7 +91,7 @@ func (sdb SqliteDb) query(t Table, qm QueryMap) (*sql.Rows, error) {
 	case BANK_ACCOUNT_HISTORY:
 		fm, err = buildFieldMap(whereIDOrMonthID|WHERE_BANK_ACCOUNT_ID, qm)
 
-	case TRANSFERS:
+	case BANK_TRANSFERS:
 		fm, err = buildFieldMap(whereIDOrMonthID|WHERE_BANK_ACCOUNT_ID, qm)
 
 	case CREDIT_CARDS:
@@ -257,7 +257,7 @@ func getExecError(err error) error {
 	if strings.Contains(err.Error(), "CHECK constraint failed: due_day") {
 		return ErrDueDayInvalid
 	}
-	if strings.Contains(err.Error(), "CHECK constraint failed: transfer_type") {
+	if strings.Contains(err.Error(), "CHECK constraint failed: type") {
 		return ErrTransferTypeInvalid
 	}
 	if strings.Contains(err.Error(), "CHECK constraint failed: amount") {

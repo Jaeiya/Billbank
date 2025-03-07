@@ -9,7 +9,7 @@ const (
 	INCOME_AFFIXES       = Table("income_affixes")
 	BANK_ACCOUNTS        = Table("bank_accounts")
 	BANK_ACCOUNT_HISTORY = Table("bank_account_history")
-	TRANSFERS            = Table("transfers")
+	BANK_TRANSFERS       = Table("bank_transfers")
 	CREDIT_CARDS         = Table("credit_cards")
 	CREDIT_CARD_HISTORY  = Table("credit_card_history")
 	BILLS                = Table("bills")
@@ -25,15 +25,15 @@ var tableData = TableFields{
 	INCOME:               {"name", "amount", "period"},
 	INCOME_HISTORY:       {"income_id", "month_id", "amount"},
 	INCOME_AFFIXES:       {"history_id", "name", "amount"},
-	BANK_ACCOUNTS:        {"name", "account_number", "notes"},
+	BANK_ACCOUNTS:        {"name", "acct_num", "notes"},
 	BANK_ACCOUNT_HISTORY: {"account_id", "month_id", "balance"},
-	TRANSFERS: {
-		"history_id",
+	BANK_TRANSFERS: {
+		"bank_history_id",
 		"month_id",
 		"name",
 		"amount",
 		"due_day",
-		"transfer_type",
+		"type",
 		"to_whom",
 		"from_whom",
 	},
