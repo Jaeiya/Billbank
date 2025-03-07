@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/jaeiya/billbank/lib"
-	"github.com/jaeiya/billbank/lib/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -25,8 +24,8 @@ func TestCreateMonth(t *testing.T) {
 		expectedError error
 	}
 
-	createDate := func(year int, month time.Month, day int) utils.Date {
-		d, _ := utils.NewDate(year, month, day)
+	createDate := func(year int, month time.Month, day int) lib.Date {
+		d, _ := lib.NewDate(year, month, day)
 		return d
 	}
 	now := time.Now()
