@@ -16,6 +16,9 @@ type MonthRecord struct {
 
 func (sdb SqliteDb) CreateMonth(year int, month time.Month) (int64, error) {
 	now := time.Now()
+	// Maybe in the future this might be a bad idea, but
+	// for now, there's no reason to create months
+	// or years that have already passed.
 	if year < now.Year() || month < now.Month() {
 		return 0, ErrCreatePastTime
 	}
