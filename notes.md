@@ -1,7 +1,4 @@
 
-## Add proper testing to new credit card fields
-There are new credit card fields which need to be tested properly
-
 
 ## Go over the entire database
 There are a lot of potentially new fields and order of fields
