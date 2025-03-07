@@ -6,17 +6,17 @@ import (
 )
 
 type BillRecord struct {
-	ID     int
-	TypeID int
-	Name   string
-	Amount lib.Currency
-	DueDay int
-	Period Period
+	ID      int
+	TypeID  int
+	Name    string
+	Amount  lib.Currency
+	DueDate lib.Date
+	Period  Period
 }
 
 func (sdb SqliteDb) CreateNewBills(records []BillRecord) error {
 	_, err := insertMultiInto(sdb, BILLS, records, func(r BillRecord) []any {
-		return []any{r.TypeID, r.Name, r.Amount, r.DueDay, r.Period}
+		return []any{r.TypeID, r.Name, r.Amount, r.DueDate, r.Period}
 	})
 	if err != nil {
 		return getExecError(err)
@@ -39,7 +39,7 @@ func (sdb SqliteDb) QueryBills(qm QueryMap) ([]BillRecord, error) {
 			&record.TypeID,
 			&record.Name,
 			&record.Amount,
-			&record.DueDay,
+			&record.DueDate,
 			&record.Period,
 		); err != nil {
 			return []BillRecord{}, err
@@ -61,9 +61,9 @@ type BillHistoryRecord struct {
 	TypeID     int
 	Name       string
 	Amount     lib.Currency
-	DueDay     int
+	DueDate    lib.Date
 	PaidAmount *lib.Currency
-	PaidDay    *int
+	PaidDate   *lib.Date
 	PaidHow    *string
 	ClearedDay *int
 	Notes      *string
@@ -76,9 +76,9 @@ func (sdb SqliteDb) CreateBillHistory(records []BillHistoryRecord) error {
 			r.TypeID,
 			r.Name,
 			r.Amount,
-			r.DueDay,
+			r.DueDate,
 			r.PaidAmount,
-			utils.TryDeref(r.PaidDay),
+			utils.TryDeref(r.PaidDate),
 			utils.TryDeref(r.PaidHow),
 			utils.TryDeref(r.ClearedDay),
 			utils.TryDeref(r.Notes),
@@ -106,9 +106,9 @@ func (sdb SqliteDb) QueryBillHistory(qm QueryMap) ([]BillHistoryRecord, error) {
 			&record.TypeID,
 			&record.Name,
 			&record.Amount,
-			&record.DueDay,
+			&record.DueDate,
 			&record.PaidAmount,
-			&record.PaidDay,
+			&record.PaidDate,
 			&record.PaidHow,
 			&record.ClearedDay,
 			&record.Notes,
