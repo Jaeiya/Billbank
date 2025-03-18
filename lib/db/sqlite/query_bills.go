@@ -143,10 +143,7 @@ func (sdb SqliteDb) QueryBillTypes() (types []string, err error) {
 	var name *string
 	var id *int
 	for rows.Next() {
-		if err = rows.Scan(
-			&id,
-			&name,
-		); err != nil {
+		if err = rows.Scan(&id, &name); err != nil {
 			return []string{}, err
 		}
 		types = append(types, *name)
@@ -182,7 +179,9 @@ func (sdb SqliteDb) QueryMonthlyBills() ([]MonthlyBill, error) {
 	monthlyBills := make([]MonthlyBill, 0, 20)
 
 	for rows.Next() {
-		rows.Scan(&id, &billID, &isActive)
+		if err := rows.Scan(&id, &billID, &isActive); err != nil {
+			return []MonthlyBill{}, err
+		}
 		monthlyBills = append(
 			monthlyBills,
 			MonthlyBill{id, billID, isActive},
