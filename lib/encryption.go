@@ -5,13 +5,11 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
-	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
 	"io"
 
 	"golang.org/x/crypto/argon2"
-	"golang.org/x/crypto/pbkdf2"
 )
 
 const (
@@ -136,5 +134,5 @@ func DecryptData(data string, password string) (string, error) {
 }
 
 func deriveKey(password string, salt []byte) []byte {
-	return pbkdf2.Key([]byte(password), salt, 100_000, 32, sha256.New)
+	return argon2.IDKey([]byte(password), salt, 5, 256*1024, 4, 32)
 }
