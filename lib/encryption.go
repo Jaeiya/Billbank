@@ -1,10 +1,10 @@
 package lib
 
 import (
-	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
+	"crypto/subtle"
 	"encoding/base64"
 	"fmt"
 	"io"
@@ -44,7 +44,7 @@ func ValidatePassword(password string, storedPass string) (bool, error) {
 	hash := storedBytes[16:]
 	newHash := argon2.IDKey([]byte(password), salt, timeCost, memoryCost, threads, hashLength)
 
-	return bytes.Equal(hash, newHash), nil
+	return subtle.ConstantTimeCompare(hash, newHash) == 1, nil
 }
 
 func EncryptData(data string, password string) (string, error) {
