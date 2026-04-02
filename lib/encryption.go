@@ -13,23 +13,24 @@ import (
 )
 
 const (
-	timeCost   uint32 = 2
-	memoryCost uint32 = 128 * 1024
+	timeCost   uint32 = 4
+	memoryCost uint32 = 256 * 1024
 	threads    uint8  = 4
-	saltLength uint32 = 16
-	hashLength uint32 = 32
+	keyLen     uint32 = 32
+
+	saltLen uint32 = 16
 )
 
 var ErrEncryptWithoutPassword = fmt.Errorf("tried to encrypt data without password")
 
 func HashPassword(password string) (string, error) {
-	salt := make([]byte, saltLength)
+	salt := make([]byte, saltLen)
 	_, err := rand.Read(salt)
 	if err != nil {
 		return "", err
 	}
 
-	hash := argon2.IDKey([]byte(password), salt, timeCost, memoryCost, threads, hashLength)
+	hash := argon2.IDKey([]byte(password), salt, timeCost, memoryCost, threads, keyLen)
 
 	return base64.StdEncoding.EncodeToString(append(salt, hash...)), nil
 }
@@ -40,15 +41,15 @@ func ValidatePassword(password string, storedPass string) (bool, error) {
 		return false, err
 	}
 
-	salt := storedBytes[:16]
-	hash := storedBytes[16:]
-	newHash := argon2.IDKey([]byte(password), salt, timeCost, memoryCost, threads, hashLength)
+	salt := storedBytes[:saltLen]
+	hash := storedBytes[saltLen:]
+	newHash := argon2.IDKey([]byte(password), salt, timeCost, memoryCost, threads, keyLen)
 
 	return subtle.ConstantTimeCompare(hash, newHash) == 1, nil
 }
 
 func EncryptData(data string, password string) (string, error) {
-	salt := make([]byte, 16)
+	salt := make([]byte, saltLen)
 	if _, err := io.ReadFull(rand.Reader, salt); err != nil {
 		panic(err)
 	}
@@ -108,7 +109,7 @@ func DecryptData(data string, password string) (string, error) {
 		return "", err
 	}
 
-	salt := cipherText[:16]
+	salt := cipherText[:saltLen]
 	key := deriveKey(password, salt)
 
 	cBlock, err := aes.NewCipher(key)
@@ -122,9 +123,9 @@ func DecryptData(data string, password string) (string, error) {
 	}
 
 	nonceSize := aesGCM.NonceSize()
-	nonce := cipherText[16 : 16+nonceSize]
+	nonce := cipherText[saltLen : int(saltLen)+nonceSize]
 
-	cipherText = cipherText[16+nonceSize:]
+	cipherText = cipherText[int(saltLen)+nonceSize:]
 
 	text, err := aesGCM.Open(nil, nonce, cipherText, nil)
 	if err != nil {
@@ -134,5 +135,5 @@ func DecryptData(data string, password string) (string, error) {
 }
 
 func deriveKey(password string, salt []byte) []byte {
-	return argon2.IDKey([]byte(password), salt, 5, 256*1024, 4, 32)
+	return argon2.IDKey([]byte(password), salt, timeCost, memoryCost, threads, keyLen)
 }

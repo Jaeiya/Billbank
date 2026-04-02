@@ -41,7 +41,7 @@ func TestEncryption(t *testing.T) {
 			decoded, err := base64.StdEncoding.DecodeString(hash1)
 			a.NoError(err, "expected a valid base64 encoding")
 
-			expectedLen := saltLength + hashLength
+			expectedLen := saltLen + keyLen
 			a.Len(decoded, int(expectedLen), "expected decoded length to be saltLen + hashLen")
 		})
 	}
@@ -277,7 +277,7 @@ func TestDeriveKey(t *testing.T) {
 	t.Parallel()
 	// Test that the same password and salt produce the same key
 	password := "password123"
-	salt := bytes.Repeat([]byte{1}, 16)
+	salt := bytes.Repeat([]byte{1}, int(saltLen))
 
 	key1 := deriveKey(password, salt)
 	key2 := deriveKey(password, salt)
@@ -291,10 +291,10 @@ func TestDeriveKey(t *testing.T) {
 	a.NotEqual(key1, key3, "expected different passwords to produce different keys")
 
 	// Test that different salts produce different keys
-	salt2 := bytes.Repeat([]byte{2}, 16)
+	salt2 := bytes.Repeat([]byte{2}, int(saltLen))
 	key4 := deriveKey(password, salt2)
 	a.NotEqual(key1, key4, "expected different salts to produce different keys")
 
 	// Test key length
-	a.Len(key1, 32, "expected key length to be 32")
+	a.Len(key1, int(keyLen), "expected key length to be 32")
 }
