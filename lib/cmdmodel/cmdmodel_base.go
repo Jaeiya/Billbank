@@ -111,12 +111,11 @@ func NewBaseModel[T any](cmdData CommandData[T]) *Base[T] {
 	)
 
 	logger.LogFunc(logger.Debug, func() string {
-		var cmdPaths []string = make([]string, 0, len(cmdMap))
+		cmdPaths := make([]string, 0, len(cmdMap))
 		for key := range cmdMap {
-			cmdPaths = append(cmdPaths, fmt.Sprintf("[%s]", key))
+			cmdPaths = append(cmdPaths, "["+key+"]")
 		}
-		pathStrings := fmt.Sprintf("%+v", strings.Join(cmdPaths, ", "))
-		return fmt.Sprintf("command [%s] loaded %s", cmdData.Name, pathStrings)
+		return "command [" + cmdData.Name + "] loaded " + strings.Join(cmdPaths, ", ")
 	})
 
 	return &Base[T]{
