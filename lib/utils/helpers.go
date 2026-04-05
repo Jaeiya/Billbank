@@ -3,9 +3,17 @@ package utils
 import (
 	"os"
 	"strconv"
+	"sync/atomic"
 )
 
 var workingDir string
+
+var NewID = func() func() int {
+	var id int64
+	return func() int {
+		return int(atomic.AddInt64(&id, 1))
+	}
+}()
 
 func GetWorkingDir() string {
 	if workingDir == "" {
