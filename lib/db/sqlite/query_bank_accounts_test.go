@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/jaeiya/billbank/lib"
-	"github.com/jaeiya/billbank/lib/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -54,61 +53,61 @@ func TestCreateBankAccount(t *testing.T) {
 			actual: []BankAccountRecord{
 				{
 					Name:          "test",
-					AccountNumber: utils.NewPointer("282841"),
-					Notes:         utils.NewPointer("some notes"),
+					AccountNumber: new("282841"),
+					Notes:         new("some notes"),
 				},
 			},
 			expected: []BankAccountRecord{
 				{
 					ID:            1,
 					Name:          "test",
-					AccountNumber: utils.NewPointer("282841"),
-					Notes:         utils.NewPointer("some notes"),
+					AccountNumber: new("282841"),
+					Notes:         new("some notes"),
 				},
 			},
-			password: utils.NewPointer("test"),
+			password: new("test"),
 		},
 		{
 			should: "just save account number",
 			actual: []BankAccountRecord{
 				{
 					Name:          "test",
-					AccountNumber: utils.NewPointer("1337420"),
+					AccountNumber: new("1337420"),
 				},
 			},
 			expected: []BankAccountRecord{
 				{
 					ID:            1,
 					Name:          "test",
-					AccountNumber: utils.NewPointer("1337420"),
+					AccountNumber: new("1337420"),
 				},
 			},
-			password: utils.NewPointer("test"),
+			password: new("test"),
 		},
 		{
 			should: "just save notes",
 			actual: []BankAccountRecord{
 				{
 					Name:  "test",
-					Notes: utils.NewPointer("some notes"),
+					Notes: new("some notes"),
 				},
 			},
 			expected: []BankAccountRecord{
 				{
 					ID:    1,
 					Name:  "test",
-					Notes: utils.NewPointer("some notes"),
+					Notes: new("some notes"),
 				},
 			},
-			password: utils.NewPointer("test"),
+			password: new("test"),
 		},
 		{
 			should: "get encoded versions of protected fields",
 			actual: []BankAccountRecord{
 				{
 					Name:          "test",
-					AccountNumber: utils.NewPointer("1337420"),
-					Notes:         utils.NewPointer("sevenCh"),
+					AccountNumber: new("1337420"),
+					Notes:         new("sevenCh"),
 				},
 			},
 			expected: []BankAccountRecord{
@@ -132,7 +131,7 @@ func TestCreateBankAccount(t *testing.T) {
 			defer db.Close()
 
 			for _, acct := range mock.actual {
-				err = db.CreateBankAccount(acct, utils.NewPointer("test"))
+				err = db.CreateBankAccount(acct, new("test"))
 				r.NoError(err)
 			}
 
@@ -168,7 +167,7 @@ func TestCreateBankAccount(t *testing.T) {
 
 		err = db.CreateBankAccount(BankAccountRecord{
 			Name:          "Test",
-			AccountNumber: utils.NewPointer("1823842"),
+			AccountNumber: new("1823842"),
 		}, nil)
 		a.ErrorIs(err, lib.ErrEncryptWithoutPassword)
 	})
@@ -347,8 +346,8 @@ func TestBankTransfers(t *testing.T) {
 					Amount:       lib.NewCurrency("72.28", lib.USD),
 					DueDay:       5,
 					TransferType: DEPOSIT,
-					ToWhom:       utils.NewPointer("johnny"),
-					FromWhom:     utils.NewPointer("bank of america"),
+					ToWhom:       new("johnny"),
+					FromWhom:     new("bank of america"),
 				},
 			},
 			expected: []TransferRecord{
@@ -360,8 +359,8 @@ func TestBankTransfers(t *testing.T) {
 					Amount:       lib.NewCurrency("72.28", lib.USD),
 					DueDay:       5,
 					TransferType: DEPOSIT,
-					ToWhom:       utils.NewPointer("johnny"),
-					FromWhom:     utils.NewPointer("bank of america"),
+					ToWhom:       new("johnny"),
+					FromWhom:     new("bank of america"),
 				},
 			},
 		},

@@ -6,7 +6,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/jaeiya/billbank/lib/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -158,19 +157,19 @@ func TestEncryptNonNil(t *testing.T) {
 		{
 			should:    "return nil with nil data",
 			data:      nil,
-			password:  utils.NewPointer("password"),
+			password:  new("password"),
 			expectNil: true,
 		},
 		{
 			should:      "panic with nil password",
-			data:        utils.NewPointer("secret"),
+			data:        new("secret"),
 			password:    nil,
 			expectedErr: ErrEncryptWithoutPassword,
 		},
 		{
 			should:    "encode non nil values",
-			data:      utils.NewPointer("secret"),
-			password:  utils.NewPointer("password"),
+			data:      new("secret"),
+			password:  new("password"),
 			expectNil: false,
 		},
 	}

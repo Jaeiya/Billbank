@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/jaeiya/billbank/lib"
-	"github.com/jaeiya/billbank/lib/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -201,13 +200,11 @@ func TestCreateBillHistory(t *testing.T) {
 					Name:       "b1",
 					Amount:     lib.NewCurrency("13.37", lib.USD),
 					DueDate:    createDate(time.Now().Year(), time.Now().Month(), 3),
-					PaidAmount: utils.NewPointer(lib.NewCurrency("5", lib.USD)),
-					PaidDate: utils.NewPointer(
-						createDate(time.Now().Year(), time.Now().Month(), 3),
-					),
-					PaidHow:    utils.NewPointer("online"),
-					ClearedDay: utils.NewPointer(3),
-					Notes:      utils.NewPointer("these are some notes"),
+					PaidAmount: new(lib.NewCurrency("5", lib.USD)),
+					PaidDate:   new(createDate(time.Now().Year(), time.Now().Month(), 3)),
+					PaidHow:    new("online"),
+					ClearedDay: new(3),
+					Notes:      new("these are some notes"),
 				},
 			},
 			expected: []BillHistoryRecord{
@@ -218,13 +215,11 @@ func TestCreateBillHistory(t *testing.T) {
 					Name:       "b1",
 					Amount:     lib.NewCurrency("13.37", lib.USD),
 					DueDate:    createDate(time.Now().Year(), time.Now().Month(), 3),
-					PaidAmount: utils.NewPointer(lib.NewCurrency("5", lib.USD)),
-					PaidDate: utils.NewPointer(
-						createDate(time.Now().Year(), time.Now().Month(), 3),
-					),
-					PaidHow:    utils.NewPointer("online"),
-					ClearedDay: utils.NewPointer(3),
-					Notes:      utils.NewPointer("these are some notes"),
+					PaidAmount: new(lib.NewCurrency("5", lib.USD)),
+					PaidDate:   new(createDate(time.Now().Year(), time.Now().Month(), 3)),
+					PaidHow:    new("online"),
+					ClearedDay: new(3),
+					Notes:      new("these are some notes"),
 				},
 			},
 		},

@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/jaeiya/billbank/lib"
-	"github.com/jaeiya/billbank/lib/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -28,10 +27,10 @@ func TestCreateCreditCards(t *testing.T) {
 				{
 					Name:           "test",
 					DueDay:         5,
-					CreditLimit:    utils.NewPointer(lib.NewCurrency("5000", lib.USD)),
-					CardNumber:     utils.NewPointer("2382 3812 4582 5822"),
+					CreditLimit:    new(lib.NewCurrency("5000", lib.USD)),
+					CardNumber:     new("2382 3812 4582 5822"),
 					LastFourDigits: "5822",
-					Notes:          utils.NewPointer("some notes"),
+					Notes:          new("some notes"),
 				},
 			},
 			expected: []CreditCardRecord{
@@ -39,13 +38,13 @@ func TestCreateCreditCards(t *testing.T) {
 					ID:             1,
 					Name:           "test",
 					DueDay:         5,
-					CreditLimit:    utils.NewPointer(lib.NewCurrency("5000", lib.USD)),
-					CardNumber:     utils.NewPointer("2382 3812 4582 5822"),
+					CreditLimit:    new(lib.NewCurrency("5000", lib.USD)),
+					CardNumber:     new("2382 3812 4582 5822"),
 					LastFourDigits: "5822",
-					Notes:          utils.NewPointer("some notes"),
+					Notes:          new("some notes"),
 				},
 			},
-			password: utils.NewPointer("password"),
+			password: new("password"),
 		},
 		{
 			should: "nullable values should be nil",
@@ -53,21 +52,21 @@ func TestCreateCreditCards(t *testing.T) {
 				{
 					Name:           "test",
 					DueDay:         5,
-					CreditLimit:    utils.NewPointer(lib.NewCurrency("5000", lib.USD)),
-					CardNumber:     utils.NewPointer("2382 3812 4582 5822"),
+					CreditLimit:    new(lib.NewCurrency("5000", lib.USD)),
+					CardNumber:     new("2382 3812 4582 5822"),
 					LastFourDigits: "5822",
 				},
 				{
 					Name:           "test2",
 					DueDay:         7,
-					CreditLimit:    utils.NewPointer(lib.NewCurrency("5000", lib.USD)),
+					CreditLimit:    new(lib.NewCurrency("5000", lib.USD)),
 					LastFourDigits: "0023",
-					Notes:          utils.NewPointer("some notes"),
+					Notes:          new("some notes"),
 				},
 				{
 					Name:           "test3",
 					DueDay:         8,
-					CreditLimit:    utils.NewPointer(lib.NewCurrency("5000", lib.USD)),
+					CreditLimit:    new(lib.NewCurrency("5000", lib.USD)),
 					LastFourDigits: "1234",
 				},
 			},
@@ -76,8 +75,8 @@ func TestCreateCreditCards(t *testing.T) {
 					ID:             1,
 					Name:           "test",
 					DueDay:         5,
-					CreditLimit:    utils.NewPointer(lib.NewCurrency("5000", lib.USD)),
-					CardNumber:     utils.NewPointer("2382 3812 4582 5822"),
+					CreditLimit:    new(lib.NewCurrency("5000", lib.USD)),
+					CardNumber:     new("2382 3812 4582 5822"),
 					LastFourDigits: "5822",
 					Notes:          nil,
 				},
@@ -85,22 +84,22 @@ func TestCreateCreditCards(t *testing.T) {
 					ID:             2,
 					Name:           "test2",
 					DueDay:         7,
-					CreditLimit:    utils.NewPointer(lib.NewCurrency("5000", lib.USD)),
+					CreditLimit:    new(lib.NewCurrency("5000", lib.USD)),
 					LastFourDigits: "0023",
-					Notes:          utils.NewPointer("some notes"),
+					Notes:          new("some notes"),
 					CardNumber:     nil,
 				},
 				{
 					ID:             3,
 					Name:           "test3",
 					DueDay:         8,
-					CreditLimit:    utils.NewPointer(lib.NewCurrency("5000", lib.USD)),
+					CreditLimit:    new(lib.NewCurrency("5000", lib.USD)),
 					LastFourDigits: "1234",
 					CardNumber:     nil,
 					Notes:          nil,
 				},
 			},
-			password: utils.NewPointer("password"),
+			password: new("password"),
 		},
 		{
 			should: "panic on due day constraint violation",
@@ -192,7 +191,7 @@ func TestCreateCreditCardHistory(t *testing.T) {
 				{
 					Name:           "test",
 					DueDay:         5,
-					CreditLimit:    utils.NewPointer(lib.NewCurrency("5000", lib.USD)),
+					CreditLimit:    new(lib.NewCurrency("5000", lib.USD)),
 					LastFourDigits: "1234",
 				},
 			},
@@ -202,10 +201,10 @@ func TestCreateCreditCardHistory(t *testing.T) {
 					MonthID:      1,
 					Balance:      lib.NewCurrency("500", lib.USD),
 					DueDay:       5,
-					CreditLimit:  utils.NewPointer(lib.NewCurrency("5000", lib.USD)),
-					PaidDay:      utils.NewPointer(3),
-					PaidAmount:   utils.NewPointer(lib.NewCurrency("32.32", lib.USD)),
-					ClearedDay:   utils.NewPointer(7),
+					CreditLimit:  new(lib.NewCurrency("5000", lib.USD)),
+					PaidDay:      new(3),
+					PaidAmount:   new(lib.NewCurrency("32.32", lib.USD)),
+					ClearedDay:   new(7),
 				},
 			},
 			expected: []CreditCardHistoryRecord{
@@ -215,10 +214,10 @@ func TestCreateCreditCardHistory(t *testing.T) {
 					MonthID:      1,
 					Balance:      lib.NewCurrency("500", lib.USD),
 					DueDay:       5,
-					CreditLimit:  utils.NewPointer(lib.NewCurrency("5000", lib.USD)),
-					PaidDay:      utils.NewPointer(3),
-					PaidAmount:   utils.NewPointer(lib.NewCurrency("32.32", lib.USD)),
-					ClearedDay:   utils.NewPointer(7),
+					CreditLimit:  new(lib.NewCurrency("5000", lib.USD)),
+					PaidDay:      new(3),
+					PaidAmount:   new(lib.NewCurrency("32.32", lib.USD)),
+					ClearedDay:   new(7),
 				},
 			},
 		},
@@ -228,7 +227,7 @@ func TestCreateCreditCardHistory(t *testing.T) {
 				{
 					Name:           "test",
 					DueDay:         5,
-					CreditLimit:    utils.NewPointer(lib.NewCurrency("5000", lib.USD)),
+					CreditLimit:    new(lib.NewCurrency("5000", lib.USD)),
 					LastFourDigits: "1234",
 				},
 			},
@@ -371,10 +370,10 @@ func TestSetCreditCardHistory(t *testing.T) {
 				CreditCardID: 1,
 				MonthID:      1,
 				Balance:      lib.NewCurrency("500", lib.USD),
-				CreditLimit:  utils.NewPointer(lib.NewCurrency("1234.56", lib.USD)),
+				CreditLimit:  new(lib.NewCurrency("1234.56", lib.USD)),
 				DueDay:       10,
-				PaidDay:      utils.NewPointer(20),
-				PaidAmount:   utils.NewPointer(lib.NewCurrency("250", lib.USD)),
+				PaidDay:      new(20),
+				PaidAmount:   new(lib.NewCurrency("250", lib.USD)),
 			},
 		},
 		{
@@ -382,42 +381,42 @@ func TestSetCreditCardHistory(t *testing.T) {
 			actual: CCFieldMap{
 				"invalidField": nil,
 			},
-			expectedErrContains: utils.NewPointer("unsupported credit card history field"),
+			expectedErrContains: new("unsupported credit card history field"),
 		},
 		{
 			should: "error on invalid balance field type",
 			actual: CCFieldMap{
 				CC_BALANCE: 8008,
 			},
-			expectedErrContains: utils.NewPointer("type: lib.Currency"),
+			expectedErrContains: new("type: lib.Currency"),
 		},
 		{
 			should: "error on invalid credit limit field type",
 			actual: CCFieldMap{
 				CC_LIMIT: 8008,
 			},
-			expectedErrContains: utils.NewPointer("type: lib.Currency"),
+			expectedErrContains: new("type: lib.Currency"),
 		},
 		{
 			should: "error on invalid paid amount field type",
 			actual: CCFieldMap{
 				CC_PAID_AMOUNT: 8008,
 			},
-			expectedErrContains: utils.NewPointer("type: lib.Currency"),
+			expectedErrContains: new("type: lib.Currency"),
 		},
 		{
 			should: "error on invalid due day field type",
 			actual: CCFieldMap{
 				CC_DUE_DAY: "invalidType",
 			},
-			expectedErrContains: utils.NewPointer("type: int"),
+			expectedErrContains: new("type: int"),
 		},
 		{
 			should: "error on invalid paid day field type",
 			actual: CCFieldMap{
 				CC_PAID_DAY: "invalidType",
 			},
-			expectedErrContains: utils.NewPointer("type: int"),
+			expectedErrContains: new("type: int"),
 		},
 	}
 

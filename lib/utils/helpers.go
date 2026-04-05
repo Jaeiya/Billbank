@@ -44,10 +44,6 @@ func IsInt(v any) bool {
 	return false
 }
 
-func NewPointer[T any](v T) *T {
-	return &v
-}
-
 func ParseInt(s string) (int, error) {
 	newInt, err := strconv.ParseInt(s, 10, 0)
 	if err != nil {
