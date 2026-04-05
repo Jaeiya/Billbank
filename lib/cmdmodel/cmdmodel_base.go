@@ -9,9 +9,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/jaeiya/billbank/lib/logger"
 	"github.com/jaeiya/billbank/lib/ui"
+	"github.com/jaeiya/billbank/lib/utils"
 )
-
-var _modelId = 0
 
 type CommandData[T any] struct {
 	Name     string
@@ -120,9 +119,8 @@ func NewBaseModel[T any](cmdData CommandData[T]) *Base[T] {
 		return fmt.Sprintf("command [%s] loaded %s", cmdData.Name, pathStrings)
 	})
 
-	_modelId += 1
 	return &Base[T]{
-		id:        _modelId,
+		id:        utils.NewID(),
 		cmdMap:    cmdMap,
 		name:      cmdData.Name,
 		aliases:   cmdData.Aliases,
