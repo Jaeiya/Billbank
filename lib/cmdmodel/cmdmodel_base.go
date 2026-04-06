@@ -404,7 +404,7 @@ func validateCmdData[T any](cmdData CommandData[T]) {
 }
 
 func populateSuggestions(cmdPaths, pathParts []string) []string {
-	var suggestions []string
+	suggestions := make([]string, 0, 10) // set a reasonable minimum length
 	for _, path := range cmdPaths {
 		cmdPathParts := strings.Fields(path)
 		if len(cmdPathParts) >= len(pathParts) {
