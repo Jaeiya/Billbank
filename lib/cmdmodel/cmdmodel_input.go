@@ -131,9 +131,10 @@ func (m InputModel) Update(msg tea.Msg) (InputModel, tea.Cmd) {
 
 	case StatusBarMsg:
 		color := ui.FgSuccessColor
-		if msg.Severity == MED {
+		switch msg.Severity {
+		case MED:
 			color = ui.FgWarnColor
-		} else if msg.Severity == HIGH {
+		case HIGH:
 			color = ui.FgErrColor
 		}
 		style := statusStyle.Foreground(color)
