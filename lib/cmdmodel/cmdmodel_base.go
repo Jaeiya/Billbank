@@ -280,6 +280,7 @@ func (m Base[T]) GetAliases() []string {
 }
 
 func (m Base[T]) GetCmdPaths() (paths []string) {
+	paths = make([]string, 0, len(m.cmdMap))
 	for k := range m.cmdMap {
 		paths = append(paths, k)
 	}
@@ -293,7 +294,9 @@ func (m Base[T]) IsActivePath(cmdPath string) bool {
 // IsInitialized checks to make sure that various expected values
 // are set.
 func (m Base[T]) IsInitialized() bool {
-	b := len(m.cmdMap) > 0 && len(m.status.Path) > 0 && m.viewWidth > 0 &&
+	b := len(m.cmdMap) > 0 &&
+		len(m.status.Path) > 0 &&
+		m.viewWidth > 0 &&
 		m.viewHeight > 0
 	return b
 }

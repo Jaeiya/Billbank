@@ -132,21 +132,21 @@ type (
 // 🟡 False will be returned for nil arguments, without error
 // propagation; optional arguments can be nil.
 func GetArgAs[T, E any](m *Base[E]) (T, bool) {
-	var zero T
+	var none T
 	cmd := m.cmdMap[m.status.Path]
 	if cmd.ArgType == ArgNone {
 		m.AddError(fmt.Errorf("[%s] is trying to get an arg it does not support", cmd.Path))
-		return zero, false
+		return none, false
 	}
 
 	if m.status.Arg == nil {
-		return zero, false
+		return none, false
 	}
 
 	if v, isType := m.status.Arg.(T); isType {
 		return v, true
 	}
 
-	m.AddArgTypeError(m.status.Arg, reflect.TypeOf(zero).Name())
-	return zero, false
+	m.AddArgTypeError(m.status.Arg, reflect.TypeOf(none).Name())
+	return none, false
 }
