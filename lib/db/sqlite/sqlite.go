@@ -9,6 +9,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/jaeiya/billbank/assets"
 	"github.com/jaeiya/billbank/lib"
 	_ "modernc.org/sqlite"
 )
@@ -17,12 +18,6 @@ type SqliteDb struct {
 	handle       *sql.DB
 	currencyCode lib.CurrencyCode
 }
-
-//go:embed sql/init_db.sqlite
-var initBankSQL string
-
-//go:embed sql/get_monthly_bills.sqlite
-var MonthlyBillsSql string
 
 func NewSqliteDb(filePath string, cc lib.CurrencyCode) (*SqliteDb, error) {
 	_, err := os.ReadDir(filepath.Dir(filePath))
@@ -46,7 +41,7 @@ func NewSqliteDb(filePath string, cc lib.CurrencyCode) (*SqliteDb, error) {
 	}
 
 	// Creates the physical db file
-	_, err = db.Exec(initBankSQL)
+	_, err = db.Exec(assets.SQL.CreateDatabase)
 	if err != nil {
 		return nil, err
 	}
