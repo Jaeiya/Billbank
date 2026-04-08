@@ -3,10 +3,12 @@ package commands
 import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/jaeiya/billbank/lib/cmdmodel"
+	"github.com/jaeiya/billbank/lib/db/sqlite"
 )
 
 type billsModel struct {
 	*cmdmodel.Base[billsModel]
+	db *sqlite.SqliteDb
 }
 
 type billCmd = cmdmodel.Command[billsModel]
@@ -15,13 +17,14 @@ var billCommands = []billCmd{
 	{Path: "", Run: loadBills, View: viewBills},
 }
 
-func NewBillsCmd() billsModel {
+func NewBillsCmd(db *sqlite.SqliteDb) billsModel {
 	return billsModel{
 		Base: cmdmodel.NewBaseModel(cmdmodel.CommandData[billsModel]{
 			Name:     "Bills",
 			Aliases:  []string{"bills"},
 			Commands: billCommands,
 		}),
+		db: db,
 	}
 }
 
