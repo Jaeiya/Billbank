@@ -2,7 +2,7 @@ SELECT
     bm.id AS id,
     bm.is_active,
     b.amount,
-    b.due_day,
+    b.due_date,
     b.period,
     bt.name AS bill_type
 FROM bills_monthly AS bm
