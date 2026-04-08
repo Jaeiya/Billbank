@@ -238,8 +238,8 @@ func getStack() string {
 		frame, more := frames.Next()
 		file := filepath.Base(frame.File)
 		function := filepath.Base(frame.Function)
-		funcBuilder.WriteString(fmt.Sprintf("\t%s(): \n", function))
-		fileBuilder.WriteString(fmt.Sprintf("%s:%d\n", file, frame.Line))
+		fmt.Fprintf(&funcBuilder, "\t%s(): \n", function)
+		fmt.Fprintf(&fileBuilder, "%s:%d\n", file, frame.Line)
 		if !more {
 			break
 		}
