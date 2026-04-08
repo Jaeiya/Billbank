@@ -2,10 +2,10 @@ package assets
 
 import _ "embed"
 
-//go:embed sql/init_db.sqlite
+//go:embed sql/init_db.sql
 var slqInitStr string
 
-//go:embed sql/get_monthly_bills.sqlite
+//go:embed sql/get_monthly_bills.sql
 var billsQueryStr string
 
 // References raw SQLite strings for various operations
