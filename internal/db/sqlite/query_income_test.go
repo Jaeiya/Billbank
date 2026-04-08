@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jaeiya/billbank/lib"
+	"github.com/jaeiya/billbank/internal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -25,7 +25,7 @@ func TestCreateIncome(t *testing.T) {
 			actual: []IncomeRecord{
 				{
 					Name:   "test",
-					Amount: lib.NewCurrency("200", lib.USD),
+					Amount: internal.NewCurrency("200", internal.USD),
 					Period: MONTHLY,
 				},
 			},
@@ -33,7 +33,7 @@ func TestCreateIncome(t *testing.T) {
 				{
 					ID:     1,
 					Name:   "test",
-					Amount: lib.NewCurrency("200", lib.USD),
+					Amount: internal.NewCurrency("200", internal.USD),
 					Period: MONTHLY,
 				},
 			},
@@ -41,7 +41,7 @@ func TestCreateIncome(t *testing.T) {
 		{
 			should: "panic on amount constraint violation",
 			actual: []IncomeRecord{
-				{Name: "test", Amount: lib.NewCurrency("-5", lib.USD)},
+				{Name: "test", Amount: internal.NewCurrency("-5", internal.USD)},
 			},
 			expectedError: ErrAmountInvalid,
 		},
@@ -54,7 +54,7 @@ func TestCreateIncome(t *testing.T) {
 			a := assert.New(t)
 			r := require.New(t)
 
-			db, err := NewSqliteDb(filepath.Join(dir, "mock.db"), lib.USD)
+			db, err := NewSqliteDb(filepath.Join(dir, "mock.db"), internal.USD)
 			r.NoError(err)
 			defer db.Close()
 
@@ -84,20 +84,20 @@ func TestCreateIncome(t *testing.T) {
 		a := assert.New(t)
 		r := require.New(t)
 
-		db, err := NewSqliteDb(filepath.Join(dir, "mock.db"), lib.USD)
+		db, err := NewSqliteDb(filepath.Join(dir, "mock.db"), internal.USD)
 		r.NoError(err)
 		defer db.Close()
 
 		_, err = db.CreateIncome(IncomeRecord{
 			Name:   "name",
-			Amount: lib.NewCurrency("13.37", lib.USD),
+			Amount: internal.NewCurrency("13.37", internal.USD),
 			Period: MONTHLY,
 		})
 		r.NoError(err)
 
 		_, err = db.CreateIncome(IncomeRecord{
 			Name:   "name",
-			Amount: lib.NewCurrency("133.7", lib.USD),
+			Amount: internal.NewCurrency("133.7", internal.USD),
 			Period: MONTHLY,
 		})
 		a.ErrorIs(err, ErrUniqueName)
@@ -120,7 +120,7 @@ func TestCreateIncomeHistory(t *testing.T) {
 			incomes: []IncomeRecord{
 				{
 					Name:   "test",
-					Amount: lib.NewCurrency("250", lib.USD),
+					Amount: internal.NewCurrency("250", internal.USD),
 					Period: BIWEEKLY,
 				},
 			},
@@ -128,7 +128,7 @@ func TestCreateIncomeHistory(t *testing.T) {
 				{
 					IncomeID: 1,
 					MonthID:  1,
-					Amount:   lib.NewCurrency("250", lib.USD),
+					Amount:   internal.NewCurrency("250", internal.USD),
 				},
 			},
 			expected: []IncomeHistoryRecord{
@@ -136,7 +136,7 @@ func TestCreateIncomeHistory(t *testing.T) {
 					ID:       1,
 					IncomeID: 1,
 					MonthID:  1,
-					Amount:   lib.NewCurrency("250", lib.USD),
+					Amount:   internal.NewCurrency("250", internal.USD),
 				},
 			},
 		},
@@ -145,7 +145,7 @@ func TestCreateIncomeHistory(t *testing.T) {
 			incomes: []IncomeRecord{
 				{
 					Name:   "test",
-					Amount: lib.NewCurrency("250", lib.USD),
+					Amount: internal.NewCurrency("250", internal.USD),
 					Period: BIWEEKLY,
 				},
 			},
@@ -153,7 +153,7 @@ func TestCreateIncomeHistory(t *testing.T) {
 				{
 					IncomeID: 1,
 					MonthID:  1,
-					Amount:   lib.NewCurrency("-5", lib.USD),
+					Amount:   internal.NewCurrency("-5", internal.USD),
 				},
 			},
 			expectedError: ErrAmountInvalid,
@@ -163,7 +163,7 @@ func TestCreateIncomeHistory(t *testing.T) {
 			incomes: []IncomeRecord{
 				{
 					Name:   "test",
-					Amount: lib.NewCurrency("250", lib.USD),
+					Amount: internal.NewCurrency("250", internal.USD),
 					Period: BIWEEKLY,
 				},
 			},
@@ -171,12 +171,12 @@ func TestCreateIncomeHistory(t *testing.T) {
 				{
 					IncomeID: 2,
 					MonthID:  1,
-					Amount:   lib.NewCurrency("1000", lib.USD),
+					Amount:   internal.NewCurrency("1000", internal.USD),
 				},
 				{
 					IncomeID: 1,
 					MonthID:  2,
-					Amount:   lib.NewCurrency("500", lib.USD),
+					Amount:   internal.NewCurrency("500", internal.USD),
 				},
 			},
 			expectedError: ErrForeignKey,
@@ -190,7 +190,7 @@ func TestCreateIncomeHistory(t *testing.T) {
 			a := assert.New(t)
 			r := require.New(t)
 
-			db, err := NewSqliteDb(filepath.Join(dir, "mock.db"), lib.USD)
+			db, err := NewSqliteDb(filepath.Join(dir, "mock.db"), internal.USD)
 			r.NoError(err)
 			defer db.Close()
 

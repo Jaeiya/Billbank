@@ -3,13 +3,13 @@ package sqlite
 import (
 	"fmt"
 
-	"github.com/jaeiya/billbank/lib"
+	"github.com/jaeiya/billbank/internal"
 )
 
 type IncomeRecord struct {
 	ID     int
 	Name   string
-	Amount lib.Currency
+	Amount internal.Currency
 	Period Period
 }
 
@@ -17,7 +17,7 @@ type IncomeHistoryRecord struct {
 	ID       int
 	IncomeID int
 	MonthID  int
-	Amount   lib.Currency
+	Amount   internal.Currency
 }
 
 func (ih IncomeHistoryRecord) String() string {
@@ -35,7 +35,7 @@ type AffixIncomeRecord struct {
 	ID              int
 	IncomeHistoryID int
 	Name            string
-	Amount          lib.Currency
+	Amount          internal.Currency
 }
 
 func (sdb SqliteDb) CreateIncome(config IncomeRecord) (int64, error) {
@@ -57,7 +57,7 @@ func (sdb SqliteDb) CreateIncome(config IncomeRecord) (int64, error) {
 	return id, nil
 }
 
-func (sdb SqliteDb) SetIncome(id int, amount lib.Currency) error {
+func (sdb SqliteDb) SetIncome(id int, amount internal.Currency) error {
 	_, err := sdb.handle.Exec(
 		fmt.Sprintf("UPDATE income SET amount=%d WHERE id=%d", amount.GetStoredValue(), id),
 	)
@@ -138,7 +138,7 @@ func (sdb SqliteDb) QueryIncomeHistory(qm QueryMap) ([]IncomeHistoryRecord, erro
 AffixIncome tracks an appended amount to an existing income. This could
 be a bonus or overtime amount.
 */
-func (sdb SqliteDb) AffixIncome(historyID int, name string, amount lib.Currency) error {
+func (sdb SqliteDb) AffixIncome(historyID int, name string, amount internal.Currency) error {
 	_, err := sdb.insertInto(INCOME_AFFIXES, historyID, name, amount.GetStoredValue())
 	if err != nil {
 		return getExecError(err)

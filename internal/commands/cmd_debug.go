@@ -13,10 +13,10 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/jaeiya/billbank/lib/cmdmodel"
-	"github.com/jaeiya/billbank/lib/logger"
-	"github.com/jaeiya/billbank/lib/ui"
-	"github.com/jaeiya/billbank/lib/utils"
+	"github.com/jaeiya/billbank/internal/cmdmodel"
+	"github.com/jaeiya/billbank/internal/logger"
+	"github.com/jaeiya/billbank/internal/ui"
+	"github.com/jaeiya/billbank/internal/utils"
 )
 
 type debugStats struct {

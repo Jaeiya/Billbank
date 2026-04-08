@@ -5,12 +5,12 @@ import (
 	"path/filepath"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/jaeiya/billbank/lib"
-	"github.com/jaeiya/billbank/lib/cmdmodel"
-	"github.com/jaeiya/billbank/lib/commands"
-	"github.com/jaeiya/billbank/lib/db/sqlite"
-	"github.com/jaeiya/billbank/lib/logger"
-	"github.com/jaeiya/billbank/lib/utils"
+	"github.com/jaeiya/billbank/internal"
+	"github.com/jaeiya/billbank/internal/cmdmodel"
+	"github.com/jaeiya/billbank/internal/commands"
+	"github.com/jaeiya/billbank/internal/db/sqlite"
+	"github.com/jaeiya/billbank/internal/logger"
+	"github.com/jaeiya/billbank/internal/utils"
 )
 
 func main() {
@@ -29,7 +29,7 @@ func main() {
 		}
 	}()
 
-	db, err := sqlite.NewSqliteDb(filePath, lib.USD)
+	db, err := sqlite.NewSqliteDb(filePath, internal.USD)
 	if err != nil {
 		panic(err)
 	}
@@ -37,7 +37,7 @@ func main() {
 
 	logger.Log(logger.Info, "loaded database")
 
-	vp := lib.ViewPort{}
+	vp := internal.ViewPort{}
 	h := utils.NewCmdHistory()
 
 	vp.CommandInput = cmdmodel.NewInputModel(
@@ -65,7 +65,7 @@ func main() {
 	}
 }
 
-// db, err := sqlite.NewSqliteDb("billbank.db", lib.USD)
+// db, err := sqlite.NewSqliteDb("billbank.db", internal.USD)
 // if err != nil {
 // 	panic(err)
 // }
@@ -90,7 +90,7 @@ func main() {
 // // IMPORTANT: Due dates for bills should be set according to period
 // // IMPORTANT: [monthly]: we set month to January and the day is specified by user
 // // IMPORTANT:  [yearly]: user should set month and day
-// dd, err := lib.NewDate(2025, time.February, 3)
+// dd, err := internal.NewDate(2025, time.February, 3)
 // if err != nil {
 // 	panic(err)
 // }
@@ -99,21 +99,21 @@ func main() {
 // 	{
 // 		TypeID:  1,
 // 		Name:    "test bill 1",
-// 		Amount:  lib.NewCurrency("32.41", lib.USD),
+// 		Amount:  internal.NewCurrency("32.41", internal.USD),
 // 		DueDate: dd,
 // 		Period:  sqlite.MONTHLY,
 // 	},
 // 	{
 // 		TypeID:  1,
 // 		Name:    "test bill 2",
-// 		Amount:  lib.NewCurrency("11.33", lib.USD),
+// 		Amount:  internal.NewCurrency("11.33", internal.USD),
 // 		DueDate: dd,
 // 		Period:  sqlite.MONTHLY,
 // 	},
 // 	{
 // 		TypeID:  1,
 // 		Name:    "test bill 3",
-// 		Amount:  lib.NewCurrency("782.23", lib.USD),
+// 		Amount:  internal.NewCurrency("782.23", internal.USD),
 // 		DueDate: dd,
 // 		Period:  sqlite.MONTHLY,
 // 	},
@@ -144,8 +144,8 @@ func main() {
 
 // var id int
 // var isActive bool
-// var amount lib.Currency
-// var dueDate lib.Date
+// var amount internal.Currency
+// var dueDate internal.Date
 // var period sqlite.Period
 // var billType string
 

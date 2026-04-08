@@ -1,16 +1,16 @@
 package sqlite
 
 import (
-	"github.com/jaeiya/billbank/lib"
-	"github.com/jaeiya/billbank/lib/utils"
+	"github.com/jaeiya/billbank/internal"
+	"github.com/jaeiya/billbank/internal/utils"
 )
 
 type BillRecord struct {
 	ID      int
 	TypeID  int
 	Name    string
-	Amount  lib.Currency
-	DueDate lib.Date
+	Amount  internal.Currency
+	DueDate internal.Date
 	Period  Period
 }
 
@@ -44,7 +44,7 @@ func (sdb SqliteDb) QueryBills(qm QueryMap) ([]BillRecord, error) {
 		); err != nil {
 			return []BillRecord{}, err
 		}
-		// record.Amount = lib.NewCurrencyFromStore(amount, sdb.currencyCode)
+		// record.Amount = internal.NewCurrencyFromStore(amount, sdb.currencyCode)
 		records = append(records, record)
 	}
 
@@ -60,10 +60,10 @@ type BillHistoryRecord struct {
 	MonthID    int
 	TypeID     int
 	Name       string
-	Amount     lib.Currency
-	DueDate    lib.Date
-	PaidAmount *lib.Currency
-	PaidDate   *lib.Date
+	Amount     internal.Currency
+	DueDate    internal.Date
+	PaidAmount *internal.Currency
+	PaidDate   *internal.Date
 	PaidHow    *string
 	ClearedDay *int
 	Notes      *string

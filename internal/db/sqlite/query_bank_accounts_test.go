@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jaeiya/billbank/lib"
+	"github.com/jaeiya/billbank/internal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -126,7 +126,7 @@ func TestCreateBankAccount(t *testing.T) {
 			r := require.New(t)
 			dir := t.TempDir()
 
-			db, err := NewSqliteDb(filepath.Join(dir, "mock.db"), lib.USD)
+			db, err := NewSqliteDb(filepath.Join(dir, "mock.db"), internal.USD)
 			r.NoError(err)
 			defer db.Close()
 
@@ -161,7 +161,7 @@ func TestCreateBankAccount(t *testing.T) {
 		r := require.New(t)
 		dir := t.TempDir()
 
-		db, err := NewSqliteDb(filepath.Join(dir, "mock.db"), lib.USD)
+		db, err := NewSqliteDb(filepath.Join(dir, "mock.db"), internal.USD)
 		r.NoError(err)
 		defer db.Close()
 
@@ -169,7 +169,7 @@ func TestCreateBankAccount(t *testing.T) {
 			Name:          "Test",
 			AccountNumber: new("1823842"),
 		}, nil)
-		a.ErrorIs(err, lib.ErrEncryptWithoutPassword)
+		a.ErrorIs(err, internal.ErrEncryptWithoutPassword)
 	})
 }
 
@@ -190,14 +190,18 @@ func TestBankAccountHistory(t *testing.T) {
 			},
 
 			actual: []BankHistoryRecord{
-				{MonthID: 1, BankAccountID: 1, Balance: lib.NewCurrency("133.7", lib.USD)},
+				{
+					MonthID:       1,
+					BankAccountID: 1,
+					Balance:       internal.NewCurrency("133.7", internal.USD),
+				},
 			},
 			expected: []BankHistoryRecord{
 				{
 					ID:            1,
 					MonthID:       1,
 					BankAccountID: 1,
-					Balance:       lib.NewCurrency("133.7", lib.USD),
+					Balance:       internal.NewCurrency("133.7", internal.USD),
 				},
 			},
 		},
@@ -211,35 +215,51 @@ func TestBankAccountHistory(t *testing.T) {
 			},
 
 			actual: []BankHistoryRecord{
-				{MonthID: 1, BankAccountID: 3, Balance: lib.NewCurrency("7242.31", lib.USD)},
-				{MonthID: 1, BankAccountID: 1, Balance: lib.NewCurrency("13.37", lib.USD)},
-				{MonthID: 1, BankAccountID: 4, Balance: lib.NewCurrency("1337.69", lib.USD)},
-				{MonthID: 1, BankAccountID: 2, Balance: lib.NewCurrency("80.08", lib.USD)},
+				{
+					MonthID:       1,
+					BankAccountID: 3,
+					Balance:       internal.NewCurrency("7242.31", internal.USD),
+				},
+				{
+					MonthID:       1,
+					BankAccountID: 1,
+					Balance:       internal.NewCurrency("13.37", internal.USD),
+				},
+				{
+					MonthID:       1,
+					BankAccountID: 4,
+					Balance:       internal.NewCurrency("1337.69", internal.USD),
+				},
+				{
+					MonthID:       1,
+					BankAccountID: 2,
+					Balance:       internal.NewCurrency("80.08", internal.USD),
+				},
 			},
 			expected: []BankHistoryRecord{
 				{
 					ID:            1,
 					MonthID:       1,
 					BankAccountID: 3,
-					Balance:       lib.NewCurrency("7242.31", lib.USD),
+					Balance:       internal.NewCurrency("7242.31", internal.USD),
 				},
 				{
 					ID:            2,
 					MonthID:       1,
 					BankAccountID: 1,
-					Balance:       lib.NewCurrency("13.37", lib.USD),
+					Balance:       internal.NewCurrency("13.37", internal.USD),
 				},
 				{
 					ID:            3,
 					MonthID:       1,
 					BankAccountID: 4,
-					Balance:       lib.NewCurrency("1337.69", lib.USD),
+					Balance:       internal.NewCurrency("1337.69", internal.USD),
 				},
 				{
 					ID:            4,
 					MonthID:       1,
 					BankAccountID: 2,
-					Balance:       lib.NewCurrency("80.08", lib.USD),
+					Balance:       internal.NewCurrency("80.08", internal.USD),
 				},
 			},
 		},
@@ -250,7 +270,11 @@ func TestBankAccountHistory(t *testing.T) {
 			},
 
 			actual: []BankHistoryRecord{
-				{MonthID: 2, BankAccountID: 1, Balance: lib.NewCurrency("133.7", lib.USD)},
+				{
+					MonthID:       2,
+					BankAccountID: 1,
+					Balance:       internal.NewCurrency("133.7", internal.USD),
+				},
 			},
 			expectError: ErrForeignKey,
 		},
@@ -261,7 +285,11 @@ func TestBankAccountHistory(t *testing.T) {
 			},
 
 			actual: []BankHistoryRecord{
-				{MonthID: 1, BankAccountID: 2, Balance: lib.NewCurrency("133.7", lib.USD)},
+				{
+					MonthID:       1,
+					BankAccountID: 2,
+					Balance:       internal.NewCurrency("133.7", internal.USD),
+				},
 			},
 			expectError: ErrForeignKey,
 		},
@@ -278,7 +306,7 @@ func TestBankAccountHistory(t *testing.T) {
 					ID:            1,
 					MonthID:       1,
 					BankAccountID: 1,
-					Balance:       lib.NewCurrency("0", lib.USD),
+					Balance:       internal.NewCurrency("0", internal.USD),
 				},
 			},
 		},
@@ -291,7 +319,7 @@ func TestBankAccountHistory(t *testing.T) {
 			r := require.New(t)
 			dir := t.TempDir()
 
-			db, err := NewSqliteDb(filepath.Join(dir, "mock.db"), lib.USD)
+			db, err := NewSqliteDb(filepath.Join(dir, "mock.db"), internal.USD)
 			r.NoError(err)
 			defer db.Close()
 
@@ -343,7 +371,7 @@ func TestBankTransfers(t *testing.T) {
 					HistoryID:    1,
 					MonthID:      1,
 					Name:         "test",
-					Amount:       lib.NewCurrency("72.28", lib.USD),
+					Amount:       internal.NewCurrency("72.28", internal.USD),
 					DueDay:       5,
 					TransferType: DEPOSIT,
 					ToWhom:       new("johnny"),
@@ -356,7 +384,7 @@ func TestBankTransfers(t *testing.T) {
 					HistoryID:    1,
 					MonthID:      1,
 					Name:         "test",
-					Amount:       lib.NewCurrency("72.28", lib.USD),
+					Amount:       internal.NewCurrency("72.28", internal.USD),
 					DueDay:       5,
 					TransferType: DEPOSIT,
 					ToWhom:       new("johnny"),
@@ -375,7 +403,7 @@ func TestBankTransfers(t *testing.T) {
 					HistoryID:    1,
 					MonthID:      1,
 					Name:         "test",
-					Amount:       lib.NewCurrency("72.28", lib.USD),
+					Amount:       internal.NewCurrency("72.28", internal.USD),
 					DueDay:       5,
 					TransferType: DEPOSIT,
 				},
@@ -386,7 +414,7 @@ func TestBankTransfers(t *testing.T) {
 					HistoryID:    1,
 					MonthID:      1,
 					Name:         "test",
-					Amount:       lib.NewCurrency("72.28", lib.USD),
+					Amount:       internal.NewCurrency("72.28", internal.USD),
 					DueDay:       5,
 					TransferType: DEPOSIT,
 					ToWhom:       nil,
@@ -449,7 +477,7 @@ func TestBankTransfers(t *testing.T) {
 			r := assert.New(t)
 			dir := t.TempDir()
 
-			db, err := NewSqliteDb(filepath.Join(dir, "mock.db"), lib.USD)
+			db, err := NewSqliteDb(filepath.Join(dir, "mock.db"), internal.USD)
 			r.NoError(err)
 			defer db.Close()
 

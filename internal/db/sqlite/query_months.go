@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/jaeiya/billbank/lib"
+	"github.com/jaeiya/billbank/internal"
 )
 
 var ErrCreatePastTime = fmt.Errorf("invalid year or month; cannot create past months/years")
 
 type MonthRecord struct {
 	ID   int
-	Date lib.Date
+	Date internal.Date
 }
 
 func (sdb SqliteDb) CreateMonth(year int, month time.Month) (int64, error) {
@@ -23,7 +23,7 @@ func (sdb SqliteDb) CreateMonth(year int, month time.Month) (int64, error) {
 		return 0, ErrCreatePastTime
 	}
 
-	d, _ := lib.NewDate(year, month, 1)
+	d, _ := internal.NewDate(year, month, 1)
 
 	res, err := sdb.insertInto(MONTHS, d)
 	if err != nil {

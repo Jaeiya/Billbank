@@ -10,16 +10,16 @@ import (
 	"strings"
 
 	"github.com/jaeiya/billbank/assets"
-	"github.com/jaeiya/billbank/lib"
+	"github.com/jaeiya/billbank/internal"
 	_ "modernc.org/sqlite"
 )
 
 type SqliteDb struct {
 	handle       *sql.DB
-	currencyCode lib.CurrencyCode
+	currencyCode internal.CurrencyCode
 }
 
-func NewSqliteDb(filePath string, cc lib.CurrencyCode) (*SqliteDb, error) {
+func NewSqliteDb(filePath string, cc internal.CurrencyCode) (*SqliteDb, error) {
 	_, err := os.ReadDir(filepath.Dir(filePath))
 	if err != nil {
 		return nil, fmt.Errorf("cannot load database: %w", err)
@@ -242,7 +242,7 @@ func buildQueryStr(t Table, fm FieldMap) (string, error) {
 			conditions = append(conditions, fmt.Sprintf("%s LIKE '%%%s%%'", field, realVal))
 		case int, int64, int32:
 			conditions = append(conditions, fmt.Sprintf("%s=%v", field, realVal))
-		case lib.Currency:
+		case internal.Currency:
 			conditions = append(conditions, fmt.Sprintf("%s=%d", field, realVal.GetStoredValue()))
 		default:
 			return "", fmt.Errorf("unsupported type [%T]", val)

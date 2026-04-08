@@ -1,12 +1,12 @@
-package lib
+package internal
 
 import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/jaeiya/billbank/lib/cmdmodel"
-	"github.com/jaeiya/billbank/lib/logger"
-	"github.com/jaeiya/billbank/lib/ui"
+	"github.com/jaeiya/billbank/internal/cmdmodel"
+	"github.com/jaeiya/billbank/internal/logger"
+	"github.com/jaeiya/billbank/internal/ui"
 )
 
 type (

@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jaeiya/billbank/lib"
+	"github.com/jaeiya/billbank/internal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -28,28 +28,28 @@ func TestQueryBills(t *testing.T) {
 				{
 					Name:    "t1",
 					TypeID:  1,
-					Amount:  lib.NewCurrency("19.99", lib.USD),
+					Amount:  internal.NewCurrency("19.99", internal.USD),
 					DueDate: createDate(now.Year(), now.Month(), 3),
 					Period:  MONTHLY,
 				},
 				{
 					Name:    "t2",
 					TypeID:  1,
-					Amount:  lib.NewCurrency("39.99", lib.USD),
+					Amount:  internal.NewCurrency("39.99", internal.USD),
 					DueDate: createDate(now.Year(), now.Month(), 27),
 					Period:  MONTHLY,
 				},
 				{
 					Name:    "t3",
 					TypeID:  1,
-					Amount:  lib.NewCurrency("10.45", lib.USD),
+					Amount:  internal.NewCurrency("10.45", internal.USD),
 					DueDate: createDate(now.Year(), now.Month(), 11),
 					Period:  MONTHLY,
 				},
 				{
 					Name:    "t4",
 					TypeID:  1,
-					Amount:  lib.NewCurrency("2.99", lib.USD),
+					Amount:  internal.NewCurrency("2.99", internal.USD),
 					DueDate: createDate(now.Year(), now.Month(), 8),
 					Period:  MONTHLY,
 				},
@@ -59,7 +59,7 @@ func TestQueryBills(t *testing.T) {
 					ID:      1,
 					Name:    "t1",
 					TypeID:  1,
-					Amount:  lib.NewCurrency("19.99", lib.USD),
+					Amount:  internal.NewCurrency("19.99", internal.USD),
 					DueDate: createDate(now.Year(), now.Month(), 3),
 					Period:  MONTHLY,
 				},
@@ -67,7 +67,7 @@ func TestQueryBills(t *testing.T) {
 					ID:      2,
 					Name:    "t2",
 					TypeID:  1,
-					Amount:  lib.NewCurrency("39.99", lib.USD),
+					Amount:  internal.NewCurrency("39.99", internal.USD),
 					DueDate: createDate(now.Year(), now.Month(), 27),
 					Period:  MONTHLY,
 				},
@@ -75,7 +75,7 @@ func TestQueryBills(t *testing.T) {
 					ID:      3,
 					Name:    "t3",
 					TypeID:  1,
-					Amount:  lib.NewCurrency("10.45", lib.USD),
+					Amount:  internal.NewCurrency("10.45", internal.USD),
 					DueDate: createDate(now.Year(), now.Month(), 11),
 					Period:  MONTHLY,
 				},
@@ -83,7 +83,7 @@ func TestQueryBills(t *testing.T) {
 					ID:      4,
 					Name:    "t4",
 					TypeID:  1,
-					Amount:  lib.NewCurrency("2.99", lib.USD),
+					Amount:  internal.NewCurrency("2.99", internal.USD),
 					DueDate: createDate(now.Year(), now.Month(), 8),
 					Period:  MONTHLY,
 				},
@@ -95,7 +95,7 @@ func TestQueryBills(t *testing.T) {
 				{
 					Name:    "t1",
 					TypeID:  2,
-					Amount:  lib.NewCurrency("123.4", lib.USD),
+					Amount:  internal.NewCurrency("123.4", internal.USD),
 					DueDate: createDate(now.Year(), now.Month(), 7),
 					Period:  MONTHLY,
 				},
@@ -111,7 +111,7 @@ func TestQueryBills(t *testing.T) {
 			a := assert.New(t)
 			r := require.New(t)
 
-			db, err := NewSqliteDb(filepath.Join(dir, "mock.db"), lib.USD)
+			db, err := NewSqliteDb(filepath.Join(dir, "mock.db"), internal.USD)
 			r.NoError(err)
 			defer db.Close()
 
@@ -140,7 +140,7 @@ func TestQueryBills(t *testing.T) {
 		a := assert.New(t)
 		r := require.New(t)
 
-		db, err := NewSqliteDb(filepath.Join(dir, "mock.db"), lib.USD)
+		db, err := NewSqliteDb(filepath.Join(dir, "mock.db"), internal.USD)
 		r.NoError(err)
 		defer db.Close()
 
@@ -151,7 +151,7 @@ func TestQueryBills(t *testing.T) {
 			{
 				Name:    "name",
 				TypeID:  1,
-				Amount:  lib.NewCurrency("13.37", lib.USD),
+				Amount:  internal.NewCurrency("13.37", internal.USD),
 				DueDate: createDate(now.Year(), now.Month(), 10),
 				Period:  MONTHLY,
 			},
@@ -162,7 +162,7 @@ func TestQueryBills(t *testing.T) {
 			{
 				Name:    "name",
 				TypeID:  1,
-				Amount:  lib.NewCurrency("133.7", lib.USD),
+				Amount:  internal.NewCurrency("133.7", internal.USD),
 				DueDate: createDate(now.Year(), now.Month(), 7),
 				Period:  MONTHLY,
 			},
@@ -188,7 +188,7 @@ func TestCreateBillHistory(t *testing.T) {
 				{
 					Name:    "b1",
 					TypeID:  1,
-					Amount:  lib.NewCurrency("13.37", lib.USD),
+					Amount:  internal.NewCurrency("13.37", internal.USD),
 					DueDate: createDate(time.Now().Year(), time.Now().Month(), 3),
 					Period:  MONTHLY,
 				},
@@ -198,9 +198,9 @@ func TestCreateBillHistory(t *testing.T) {
 					MonthID:    1,
 					TypeID:     1,
 					Name:       "b1",
-					Amount:     lib.NewCurrency("13.37", lib.USD),
+					Amount:     internal.NewCurrency("13.37", internal.USD),
 					DueDate:    createDate(time.Now().Year(), time.Now().Month(), 3),
-					PaidAmount: new(lib.NewCurrency("5", lib.USD)),
+					PaidAmount: new(internal.NewCurrency("5", internal.USD)),
 					PaidDate:   new(createDate(time.Now().Year(), time.Now().Month(), 3)),
 					PaidHow:    new("online"),
 					ClearedDay: new(3),
@@ -213,9 +213,9 @@ func TestCreateBillHistory(t *testing.T) {
 					MonthID:    1,
 					TypeID:     1,
 					Name:       "b1",
-					Amount:     lib.NewCurrency("13.37", lib.USD),
+					Amount:     internal.NewCurrency("13.37", internal.USD),
 					DueDate:    createDate(time.Now().Year(), time.Now().Month(), 3),
-					PaidAmount: new(lib.NewCurrency("5", lib.USD)),
+					PaidAmount: new(internal.NewCurrency("5", internal.USD)),
 					PaidDate:   new(createDate(time.Now().Year(), time.Now().Month(), 3)),
 					PaidHow:    new("online"),
 					ClearedDay: new(3),
@@ -229,7 +229,7 @@ func TestCreateBillHistory(t *testing.T) {
 				{
 					Name:    "b3",
 					TypeID:  1,
-					Amount:  lib.NewCurrency("1337", lib.USD),
+					Amount:  internal.NewCurrency("1337", internal.USD),
 					DueDate: createDate(time.Now().Year(), time.Now().Month(), 3),
 					Period:  MONTHLY,
 				},
@@ -239,7 +239,7 @@ func TestCreateBillHistory(t *testing.T) {
 					MonthID: 1,
 					TypeID:  1,
 					Name:    "b3",
-					Amount:  lib.NewCurrency("1337", lib.USD),
+					Amount:  internal.NewCurrency("1337", internal.USD),
 					DueDate: createDate(time.Now().Year(), time.Now().Month(), 3),
 				},
 			},
@@ -249,7 +249,7 @@ func TestCreateBillHistory(t *testing.T) {
 					MonthID:    1,
 					TypeID:     1,
 					Name:       "b3",
-					Amount:     lib.NewCurrency("1337", lib.USD),
+					Amount:     internal.NewCurrency("1337", internal.USD),
 					DueDate:    createDate(time.Now().Year(), time.Now().Month(), 3),
 					PaidAmount: nil,
 					PaidDate:   nil,
@@ -265,7 +265,7 @@ func TestCreateBillHistory(t *testing.T) {
 				{
 					Name:    "b4",
 					TypeID:  1,
-					Amount:  lib.NewCurrency("1337", lib.USD),
+					Amount:  internal.NewCurrency("1337", internal.USD),
 					DueDate: createDate(time.Now().Year(), time.Now().Month(), 3),
 					Period:  MONTHLY,
 				},
@@ -275,7 +275,7 @@ func TestCreateBillHistory(t *testing.T) {
 					MonthID: 2, // should not exist
 					TypeID:  1,
 					Name:    "b4",
-					Amount:  lib.NewCurrency("1337", lib.USD),
+					Amount:  internal.NewCurrency("1337", internal.USD),
 					DueDate: createDate(time.Now().Year(), time.Now().Month(), 3),
 				},
 			},
@@ -287,7 +287,7 @@ func TestCreateBillHistory(t *testing.T) {
 				{
 					Name:    "b4",
 					TypeID:  1,
-					Amount:  lib.NewCurrency("1337", lib.USD),
+					Amount:  internal.NewCurrency("1337", internal.USD),
 					DueDate: createDate(time.Now().Year(), time.Now().Month(), 3),
 					Period:  MONTHLY,
 				},
@@ -297,7 +297,7 @@ func TestCreateBillHistory(t *testing.T) {
 					MonthID: 1,
 					TypeID:  2, // should not exist
 					Name:    "b4",
-					Amount:  lib.NewCurrency("1337", lib.USD),
+					Amount:  internal.NewCurrency("1337", internal.USD),
 					DueDate: createDate(time.Now().Year(), time.Now().Month(), 3),
 				},
 			},
@@ -312,7 +312,7 @@ func TestCreateBillHistory(t *testing.T) {
 			a := assert.New(t)
 			r := require.New(t)
 
-			db, err := NewSqliteDb(filepath.Join(dir, "mock.db"), lib.USD)
+			db, err := NewSqliteDb(filepath.Join(dir, "mock.db"), internal.USD)
 			r.NoError(err)
 			defer db.Close()
 
@@ -360,28 +360,28 @@ func TestBillsMonthly(t *testing.T) {
 				{
 					TypeID:  1,
 					Name:    "t1",
-					Amount:  lib.NewCurrency("123", lib.USD),
+					Amount:  internal.NewCurrency("123", internal.USD),
 					DueDate: createDate(time.Now().Year(), time.Now().Month(), 3),
 					Period:  MONTHLY,
 				},
 				{
 					TypeID:  1,
 					Name:    "t2",
-					Amount:  lib.NewCurrency("123", lib.USD),
+					Amount:  internal.NewCurrency("123", internal.USD),
 					DueDate: createDate(time.Now().Year(), time.Now().Month(), 3),
 					Period:  MONTHLY,
 				},
 				{
 					TypeID:  1,
 					Name:    "t3",
-					Amount:  lib.NewCurrency("123", lib.USD),
+					Amount:  internal.NewCurrency("123", internal.USD),
 					DueDate: createDate(time.Now().Year(), time.Now().Month(), 3),
 					Period:  MONTHLY,
 				},
 				{
 					TypeID:  1,
 					Name:    "t4",
-					Amount:  lib.NewCurrency("123", lib.USD),
+					Amount:  internal.NewCurrency("123", internal.USD),
 					DueDate: createDate(time.Now().Year(), time.Now().Month(), 3),
 					Period:  MONTHLY,
 				},
@@ -405,7 +405,7 @@ func TestBillsMonthly(t *testing.T) {
 				{
 					TypeID:  1,
 					Name:    "hello",
-					Amount:  lib.NewCurrency("1.12", lib.USD),
+					Amount:  internal.NewCurrency("1.12", internal.USD),
 					DueDate: createDate(time.Now().Year(), time.Now().Month(), 3),
 					Period:  MONTHLY,
 				},
@@ -422,7 +422,7 @@ func TestBillsMonthly(t *testing.T) {
 			a := assert.New(t)
 			r := require.New(t)
 
-			db, err := NewSqliteDb(filepath.Join(dir, "mock.db"), lib.USD)
+			db, err := NewSqliteDb(filepath.Join(dir, "mock.db"), internal.USD)
 			r.NoError(err)
 			defer db.Close()
 
@@ -457,7 +457,7 @@ func TestBillsMonthly(t *testing.T) {
 		a := assert.New(t)
 		r := require.New(t)
 
-		db, err := NewSqliteDb(filepath.Join(dir, "mock.db"), lib.USD)
+		db, err := NewSqliteDb(filepath.Join(dir, "mock.db"), internal.USD)
 		r.NoError(err)
 		defer db.Close()
 
@@ -468,7 +468,7 @@ func TestBillsMonthly(t *testing.T) {
 			{
 				Name:    "t1",
 				TypeID:  1,
-				Amount:  lib.NewCurrency("13.37", lib.USD),
+				Amount:  internal.NewCurrency("13.37", internal.USD),
 				DueDate: createDate(time.Now().Year(), time.Now().Month(), 3),
 				Period:  MONTHLY,
 			},

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/jaeiya/billbank/lib"
-	"github.com/jaeiya/billbank/lib/utils"
+	"github.com/jaeiya/billbank/internal"
+	"github.com/jaeiya/billbank/internal/utils"
 )
 
 type (
@@ -25,7 +25,7 @@ type CreditCardRecord struct {
 	ID             int
 	Name           string
 	DueDay         int
-	CreditLimit    *lib.Currency
+	CreditLimit    *internal.Currency
 	CardNumber     *string
 	LastFourDigits string
 	Notes          *string
@@ -35,21 +35,21 @@ type CreditCardHistoryRecord struct {
 	ID           int
 	CreditCardID int
 	MonthID      int
-	Balance      lib.Currency
-	CreditLimit  *lib.Currency
-	PaidAmount   *lib.Currency
+	Balance      internal.Currency
+	CreditLimit  *internal.Currency
+	PaidAmount   *internal.Currency
 	PaidDay      *int
 	DueDay       int
 	ClearedDay   *int
 }
 
 func (sdb SqliteDb) CreateCreditCard(config CreditCardRecord, pass *string) error {
-	encCardNum, err := lib.EncryptNonNil(config.CardNumber, pass)
+	encCardNum, err := internal.EncryptNonNil(config.CardNumber, pass)
 	if err != nil {
 		return err
 	}
 
-	encNotes, err := lib.EncryptNonNil(config.Notes, pass)
+	encNotes, err := internal.EncryptNonNil(config.Notes, pass)
 	if err != nil {
 		return err
 	}
@@ -96,13 +96,13 @@ func (sdb SqliteDb) QueryCreditCards(
 		}
 
 		if password != nil && record.CardNumber != nil {
-			if record.CardNumber, err = lib.DecryptNonNil(record.CardNumber, *password); err != nil {
+			if record.CardNumber, err = internal.DecryptNonNil(record.CardNumber, *password); err != nil {
 				return []CreditCardRecord{}, err
 			}
 		}
 
 		if password != nil && record.Notes != nil {
-			if record.Notes, err = lib.DecryptNonNil(record.Notes, *password); err != nil {
+			if record.Notes, err = internal.DecryptNonNil(record.Notes, *password); err != nil {
 				return []CreditCardRecord{}, err
 			}
 		}
@@ -176,9 +176,9 @@ func (sdb SqliteDb) SetCreditCardHistory(historyID int, fieldMap CCFieldMap) err
 		switch field {
 
 		case CC_BALANCE, CC_LIMIT, CC_PAID_AMOUNT:
-			c, err := lib.ToCurrency(value)
+			c, err := internal.ToCurrency(value)
 			if err != nil {
-				return fmt.Errorf("%s should be of type: lib.Currency", field)
+				return fmt.Errorf("%s should be of type: internal.Currency", field)
 			}
 			conditions = append(conditions, fmt.Sprintf("%s=%d", field, c.GetStoredValue()))
 

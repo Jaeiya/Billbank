@@ -3,8 +3,8 @@ package sqlite
 import (
 	"fmt"
 
-	"github.com/jaeiya/billbank/lib"
-	"github.com/jaeiya/billbank/lib/utils"
+	"github.com/jaeiya/billbank/internal"
+	"github.com/jaeiya/billbank/internal/utils"
 )
 
 type TransferType string
@@ -26,7 +26,7 @@ type BankHistoryRecord struct {
 	ID            int
 	MonthID       int
 	BankAccountID int
-	Balance       lib.Currency
+	Balance       internal.Currency
 }
 
 type TransferRecord struct {
@@ -34,7 +34,7 @@ type TransferRecord struct {
 	HistoryID    int
 	MonthID      int
 	Name         string
-	Amount       lib.Currency
+	Amount       internal.Currency
 	DueDay       int
 	TransferType TransferType
 
@@ -43,12 +43,12 @@ type TransferRecord struct {
 }
 
 func (sdb SqliteDb) CreateBankAccount(config BankAccountRecord, password *string) error {
-	encAccountNum, err := lib.EncryptNonNil(config.AccountNumber, password)
+	encAccountNum, err := internal.EncryptNonNil(config.AccountNumber, password)
 	if err != nil {
 		return err
 	}
 
-	encNotes, err := lib.EncryptNonNil(config.Notes, password)
+	encNotes, err := internal.EncryptNonNil(config.Notes, password)
 	if err != nil {
 		return err
 	}
@@ -81,13 +81,13 @@ func (sdb SqliteDb) QueryBankAccounts(qm QueryMap, pass *string) ([]BankAccountR
 		}
 
 		if pass != nil && record.AccountNumber != nil {
-			if record.AccountNumber, err = lib.DecryptNonNil(record.AccountNumber, *pass); err != nil {
+			if record.AccountNumber, err = internal.DecryptNonNil(record.AccountNumber, *pass); err != nil {
 				return []BankAccountRecord{}, err
 			}
 		}
 
 		if pass != nil && record.Notes != nil {
-			if record.Notes, err = lib.DecryptNonNil(record.Notes, *pass); err != nil {
+			if record.Notes, err = internal.DecryptNonNil(record.Notes, *pass); err != nil {
 				return []BankAccountRecord{}, err
 			}
 		}

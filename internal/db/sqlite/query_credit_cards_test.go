@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jaeiya/billbank/lib"
+	"github.com/jaeiya/billbank/internal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -27,7 +27,7 @@ func TestCreateCreditCards(t *testing.T) {
 				{
 					Name:           "test",
 					DueDay:         5,
-					CreditLimit:    new(lib.NewCurrency("5000", lib.USD)),
+					CreditLimit:    new(internal.NewCurrency("5000", internal.USD)),
 					CardNumber:     new("2382 3812 4582 5822"),
 					LastFourDigits: "5822",
 					Notes:          new("some notes"),
@@ -38,7 +38,7 @@ func TestCreateCreditCards(t *testing.T) {
 					ID:             1,
 					Name:           "test",
 					DueDay:         5,
-					CreditLimit:    new(lib.NewCurrency("5000", lib.USD)),
+					CreditLimit:    new(internal.NewCurrency("5000", internal.USD)),
 					CardNumber:     new("2382 3812 4582 5822"),
 					LastFourDigits: "5822",
 					Notes:          new("some notes"),
@@ -52,21 +52,21 @@ func TestCreateCreditCards(t *testing.T) {
 				{
 					Name:           "test",
 					DueDay:         5,
-					CreditLimit:    new(lib.NewCurrency("5000", lib.USD)),
+					CreditLimit:    new(internal.NewCurrency("5000", internal.USD)),
 					CardNumber:     new("2382 3812 4582 5822"),
 					LastFourDigits: "5822",
 				},
 				{
 					Name:           "test2",
 					DueDay:         7,
-					CreditLimit:    new(lib.NewCurrency("5000", lib.USD)),
+					CreditLimit:    new(internal.NewCurrency("5000", internal.USD)),
 					LastFourDigits: "0023",
 					Notes:          new("some notes"),
 				},
 				{
 					Name:           "test3",
 					DueDay:         8,
-					CreditLimit:    new(lib.NewCurrency("5000", lib.USD)),
+					CreditLimit:    new(internal.NewCurrency("5000", internal.USD)),
 					LastFourDigits: "1234",
 				},
 			},
@@ -75,7 +75,7 @@ func TestCreateCreditCards(t *testing.T) {
 					ID:             1,
 					Name:           "test",
 					DueDay:         5,
-					CreditLimit:    new(lib.NewCurrency("5000", lib.USD)),
+					CreditLimit:    new(internal.NewCurrency("5000", internal.USD)),
 					CardNumber:     new("2382 3812 4582 5822"),
 					LastFourDigits: "5822",
 					Notes:          nil,
@@ -84,7 +84,7 @@ func TestCreateCreditCards(t *testing.T) {
 					ID:             2,
 					Name:           "test2",
 					DueDay:         7,
-					CreditLimit:    new(lib.NewCurrency("5000", lib.USD)),
+					CreditLimit:    new(internal.NewCurrency("5000", internal.USD)),
 					LastFourDigits: "0023",
 					Notes:          new("some notes"),
 					CardNumber:     nil,
@@ -93,7 +93,7 @@ func TestCreateCreditCards(t *testing.T) {
 					ID:             3,
 					Name:           "test3",
 					DueDay:         8,
-					CreditLimit:    new(lib.NewCurrency("5000", lib.USD)),
+					CreditLimit:    new(internal.NewCurrency("5000", internal.USD)),
 					LastFourDigits: "1234",
 					CardNumber:     nil,
 					Notes:          nil,
@@ -124,7 +124,7 @@ func TestCreateCreditCards(t *testing.T) {
 			a := assert.New(t)
 			r := require.New(t)
 
-			db, err := NewSqliteDb(filepath.Join(dir, "mock.db"), lib.USD)
+			db, err := NewSqliteDb(filepath.Join(dir, "mock.db"), internal.USD)
 			r.NoError(err)
 			defer db.Close()
 
@@ -154,7 +154,7 @@ func TestCreateCreditCards(t *testing.T) {
 		a := assert.New(t)
 		r := require.New(t)
 
-		db, err := NewSqliteDb(filepath.Join(dir, "mock.db"), lib.USD)
+		db, err := NewSqliteDb(filepath.Join(dir, "mock.db"), internal.USD)
 		r.NoError(err)
 		defer db.Close()
 
@@ -191,7 +191,7 @@ func TestCreateCreditCardHistory(t *testing.T) {
 				{
 					Name:           "test",
 					DueDay:         5,
-					CreditLimit:    new(lib.NewCurrency("5000", lib.USD)),
+					CreditLimit:    new(internal.NewCurrency("5000", internal.USD)),
 					LastFourDigits: "1234",
 				},
 			},
@@ -199,11 +199,11 @@ func TestCreateCreditCardHistory(t *testing.T) {
 				{
 					CreditCardID: 1,
 					MonthID:      1,
-					Balance:      lib.NewCurrency("500", lib.USD),
+					Balance:      internal.NewCurrency("500", internal.USD),
 					DueDay:       5,
-					CreditLimit:  new(lib.NewCurrency("5000", lib.USD)),
+					CreditLimit:  new(internal.NewCurrency("5000", internal.USD)),
 					PaidDay:      new(3),
-					PaidAmount:   new(lib.NewCurrency("32.32", lib.USD)),
+					PaidAmount:   new(internal.NewCurrency("32.32", internal.USD)),
 					ClearedDay:   new(7),
 				},
 			},
@@ -212,11 +212,11 @@ func TestCreateCreditCardHistory(t *testing.T) {
 					ID:           1,
 					CreditCardID: 1,
 					MonthID:      1,
-					Balance:      lib.NewCurrency("500", lib.USD),
+					Balance:      internal.NewCurrency("500", internal.USD),
 					DueDay:       5,
-					CreditLimit:  new(lib.NewCurrency("5000", lib.USD)),
+					CreditLimit:  new(internal.NewCurrency("5000", internal.USD)),
 					PaidDay:      new(3),
-					PaidAmount:   new(lib.NewCurrency("32.32", lib.USD)),
+					PaidAmount:   new(internal.NewCurrency("32.32", internal.USD)),
 					ClearedDay:   new(7),
 				},
 			},
@@ -227,7 +227,7 @@ func TestCreateCreditCardHistory(t *testing.T) {
 				{
 					Name:           "test",
 					DueDay:         5,
-					CreditLimit:    new(lib.NewCurrency("5000", lib.USD)),
+					CreditLimit:    new(internal.NewCurrency("5000", internal.USD)),
 					LastFourDigits: "1234",
 				},
 			},
@@ -235,7 +235,7 @@ func TestCreateCreditCardHistory(t *testing.T) {
 				{
 					CreditCardID: 1,
 					MonthID:      1,
-					Balance:      lib.NewCurrency("500", lib.USD),
+					Balance:      internal.NewCurrency("500", internal.USD),
 					DueDay:       5,
 				},
 			},
@@ -244,7 +244,7 @@ func TestCreateCreditCardHistory(t *testing.T) {
 					ID:           1,
 					CreditCardID: 1,
 					MonthID:      1,
-					Balance:      lib.NewCurrency("500", lib.USD),
+					Balance:      internal.NewCurrency("500", internal.USD),
 					DueDay:       5,
 					CreditLimit:  nil,
 					PaidDay:      nil,
@@ -266,13 +266,13 @@ func TestCreateCreditCardHistory(t *testing.T) {
 				{
 					CreditCardID: 2,
 					MonthID:      1,
-					Balance:      lib.NewCurrency("500", lib.USD),
+					Balance:      internal.NewCurrency("500", internal.USD),
 					DueDay:       5,
 				},
 				{
 					CreditCardID: 1,
 					MonthID:      2,
-					Balance:      lib.NewCurrency("500", lib.USD),
+					Balance:      internal.NewCurrency("500", internal.USD),
 					DueDay:       5,
 				},
 			},
@@ -291,13 +291,13 @@ func TestCreateCreditCardHistory(t *testing.T) {
 				{
 					CreditCardID: 1,
 					MonthID:      1,
-					Balance:      lib.NewCurrency("500", lib.USD),
+					Balance:      internal.NewCurrency("500", internal.USD),
 					DueDay:       0,
 				},
 				{
 					CreditCardID: 1,
 					MonthID:      2,
-					Balance:      lib.NewCurrency("500", lib.USD),
+					Balance:      internal.NewCurrency("500", internal.USD),
 					DueDay:       32,
 				},
 			},
@@ -312,7 +312,7 @@ func TestCreateCreditCardHistory(t *testing.T) {
 			a := assert.New(t)
 			r := require.New(t)
 
-			db, err := NewSqliteDb(filepath.Join(dir, "mock.db"), lib.USD)
+			db, err := NewSqliteDb(filepath.Join(dir, "mock.db"), internal.USD)
 			r.NoError(err)
 			defer db.Close()
 
@@ -359,21 +359,21 @@ func TestSetCreditCardHistory(t *testing.T) {
 		{
 			should: "set all available fields",
 			actual: CCFieldMap{
-				CC_BALANCE:     lib.NewCurrency("500", lib.USD),
-				CC_LIMIT:       lib.NewCurrency("1234.56", lib.USD),
+				CC_BALANCE:     internal.NewCurrency("500", internal.USD),
+				CC_LIMIT:       internal.NewCurrency("1234.56", internal.USD),
 				CC_DUE_DAY:     10,
 				CC_PAID_DAY:    20,
-				CC_PAID_AMOUNT: lib.NewCurrency("250", lib.USD),
+				CC_PAID_AMOUNT: internal.NewCurrency("250", internal.USD),
 			},
 			expected: CreditCardHistoryRecord{
 				ID:           1,
 				CreditCardID: 1,
 				MonthID:      1,
-				Balance:      lib.NewCurrency("500", lib.USD),
-				CreditLimit:  new(lib.NewCurrency("1234.56", lib.USD)),
+				Balance:      internal.NewCurrency("500", internal.USD),
+				CreditLimit:  new(internal.NewCurrency("1234.56", internal.USD)),
 				DueDay:       10,
 				PaidDay:      new(20),
-				PaidAmount:   new(lib.NewCurrency("250", lib.USD)),
+				PaidAmount:   new(internal.NewCurrency("250", internal.USD)),
 			},
 		},
 		{
@@ -388,21 +388,21 @@ func TestSetCreditCardHistory(t *testing.T) {
 			actual: CCFieldMap{
 				CC_BALANCE: 8008,
 			},
-			expectedErrContains: new("type: lib.Currency"),
+			expectedErrContains: new("type: internal.Currency"),
 		},
 		{
 			should: "error on invalid credit limit field type",
 			actual: CCFieldMap{
 				CC_LIMIT: 8008,
 			},
-			expectedErrContains: new("type: lib.Currency"),
+			expectedErrContains: new("type: internal.Currency"),
 		},
 		{
 			should: "error on invalid paid amount field type",
 			actual: CCFieldMap{
 				CC_PAID_AMOUNT: 8008,
 			},
-			expectedErrContains: new("type: lib.Currency"),
+			expectedErrContains: new("type: internal.Currency"),
 		},
 		{
 			should: "error on invalid due day field type",
@@ -427,7 +427,7 @@ func TestSetCreditCardHistory(t *testing.T) {
 			a := assert.New(t)
 			r := require.New(t)
 
-			db, err := NewSqliteDb(filepath.Join(dir, "mock.db"), lib.USD)
+			db, err := NewSqliteDb(filepath.Join(dir, "mock.db"), internal.USD)
 			r.NoError(err)
 			defer db.Close()
 
@@ -445,7 +445,7 @@ func TestSetCreditCardHistory(t *testing.T) {
 			err = db.CreateCreditCardHistory(CreditCardHistoryRecord{
 				CreditCardID: 1,
 				MonthID:      1,
-				Balance:      lib.NewCurrency("0", lib.USD),
+				Balance:      internal.NewCurrency("0", internal.USD),
 				DueDay:       1,
 			})
 			r.NoError(err)

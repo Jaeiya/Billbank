@@ -2,8 +2,8 @@ package commands
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/jaeiya/billbank/lib/cmdmodel"
-	"github.com/jaeiya/billbank/lib/db/sqlite"
+	"github.com/jaeiya/billbank/internal/cmdmodel"
+	"github.com/jaeiya/billbank/internal/db/sqlite"
 )
 
 type billsModel struct {

@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jaeiya/billbank/lib"
+	"github.com/jaeiya/billbank/internal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -24,8 +24,8 @@ func TestCreateMonth(t *testing.T) {
 		expectedError error
 	}
 
-	createDate := func(year int, month time.Month, day int) lib.Date {
-		d, _ := lib.NewDate(year, month, day)
+	createDate := func(year int, month time.Month, day int) internal.Date {
+		d, _ := internal.NewDate(year, month, day)
 		return d
 	}
 	now := time.Now()
@@ -72,7 +72,7 @@ func TestCreateMonth(t *testing.T) {
 			a := assert.New(t)
 			r := require.New(t)
 
-			db, err := NewSqliteDb(filepath.Join(dir, "mock.db"), lib.USD)
+			db, err := NewSqliteDb(filepath.Join(dir, "mock.db"), internal.USD)
 			r.NoError(err)
 			defer db.Close()
 
