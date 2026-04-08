@@ -369,11 +369,6 @@ func viewSlog(m debugModel) string {
 func loadStats(m debugModel) debugModel {
 	var err error
 
-	ll, isValid := cmdmodel.GetArgAs[logger.LogLevel](m.Base)
-	if !isValid {
-		return m
-	}
-	_ = ll
 	path := filepath.Join(utils.GetWorkingDir(), "log.txt")
 	fileInfo, err := os.Stat(path)
 	if err != nil {
