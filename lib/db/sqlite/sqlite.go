@@ -21,6 +21,9 @@ type SqliteDb struct {
 //go:embed sql/init_db.sqlite
 var initBankSQL string
 
+//go:embed sql/get_monthly_bills.sqlite
+var MonthlyBillsSql string
+
 func NewSqliteDb(filePath string, cc lib.CurrencyCode) (*SqliteDb, error) {
 	_, err := os.ReadDir(filepath.Dir(filePath))
 	if err != nil {
@@ -53,6 +56,10 @@ func NewSqliteDb(filePath string, cc lib.CurrencyCode) (*SqliteDb, error) {
 
 func (sdb SqliteDb) Close() error {
 	return sdb.handle.Close()
+}
+
+func (sdb SqliteDb) Query(s string) (*sql.Rows, error) {
+	return sdb.handle.Query(s)
 }
 
 func (sdb SqliteDb) insertInto(t Table, args ...any) (sql.Result, error) {
