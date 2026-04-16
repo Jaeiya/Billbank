@@ -4,7 +4,8 @@ import (
 	"os"
 	"path/filepath"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
+
 	"github.com/jaeiya/billbank/internal"
 	"github.com/jaeiya/billbank/internal/cmdmodel"
 	"github.com/jaeiya/billbank/internal/commands"
@@ -49,10 +50,7 @@ func main() {
 
 	logger.Log(logger.Info, "finished loading commands")
 
-	p1 := tea.NewProgram(
-		vp,
-		tea.WithAltScreen(),
-	)
+	p1 := tea.NewProgram(vp)
 
 	if _, err := p1.Run(); err != nil {
 		panic(err)

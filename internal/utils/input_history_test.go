@@ -3,7 +3,7 @@ package utils
 import (
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -68,7 +68,7 @@ func TestHistoryCycle(t *testing.T) {
 	for _, tt := range tests {
 		t.Run("should "+tt.should, func(t *testing.T) {
 			a := assert.New(t)
-			cmd, present := h.Cycle(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(tt.key)})
+			cmd, present := h.Cycle(tea.KeyPressMsg{Text: tt.key})
 			a.Equal(tt.expectedCmd, cmd)
 			a.Equal(tt.expectedPresent, present)
 			a.Equal(tt.expectedPos, h.pos)
@@ -78,7 +78,7 @@ func TestHistoryCycle(t *testing.T) {
 
 func TestHistoryCycleEmpty(t *testing.T) {
 	h := NewCmdHistory()
-	cmd, present := h.Cycle(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("up")})
+	cmd, present := h.Cycle(tea.KeyPressMsg{Text: "up"})
 	a := assert.New(t)
 	a.Equal("", cmd, "should have empty history")
 	a.False(present, "should indicate missing history")

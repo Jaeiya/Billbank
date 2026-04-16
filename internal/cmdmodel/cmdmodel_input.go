@@ -5,11 +5,10 @@ import (
 	"fmt"
 	"slices"
 	"strings"
-	"time"
 
-	"github.com/charmbracelet/bubbles/textinput"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/textinput"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/jaeiya/billbank/internal/logger"
 	"github.com/jaeiya/billbank/internal/ui"
 	"github.com/jaeiya/billbank/internal/utils"
@@ -24,12 +23,13 @@ const (
 )
 
 type InputModel struct {
-	input    textinput.Model
-	history  *utils.InputHistory
-	homePath string
-	commands []Interface
-	lastCmd  Interface
-	state    struct {
+	input     textinput.Model
+	winHeight int
+	history   *utils.InputHistory
+	homePath  string
+	commands  []Interface
+	lastCmd   Interface
+	state     struct {
 		cmdStatus Status
 		activeCmd Interface
 	}
@@ -51,28 +51,13 @@ var versionStyle = lipgloss.NewStyle().
 	Background(lipgloss.Color("#330072")).
 	Foreground(ui.BrightMagenta)
 
-var commanderInput textinput.Model = func() textinput.Model {
-	m := textinput.New()
-	m.Prompt = ""
-	m.PlaceholderStyle = m.PlaceholderStyle.Foreground(lipgloss.Color("#00FFA2"))
-	m.CompletionStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#00FFA2"))
-	m.Focus()
-	m.Cursor.Style = m.Cursor.Style.Foreground(lipgloss.Color("#00FFA2"))
-	m.PromptStyle = m.Cursor.Style.Foreground(lipgloss.Color("#00FFA2"))
-	m.Cursor.BlinkSpeed = time.Millisecond * 500
-	m.TextStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#FFF"))
-	m.Prompt = "> "
-	m.ShowSuggestions = true
-	return m
-}()
-
 // TODO - Use an interface to define input history methods
 func NewInputModel(h *utils.InputHistory, homePath string, cmdModels ...Interface) InputModel {
 	inputModel := InputModel{
 		aliases:  []string{},
 		homePath: homePath,
 		history:  h,
-		input:    commanderInput,
+		input:    commanderInput(),
 	}
 
 	aliasStore := make(map[string]struct{}, len(cmdModels))
@@ -107,8 +92,30 @@ func NewInputModel(h *utils.InputHistory, homePath string, cmdModels ...Interfac
 	return inputModel
 }
 
+func commanderInput() textinput.Model {
+	ti := textinput.New()
+	ti.ShowSuggestions = true
+	ti.Prompt = "> "
+
+	ts := ti.Styles()
+	ts.Focused.Placeholder = ts.Focused.Placeholder.Foreground(lipgloss.Color("#00FFA2"))
+	ts.Focused.Text = ts.Focused.Text.Foreground(lipgloss.Color("#00FFA2"))
+	ts.Focused.Prompt = ts.Focused.Prompt.Foreground(lipgloss.Color("#00FFA2"))
+	ts.Blurred.Text = ts.Blurred.Text.Foreground(lipgloss.Color("#00FFA2"))
+	ts.Cursor.Shape = tea.CursorBar
+	ts.Cursor.Blink = true
+	ts.Cursor.Color = lipgloss.Color("#00FFA2")
+	ts.Focused.Suggestion = ts.Focused.Suggestion.Foreground(lipgloss.Color("#2c9770"))
+
+	ti.SetVirtualCursor(false)
+	ti.SetStyles(ts)
+	ti.Focus()
+	return ti
+}
+
 func (m InputModel) Init() tea.Cmd {
-	return func() tea.Msg { return HomeMsg{} }
+	homeMsg := func() tea.Msg { return HomeMsg{} }
+	return tea.Batch(homeMsg, textinput.Blink)
 }
 
 func (m InputModel) Update(msg tea.Msg) (InputModel, tea.Cmd) {
@@ -118,12 +125,13 @@ func (m InputModel) Update(msg tea.Msg) (InputModel, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		statusStyle = statusStyle.Width(msg.Width)
-		m.input.Width = msg.Width
+		m.winHeight = msg.Height
+		m.input.SetWidth(msg.Width)
 
 	case HomeMsg:
 		if m.homePath != "" {
 			m.input.SetValue(m.homePath)
-			m, _ = tryParseCmd(m, tea.KeyMsg{})
+			m, _ = tryParseCmd(m, tea.KeyPressMsg{})
 			m, cmd = m.tryEnterCmd()
 			m.input.Reset()
 			return m, cmd
@@ -152,7 +160,7 @@ func (m InputModel) Update(msg tea.Msg) (InputModel, tea.Cmd) {
 			} else if len(val) > 0 {
 				m.input.SetValue(val)
 				m.input.CursorEnd()
-				return tryParseCmd(m, tea.KeyMsg{})
+				return tryParseCmd(m, tea.KeyPressMsg{})
 			}
 
 			return m, nil
@@ -176,16 +184,21 @@ func (m InputModel) Update(msg tea.Msg) (InputModel, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m InputModel) View() string {
+func (m InputModel) View() tea.View {
+	v := tea.NewView("")
 	version := versionStyle.Render(utils.GetVersion())
 	vWidth := lipgloss.Width(version)
 	statusWidth := statusStyle.GetWidth()
 	status := statusStyle.Width(statusWidth - vWidth).Render(m.statusText)
 
 	line := lipgloss.JoinHorizontal(lipgloss.Left, status, version)
+	c := m.input.Cursor()
+	c.Y = m.winHeight - 1
 
 	s := fmt.Sprintf("%s\n%s", line, m.input.View())
-	return s
+	v.SetContent(s)
+	v.Cursor = c
+	return v
 }
 
 func (m InputModel) onEnter() (InputModel, tea.Cmd) {
@@ -210,7 +223,7 @@ func (m InputModel) onEnter() (InputModel, tea.Cmd) {
 func (m InputModel) tryEnterCmd() (InputModel, tea.Cmd) {
 	// Empty commands will not yet have been parsed.
 	if m.input.Value() == "" {
-		m, _ = tryParseCmd(m, tea.KeyMsg{})
+		m, _ = tryParseCmd(m, tea.KeyPressMsg{})
 	}
 	cmd := m.state.activeCmd
 	cmdStatus := m.state.cmdStatus

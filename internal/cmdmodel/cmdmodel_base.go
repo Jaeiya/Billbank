@@ -6,7 +6,7 @@ import (
 	"slices"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/jaeiya/billbank/internal/logger"
 	"github.com/jaeiya/billbank/internal/ui"
 	"github.com/jaeiya/billbank/internal/utils"

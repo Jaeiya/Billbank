@@ -1,9 +1,9 @@
 package internal
 
 import (
-	"github.com/charmbracelet/bubbles/textinput"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/textinput"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/jaeiya/billbank/internal/cmdmodel"
 	"github.com/jaeiya/billbank/internal/logger"
 	"github.com/jaeiya/billbank/internal/ui"
@@ -52,7 +52,7 @@ func (vp ViewPort) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			teaCmds = append(teaCmds, vp.sendViewportSize(cmdmodel.WindowSizeMsg{}))
 		}
 
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		// Emergency exit
 		if msg.String() == "alt+`" {
 			logger.Log(logger.Debug, "used emergency exit")
@@ -91,9 +91,11 @@ func (vp ViewPort) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return vp, tea.Batch(teaCmds...)
 }
 
-func (vp ViewPort) View() string {
+func (vp ViewPort) View() tea.View {
 	cmdrStr := vp.CommandInput.View()
-	h := lipgloss.Height(cmdrStr)
+	h := lipgloss.Height(cmdrStr.Content)
+	v := tea.NewView("")
+	v.AltScreen = true
 	cmdView := ""
 
 	if vp.CommandModel != nil && vp.CommandModel.IsInitialized() {
@@ -116,16 +118,19 @@ func (vp ViewPort) View() string {
 
 	// Do not display text-input when command has exclusive control
 	if vp.hasHiddenInput {
-		return getCmdView(true)
+		v.SetContent(getCmdView(true))
+		return v
 	}
 
-	return lipgloss.JoinVertical(
+	v.SetContent(lipgloss.JoinVertical(
 		lipgloss.Top,
 		lipgloss.NewStyle().Foreground(ui.FgColor).Render(
 			getCmdView(false),
 		),
-		cmdrStr,
-	)
+		cmdrStr.Content,
+	))
+	v.Cursor = cmdrStr.Cursor
+	return v
 }
 
 func (vp *ViewPort) updateCommand(msg cmdmodel.UpdateCmdMsg) tea.Cmd {
@@ -140,7 +145,7 @@ func (vp *ViewPort) updateCommand(msg cmdmodel.UpdateCmdMsg) tea.Cmd {
 }
 
 func (vp ViewPort) getSize() ViewportSize {
-	offsetHeight := lipgloss.Height(vp.CommandInput.View())
+	offsetHeight := lipgloss.Height(vp.CommandInput.View().Content)
 	if vp.hasHiddenInput {
 		offsetHeight = 0
 	}

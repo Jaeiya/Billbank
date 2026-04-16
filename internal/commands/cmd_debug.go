@@ -9,10 +9,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/viewport"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/key"
+	"charm.land/bubbles/v2/viewport"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/jaeiya/billbank/internal/cmdmodel"
 	"github.com/jaeiya/billbank/internal/logger"
 	"github.com/jaeiya/billbank/internal/ui"
@@ -51,7 +51,7 @@ var (
 	infoLogStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#29DEFF"))
 	attnLogStyle = lipgloss.NewStyle().Background(ui.BgDarkColor).Foreground(ui.FgWarnColor)
 	errLogStyle  = lipgloss.NewStyle().
-			Background(lipgloss.Color(ui.BgDarkColor)).
+			Background(ui.BgDarkColor).
 			Foreground(ui.FgErrColor)
 	debugLogStyle = lipgloss.NewStyle().
 			Background(lipgloss.Color("#2E3F00")).
@@ -130,7 +130,7 @@ type debugModel struct {
 }
 
 func NewDebugCmd(h *utils.InputHistory) debugModel {
-	vp := viewport.New(0, 0)
+	vp := viewport.New(viewport.WithHeight(0), viewport.WithWidth(0))
 	vp.KeyMap.Down = key.NewBinding()
 	vp.KeyMap.Up = key.NewBinding()
 	vp.KeyMap.PageDown = key.NewBinding()
@@ -309,8 +309,8 @@ func loadSlog(m debugModel) debugModel {
 
 	// The terminal can be resized at any time
 	w, h := m.GetViewSize()
-	m.slog.viewPort.Width = w
-	m.slog.viewPort.Height = h - 2
+	m.slog.viewPort.SetWidth(w)
+	m.slog.viewPort.SetHeight(h - 2)
 
 	m.slog.viewPort.SetContent(m.slog.view)
 	m.slog.viewPort.GotoBottom()
@@ -355,8 +355,8 @@ func clearSlogView(m debugModel) string {
 
 func viewSlog(m debugModel) string {
 	w, h := m.GetViewSize()
-	m.slog.viewPort.Width = w
-	m.slog.viewPort.Height = h - 2
+	m.slog.viewPort.SetWidth(w)
+	m.slog.viewPort.SetHeight(h - 2)
 
 	content := fmt.Sprintf(
 		"%s\nTook: %s",

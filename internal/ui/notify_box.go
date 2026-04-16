@@ -1,15 +1,16 @@
 package ui
 
 import (
+	"image/color"
 	"strings"
 
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
 )
 
 type boxColor struct {
-	bg     lipgloss.Color
-	header lipgloss.Color
-	msg    lipgloss.Color
+	bg     color.Color
+	header color.Color
+	msg    color.Color
 }
 
 var (
@@ -65,6 +66,8 @@ func newBox(width, height int, title, msg string, color boxColor) string {
 				Foreground(color.msg).
 				Render(msg),
 		),
-		lipgloss.WithWhitespaceBackground(lipgloss.Color("#1E1E2E")),
+		lipgloss.WithWhitespaceStyle(
+			lipgloss.NewStyle().Background(lipgloss.Color("#1E1E2E")).Padding(1, 2),
+		),
 	)
 }
