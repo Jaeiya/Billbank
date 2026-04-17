@@ -99,7 +99,7 @@ func (vp ViewPort) View() tea.View {
 	cmdView := ""
 
 	if vp.CommandModel != nil && vp.CommandModel.IsInitialized() {
-		cmdView = vp.CommandModel.View()
+		cmdView = vp.CommandModel.View().Content
 	}
 
 	getCmdView := func(withoutTextInput bool) string {

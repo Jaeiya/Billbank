@@ -42,7 +42,7 @@ type Command[T any] struct {
 	Run func(T) T
 
 	// The main display function for the command.
-	View func(T) string
+	View func(T) tea.View
 
 	// Hides the command input, which relinquishes
 	// keyboard control to the command. This is
@@ -150,8 +150,9 @@ func (bc *Base[T]) Update(model T, msg tea.Msg) (T, tea.Cmd) {
 	return model, tea.Batch(teaCmds...)
 }
 
-func (bc *Base[T]) View(model T) string {
+func (bc *Base[T]) View(model T) tea.View {
 	cmdPath := bc.status.Path
+	v := tea.NewView("")
 
 	cmd, ok := bc.cmdMap[cmdPath]
 	if !ok {
@@ -160,13 +161,15 @@ func (bc *Base[T]) View(model T) string {
 
 	errs := bc.getErrors()
 	if len(errs) > 0 {
-		return ui.NewErrorBox(
+		v.SetContent(ui.NewErrorBox(
 			"Command Error",
 			errs[0].Error(),
 			bc.viewWidth,
 			bc.viewHeight,
-		)
+		))
+		return v
 	}
+
 	return cmd.View(model)
 }
 

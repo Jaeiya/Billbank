@@ -48,7 +48,7 @@ func (m billsModel) Update(msg tea.Msg) (cmdmodel.Interface, tea.Cmd) {
 }
 
 // DO NOT REMOVE or MODIFY; required for base model interaction
-func (m billsModel) View() string {
+func (m billsModel) View() tea.View {
 	return m.Base.View(m)
 }
 
@@ -60,6 +60,6 @@ func loadBills(m billsModel) billsModel {
 	return m
 }
 
-func viewBills(m billsModel) string {
-	return "hello world"
+func viewBills(m billsModel) tea.View {
+	return tea.NewView("hello world")
 }

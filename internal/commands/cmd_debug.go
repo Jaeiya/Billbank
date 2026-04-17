@@ -174,7 +174,7 @@ func (m debugModel) Update(msg tea.Msg) (cmdmodel.Interface, tea.Cmd) {
 	return m, tea.Batch(teaCmds...)
 }
 
-func (m debugModel) View() string {
+func (m debugModel) View() tea.View {
 	return m.Base.View(m)
 }
 
@@ -197,8 +197,8 @@ func loadHistory(m debugModel) debugModel {
 	return m
 }
 
-func viewHistory(m debugModel) string {
-	return histStyle.Render(m.history.view)
+func viewHistory(m debugModel) tea.View {
+	return tea.NewView(histStyle.Render(m.history.view))
 }
 
 func loadLog(m debugModel) (debugModel, bool) {
@@ -344,16 +344,16 @@ func getTagStyle(tag string) (string, lipgloss.Style) {
 	return tag, subjectStyle
 }
 
-func clearSlogView(m debugModel) string {
+func clearSlogView(m debugModel) tea.View {
 	w, h := m.GetViewSize()
-	return ui.NewInfoBox(
+	return tea.NewView(ui.NewInfoBox(
 		"Clear Slog",
 		"Slog has been reset and will be re-rendered on execution.",
 		w, h,
-	)
+	))
 }
 
-func viewSlog(m debugModel) string {
+func viewSlog(m debugModel) tea.View {
 	w, h := m.GetViewSize()
 	m.slog.viewPort.SetWidth(w)
 	m.slog.viewPort.SetHeight(h - 2)
@@ -363,7 +363,7 @@ func viewSlog(m debugModel) string {
 		m.slog.viewPort.View(),
 		m.slog.lastRenderDur,
 	)
-	return logStyle.Render(content)
+	return tea.NewView(logStyle.Render(content))
 }
 
 func loadStats(m debugModel) debugModel {
@@ -398,7 +398,7 @@ func loadStats(m debugModel) debugModel {
 	return m
 }
 
-func viewStats(m debugModel) string {
+func viewStats(m debugModel) tea.View {
 	debugHeader := statHeader.Render("History Stats")
 
 	debugTitles := lipgloss.JoinVertical(
@@ -469,7 +469,7 @@ func viewStats(m debugModel) string {
 
 	w, h := m.GetViewSize()
 
-	return lipgloss.Place(
+	return tea.NewView(lipgloss.Place(
 		w, h,
 		lipgloss.Center,
 		lipgloss.Center,
@@ -479,7 +479,7 @@ func viewStats(m debugModel) string {
 			" ",
 			lipgloss.JoinVertical(lipgloss.Left, memHeader, memStats),
 		),
-	)
+	))
 }
 
 func setLogLevel(m debugModel) debugModel {
@@ -492,11 +492,11 @@ func setLogLevel(m debugModel) debugModel {
 	return m
 }
 
-func viewLogLevel(m debugModel) string {
+func viewLogLevel(m debugModel) tea.View {
 	w, h := m.GetViewSize()
-	return ui.NewInfoBox(
+	return tea.NewView(ui.NewInfoBox(
 		"Set Log Level",
 		fmt.Sprintf("Log level has been set to %s", logger.GetLogLevel()),
 		w, h,
-	)
+	))
 }

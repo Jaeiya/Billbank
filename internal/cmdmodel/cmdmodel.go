@@ -74,7 +74,7 @@ var (
 
 type Interface interface {
 	Update(tea.Msg) (Interface, tea.Cmd)
-	View() string
+	View() tea.View
 	GetName() string
 	GetAliases() []string
 	GetId() int
