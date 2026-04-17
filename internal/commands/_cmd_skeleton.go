@@ -1,10 +1,11 @@
+
 import (
 	"fmt"
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
-	"github.com/jaeiya/billbank/lib/cmdmodel"
-	"github.com/jaeiya/billbank/lib/utils"
+	"github.com/jaeiya/billbank/internal/cmdmodel"
+	"github.com/jaeiya/billbank/internal/utils"
 )
 
 // Main model that contains all data for your new command.
@@ -109,7 +110,7 @@ func (m skeletonModel) Update(msg tea.Msg) (cmdmodel.Interface, tea.Cmd) {
 }
 
 // DO NOT REMOVE or MODIFY; required for base model interaction
-func (m skeletonModel) View() string {
+func (m skeletonModel) View() tea.View {
 	return m.Base.View(m)
 }
 
@@ -122,12 +123,12 @@ func loadDummy(m skeletonModel) skeletonModel {
 	return m
 }
 
-func loadDefaultView(m skeletonModel) string {
-	return "default view"
+func loadDefaultView(m skeletonModel) tea.View {
+	return tea.NewView("default view")
 }
 
-func viewA(m skeletonModel) string {
-	return fmt.Sprintf(
+func viewA(m skeletonModel) tea.View {
+	return tea.NewView(fmt.Sprintf(
 		`Hit ctrl+k to increment this counter: %d
 
 Did it not work? That's because you'll need to hit the
@@ -139,7 +140,7 @@ use the CaptureInput flag, which will hide the
 command box on command execution.
 `,
 		m.thisCounter,
-	)
+	))
 }
 
 func loadB(m skeletonModel) skeletonModel {
@@ -147,7 +148,7 @@ func loadB(m skeletonModel) skeletonModel {
 	return m
 }
 
-func viewB(m skeletonModel) string {
+func viewB(m skeletonModel) tea.View {
 	text := `
 Execute the command again to increment the counter: %d
 
@@ -162,7 +163,7 @@ this "feature" is because it prevents
 expensive commands from lagging the UI
 during window resizing.
 `
-	return fmt.Sprintf(text, m.thatCounter)
+	return tea.NewView(fmt.Sprintf(text, m.thatCounter))
 }
 
 func loadC(m skeletonModel) skeletonModel {
@@ -178,18 +179,18 @@ func loadC(m skeletonModel) skeletonModel {
 	return m
 }
 
-func viewC(m skeletonModel) string {
-	return fmt.Sprintf(`
+func viewC(m skeletonModel) tea.View {
+	return tea.NewView(fmt.Sprintf(`
 You entered the number: %d
 
 Validating arguments is very important and the error
 messages returned to the user should always clue them
 in on what they did wrong.
-`, m.cInt)
+`, m.cInt))
 }
 
-func viewD(m skeletonModel) string {
-	return fmt.Sprintf(`
+func viewD(m skeletonModel) tea.View {
+	return tea.NewView(fmt.Sprintf(`
 Last key entered: %s
 
 This view captures the input immediately
@@ -206,5 +207,5 @@ This means if the command input is active, you
 won't see the keys change above, because the
 command input will be intercepting all of
 them.
-`, m.lastKey)
+`, m.lastKey))
 }
