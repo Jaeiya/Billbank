@@ -148,7 +148,7 @@ func (m InputModel) Update(msg tea.Msg) (InputModel, tea.Cmd) {
 		style := statusStyle.Foreground(color)
 		m.statusText = style.Render(msg.String)
 
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "ctrl+c", "esc":
 			return m, tea.Quit
@@ -165,7 +165,7 @@ func (m InputModel) Update(msg tea.Msg) (InputModel, tea.Cmd) {
 
 			return m, nil
 
-		case " ":
+		case "space":
 			// Prevent accidental spaces
 			if isLastCharSpace(m) {
 				return m, nil
