@@ -157,7 +157,7 @@ func (m debugModel) Update(msg tea.Msg) (cmdmodel.Interface, tea.Cmd) {
 	teaCmds = append(teaCmds, teaCmd)
 
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		if m.IsActivePath("/ slog") {
 			// Reload slog
 			if msg.String() == "ctrl+r" {

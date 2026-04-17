@@ -28,7 +28,7 @@ Cycle moves either up or down through the history of commands
 that have been added. Returns a string containing the command
 text if it exists, and true if history cycles back to present.
 */
-func (h *InputHistory) Cycle(msg tea.KeyMsg) (string, bool) {
+func (h *InputHistory) Cycle(msg tea.KeyPressMsg) (string, bool) {
 	if len(h.cmds) == 0 {
 		return "", false
 	}

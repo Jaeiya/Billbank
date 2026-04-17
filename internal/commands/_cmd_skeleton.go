@@ -97,7 +97,7 @@ func (m skeletonModel) Update(msg tea.Msg) (cmdmodel.Interface, tea.Cmd) {
 	//--------------------------------------------------//
 
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		if msg.String() == "ctrl+k" {
 			m.thisCounter += 1
 		}

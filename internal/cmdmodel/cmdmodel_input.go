@@ -51,7 +51,7 @@ var versionStyle = lipgloss.NewStyle().
 	Background(lipgloss.Color("#330072")).
 	Foreground(ui.BrightMagenta)
 
-// TODO - Use an interface to define input history methods
+// TODO: Use an interface to define input history methods
 func NewInputModel(h *utils.InputHistory, homePath string, cmdModels ...Interface) InputModel {
 	inputModel := InputModel{
 		aliases:  []string{},
