@@ -190,7 +190,7 @@ func loadHistory(m debugModel) debugModel {
 			sb.WriteString(item)
 			continue
 		}
-		sb.WriteString(fmt.Sprintf("\n%s", item))
+		fmt.Fprintf(&sb, "\n%s", item)
 	}
 	m.history.lastLen = m.history.data.GetLen()
 	m.history.view = sb.String()
@@ -279,10 +279,10 @@ func loadSlog(m debugModel) debugModel {
 			timeDiff = time.Duration(0)
 		}
 		lastTimeStamp = timeStamp
-		timeBuilder.WriteString(fmt.Sprintf("%s \n", timeDiff.Round(10*time.Microsecond)))
+		fmt.Fprintf(&timeBuilder, "%s \n", timeDiff.Round(10*time.Microsecond))
 
 		tag, subjectStyle = getTagStyle(tag)
-		tagBuilder.WriteString(fmt.Sprintf("%s \n", tag))
+		fmt.Fprintf(&tagBuilder, "%s \n", tag)
 
 		var words []string = parts[5:]
 
@@ -291,9 +291,7 @@ func loadSlog(m debugModel) debugModel {
 
 		subjBuilder.WriteString(subj)
 		subjBuilder.WriteString("\n ")
-		wordBuilder.WriteString(
-			fmt.Sprintf(" %s\n", slogWordStyle.Render(strings.Join(words, " "))),
-		)
+		fmt.Fprintf(&wordBuilder, " %s\n", slogWordStyle.Render(strings.Join(words, " ")))
 	}
 
 	content := lipgloss.JoinHorizontal(

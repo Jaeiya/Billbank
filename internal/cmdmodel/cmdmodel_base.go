@@ -26,44 +26,41 @@ const (
 	ArgRequired
 )
 
+// Command is the base struct for all commands and expects a
+// tea model as T.
 type Command[T any] struct {
-	// A list of words that execute a specific
-	// command function, when entered into the
-	// command input. Empty paths refer to
-	// the command alias itself as a command.
+	// A word or string of words separated by a space, which lead to
+	// the execution of the command.
+	//
+	// Ex: "clear" or "clear log" or "clear history"
+	//
+	// 🟡 An empty path refers to the command alias itself as the path.
 	Path string
 
-	// The path split by its words without the
-	// alias.
+	// A slice containing each word found in the path
+	//
+	// 🟡 Will be empty if the path is left empty
 	pathParts []string
 
-	// Executes the logic of the command, which
-	// updates the command model.
+	// Acts as the commands Update func inside of a tea model
 	Run func(T) T
 
-	// The main display function for the command.
+	// Acts as the commands View func inside of a tea model
 	View func(T) tea.View
 
-	// Hides the command input, which relinquishes
-	// keyboard control to the command. This is
-	// necessary for commands which control the
+	// Hides the command input, which relinquishes keyboard control to
+	// the command. This is necessary for commands which control the
 	// UI using the keyboard.
 	CaptureInput bool
 
-	// The type of arguments that the command
-	// requires. ArgNone is the default.
-	//
-	//	ArgNone
-	//	ArgOptional
-	//	ArgRequired
+	// The type of arguments that the command requires.
+	// ArgNone is the default.
 	ArgType ArgType
 
-	// Parses the argument passed to the command.
-	// It should return a user-readable error
-	// if it fails to parse.
+	// Parses the argument passed to the command. It should return a
+	// user-readable error if it fails to parse.
 	//
-	// This function is required if the arg type
-	// is NOT ArgNone.
+	// 🟠 This function is required if the arg type is NOT ArgNone.
 	ParseArg func(arg string) (any, error)
 }
 
@@ -128,44 +125,47 @@ func NewBaseModel[T any](cmdData CommandData[T]) *Base[T] {
 	}
 }
 
-func (bc *Base[T]) Update(model T, msg tea.Msg) (T, tea.Cmd) {
+func (b *Base[T]) Update(model T, msg tea.Msg) (T, tea.Cmd) {
 	var teaCmds []tea.Cmd
 
 	switch msg := msg.(type) {
 	case WindowSizeMsg:
 		logger.Log(logger.Hot, "window size event triggered [%d:%d]", msg.Width, msg.Height)
-		bc.viewHeight = msg.Height
-		bc.viewWidth = msg.Width
+		b.viewHeight = msg.Height
+		b.viewWidth = msg.Width
 
+	// Sent every time a command is updated and therefore
+	// is responsible for command execution.
 	case ViewportSizeMsg:
 		logger.Log(logger.Hot, "viewport size event triggered [%d:%d]", msg.Width, msg.Height)
-		bc.viewHeight = msg.Height
-		bc.viewWidth = msg.Width
-		if bc.status.Path != "" {
-			model = bc.Exec(model)
-			logger.Log(logger.Hot, "finished executing [%s]", bc.status.Path)
+		b.viewHeight = msg.Height
+		b.viewWidth = msg.Width
+		// Make sure a command is active before execution
+		if b.status.Path != "" {
+			model = b.Exec(model)
+			logger.Log(logger.Hot, "finished executing [%s]", b.status.Path)
 		}
 	}
 
 	return model, tea.Batch(teaCmds...)
 }
 
-func (bc *Base[T]) View(model T) tea.View {
-	cmdPath := bc.status.Path
+func (b *Base[T]) View(model T) tea.View {
+	cmdPath := b.status.Path
 	v := tea.NewView("")
 
-	cmd, ok := bc.cmdMap[cmdPath]
+	cmd, ok := b.cmdMap[cmdPath]
 	if !ok {
-		bc.AddError(fmt.Errorf("could not find command [%s]", bc.status.Path))
+		b.AddError(fmt.Errorf("could not find command [%s]", b.status.Path))
 	}
 
-	errs := bc.getErrors()
+	errs := b.getErrors()
 	if len(errs) > 0 {
 		v.SetContent(ui.NewErrorBox(
 			"Command Error",
 			errs[0].Error(),
-			bc.viewWidth,
-			bc.viewHeight,
+			b.viewWidth,
+			b.viewHeight,
 		))
 		return v
 	}
@@ -173,7 +173,7 @@ func (bc *Base[T]) View(model T) tea.View {
 	return cmd.View(model)
 }
 
-func (m Base[T]) ParseCommand(cmdInput string) Status {
+func (b Base[T]) ParseCommand(cmdInput string) Status {
 	var inputParts []string = strings.Fields(cmdInput)
 	if len(inputParts) == 0 {
 		return Status{Error: ErrEmptyCommand}
@@ -183,11 +183,11 @@ func (m Base[T]) ParseCommand(cmdInput string) Status {
 	var cmdPathParts []string = inputParts[1:]
 	var cmdPaths []string
 
-	if !slices.Contains(m.aliases, alias) {
+	if !slices.Contains(b.aliases, alias) {
 		return Status{Error: ErrNotCommand}
 	}
 
-	for _, cmd := range m.commands {
+	for _, cmd := range b.commands {
 		cmdPath := strings.Join(cmdPathParts, " ")
 		cmdPaths = append(cmdPaths, fmt.Sprintf("%s %s", alias, cmd.Path))
 
@@ -240,58 +240,58 @@ func (m Base[T]) ParseCommand(cmdInput string) Status {
 	}
 }
 
-func (m Base[T]) GetViewSize() (int, int) {
-	return m.viewWidth, m.viewHeight
+func (b Base[T]) GetViewSize() (int, int) {
+	return b.viewWidth, b.viewHeight
 }
 
-func (m Base[T]) GetId() int {
-	return m.id
+func (b Base[T]) GetId() int {
+	return b.id
 }
 
-func (m Base[T]) GetStatus() Status {
-	return m.status
+func (b Base[T]) GetStatus() Status {
+	return b.status
 }
 
-func (m *Base[T]) SetStatus(s Status) {
-	m.status = s
+func (b *Base[T]) SetStatus(s Status) {
+	b.status = s
 }
 
-func (m Base[T]) GetName() string {
-	return m.name
+func (b Base[T]) GetName() string {
+	return b.name
 }
 
-func (m *Base[T]) AddError(err error) {
-	m.errors = append(m.errors, err)
+func (b *Base[T]) AddError(err error) {
+	b.errors = append(b.errors, err)
 }
 
-func (m *Base[T]) AddArgTypeError(arg any, expectedType string) {
-	m.errors = append(
-		m.errors,
+func (b *Base[T]) AddArgTypeError(arg any, expectedType string) {
+	b.errors = append(
+		b.errors,
 		fmt.Errorf(
 			"[%s] has a misconfigured arg type: [%s] expected [%s]",
-			m.status.Path,
+			b.status.Path,
 			reflect.TypeOf(arg),
 			expectedType,
 		),
 	)
 }
 
-func (m Base[T]) GetAliases() []string {
-	aliases := make([]string, len(m.aliases))
-	copy(aliases, m.aliases)
+func (b Base[T]) GetAliases() []string {
+	aliases := make([]string, len(b.aliases))
+	copy(aliases, b.aliases)
 	return aliases
 }
 
-func (m Base[T]) GetCmdPaths() (paths []string) {
-	paths = make([]string, 0, len(m.cmdMap))
-	for k := range m.cmdMap {
+func (b Base[T]) GetCmdPaths() (paths []string) {
+	paths = make([]string, 0, len(b.cmdMap))
+	for k := range b.cmdMap {
 		paths = append(paths, k)
 	}
 	return paths
 }
 
-func (m Base[T]) IsActivePath(cmdPath string) bool {
-	return m.status.Path == cmdPath
+func (b Base[T]) IsActivePath(cmdPath string) bool {
+	return b.status.Path == cmdPath
 }
 
 // IsInitialized checks to make sure that various expected values
@@ -306,53 +306,53 @@ func (m Base[T]) IsInitialized() bool {
 
 // Exec executes the current command path in the context of the
 // passed model. All detected errors are logged and stored.
-func (m *Base[T]) Exec(model T) T {
-	cmdPath := m.status.Path
-	cmd := m.cmdMap[cmdPath]
+func (b *Base[T]) Exec(model T) T {
+	cmdPath := b.status.Path
+	cmd := b.cmdMap[cmdPath]
 
-	m.clearErrors()
+	b.clearErrors()
 	logger.Log(logger.Hot, "executing command path [%s]", cmdPath)
 
 	if cmd.Run == nil {
 		err := fmt.Errorf("[%s] has an unimplemented Run func()", cmdPath)
-		if m.lastError.Error() != err.Error() {
+		if b.lastError.Error() != err.Error() {
 			logger.Log(logger.Error, "%s", err)
-			m.lastError = err
-			m.AddError(err)
+			b.lastError = err
+			b.AddError(err)
 		}
 		return model
 	}
 
 	if cmd.View == nil {
 		err := fmt.Errorf("[%s] has an unimplemented View func()", cmdPath)
-		if m.lastError.Error() != err.Error() {
+		if b.lastError.Error() != err.Error() {
 			logger.Log(logger.Error, "%s", err)
-			m.lastError = err
-			m.AddError(err)
+			b.lastError = err
+			b.AddError(err)
 		}
 		return model
 	}
 
 	model = cmd.Run(model)
-	errs := m.getErrors()
+	errs := b.getErrors()
 	if len(errs) > 0 {
-		if m.lastError.Error() != errs[0].Error() {
+		if b.lastError.Error() != errs[0].Error() {
 			logger.Log(logger.Error, "%s", errs[0].Error())
 		}
-		m.lastError = errs[0]
+		b.lastError = errs[0]
 	}
 
 	return model
 }
 
-func (m Base[T]) getErrors() []error {
-	return m.errors
+func (b Base[T]) getErrors() []error {
+	return b.errors
 }
 
-func (m *Base[T]) clearErrors() {
-	if len(m.errors) > 0 {
-		m.lastError = fmt.Errorf("")
-		m.errors = nil
+func (b *Base[T]) clearErrors() {
+	if len(b.errors) > 0 {
+		b.lastError = fmt.Errorf("")
+		b.errors = nil
 	}
 }
 
