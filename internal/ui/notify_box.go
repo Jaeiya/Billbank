@@ -67,7 +67,7 @@ func newBox(width, height int, title, msg string, color boxColor) string {
 				Render(msg),
 		),
 		lipgloss.WithWhitespaceStyle(
-			lipgloss.NewStyle().Background(lipgloss.Color("#1E1E2E")).Padding(1, 2),
+			lipgloss.NewStyle().Background(lipgloss.Color("#1E1E2E")),
 		),
 	)
 }
