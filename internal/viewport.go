@@ -22,17 +22,23 @@ type ViewportSize struct {
 }
 
 type ViewPort struct {
-	CommandInput   cmdmodel.InputModel
-	CommandModel   cmdmodel.Interface
+	cmdInput       cmdmodel.InputModel
+	cmdModel       cmdmodel.Interface
 	hasHiddenInput bool
 	height         int
 	width          int
 }
 
+func NewViewport(input cmdmodel.InputModel) ViewPort {
+	vp := ViewPort{}
+	vp.cmdInput = input
+	return vp
+}
+
 func (vp ViewPort) Init() tea.Cmd {
 	teaCmds := []tea.Cmd{
 		textinput.Blink,
-		vp.CommandInput.Init(),
+		vp.cmdInput.Init(),
 	}
 	logger.Log(logger.Info, "loaded viewport")
 	return tea.Batch(teaCmds...)
@@ -76,14 +82,14 @@ func (vp ViewPort) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	// Give up keyboard control to current command
 	if !vp.hasHiddenInput || !isKey {
-		vp.CommandInput, teaCmd = vp.CommandInput.Update(msg)
+		vp.cmdInput, teaCmd = vp.cmdInput.Update(msg)
 		teaCmds = append(teaCmds, teaCmd)
 	}
 
-	if vp.CommandModel != nil {
+	if vp.cmdModel != nil {
 		// Ignore key input unless command has exclusive control
 		if isKey && vp.hasHiddenInput || !isKey {
-			vp.CommandModel, teaCmd = vp.CommandModel.Update(msg)
+			vp.cmdModel, teaCmd = vp.cmdModel.Update(msg)
 			teaCmds = append(teaCmds, teaCmd)
 		}
 	}
@@ -92,14 +98,14 @@ func (vp ViewPort) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (vp ViewPort) View() tea.View {
-	cmdrStr := vp.CommandInput.View()
+	cmdrStr := vp.cmdInput.View()
 	h := lipgloss.Height(cmdrStr.Content)
 	v := tea.NewView("")
 	v.AltScreen = true
 	cmdView := ""
 
-	if vp.CommandModel != nil && vp.CommandModel.IsInitialized() {
-		cmdView = vp.CommandModel.View().Content
+	if vp.cmdModel != nil && vp.cmdModel.IsInitialized() {
+		cmdView = vp.cmdModel.View().Content
 	}
 
 	getCmdView := func(withoutTextInput bool) string {
@@ -135,17 +141,17 @@ func (vp ViewPort) View() tea.View {
 
 func (vp *ViewPort) updateCommand(msg cmdmodel.UpdateCmdMsg) tea.Cmd {
 	if msg.Model != nil {
-		vp.CommandModel = msg.Model
+		vp.cmdModel = msg.Model
 		logger.Log(logger.Debug, "storing command model [%s]", msg.Model.GetName())
 	}
-	if vp.CommandModel.GetStatus().CaptureInput {
+	if vp.cmdModel.GetStatus().CaptureInput {
 		vp.hasHiddenInput = true
 	}
 	return vp.sendViewportSize(cmdmodel.ViewportSizeMsg{})
 }
 
 func (vp ViewPort) getSize() ViewportSize {
-	offsetHeight := lipgloss.Height(vp.CommandInput.View().Content)
+	offsetHeight := lipgloss.Height(vp.cmdInput.View().Content)
 	if vp.hasHiddenInput {
 		offsetHeight = 0
 	}
@@ -162,7 +168,7 @@ func (vp ViewPort) toggleInput() (ViewPort, tea.Cmd) {
 		teaCmd = textinput.Blink
 	}
 	// Updating directly, Avoids UI jumping around
-	vp.CommandModel, _ = vp.CommandModel.Update(cmdmodel.ViewportSizeMsg(vp.getSize()))
+	vp.cmdModel, _ = vp.cmdModel.Update(cmdmodel.ViewportSizeMsg(vp.getSize()))
 	return vp, teaCmd
 }
 

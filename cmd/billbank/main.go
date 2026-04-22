@@ -38,15 +38,16 @@ func main() {
 
 	logger.Log(logger.Info, "loaded database")
 
-	vp := internal.ViewPort{}
 	h := utils.NewCmdHistory()
 
-	vp.CommandInput = cmdmodel.NewInputModel(
+	im := cmdmodel.NewInputModel(
 		h,
 		"bills",
 		commands.NewBillsCmd(db),
 		commands.NewDebugCmd(h),
 	)
+
+	vp := internal.NewViewport(im)
 
 	logger.Log(logger.Info, "finished loading commands")
 
