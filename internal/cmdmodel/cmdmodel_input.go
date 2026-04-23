@@ -265,8 +265,7 @@ func (m InputModel) tryEnterCmd() (InputModel, tea.Cmd) {
 		cmdStatus.Path,
 	)
 	cmd.SetStatus(cmdStatus)
-	teaMsg := UpdateCmdMsg{cmd}
-	return m, func() tea.Msg { return teaMsg }
+	return m, func() tea.Msg { return UpdateCmdMsg{cmd} }
 }
 
 func onAnyKey(m InputModel, msg tea.KeyMsg) (InputModel, tea.Cmd) {
@@ -283,10 +282,12 @@ func onAnyKey(m InputModel, msg tea.KeyMsg) (InputModel, tea.Cmd) {
 func tryParseCmd(m InputModel, msg tea.KeyMsg) (InputModel, tea.Cmd) {
 	var cmd tea.Cmd
 	m.input, cmd = m.input.Update(msg)
+
 	m.state = struct {
 		cmdStatus Status
 		activeCmd Interface
 	}{cmdStatus: Status{}, activeCmd: nil}
+
 	for _, cmd := range m.commands {
 		logger.Log(
 			logger.Insane,
