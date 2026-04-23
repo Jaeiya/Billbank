@@ -164,7 +164,7 @@ func insertMultiInto[T any](
 
 func toInsertStr(tName string, cols []string) string {
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("INSERT INTO %s (%s) VALUES (", tName, strings.Join(cols, ",")))
+	fmt.Fprintf(&sb, "INSERT INTO %s (%s) VALUES (", tName, strings.Join(cols, ","))
 
 	for i := range len(cols) {
 		if i > 0 {
@@ -179,7 +179,7 @@ func toInsertStr(tName string, cols []string) string {
 
 func toInsertMultiStr(tName string, cols []string, count int) string {
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("INSERT INTO %s (%s) VALUES ", tName, strings.Join(cols, ",")))
+	fmt.Fprintf(&sb, "INSERT INTO %s (%s) VALUES ", tName, strings.Join(cols, ","))
 
 	for i := range count {
 		if i > 0 {
