@@ -137,12 +137,12 @@ func (sdb SqliteDb) query(t Table, qm QueryMap) (*sql.Rows, error) {
 func insertMultiInto[T any](
 	db SqliteDb,
 	t Table,
-	values []T,
-	res func(r T) []any,
+	records []T,
+	resolve func(r T) []any,
 ) (sql.Result, error) {
-	execValues := make([][]any, len(values))
-	for i, v := range values {
-		execValues[i] = res(v)
+	resolvedRecords := make([][]any, len(records))
+	for i, r := range records {
+		resolvedRecords[i] = resolve(r)
 	}
 
 	columns, exists := tableData[t]
@@ -150,15 +150,15 @@ func insertMultiInto[T any](
 		return nil, ErrUnsupportedTable
 	}
 
-	for _, v := range execValues {
-		if len(v) != len(columns) {
+	for _, rr := range resolvedRecords {
+		if len(rr) != len(columns) {
 			return nil, ErrMismatchColsValues
 		}
 	}
 
 	return db.handle.Exec(
-		toInsertMultiStr(string(t), columns, len(values)),
-		slices.Concat(execValues...)...,
+		toInsertMultiStr(string(t), columns, len(records)),
+		slices.Concat(resolvedRecords...)...,
 	)
 }
 
