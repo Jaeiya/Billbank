@@ -17,36 +17,65 @@ import (
 type SqliteDb struct {
 	handle       *sql.DB
 	currencyCode internal.CurrencyCode
+	inMemory     bool
 }
 
-func NewSqliteDb(filePath string, cc internal.CurrencyCode) (*SqliteDb, error) {
-	_, err := os.ReadDir(filepath.Dir(filePath))
-	if err != nil {
-		return nil, fmt.Errorf("cannot load database: %w", err)
+type Option func(*SqliteDb)
+
+func NewSqliteDb(filePath string, cc internal.CurrencyCode, opts ...Option) (*SqliteDb, error) {
+	db := &SqliteDb{}
+
+	for _, o := range opts {
+		o(db)
 	}
 
-	db, err := sql.Open("sqlite", filePath)
+	if !db.inMemory {
+		_, err := os.ReadDir(filepath.Dir(filePath))
+		if err != nil {
+			return nil, fmt.Errorf("cannot load database: %w", err)
+		}
+	}
+
+	var dbHandle *sql.DB
+	var err error
+	if db.inMemory {
+		dbHandle, err = sql.Open("sqlite", ":memory:")
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		dbHandle, err = sql.Open("sqlite", filePath)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	_, err = dbHandle.Exec("PRAGMA foreign_keys = ON;")
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = db.Exec("PRAGMA foreign_keys = ON;")
-	if err != nil {
-		return nil, err
-	}
-
-	_, err = db.Exec("PRAGMA user_version = 1;")
+	_, err = dbHandle.Exec("PRAGMA user_version = 1;")
 	if err != nil {
 		return nil, err
 	}
 
 	// Creates the physical db file
-	_, err = db.Exec(assets.SQL.CreateDatabase)
+	_, err = dbHandle.Exec(assets.SQL.CreateDatabase)
 	if err != nil {
 		return nil, err
 	}
 
-	return &SqliteDb{db, cc}, nil
+	db.handle = dbHandle
+	db.currencyCode = cc
+
+	return db, nil
+}
+
+func WithMemoryDB() Option {
+	return func(db *SqliteDb) {
+		db.inMemory = true
+	}
 }
 
 func (sdb SqliteDb) Close() error {

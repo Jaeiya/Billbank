@@ -1,11 +1,11 @@
 package sqlite
 
 import (
-	"path/filepath"
 	"testing"
 	"time"
 
 	"github.com/jaeiya/billbank/internal"
+	"github.com/jaeiya/billbank/internal/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -107,11 +107,10 @@ func TestQueryBills(t *testing.T) {
 	for _, mock := range table {
 		t.Run("should "+mock.should, func(t *testing.T) {
 			t.Parallel()
-			dir := t.TempDir()
 			a := assert.New(t)
 			r := require.New(t)
 
-			db, err := NewSqliteDb(filepath.Join(dir, "mock.db"), internal.USD)
+			db, err := NewSqliteDb("", internal.USD, WithMemoryDB())
 			r.NoError(err)
 			defer db.Close()
 
@@ -136,11 +135,10 @@ func TestQueryBills(t *testing.T) {
 
 	t.Run("should panic on unique constraint violation", func(t *testing.T) {
 		t.Parallel()
-		dir := t.TempDir()
 		a := assert.New(t)
 		r := require.New(t)
 
-		db, err := NewSqliteDb(filepath.Join(dir, "mock.db"), internal.USD)
+		db, err := NewSqliteDb("", internal.USD, WithMemoryDB())
 		r.NoError(err)
 		defer db.Close()
 
@@ -308,11 +306,10 @@ func TestCreateBillHistory(t *testing.T) {
 	for _, mock := range table {
 		t.Run("should "+mock.should, func(t *testing.T) {
 			t.Parallel()
-			dir := t.TempDir()
 			a := assert.New(t)
 			r := require.New(t)
 
-			db, err := NewSqliteDb(filepath.Join(dir, "mock.db"), internal.USD)
+			db, err := NewSqliteDb("", internal.USD, WithMemoryDB())
 			r.NoError(err)
 			defer db.Close()
 
@@ -418,11 +415,10 @@ func TestBillsMonthly(t *testing.T) {
 	for _, mock := range table {
 		t.Run("should "+mock.should, func(t *testing.T) {
 			t.Parallel()
-			dir := t.TempDir()
 			a := assert.New(t)
 			r := require.New(t)
 
-			db, err := NewSqliteDb(filepath.Join(dir, "mock.db"), internal.USD)
+			db, err := NewSqliteDb("", internal.USD, WithMemoryDB())
 			r.NoError(err)
 			defer db.Close()
 
@@ -453,11 +449,10 @@ func TestBillsMonthly(t *testing.T) {
 
 	t.Run("should panic on unique constraint violation", func(t *testing.T) {
 		t.Parallel()
-		dir := t.TempDir()
 		a := assert.New(t)
 		r := require.New(t)
 
-		db, err := NewSqliteDb(filepath.Join(dir, "mock.db"), internal.USD)
+		db, err := NewSqliteDb("", internal.USD, WithMemoryDB())
 		r.NoError(err)
 		defer db.Close()
 

@@ -124,9 +124,8 @@ func TestCreateBankAccount(t *testing.T) {
 			t.Parallel()
 			a := assert.New(t)
 			r := require.New(t)
-			dir := t.TempDir()
 
-			db, err := NewSqliteDb(filepath.Join(dir, "mock.db"), internal.USD)
+			db, err := NewSqliteDb("", internal.USD, WithMemoryDB())
 			r.NoError(err)
 			defer db.Close()
 
@@ -317,9 +316,8 @@ func TestBankAccountHistory(t *testing.T) {
 			t.Parallel()
 			a := assert.New(t)
 			r := require.New(t)
-			dir := t.TempDir()
 
-			db, err := NewSqliteDb(filepath.Join(dir, "mock.db"), internal.USD)
+			db, err := NewSqliteDb("", internal.USD, WithMemoryDB())
 			r.NoError(err)
 			defer db.Close()
 
@@ -475,9 +473,8 @@ func TestBankTransfers(t *testing.T) {
 			t.Parallel()
 			a := assert.New(t)
 			r := assert.New(t)
-			dir := t.TempDir()
 
-			db, err := NewSqliteDb(filepath.Join(dir, "mock.db"), internal.USD)
+			db, err := NewSqliteDb("", internal.USD, WithMemoryDB())
 			r.NoError(err)
 			defer db.Close()
 

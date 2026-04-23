@@ -1,7 +1,6 @@
 package sqlite
 
 import (
-	"path/filepath"
 	"testing"
 	"time"
 
@@ -68,11 +67,10 @@ func TestCreateMonth(t *testing.T) {
 	for _, mock := range table {
 		t.Run("should "+mock.should, func(t *testing.T) {
 			t.Parallel()
-			dir := t.TempDir()
 			a := assert.New(t)
 			r := require.New(t)
 
-			db, err := NewSqliteDb(filepath.Join(dir, "mock.db"), internal.USD)
+			db, err := NewSqliteDb("", internal.USD, WithMemoryDB())
 			r.NoError(err)
 			defer db.Close()
 

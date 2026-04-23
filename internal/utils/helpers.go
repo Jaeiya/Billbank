@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"database/sql"
 	"os"
 	"strconv"
 	"sync/atomic"
@@ -36,6 +37,14 @@ func TryDeref[T any](p *T) any /*nil|T*/ {
 		return nil
 	}
 	return *p
+}
+
+func NewSqlNull[T any](v T) sql.Null[T] {
+	return sql.Null[T]{V: v, Valid: true}
+}
+
+func SqlFalseNull[T any]() sql.Null[T] {
+	return sql.Null[T]{Valid: false}
 }
 
 func IsString(v any) bool {
