@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"database/sql"
 	"os"
 	"strconv"
 	"sync/atomic"
@@ -26,14 +25,6 @@ func GetWorkingDir() string {
 	}
 
 	return workingDir
-}
-
-func NewSqlNull[T any](v T) sql.Null[T] {
-	return sql.Null[T]{V: v, Valid: true}
-}
-
-func SqlFalseNull[T any]() sql.Null[T] {
-	return sql.Null[T]{Valid: false}
 }
 
 func IsString(v any) bool {
