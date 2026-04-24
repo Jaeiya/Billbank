@@ -28,17 +28,6 @@ func GetWorkingDir() string {
 	return workingDir
 }
 
-/*
-TryDeref tries to dereference a pointer to type T. If it cannot,
-then it returns nil.
-*/
-func TryDeref[T any](p *T) any /*nil|T*/ {
-	if p == nil {
-		return nil
-	}
-	return *p
-}
-
 func NewSqlNull[T any](v T) sql.Null[T] {
 	return sql.Null[T]{V: v, Valid: true}
 }

@@ -1,8 +1,6 @@
 package sqlite
 
 import (
-	"database/sql"
-
 	"github.com/jaeiya/billbank/internal"
 )
 
@@ -63,11 +61,11 @@ type BillHistoryRecord struct {
 	Name       string
 	Amount     internal.Currency
 	DueDate    internal.Date
-	PaidAmount sql.Null[internal.Currency]
-	PaidDate   sql.Null[internal.Date]
-	PaidHow    sql.Null[string]
-	ClearedDay sql.Null[int]
-	Notes      sql.Null[string]
+	PaidAmount *internal.Currency
+	PaidDate   *internal.Date
+	PaidHow    *string
+	ClearedDay *int
+	Notes      *string
 }
 
 func (sdb SqliteDb) CreateBillHistory(records []BillHistoryRecord) error {

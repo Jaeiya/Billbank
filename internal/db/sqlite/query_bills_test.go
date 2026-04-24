@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/jaeiya/billbank/internal"
-	"github.com/jaeiya/billbank/internal/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -198,13 +197,11 @@ func TestCreateBillHistory(t *testing.T) {
 					Name:       "b1",
 					Amount:     internal.NewCurrency("13.37", internal.USD),
 					DueDate:    createDate(time.Now().Year(), time.Now().Month(), 3),
-					PaidAmount: utils.NewSqlNull(internal.NewCurrency("5", internal.USD)),
-					PaidDate: utils.NewSqlNull(
-						createDate(time.Now().Year(), time.Now().Month(), 3),
-					),
-					PaidHow:    utils.NewSqlNull("online"),
-					ClearedDay: utils.NewSqlNull(3),
-					Notes:      utils.NewSqlNull("these are some notes"),
+					PaidAmount: new(internal.NewCurrency("5", internal.USD)),
+					PaidDate:   new(createDate(time.Now().Year(), time.Now().Month(), 3)),
+					PaidHow:    new("online"),
+					ClearedDay: new(3),
+					Notes:      new("these are some notes"),
 				},
 			},
 			expected: []BillHistoryRecord{
@@ -215,13 +212,11 @@ func TestCreateBillHistory(t *testing.T) {
 					Name:       "b1",
 					Amount:     internal.NewCurrency("13.37", internal.USD),
 					DueDate:    createDate(time.Now().Year(), time.Now().Month(), 3),
-					PaidAmount: utils.NewSqlNull(internal.NewCurrency("5", internal.USD)),
-					PaidDate: utils.NewSqlNull(
-						createDate(time.Now().Year(), time.Now().Month(), 3),
-					),
-					PaidHow:    utils.NewSqlNull("online"),
-					ClearedDay: utils.NewSqlNull(3),
-					Notes:      utils.NewSqlNull("these are some notes"),
+					PaidAmount: new(internal.NewCurrency("5", internal.USD)),
+					PaidDate:   new(createDate(time.Now().Year(), time.Now().Month(), 3)),
+					PaidHow:    new("online"),
+					ClearedDay: new(3),
+					Notes:      new("these are some notes"),
 				},
 			},
 		},
@@ -253,11 +248,11 @@ func TestCreateBillHistory(t *testing.T) {
 					Name:       "b3",
 					Amount:     internal.NewCurrency("1337", internal.USD),
 					DueDate:    createDate(time.Now().Year(), time.Now().Month(), 3),
-					PaidAmount: utils.SqlFalseNull[internal.Currency](),
-					PaidDate:   utils.SqlFalseNull[internal.Date](),
-					PaidHow:    utils.SqlFalseNull[string](),
-					ClearedDay: utils.SqlFalseNull[int](),
-					Notes:      utils.SqlFalseNull[string](),
+					PaidAmount: nil,
+					PaidDate:   nil,
+					PaidHow:    nil,
+					ClearedDay: nil,
+					Notes:      nil,
 				},
 			},
 		},

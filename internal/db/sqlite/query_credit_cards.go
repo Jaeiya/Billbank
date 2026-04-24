@@ -117,17 +117,17 @@ func (sdb SqliteDb) QueryCreditCards(
 	return records, nil
 }
 
-func (sdb SqliteDb) CreateCreditCardHistory(config CreditCardHistoryRecord) error {
+func (sdb SqliteDb) CreateCreditCardHistory(r CreditCardHistoryRecord) error {
 	_, err := sdb.insertInto(
 		CREDIT_CARD_HISTORY,
-		config.CreditCardID,
-		config.MonthID,
-		config.Balance.GetStoredValue(),
-		config.DueDay,
-		config.CreditLimit,
-		utils.TryDeref(config.PaidDay),
-		config.PaidAmount,
-		utils.TryDeref(config.ClearedDay),
+		r.CreditCardID,
+		r.MonthID,
+		r.Balance.GetStoredValue(),
+		r.DueDay,
+		r.CreditLimit,
+		r.PaidDay,
+		r.PaidAmount,
+		r.ClearedDay,
 	)
 	if err != nil {
 		return getExecError(err)
