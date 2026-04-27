@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"errors"
+	"fmt"
 	"os"
 	"strconv"
 	"sync/atomic"
@@ -42,10 +44,21 @@ func IsInt(v any) bool {
 }
 
 func ParseInt(s string) (int, error) {
-	newInt, err := strconv.ParseInt(s, 10, 0)
-	if err != nil {
-		return int(newInt), err
+	var newInt int64
+	var err error
+
+	if newInt, err = strconv.ParseInt(s, 10, 0); err != nil {
+		if errors.Is(err, strconv.ErrSyntax) {
+			return 0, fmt.Errorf("'%s' is not a number", s)
+		}
+
+		if errors.Is(err, strconv.ErrRange) {
+			return 0, fmt.Errorf("'%s' is too large or too small", s)
+		}
+
+		return 0, fmt.Errorf("unexpected parse error: %w", err)
 	}
+
 	return int(newInt), nil
 }
 
