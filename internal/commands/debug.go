@@ -13,7 +13,7 @@ import (
 	"charm.land/bubbles/v2/viewport"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
-	"github.com/jaeiya/billbank/internal/cmdmodel"
+	"github.com/jaeiya/billbank/internal/cmdcore"
 	"github.com/jaeiya/billbank/internal/logger"
 	"github.com/jaeiya/billbank/internal/ui"
 	"github.com/jaeiya/billbank/internal/utils"
@@ -84,103 +84,135 @@ var (
 		Width(30)
 )
 
-var debugCommands = []debugCmd{
-	{Path: "history", Run: loadHistory, View: viewHistory},
-	{
-		Path:     "slog",
-		Run:      loadSlog,
-		View:     viewSlog,
-		ArgType:  cmdmodel.ArgOptional,
-		ParseArg: validateSlogInput,
-	},
-	{Path: "stats", Run: loadStats, View: viewStats},
-	{Path: "clear slog", Run: clearLog, View: clearSlogView},
-	{
-		Path:    "log_level",
-		Run:     setLogLevel,
-		View:    viewLogLevel,
-		ArgType: cmdmodel.ArgRequired,
-		ParseArg: func(arg string) (any, error) {
-			v, err := utils.ParseInt(arg)
-			if err != nil {
-				return nil, fmt.Errorf("'%s' is not a valid number", arg)
-			}
-
-			ll := logger.LogLevel(v)
-			if !ll.IsValid() {
-				return nil, fmt.Errorf("'%s' is not a valid log level", arg)
-			}
-
-			return ll, nil
-		},
-	},
-}
-
-type debugCmd = cmdmodel.Command[debugModel]
-
 type debugModel struct {
-	*cmdmodel.Base[debugModel]
-	history debugHistory
-	log     debugLog
-	slog    debugSlog
-	stats   struct {
+	history      debugHistory
+	log          debugLog
+	slog         debugSlog
+	workingPath  string
+	viewportSize struct {
+		w int
+		h int
+	}
+	stats struct {
 		data     debugStats
 		memStats runtime.MemStats
 	}
 }
 
-func NewDebugCmd(h *utils.InputHistory) debugModel {
+func NewDebugHandler(h *utils.InputHistory) cmdcore.CommandHandler {
 	vp := viewport.New(viewport.WithHeight(0), viewport.WithWidth(0))
-	vp.KeyMap.Down = key.NewBinding()
-	vp.KeyMap.Up = key.NewBinding()
+	vp.KeyMap.Down = key.NewBinding(key.WithKeys("j"))
+	vp.KeyMap.Up = key.NewBinding(key.WithKeys("k"))
 	vp.KeyMap.PageDown = key.NewBinding()
 	vp.KeyMap.PageUp = key.NewBinding()
 	vp.KeyMap.HalfPageUp = key.NewBinding(key.WithKeys("ctrl+k"))
 	vp.KeyMap.HalfPageDown = key.NewBinding(key.WithKeys("ctrl+j"))
 
-	return debugModel{
-		Base: cmdmodel.NewBaseModel(cmdmodel.CommandData[debugModel]{
-			Name:     "Debug",
-			Aliases:  []string{"/"},
-			Commands: debugCommands,
-		}),
+	m := debugModel{
 		history: debugHistory{data: h},
 		slog:    debugSlog{viewPort: vp},
 	}
+
+	commands := []cmdcore.Command[debugModel]{
+		cmdcore.NewCommand(cmdcore.CommandOptions[debugModel, cmdcore.NoArg]{
+			Path:     "history",
+			RunFunc:  loadHistory,
+			ViewFunc: viewHistory,
+		}),
+
+		cmdcore.NewCommand(cmdcore.CommandOptions[debugModel, int]{
+			Path:      "slog",
+			ArgType:   cmdcore.ArgOptional,
+			RunFunc:   loadSlog,
+			ViewFunc:  viewSlog,
+			ParseFunc: validateSlogInput,
+		}),
+
+		cmdcore.NewCommand(cmdcore.CommandOptions[debugModel, cmdcore.NoArg]{
+			Path:     "stats",
+			RunFunc:  loadStats,
+			ViewFunc: viewStats,
+		}),
+
+		cmdcore.NewCommand(cmdcore.CommandOptions[debugModel, cmdcore.NoArg]{
+			Path:     "clear slog",
+			RunFunc:  clearLog,
+			ViewFunc: clearSlogView,
+		}),
+
+		cmdcore.NewCommand(cmdcore.CommandOptions[debugModel, logger.LogLevel]{
+			Path:     "log_level",
+			ArgType:  cmdcore.ArgRequired,
+			RunFunc:  setLogLevel,
+			ViewFunc: viewLogLevel,
+			ParseFunc: func(arg string) (logger.LogLevel, error) {
+				v, err := utils.ParseInt(arg)
+				if err != nil {
+					return 0, err
+				}
+
+				ll := logger.LogLevel(v)
+				if !ll.IsValid() {
+					return 0, fmt.Errorf("'%s' is not a valid log level", arg)
+				}
+
+				return ll, nil
+			},
+		}),
+	}
+
+	return cmdcore.NewCmdHandler(
+		"debug",
+		[]string{"/"},
+		commands,
+		m,
+	)
 }
 
-func (m debugModel) Update(msg tea.Msg) (cmdmodel.Interface, tea.Cmd) {
+func (m debugModel) Update(msg tea.Msg) (cmdcore.CommandModel, tea.Cmd) {
 	var teaCmd tea.Cmd
 	var teaCmds []tea.Cmd
 
-	m, teaCmd = m.Base.Update(m, msg)
-	teaCmds = append(teaCmds, teaCmd)
-
-	switch msg := msg.(type) {
-	case tea.KeyPressMsg:
-		if m.IsActivePath("/ slog") {
-			// Reload slog
-			if msg.String() == "ctrl+r" {
-				logger.Log(logger.Debug, "reload slog")
-				// Wait for log to be written
-				time.Sleep(10 * time.Millisecond)
-				m = m.Exec(m)
-			}
-		}
-	}
+	// switch msg := msg.(type) {
+	// case tea.KeyPressMsg:
+	// 	if m.IsWorkingPath("/ slog") {
+	// 		// Reload slog
+	// 		if msg.String() == "ctrl+r" {
+	// 			logger.Log(logger.Debug, "reload slog")
+	// 			// Wait for log to be written
+	// 			time.Sleep(10 * time.Millisecond)
+	// 			m = m.Exec(m)
+	// 		}
+	// 	}
+	// }
 
 	m.slog.viewPort, teaCmd = m.slog.viewPort.Update(msg)
 	teaCmds = append(teaCmds, teaCmd)
 	return m, tea.Batch(teaCmds...)
 }
 
-func (m debugModel) View() tea.View {
-	return m.Base.View(m)
+func (m debugModel) SetWorkingPath(path string) cmdcore.CommandModel {
+	m.workingPath = path
+	return m
 }
 
-func loadHistory(m debugModel) debugModel {
+func (m debugModel) SetViewportSize(w, h int) cmdcore.CommandModel {
+	m.viewportSize.w = w
+	m.viewportSize.h = h
+	return m
+}
+
+func (m debugModel) GetViewportSize() (w, h int) {
+	return m.viewportSize.w, m.viewportSize.h
+}
+
+func (m debugModel) IsWorkingPath(path string) bool {
+	return m.workingPath == path
+}
+
+func loadHistory(m debugModel, arg *cmdcore.NoArg) (cmdcore.CommandModel, error) {
 	if m.history.data.GetLen() == m.history.lastLen {
-		return m
+		return m, nil
 	}
 
 	var sb strings.Builder
@@ -194,70 +226,67 @@ func loadHistory(m debugModel) debugModel {
 	}
 	m.history.lastLen = m.history.data.GetLen()
 	m.history.view = sb.String()
-	return m
+	return m, nil
 }
 
 func viewHistory(m debugModel) tea.View {
 	return tea.NewView(histStyle.Render(m.history.view))
 }
 
-func loadLog(m debugModel) (debugModel, bool) {
-	path := filepath.Join(utils.GetWorkingDir(), "log.txt")
-	fileInfo, err := os.Stat(path)
-	if err != nil {
-		m.AddError(err)
-		return m, false
-	}
-	if fileInfo.Size() == int64(len(m.log.view)+1) {
-		return m, true
-	}
-	bytes, err := os.ReadFile(path)
-	if err != nil {
-		m.AddError(err)
-		return m, false
-	}
-	m.log.view = strings.TrimSpace(string(bytes))
-	m.log.lineCount = strings.Count(m.log.view, "\n")
-	return m, false
-}
-
-func clearLog(m debugModel) debugModel {
+func clearLog(m debugModel, arg *cmdcore.NoArg) (cmdcore.CommandModel, error) {
 	err := logger.Reset()
 	if err != nil {
-		m.AddError(err)
-		return m
+		return m, err
 	}
 	m.log.view = ""
 	m.log.lineCount = 0
 	m.slog.view = ""
-	return m
+	return m, nil
 }
 
-func validateSlogInput(arg string) (any, error) {
+func validateSlogInput(arg string) (int, error) {
 	v, err := utils.ParseInt(arg)
 	if err != nil {
-		return nil, fmt.Errorf("[%s] is not a valid number of lines", arg)
+		return 0, fmt.Errorf("[%s] is not a valid number of lines", arg)
 	}
 	return v, nil
 }
 
-func loadSlog(m debugModel) debugModel {
-	m, isCached := loadLog(m)
-	if isCached {
-		return m
+func loadSlog(m debugModel, arg *int) (cmdcore.CommandModel, error) {
+	path := filepath.Join(utils.GetWorkingDir(), "log.txt")
+	fileInfo, err := os.Stat(path)
+	if err != nil {
+		return m, err
 	}
 
-	maxLines := 150
-	arg, isValid := cmdmodel.GetArgAs[int](m.Base)
-	if isValid {
-		maxLines = arg
+	// Check if log is already cached
+	if fileInfo.Size() == int64(len(m.log.view)+1) {
+		logger.Log(logger.Debug, "[loadSlog] log is already cached")
+		return m, nil
+	}
+
+	bytes, err := os.ReadFile(path)
+	if err != nil {
+		return m, err
+	}
+
+	m.log.view = strings.TrimSpace(string(bytes))
+	m.log.lineCount = strings.Count(m.log.view, "\n")
+
+	maxLines := 0
+	if arg != nil {
+		maxLines = *arg
 	}
 
 	var tagBuilder, subjBuilder, wordBuilder, timeBuilder strings.Builder
 	now := time.Now()
 
 	lines := strings.Split(m.log.view, "\n")
-	lines = lines[max(len(lines)-maxLines, 0):]
+
+	if maxLines > 0 {
+		lines = lines[len(lines)-maxLines:]
+	}
+
 	var lastTimeStamp time.Time = time.Now()
 	for i, line := range lines {
 		if line == "" {
@@ -306,13 +335,13 @@ func loadSlog(m debugModel) debugModel {
 	m.slog.view = content
 
 	// The terminal can be resized at any time
-	w, h := m.GetViewSize()
+	w, h := m.GetViewportSize()
 	m.slog.viewPort.SetWidth(w)
 	m.slog.viewPort.SetHeight(h - 2)
 
 	m.slog.viewPort.SetContent(m.slog.view)
 	m.slog.viewPort.GotoBottom()
-	return m
+	return m, nil
 }
 
 func getTagStyle(tag string) (string, lipgloss.Style) {
@@ -343,7 +372,7 @@ func getTagStyle(tag string) (string, lipgloss.Style) {
 }
 
 func clearSlogView(m debugModel) tea.View {
-	w, h := m.GetViewSize()
+	w, h := m.GetViewportSize()
 	return tea.NewView(ui.NewInfoBox(
 		"Clear Slog",
 		"Slog has been reset and will be re-rendered on execution.",
@@ -352,7 +381,7 @@ func clearSlogView(m debugModel) tea.View {
 }
 
 func viewSlog(m debugModel) tea.View {
-	w, h := m.GetViewSize()
+	w, h := m.GetViewportSize()
 	m.slog.viewPort.SetWidth(w)
 	m.slog.viewPort.SetHeight(h - 2)
 
@@ -364,14 +393,13 @@ func viewSlog(m debugModel) tea.View {
 	return tea.NewView(logStyle.Render(content))
 }
 
-func loadStats(m debugModel) debugModel {
+func loadStats(m debugModel, arg *cmdcore.NoArg) (cmdcore.CommandModel, error) {
 	var err error
 
 	path := filepath.Join(utils.GetWorkingDir(), "log.txt")
 	fileInfo, err := os.Stat(path)
 	if err != nil {
-		m.AddError(err)
-		return m
+		return m, err
 	}
 
 	var historySize int
@@ -393,7 +421,7 @@ func loadStats(m debugModel) debugModel {
 		memWorking: m.stats.memStats.OtherSys + m.stats.memStats.HeapSys,
 	}
 
-	return m
+	return m, nil
 }
 
 func viewStats(m debugModel) tea.View {
@@ -465,7 +493,7 @@ func viewStats(m debugModel) tea.View {
 		memValues,
 	))
 
-	w, h := m.GetViewSize()
+	w, h := m.GetViewportSize()
 
 	return tea.NewView(lipgloss.Place(
 		w, h,
@@ -480,18 +508,15 @@ func viewStats(m debugModel) tea.View {
 	))
 }
 
-func setLogLevel(m debugModel) debugModel {
-	ll, isValid := cmdmodel.GetArgAs[logger.LogLevel](m.Base)
-	if !isValid {
-		return m
-	}
-
-	_ = logger.SetLogLevel(ll)
-	return m
+func setLogLevel(m debugModel, arg *logger.LogLevel) (cmdcore.CommandModel, error) {
+	// We ignore error because this check is already done
+	// in the parse func.
+	_ = logger.SetLogLevel(*arg)
+	return m, nil
 }
 
 func viewLogLevel(m debugModel) tea.View {
-	w, h := m.GetViewSize()
+	w, h := m.GetViewportSize()
 	return tea.NewView(ui.NewInfoBox(
 		"Set Log Level",
 		fmt.Sprintf("Log level has been set to %s", logger.GetLogLevel()),

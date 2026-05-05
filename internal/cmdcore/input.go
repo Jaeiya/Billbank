@@ -1,4 +1,4 @@
-package cmdmodel
+package cmdcore
 
 import (
 	"errors"
@@ -27,11 +27,11 @@ type InputModel struct {
 	winHeight int
 	history   *utils.InputHistory
 	homePath  string
-	commands  []Interface
-	lastCmd   Interface
+	cmdModels []CommandHandler
+	lastCmd   CommandHandler
 	state     struct {
-		cmdStatus Status
-		activeCmd Interface
+		cmdState      CommandState
+		activeHandler CommandHandler
 	}
 	aliases    []string
 	statusText string
@@ -52,7 +52,11 @@ var versionStyle = lipgloss.NewStyle().
 	Foreground(ui.BrightMagenta)
 
 // TODO: Use an interface to define input history methods
-func NewInputModel(h *utils.InputHistory, homePath string, cmdModels ...Interface) InputModel {
+func NewInputModel(
+	h *utils.InputHistory,
+	homePath string,
+	cmdHandlers ...CommandHandler,
+) InputModel {
 	inputModel := InputModel{
 		aliases:  []string{},
 		homePath: homePath,
@@ -60,10 +64,10 @@ func NewInputModel(h *utils.InputHistory, homePath string, cmdModels ...Interfac
 		input:    commanderInput(),
 	}
 
-	aliasStore := make(map[string]struct{}, len(cmdModels))
+	aliasStore := make(map[string]struct{}, len(cmdHandlers))
 	cmdPaths := []string{}
 
-	for _, cmdModel := range cmdModels {
+	for _, cmdModel := range cmdHandlers {
 		for _, alias := range cmdModel.GetAliases() {
 			if _, ok := aliasStore[alias]; ok {
 				logger.LogFatal(
@@ -76,7 +80,7 @@ func NewInputModel(h *utils.InputHistory, homePath string, cmdModels ...Interfac
 			inputModel.aliases = append(inputModel.aliases, alias)
 		}
 		cmdPaths = append(cmdPaths, cmdModel.GetCmdPaths()...)
-		inputModel.commands = append(inputModel.commands, cmdModel)
+		inputModel.cmdModels = append(inputModel.cmdModels, cmdModel)
 	}
 
 	if homePath != "" {
@@ -124,6 +128,7 @@ func (m InputModel) Update(msg tea.Msg) (InputModel, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
+		logger.Log(logger.Insane, "[CommandInput] received window size [%d:%d]", msg.Width, msg.Height)
 		statusStyle = statusStyle.Width(msg.Width)
 		m.winHeight = msg.Height
 		m.input.SetWidth(msg.Width)
@@ -204,18 +209,8 @@ func (m InputModel) View() tea.View {
 func (m InputModel) onEnter() (InputModel, tea.Cmd) {
 	var cmd tea.Cmd
 	m, cmd = m.tryEnterCmd()
-	if m.state.cmdStatus.Error != nil {
-		if errors.Is(ErrMisconfiguredArgParser, m.state.cmdStatus.Error) {
-			logger.Log(logger.Error,
-				"command [%s] path [%s] has a misconfigured arg parser func",
-				m.state.activeCmd.GetName(),
-				m.state.cmdStatus.Path,
-			)
-		} else {
-			cmdErr := "command parse error:"
-			msg := fmt.Sprintf("%s [%s]", cmdErr, m.state.cmdStatus.Error)
-			logger.Log(logger.Attention, "%s", msg)
-		}
+	if m.state.cmdState.Error != nil {
+		logger.Log(logger.Attention, "command parse error: [%s] ", m.state.cmdState.Error)
 	}
 	return m, cmd
 }
@@ -225,13 +220,13 @@ func (m InputModel) tryEnterCmd() (InputModel, tea.Cmd) {
 	if m.input.Value() == "" {
 		m, _ = tryParseCmd(m, tea.KeyPressMsg{})
 	}
-	cmd := m.state.activeCmd
-	cmdStatus := m.state.cmdStatus
+	cmdHandler := m.state.activeHandler
+	cmdState := m.state.cmdState
 
 	logger.Log(logger.Info, "entering command [%s]", m.input.Value())
-	logger.Log(logger.Debug, "command status [%+v]", cmdStatus)
+	logger.Log(logger.Debug, "command status [%+v]", cmdState)
 
-	cmdErr := cmdStatus.Error
+	cmdErr := cmdState.Error
 	if cmdErr != nil {
 		m.statusText = cmdErr.Error()
 		statusStyle = statusStyle.Foreground(ui.FgErrColor)
@@ -242,30 +237,30 @@ func (m InputModel) tryEnterCmd() (InputModel, tea.Cmd) {
 	}
 
 	statusStyle = statusStyle.Foreground(ui.FgSuccessColor)
-	m.statusText = fmt.Sprintf("Executing Command: %s", cmdStatus.Path)
+	m.statusText = fmt.Sprintf("Executing Command: %s", cmdState.Path)
 
 	m.history.Add(m.input.Value())
 
-	if m.lastCmd != nil && m.lastCmd.GetId() == cmd.GetId() {
+	if m.lastCmd != nil && m.lastCmd.GetId() == cmdHandler.GetId() {
 		m.input.Reset()
 		logger.Log(
 			logger.Debug,
 			"sending command [%s] status update",
-			cmdStatus.Path,
+			cmdState.Path,
 		)
-		cmd.SetStatus(cmdStatus)
-		return m, func() tea.Msg { return UpdateCmdMsg{nil} }
+		cmdHandler.SetCmdState(cmdState)
+		return m, func() tea.Msg { return UpdateHandlerMsg{nil} }
 	}
 
-	m.lastCmd = cmd
+	m.lastCmd = cmdHandler
 	m.input.Reset()
 	logger.Log(
 		logger.Debug,
-		"sending [%s] model update msg",
-		cmdStatus.Path,
+		"sending UpdateHandlerMsg with [%s] handler",
+		cmdHandler.GetName(),
 	)
-	cmd.SetStatus(cmdStatus)
-	return m, func() tea.Msg { return UpdateCmdMsg{cmd} }
+	cmdHandler.SetCmdState(cmdState)
+	return m, func() tea.Msg { return UpdateHandlerMsg{cmdHandler} }
 }
 
 func onAnyKey(m InputModel, msg tea.KeyMsg) (InputModel, tea.Cmd) {
@@ -274,7 +269,7 @@ func onAnyKey(m InputModel, msg tea.KeyMsg) (InputModel, tea.Cmd) {
 		key = "ctrl"
 	}
 	m.statusText = ""
-	logger.Log(logger.Insane, "[onAnyKey] command status [%+v]", m.state.cmdStatus)
+	logger.Log(logger.Insane, "[onAnyKey] command status [%+v]", m.state.cmdState)
 	logger.Log(logger.Hot, "[onAnyKey] try parse command on [%s]", key)
 	return tryParseCmd(m, msg)
 }
@@ -284,23 +279,23 @@ func tryParseCmd(m InputModel, msg tea.KeyMsg) (InputModel, tea.Cmd) {
 	m.input, cmd = m.input.Update(msg)
 
 	m.state = struct {
-		cmdStatus Status
-		activeCmd Interface
-	}{cmdStatus: Status{}, activeCmd: nil}
+		cmdState      CommandState
+		activeHandler CommandHandler
+	}{cmdState: CommandState{}, activeHandler: nil}
 
-	for _, cmd := range m.commands {
+	for _, model := range m.cmdModels {
 		logger.Log(
 			logger.Insane,
 			"test if [%s] is a [%s] command",
 			m.input.Value(),
-			cmd.GetName(),
+			model.GetName(),
 		)
-		status := cmd.ParseCommand(m.input.Value())
-		m.state.cmdStatus = status
-		m.state.activeCmd = cmd
-		if status.IsCommand {
-			if errors.Is(status.Error, ErrIncompleteCmd) {
-				m.input.SetSuggestions(status.Suggestions)
+		state := model.ParseCommand(m.input.Value())
+		m.state.cmdState = state
+		m.state.activeHandler = model
+		if len(state.Path) > 0 {
+			if errors.Is(state.Error, ErrIncompleteCmd) {
+				m.input.SetSuggestions(state.Suggestions)
 			}
 			break
 		}

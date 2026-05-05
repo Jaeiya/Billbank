@@ -7,7 +7,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/jaeiya/billbank/internal"
-	"github.com/jaeiya/billbank/internal/cmdmodel"
+	"github.com/jaeiya/billbank/internal/cmdcore"
 	"github.com/jaeiya/billbank/internal/commands"
 	"github.com/jaeiya/billbank/internal/db/sqlite"
 	"github.com/jaeiya/billbank/internal/logger"
@@ -40,11 +40,11 @@ func main() {
 
 	h := utils.NewCmdHistory()
 
-	im := cmdmodel.NewInputModel(
+	im := cmdcore.NewInputModel(
 		h,
 		"bills",
-		commands.NewBillsCmd(db),
-		commands.NewDebugCmd(h),
+		commands.NewBillsHandler(db),
+		commands.NewDebugHandler(h),
 	)
 
 	vp := internal.NewViewport(im)

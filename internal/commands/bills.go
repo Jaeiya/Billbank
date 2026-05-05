@@ -2,62 +2,58 @@ package commands
 
 import (
 	tea "charm.land/bubbletea/v2"
-	"github.com/jaeiya/billbank/internal/cmdmodel"
+	"github.com/jaeiya/billbank/internal/cmdcore"
 	"github.com/jaeiya/billbank/internal/db/sqlite"
 )
 
 type billsModel struct {
-	*cmdmodel.Base[billsModel]
-	db *sqlite.SqliteDb
+	db          *sqlite.SqliteDb
+	workingPath string
+	vpSize      struct{ w, h int }
 }
 
-type billCmd = cmdmodel.Command[billsModel]
-
-var billCommands = []billCmd{
-	{Path: "", Run: loadBills, View: viewBills},
+func NewBillsHandler(db *sqlite.SqliteDb) cmdcore.CommandHandler {
+	model := billsModel{}
+	h := cmdcore.NewCmdHandler(
+		"bills",
+		[]string{"bills"},
+		[]cmdcore.Command[billsModel]{
+			cmdcore.NewCommand(cmdcore.CommandOptions[billsModel, cmdcore.NoArg]{
+				Path:     "",
+				RunFunc:  loadBills,
+				ViewFunc: viewBills,
+			}),
+		},
+		model,
+	)
+	return h
 }
 
-func NewBillsCmd(db *sqlite.SqliteDb) billsModel {
-	return billsModel{
-		Base: cmdmodel.NewBaseModel(cmdmodel.CommandData[billsModel]{
-			Name:     "Bills",
-			Aliases:  []string{"bills"},
-			Commands: billCommands,
-		}),
-		db: db,
-	}
+func (m billsModel) Update(msg tea.Msg) (cmdcore.CommandModel, tea.Cmd) {
+	return m, nil
 }
 
-func (m billsModel) Update(msg tea.Msg) (cmdmodel.Interface, tea.Cmd) {
-	var teaCmd tea.Cmd
-	var teaCmds []tea.Cmd
-
-	//- DO NOT REMOVE or MODIFY; required for base model interaction
-	m, teaCmd = m.Base.Update(m, msg)
-	teaCmds = append(teaCmds, teaCmd)
-	//--------------------------------------------------//
-
-	// switch msg := msg.(type) {
-	// case tea.KeyMsg:
-	// 	if msg.String() == "ctrl+k" {
-	// 		m.thisCounter += 1
-	// 	}
-	// }
-
-	return m, tea.Batch(teaCmds...)
+func (m billsModel) GetViewportSize() (w, h int) {
+	return m.vpSize.w, m.vpSize.h
 }
 
-// DO NOT REMOVE or MODIFY; required for base model interaction
-func (m billsModel) View() tea.View {
-	return m.Base.View(m)
+func (m billsModel) IsWorkingPath(path string) bool {
+	return m.workingPath == path
 }
 
-//##########################################
-//     Custom Functions Go Below Here
-//##########################################
-
-func loadBills(m billsModel) billsModel {
+func (m billsModel) SetWorkingPath(path string) cmdcore.CommandModel {
+	m.workingPath = path
 	return m
+}
+
+func (m billsModel) SetViewportSize(w, h int) cmdcore.CommandModel {
+	m.vpSize.w = w
+	m.vpSize.h = h
+	return m
+}
+
+func loadBills(m billsModel, arg *cmdcore.NoArg) (cmdcore.CommandModel, error) {
+	return m, nil
 }
 
 func viewBills(m billsModel) tea.View {

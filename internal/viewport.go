@@ -1,10 +1,13 @@
 package internal
 
 import (
+	"fmt"
+	"reflect"
+
 	"charm.land/bubbles/v2/textinput"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
-	"github.com/jaeiya/billbank/internal/cmdmodel"
+	"github.com/jaeiya/billbank/internal/cmdcore"
 	"github.com/jaeiya/billbank/internal/logger"
 	"github.com/jaeiya/billbank/internal/ui"
 )
@@ -12,7 +15,7 @@ import (
 type (
 	CommanderStatusMsg struct {
 		String   string
-		Severity cmdmodel.StatusSeverity
+		Severity cmdcore.StatusSeverity
 	}
 )
 
@@ -22,14 +25,14 @@ type ViewportSize struct {
 }
 
 type ViewPort struct {
-	cmdInput       cmdmodel.InputModel
-	cmdModel       cmdmodel.Interface
+	cmdInput       cmdcore.InputModel
+	cmdHandler     cmdcore.CommandHandler
 	hasHiddenInput bool
-	height         int
-	width          int
+	winHeight      int
+	winWidth       int
 }
 
-func NewViewport(input cmdmodel.InputModel) ViewPort {
+func NewViewport(input cmdcore.InputModel) ViewPort {
 	vp := ViewPort{}
 	vp.cmdInput = input
 	return vp
@@ -40,7 +43,7 @@ func (vp ViewPort) Init() tea.Cmd {
 		textinput.Blink,
 		vp.cmdInput.Init(),
 	}
-	logger.Log(logger.Info, "loaded viewport")
+	logger.Log(logger.Info, "viewport loaded")
 	return tea.Batch(teaCmds...)
 }
 
@@ -51,11 +54,11 @@ func (vp ViewPort) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		// Don't update unless we have a new size
-		if msg.Height != vp.height || msg.Width != vp.width {
-			vp.height = msg.Height
-			vp.width = msg.Width
-			logger.Log(logger.Hot, "[WindowSizeMsg] sending viewport size [%d:%d]", vp.width, vp.height)
-			teaCmds = append(teaCmds, vp.sendViewportSize(cmdmodel.WindowSizeMsg{}))
+		if msg.Height != vp.winHeight || msg.Width != vp.winWidth {
+			logger.Log(logger.Hot, "setting window size [%d:%d]", msg.Width, msg.Height)
+			vp.winHeight = msg.Height
+			vp.winWidth = msg.Width
+			teaCmds = append(teaCmds, vp.sendViewportSize())
 		}
 
 	case tea.KeyPressMsg:
@@ -71,8 +74,10 @@ func (vp ViewPort) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return vp, teaCmd
 		}
 
-	case cmdmodel.UpdateCmdMsg:
-		teaCmds = append(teaCmds, vp.updateCommand(msg))
+	case cmdcore.UpdateHandlerMsg:
+		teaCmds = append(teaCmds, vp.updateHandler(msg))
+		// We don't need to propagate this message
+		return vp, tea.Batch(teaCmds...)
 
 	case CommanderStatusMsg:
 		teaCmds = append(teaCmds, vp.sendStatusMsg(msg.String, msg.Severity))
@@ -82,14 +87,22 @@ func (vp ViewPort) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	// Give up keyboard control to current command
 	if !vp.hasHiddenInput || !isKey {
+		logger.LogFunc(logger.Insane, func() string {
+			return fmt.Sprintf("sending [%+v] to command input", reflect.TypeOf(msg))
+		})
 		vp.cmdInput, teaCmd = vp.cmdInput.Update(msg)
 		teaCmds = append(teaCmds, teaCmd)
 	}
 
-	if vp.cmdModel != nil {
+	if vp.cmdHandler != nil {
 		// Ignore key input unless command has exclusive control
 		if isKey && vp.hasHiddenInput || !isKey {
-			vp.cmdModel, teaCmd = vp.cmdModel.Update(msg)
+			logger.LogFunc(logger.Hot, func() string {
+				return fmt.Sprintf("sending [%+v] to [%s] handler",
+					reflect.TypeOf(msg), vp.cmdHandler.GetName(),
+				)
+			})
+			vp.cmdHandler, teaCmd = vp.cmdHandler.Update(msg)
 			teaCmds = append(teaCmds, teaCmd)
 		}
 	}
@@ -104,8 +117,8 @@ func (vp ViewPort) View() tea.View {
 	v.AltScreen = true
 	cmdView := ""
 
-	if vp.cmdModel != nil && vp.cmdModel.IsInitialized() {
-		cmdView = vp.cmdModel.View().Content
+	if vp.cmdHandler != nil && vp.cmdHandler.IsInitialized() {
+		cmdView = vp.cmdHandler.View().Content
 	}
 
 	getCmdView := func(withoutTextInput bool) string {
@@ -114,8 +127,8 @@ func (vp ViewPort) View() tea.View {
 		}
 		return lipgloss.NewStyle().Foreground(ui.FgColor).Render(
 			lipgloss.Place(
-				vp.width,
-				vp.height-h,
+				vp.winWidth,
+				vp.winHeight-h,
 				lipgloss.Left,
 				lipgloss.Top,
 				cmdView,
@@ -139,15 +152,23 @@ func (vp ViewPort) View() tea.View {
 	return v
 }
 
-func (vp *ViewPort) updateCommand(msg cmdmodel.UpdateCmdMsg) tea.Cmd {
-	if msg.Model != nil {
-		vp.cmdModel = msg.Model
-		logger.Log(logger.Debug, "storing command model [%s]", msg.Model.GetName())
+func (vp *ViewPort) updateHandler(msg cmdcore.UpdateHandlerMsg) tea.Cmd {
+	if msg.Handler != nil {
+		vp.cmdHandler = msg.Handler
+		logger.Log(
+			logger.Debug,
+			"storing [%s] handler",
+			msg.Handler.GetName(),
+		)
 	}
-	if vp.cmdModel.GetStatus().CaptureInput {
+
+	if vp.cmdHandler.GetStatus().CaptureInput {
 		vp.hasHiddenInput = true
 	}
-	return vp.sendViewportSize(cmdmodel.ViewportSizeMsg{})
+
+	return func() tea.Msg {
+		return cmdcore.ExecCmdMsg(vp.getSize())
+	}
 }
 
 func (vp ViewPort) getSize() ViewportSize {
@@ -156,8 +177,8 @@ func (vp ViewPort) getSize() ViewportSize {
 		offsetHeight = 0
 	}
 	return ViewportSize{
-		Height: vp.height - offsetHeight,
-		Width:  vp.width,
+		Height: vp.winHeight - offsetHeight,
+		Width:  vp.winWidth,
 	}
 }
 
@@ -168,35 +189,27 @@ func (vp ViewPort) toggleInput() (ViewPort, tea.Cmd) {
 		teaCmd = textinput.Blink
 	}
 	// Updating directly, Avoids UI jumping around
-	vp.cmdModel, _ = vp.cmdModel.Update(cmdmodel.ViewportSizeMsg(vp.getSize()))
+	vp.cmdHandler, _ = vp.cmdHandler.Update(cmdcore.ViewportSizeMsg(vp.getSize()))
 	return vp, teaCmd
 }
 
-func (vp ViewPort) sendViewportSize(msgType tea.Msg) tea.Cmd {
-	var msg tea.Msg
+func (vp ViewPort) sendViewportSize() tea.Cmd {
 	vpSize := vp.getSize()
-	logger.Log(logger.Hot, "sending viewport size [%d:%d]", vpSize.Width, vpSize.Height)
-
-	switch msgType.(type) {
-	case cmdmodel.ViewportSizeMsg:
-		msg = cmdmodel.ViewportSizeMsg(vpSize)
-
-	case cmdmodel.WindowSizeMsg:
-		msg = cmdmodel.WindowSizeMsg(vpSize)
-
-	default:
-		// This should never happen
-		panic("invalid viewport message type")
-	}
+	logger.Log(
+		logger.Hot,
+		"sending viewport size msg [%d:%d]",
+		vpSize.Width,
+		vpSize.Height,
+	)
 
 	return func() tea.Msg {
-		return msg
+		return cmdcore.ViewportSizeMsg(vpSize)
 	}
 }
 
-func (vp ViewPort) sendStatusMsg(msg string, s cmdmodel.StatusSeverity) func() tea.Msg {
+func (vp ViewPort) sendStatusMsg(msg string, s cmdcore.StatusSeverity) func() tea.Msg {
 	return func() tea.Msg {
-		return cmdmodel.StatusBarMsg{
+		return cmdcore.StatusBarMsg{
 			String:   msg,
 			Severity: s,
 		}
