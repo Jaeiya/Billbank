@@ -31,14 +31,6 @@ type CommandHandler interface {
 	IsInitialized() bool
 }
 
-type CommandModel interface {
-	Update(msg tea.Msg) (CommandModel, tea.Cmd)
-	SetWorkingPath(path string) CommandModel
-	SetViewportSize(w, h int) CommandModel
-	GetViewportSize() (w, h int)
-	IsWorkingPath(path string) bool
-}
-
 type (
 	HomeMsg struct{}
 
@@ -155,7 +147,7 @@ func (ch *cmdHandler[M]) Update(msg tea.Msg) (CommandHandler, tea.Cmd) {
 				"[%s] handler setting viewport size for command path [%s]",
 				ch.name, ch.cmdState.Path,
 			)
-			ch.cmdModel = ch.cmdModel.SetViewportSize(msg.Width, msg.Height)
+			ch.cmdModel.SetViewportSize(msg.Width, msg.Height)
 		}
 
 	case ExecCmdMsg:
@@ -185,8 +177,8 @@ func (ch *cmdHandler[M]) Update(msg tea.Msg) (CommandHandler, tea.Cmd) {
 		cmdPath := ch.cmdState.Path
 		cmd := ch.cmdMap[cmdPath]
 		logger.Log(logger.Debug, "[%s] handler is executing command path [%s]", ch.name, cmdPath)
-		ch.cmdModel = ch.cmdModel.SetWorkingPath(cmdPath)
-		ch.cmdModel = ch.cmdModel.SetViewportSize(msg.Width, msg.Height)
+		ch.cmdModel.SetWorkingPath(cmdPath)
+		ch.cmdModel.SetViewportSize(msg.Width, msg.Height)
 		ch.cmdModel, err = cmd.Run(ch.cmdModel)
 		if err != nil {
 			if errors.Is(err, ErrModelTypeMismatch) {

@@ -16,7 +16,7 @@ const (
 )
 
 var (
-	ErrModelTypeMismatch       = fmt.Errorf("model type mismatch")
+	ErrModelTypeMismatch       = fmt.Errorf("command model type mismatch")
 	ErrModelTypeReturnMismatch = fmt.Errorf("command has returned the wrong model type")
 	ErrNoResolveArg            = fmt.Errorf("command does not have an argument to resolve")
 )

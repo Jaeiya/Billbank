@@ -10,6 +10,7 @@ import (
 // Command model that shares all data between your commands.
 // (rename to reflect the name of your new command)
 type skeletonModel struct {
+	cmdcore.ModelBase
 	vpSize      struct{ w, h int }
 	workingPath string
 	thisCounter int
@@ -22,6 +23,13 @@ type skeletonModel struct {
 // command handler.
 // (rename it to reflect the command name)
 func NewSkeletonHandler() cmdcore.CommandHandler {
+	// Initialize our model with the base command model
+	// so we're not having to re-implement for each
+	// command.
+	model := skeletonModel{
+		ModelBase: cmdcore.NewModelBase(),
+	}
+
 	commands := []cmdcore.Command[skeletonModel]{
 		// Creates "skeleton" command which demonstrates how to create
 		// what's called a 'default command' where the alias
@@ -86,7 +94,7 @@ func NewSkeletonHandler() cmdcore.CommandHandler {
 		"skeleton",
 		[]string{"skeleton"},
 		commands,
-		skeletonModel{},
+		model,
 	)
 }
 
@@ -104,27 +112,6 @@ func (m skeletonModel) Update(msg tea.Msg) (cmdcore.CommandModel, tea.Cmd) {
 	}
 
 	return m, tea.Batch(teaCmds...)
-}
-
-func (m skeletonModel) GetViewportSize() (w, h int) {
-	return m.vpSize.w, m.vpSize.h
-}
-
-func (m skeletonModel) IsWorkingPath(path string) bool {
-	return m.workingPath == path
-}
-
-// SetWorkingPath is called from within the command handler.
-func (m skeletonModel) SetWorkingPath(path string) cmdcore.CommandModel {
-	m.workingPath = path
-	return m
-}
-
-// SetViewportSize is called from within the command handler.
-func (m skeletonModel) SetViewportSize(w, h int) cmdcore.CommandModel {
-	m.vpSize.w = w
-	m.vpSize.h = h
-	return m
 }
 
 // ##########################################

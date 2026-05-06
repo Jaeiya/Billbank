@@ -85,15 +85,11 @@ var (
 )
 
 type debugModel struct {
-	history      debugHistory
-	log          debugLog
-	slog         debugSlog
-	workingPath  string
-	viewportSize struct {
-		w int
-		h int
-	}
-	stats struct {
+	cmdcore.ModelBase
+	history debugHistory
+	log     debugLog
+	slog    debugSlog
+	stats   struct {
 		data     debugStats
 		memStats runtime.MemStats
 	}
@@ -109,8 +105,9 @@ func NewDebugHandler(h *utils.InputHistory) cmdcore.CommandHandler {
 	vp.KeyMap.HalfPageDown = key.NewBinding(key.WithKeys("ctrl+j"))
 
 	m := debugModel{
-		history: debugHistory{data: h},
-		slog:    debugSlog{viewPort: vp},
+		ModelBase: cmdcore.NewModelBase(),
+		history:   debugHistory{data: h},
+		slog:      debugSlog{viewPort: vp},
 	}
 
 	commands := []cmdcore.Command[debugModel]{
@@ -189,25 +186,6 @@ func (m debugModel) Update(msg tea.Msg) (cmdcore.CommandModel, tea.Cmd) {
 	m.slog.viewPort, teaCmd = m.slog.viewPort.Update(msg)
 	teaCmds = append(teaCmds, teaCmd)
 	return m, tea.Batch(teaCmds...)
-}
-
-func (m debugModel) SetWorkingPath(path string) cmdcore.CommandModel {
-	m.workingPath = path
-	return m
-}
-
-func (m debugModel) SetViewportSize(w, h int) cmdcore.CommandModel {
-	m.viewportSize.w = w
-	m.viewportSize.h = h
-	return m
-}
-
-func (m debugModel) GetViewportSize() (w, h int) {
-	return m.viewportSize.w, m.viewportSize.h
-}
-
-func (m debugModel) IsWorkingPath(path string) bool {
-	return m.workingPath == path
 }
 
 func loadHistory(m debugModel, arg *cmdcore.NoArg) (cmdcore.CommandModel, error) {
@@ -335,7 +313,7 @@ func loadSlog(m debugModel, arg *int) (cmdcore.CommandModel, error) {
 	m.slog.view = content
 
 	// The terminal can be resized at any time
-	w, h := m.GetViewportSize()
+	w, h := m.ViewportSize()
 	m.slog.viewPort.SetWidth(w)
 	m.slog.viewPort.SetHeight(h - 2)
 
@@ -372,7 +350,7 @@ func getTagStyle(tag string) (string, lipgloss.Style) {
 }
 
 func clearSlogView(m debugModel) tea.View {
-	w, h := m.GetViewportSize()
+	w, h := m.ViewportSize()
 	return tea.NewView(ui.NewInfoBox(
 		"Clear Slog",
 		"Slog has been reset and will be re-rendered on execution.",
@@ -381,7 +359,7 @@ func clearSlogView(m debugModel) tea.View {
 }
 
 func viewSlog(m debugModel) tea.View {
-	w, h := m.GetViewportSize()
+	w, h := m.ViewportSize()
 	m.slog.viewPort.SetWidth(w)
 	m.slog.viewPort.SetHeight(h - 2)
 
@@ -493,7 +471,7 @@ func viewStats(m debugModel) tea.View {
 		memValues,
 	))
 
-	w, h := m.GetViewportSize()
+	w, h := m.ViewportSize()
 
 	return tea.NewView(lipgloss.Place(
 		w, h,
@@ -516,7 +494,7 @@ func setLogLevel(m debugModel, arg *logger.LogLevel) (cmdcore.CommandModel, erro
 }
 
 func viewLogLevel(m debugModel) tea.View {
-	w, h := m.GetViewportSize()
+	w, h := m.ViewportSize()
 	return tea.NewView(ui.NewInfoBox(
 		"Set Log Level",
 		fmt.Sprintf("Log level has been set to %s", logger.GetLogLevel()),
