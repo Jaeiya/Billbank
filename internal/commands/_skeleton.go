@@ -1,4 +1,3 @@
-
 import (
 	"fmt"
 
@@ -98,6 +97,8 @@ func NewSkeletonHandler() cmdcore.CommandHandler {
 	)
 }
 
+// Update is a required method to allow interaction with
+// the TUI loop (via messages) and the command.
 func (m skeletonModel) Update(msg tea.Msg) (cmdcore.CommandModel, tea.Cmd) {
 	var teaCmds []tea.Cmd
 
@@ -114,11 +115,6 @@ func (m skeletonModel) Update(msg tea.Msg) (cmdcore.CommandModel, tea.Cmd) {
 	return m, tea.Batch(teaCmds...)
 }
 
-// ##########################################
-//
-//	Command Functions Go Below Here
-//
-// ##########################################
 func loadDummy(m skeletonModel, arg *cmdcore.NoArg) (cmdcore.CommandModel, error) {
 	return m, nil
 }
