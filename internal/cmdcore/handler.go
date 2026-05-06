@@ -67,9 +67,8 @@ type CommandState struct {
 }
 
 type cmdHandler[M any] struct {
-	cmdMap   map[string]Command[M]
-	name     string
 	aliases  []string
+	cmdMap   map[string]Command[M]
 	commands []Command[M]
 	cmdState CommandState
 	cmdModel CommandModel
@@ -77,6 +76,7 @@ type cmdHandler[M any] struct {
 		fatal   error
 		command error
 	}
+	name       string
 	activePath string
 	id         int
 	viewWidth  int
@@ -327,18 +327,6 @@ func (ch cmdHandler[M]) ParseCommand(input string) CommandState {
 	cmdState.Error = ErrIncompleteCmd
 	cmdState.Suggestions = populateSuggestions(cmdPaths, inputParts)
 	return cmdState
-}
-
-func (ch *cmdHandler[M]) SetActivePath(path string) {
-	ch.activePath = path
-}
-
-func (ch *cmdHandler[M]) SetCommandState(state CommandState) {
-	ch.cmdState = state
-}
-
-func (ch cmdHandler[M]) ViewSize() (w, h int) {
-	return ch.viewWidth, ch.viewHeight
 }
 
 func (ch cmdHandler[M]) GetId() int {
