@@ -15,6 +15,10 @@ const (
 	ArgRequired
 )
 
+// Helper type to indicate no args will be passed
+// to the command.
+type NoArg struct{}
+
 var (
 	ErrModelTypeMismatch       = fmt.Errorf("command model type mismatch")
 	ErrModelTypeReturnMismatch = fmt.Errorf("command has returned the wrong model type")
@@ -25,10 +29,6 @@ type Command[M any] interface {
 	GetPath() string
 	GetArgType() ArgType
 	CanCaptureInput() bool
-
-	// SetWorkingPath will be used to let the command model know
-	// which command path is active in the command handler.
-	SetWorkingPath(path string)
 
 	// Validate that the model passed is M otherwise error
 	Run(model any) (CommandModel, error)
@@ -86,6 +86,49 @@ type command[M any, A any] struct {
 	workingPath  string
 }
 
+func NewCommand[M any, A any](opt CommandOptions[M, A]) Command[M] {
+	if opt.RunFunc == nil {
+		logger.LogFatal(
+			"command [%s] is missing a RunFunc",
+			"Did you forget to assign the RunFunc field for this command?",
+			opt.Path,
+		)
+	}
+
+	if opt.ViewFunc == nil {
+		logger.LogFatal(
+			"command [%s] is missing a ViewFunc",
+			"Did you forget to assign the ViewFunc field for this command?",
+			opt.Path,
+		)
+	}
+
+	if opt.ArgType == ArgNone && opt.ParseFunc != nil {
+		logger.LogFatal(
+			"command [%s] expects an arg type to be parsed",
+			"Did you forget to set the arg type for this command?",
+			opt.Path,
+		)
+	}
+
+	if opt.ArgType > ArgNone && opt.ParseFunc == nil {
+		logger.LogFatal(
+			"command [%s] is missing ParseFunc",
+			"This command is setup to accept args, did you forget?",
+			opt.Path,
+		)
+	}
+
+	return &command[M, A]{
+		Path:         opt.Path,
+		ArgType:      opt.ArgType,
+		CaptureInput: opt.CaptureInput,
+		RunFunc:      opt.RunFunc,
+		ViewFunc:     opt.ViewFunc,
+		ParseFunc:    opt.ParseFunc,
+	}
+}
+
 func (c command[M, A]) GetPath() string {
 	return c.Path
 }
@@ -96,14 +139,6 @@ func (c command[M, A]) GetArgType() ArgType {
 
 func (c command[M, A]) CanCaptureInput() bool {
 	return c.CaptureInput
-}
-
-func (c *command[M, A]) SetWorkingPath(s string) {
-	c.workingPath = s
-}
-
-func (c command[M, A]) IsWorkingPath(path string) bool {
-	return c.workingPath == path
 }
 
 func (c *command[M, A]) Run(m any) (CommandModel, error) {
@@ -151,113 +186,3 @@ func (c *command[M, A]) ResolveArg(arg string) error {
 	c.arg = &parsedArg
 	return nil
 }
-
-// type noArgCommand[M any] struct {
-// 	command[M, A]
-// }
-
-// func NewNoArgCommand[M any](opt CommandOptions[M]) Command[M] {
-// 	return noArgCommand[M]{
-// 		command: command[M]{
-// 			Path:         opt.Path,
-// 			CaptureInput: opt.CaptureInput,
-// 			RunFunc:      opt.RunFunc,
-// 			ViewFunc:     opt.ViewFunc,
-// 		},
-// 	}
-// }
-
-// func (c noArgCommand[M]) ResolveArg(arg string) error {
-// 	return ErrNoResolveArg
-// }
-
-type ArgParser[T any] func(arg string) (T, error)
-
-type NoArg struct{}
-
-func NewCommand[M any, A any](opt CommandOptions[M, A]) Command[M] {
-	if opt.RunFunc == nil {
-		logger.LogFatal(
-			"command [%s] is missing a RunFunc",
-			"Did you forget to assign the RunFunc field for this command?",
-			opt.Path,
-		)
-	}
-
-	if opt.ViewFunc == nil {
-		logger.LogFatal(
-			"command [%s] is missing a ViewFunc",
-			"Did you forget to assign the ViewFunc field for this command?",
-			opt.Path,
-		)
-	}
-
-	if opt.ArgType == ArgNone && opt.ParseFunc != nil {
-		logger.LogFatal(
-			"command [%s] expects an arg type to be parsed",
-			"Did you forget to set the arg type for this command?",
-			opt.Path,
-		)
-	}
-
-	if opt.ArgType > ArgNone && opt.ParseFunc == nil {
-		logger.LogFatal(
-			"command [%s] is missing ParseFunc",
-			"This command is setup to accept args, did you forget?",
-			opt.Path,
-		)
-	}
-
-	return &command[M, A]{
-		Path:         opt.Path,
-		ArgType:      opt.ArgType,
-		CaptureInput: opt.CaptureInput,
-		RunFunc:      opt.RunFunc,
-		ViewFunc:     opt.ViewFunc,
-		ParseFunc:    opt.ParseFunc,
-	}
-}
-
-// type argCommand[M any, A any] struct {
-// 	command[M]
-// 	lastArg   *A
-// 	parseFunc ArgParser[A]
-// }
-
-// func NewArgCommand[M any, A any](opt CommandOptions[M], p ArgParser[A]) *argCommand[M, A] {
-// 	if opt.ArgType == ArgNone {
-// 		logger.LogFatal(
-// 			"cannot use ArgNone with command [%s]",
-// 			"You either forgot to set the arg type for this command or you used the wrong command constructor.",
-// 			opt.Path,
-// 		)
-// 	}
-
-// 	return &argCommand[M, A]{
-// 		command: command[M]{
-// 			Path:         opt.Path,
-// 			ArgType:      opt.ArgType,
-// 			CaptureInput: opt.CaptureInput,
-// 			RunFunc:      opt.RunFunc,
-// 			ViewFunc:     opt.ViewFunc,
-// 		},
-// 		parseFunc: p,
-// 	}
-// }
-
-// func (c *argCommand[M, A]) ResolveArg(arg string) error {
-// 	// Prevents potential undefined behavior if somehow
-// 	// the lastArg is referenced after this func is called
-// 	c.lastArg = nil
-
-// 	v, err := c.parseFunc(arg)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	c.lastArg = &v
-// 	return nil
-// }
-
-// func (c argCommand[M, A]) GetArg() A {
-// 	return *c.lastArg
-// }
