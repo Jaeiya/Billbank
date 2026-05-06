@@ -38,7 +38,7 @@ func NewSkeletonHandler() cmdcore.CommandHandler {
 		// 🟠 If you set the arg type to anything other than ArgNone,
 		// then you can no longer add any other commands to the path.
 		// This is because all subsequent words in the path would be
-		// translated as args for this default command.
+		// translated as args for the default command.
 		cmdcore.NewCommand(cmdcore.CommandOptions[skeletonModel, cmdcore.NoArg]{
 			Path:     "",
 			RunFunc:  loadDummy,
