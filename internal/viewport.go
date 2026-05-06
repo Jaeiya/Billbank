@@ -99,7 +99,7 @@ func (vp ViewPort) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if isKey && vp.hasHiddenInput || !isKey {
 			logger.LogFunc(logger.Hot, func() string {
 				return fmt.Sprintf("sending [%+v] to [%s] handler",
-					reflect.TypeOf(msg), vp.cmdHandler.GetName(),
+					reflect.TypeOf(msg), vp.cmdHandler.Name(),
 				)
 			})
 			vp.cmdHandler, teaCmd = vp.cmdHandler.Update(msg)
@@ -158,11 +158,11 @@ func (vp *ViewPort) updateHandler(msg cmdcore.UpdateHandlerMsg) tea.Cmd {
 		logger.Log(
 			logger.Debug,
 			"storing [%s] handler",
-			msg.Handler.GetName(),
+			msg.Handler.Name(),
 		)
 	}
 
-	if vp.cmdHandler.GetStatus().CaptureInput {
+	if vp.cmdHandler.CommandState().CaptureInput {
 		vp.hasHiddenInput = true
 	}
 

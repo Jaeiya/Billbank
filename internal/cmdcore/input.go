@@ -68,7 +68,7 @@ func NewInputModel(
 	cmdPaths := []string{}
 
 	for _, cmdModel := range cmdHandlers {
-		for _, alias := range cmdModel.GetAliases() {
+		for _, alias := range cmdModel.Aliases() {
 			if _, ok := aliasStore[alias]; ok {
 				logger.LogFatal(
 					"command alias [%s] already exists",
@@ -79,7 +79,7 @@ func NewInputModel(
 			aliasStore[alias] = struct{}{}
 			inputModel.aliases = append(inputModel.aliases, alias)
 		}
-		cmdPaths = append(cmdPaths, cmdModel.GetCmdPaths()...)
+		cmdPaths = append(cmdPaths, cmdModel.CommandPaths()...)
 		inputModel.cmdModels = append(inputModel.cmdModels, cmdModel)
 	}
 
@@ -241,7 +241,7 @@ func (m InputModel) tryEnterCmd() (InputModel, tea.Cmd) {
 
 	m.history.Add(m.input.Value())
 
-	if m.lastCmd != nil && m.lastCmd.GetId() == cmdHandler.GetId() {
+	if m.lastCmd != nil && m.lastCmd.Id() == cmdHandler.Id() {
 		m.input.Reset()
 		logger.Log(
 			logger.Debug,
@@ -257,7 +257,7 @@ func (m InputModel) tryEnterCmd() (InputModel, tea.Cmd) {
 	logger.Log(
 		logger.Debug,
 		"sending UpdateHandlerMsg with [%s] handler",
-		cmdHandler.GetName(),
+		cmdHandler.Name(),
 	)
 	cmdHandler.SetCmdState(cmdState)
 	return m, func() tea.Msg { return UpdateHandlerMsg{cmdHandler} }
@@ -288,7 +288,7 @@ func tryParseCmd(m InputModel, msg tea.KeyMsg) (InputModel, tea.Cmd) {
 			logger.Insane,
 			"test if [%s] is a [%s] command",
 			m.input.Value(),
-			model.GetName(),
+			model.Name(),
 		)
 		state := model.ParseCommand(m.input.Value())
 		m.state.cmdState = state

@@ -21,12 +21,12 @@ var (
 type CommandHandler interface {
 	Update(tea.Msg) (CommandHandler, tea.Cmd)
 	View() tea.View
-	GetName() string
-	GetAliases() []string
-	GetId() int
-	GetCmdPaths() []string
+	Name() string
+	Aliases() []string
+	Id() int
+	CommandPaths() []string
 	ParseCommand(string) CommandState
-	GetStatus() CommandState
+	CommandState() CommandState
 	SetCmdState(CommandState)
 	IsInitialized() bool
 }
@@ -131,7 +131,6 @@ func NewCmdHandler[M any](
 func (ch *cmdHandler[M]) Update(msg tea.Msg) (CommandHandler, tea.Cmd) {
 	var teaCmds []tea.Cmd
 	var cmd tea.Cmd
-	var err error
 
 	switch msg := msg.(type) {
 	case ViewportSizeMsg:
@@ -173,29 +172,7 @@ func (ch *cmdHandler[M]) Update(msg tea.Msg) (CommandHandler, tea.Cmd) {
 		)
 		ch.viewHeight = msg.Height
 		ch.viewWidth = msg.Width
-
-		cmdPath := ch.cmdState.Path
-		cmd := ch.cmdMap[cmdPath]
-		logger.Log(logger.Debug, "[%s] handler is executing command path [%s]", ch.name, cmdPath)
-		ch.cmdModel.SetWorkingPath(cmdPath)
-		ch.cmdModel.SetViewportSize(msg.Width, msg.Height)
-		ch.cmdModel, err = cmd.Run(ch.cmdModel)
-		if err != nil {
-			if errors.Is(err, ErrModelTypeMismatch) {
-				ch.errors.fatal = fmt.Errorf(
-					"[%s] handler has passed an invalid model type to command [%s]",
-					ch.name, ch.cmdState.Path,
-				)
-				logger.Log(logger.Error, ch.errors.fatal.Error())
-			} else {
-				ch.errors.command = fmt.Errorf(
-					"[%s] handler got an unexpected error from command [%s]: %w",
-					ch.name, ch.cmdState.Path, err,
-				)
-				logger.Log(logger.Error, ch.errors.command.Error())
-			}
-		}
-		logger.Log(logger.Debug, "[%s] handler has finished executing [%s]", ch.name, ch.cmdState.Path)
+		ch.cmdModel = ch.ExecCommand(msg.Width, msg.Height)
 	}
 
 	// Do not update an erroring command
@@ -261,16 +238,51 @@ func (ch cmdHandler[M]) View() tea.View {
 
 // IsInitialized checks to make sure that various expected values
 // are set.
-func (m cmdHandler[M]) IsInitialized() bool {
-	b := len(m.cmdMap) > 0 &&
-		len(m.cmdState.Path) > 0 &&
-		m.viewWidth > 0 &&
-		m.viewHeight > 0
+func (ch cmdHandler[M]) IsInitialized() bool {
+	b := len(ch.cmdMap) > 0 &&
+		len(ch.cmdState.Path) > 0 &&
+		ch.viewWidth > 0 &&
+		ch.viewHeight > 0
 	return b
 }
 
-func (m *cmdHandler[M]) SetCmdState(s CommandState) {
-	m.cmdState = s
+func (ch *cmdHandler[M]) SetCmdState(s CommandState) {
+	ch.cmdState = s
+}
+
+func (ch *cmdHandler[M]) ExecCommand(w, h int) CommandModel {
+	cmdPath := ch.cmdState.Path
+	cmd := ch.cmdMap[cmdPath]
+
+	logger.Log(logger.Debug, "[%s] handler is executing command path [%s]", ch.name, cmdPath)
+	ch.cmdModel.SetWorkingPath(cmdPath)
+	ch.cmdModel.SetViewportSize(w, h)
+
+	model, err := cmd.Run(ch.cmdModel)
+	if err != nil {
+		if errors.Is(err, ErrModelTypeMismatch) {
+			ch.errors.fatal = fmt.Errorf(
+				"[%s] handler has passed an invalid model type to command [%s]",
+				ch.name, ch.cmdState.Path,
+			)
+			logger.Log(logger.Error, ch.errors.fatal.Error())
+		} else {
+			ch.errors.command = fmt.Errorf(
+				"[%s] handler got an unexpected error from command [%s]: %w",
+				ch.name, ch.cmdState.Path, err,
+			)
+			logger.Log(logger.Error, ch.errors.command.Error())
+		}
+	}
+
+	logger.Log(
+		logger.Debug,
+		"[%s] handler has finished executing [%s]",
+		ch.name,
+		ch.cmdState.Path,
+	)
+
+	return model
 }
 
 func (ch cmdHandler[M]) ParseCommand(input string) CommandState {
@@ -329,25 +341,25 @@ func (ch cmdHandler[M]) ParseCommand(input string) CommandState {
 	return cmdState
 }
 
-func (ch cmdHandler[M]) GetId() int {
+func (ch cmdHandler[M]) Id() int {
 	return ch.id
 }
 
-func (ch cmdHandler[M]) GetStatus() CommandState {
+func (ch cmdHandler[M]) CommandState() CommandState {
 	return ch.cmdState
 }
 
-func (ch cmdHandler[M]) GetName() string {
+func (ch cmdHandler[M]) Name() string {
 	return ch.name
 }
 
-func (ch cmdHandler[M]) GetAliases() []string {
+func (ch cmdHandler[M]) Aliases() []string {
 	aliases := make([]string, len(ch.aliases))
 	copy(aliases, ch.aliases)
 	return aliases
 }
 
-func (ch cmdHandler[M]) GetCmdPaths() (paths []string) {
+func (ch cmdHandler[M]) CommandPaths() (paths []string) {
 	paths = make([]string, 0, len(ch.cmdMap))
 	for k := range ch.cmdMap {
 		paths = append(paths, k)
