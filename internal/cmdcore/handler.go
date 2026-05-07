@@ -139,12 +139,12 @@ func (ch *cmdHandler[M]) Update(msg tea.Msg) (CommandHandler, tea.Cmd) {
 		ch.viewHeight = msg.Height
 		ch.viewWidth = msg.Width
 		if ch.cmdState.Path != "" {
+			ch.cmdModel.SetViewportSize(msg.Width, msg.Height)
 			logger.Log(
 				logger.Hot,
-				"[%s] handler setting viewport size for command path [%s]",
+				"[%s] handler set viewport size for command path [%s]",
 				ch.name, ch.cmdState.Path,
 			)
-			ch.cmdModel.SetViewportSize(msg.Width, msg.Height)
 		}
 
 	case ExecCmdMsg:
@@ -186,20 +186,15 @@ func (ch *cmdHandler[M]) Update(msg tea.Msg) (CommandHandler, tea.Cmd) {
 func (ch cmdHandler[M]) View() tea.View {
 	v := tea.NewView("")
 
+	errorTitle := "Command Error"
 	if ch.errors.fatal != nil {
-		v.SetContent(ui.NewErrorBox(
-			"Fatal Error",
-			ch.errors.fatal.Error(),
-			ch.viewWidth,
-			ch.viewHeight,
-		))
-		return v
+		errorTitle = "Fatal Error"
 	}
 
-	if ch.errors.command != nil {
+	if ch.errors.fatal != nil || ch.errors.command != nil {
 		v.SetContent(ui.NewErrorBox(
-			"Command Error",
-			ch.errors.command.Error(),
+			errorTitle,
+			ch.errors.fatal.Error(),
 			ch.viewWidth,
 			ch.viewHeight,
 		))
