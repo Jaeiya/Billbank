@@ -26,8 +26,8 @@ var (
 )
 
 type Command[M any] interface {
-	GetPath() string
-	GetArgType() ArgType
+	Path() string
+	ArgType() ArgType
 	CanCaptureInput() bool
 
 	// Validate that the model passed is M otherwise error
@@ -78,12 +78,12 @@ type CommandOptions[M any, A any] struct {
 }
 
 type command[M any, A any] struct {
-	Path         string
-	CaptureInput bool
-	ArgType      ArgType
-	RunFunc      runFunc[M, A]
-	ViewFunc     func(model M) tea.View
-	ParseFunc    func(arg string) (A, error)
+	path         string
+	captureInput bool
+	argType      ArgType
+	runFunc      runFunc[M, A]
+	viewFunc     func(model M) tea.View
+	parseFunc    func(arg string) (A, error)
 	arg          *A
 	workingPath  string
 }
@@ -122,25 +122,25 @@ func NewCommand[M any, A any](opt CommandOptions[M, A]) Command[M] {
 	}
 
 	return &command[M, A]{
-		Path:         opt.Path,
-		ArgType:      opt.ArgType,
-		CaptureInput: opt.CaptureInput,
-		RunFunc:      opt.RunFunc,
-		ViewFunc:     opt.ViewFunc,
-		ParseFunc:    opt.ParseFunc,
+		path:         opt.Path,
+		argType:      opt.ArgType,
+		captureInput: opt.CaptureInput,
+		runFunc:      opt.RunFunc,
+		viewFunc:     opt.ViewFunc,
+		parseFunc:    opt.ParseFunc,
 	}
 }
 
-func (c command[M, A]) GetPath() string {
-	return c.Path
+func (c command[M, A]) Path() string {
+	return c.path
 }
 
-func (c command[M, A]) GetArgType() ArgType {
-	return c.ArgType
+func (c command[M, A]) ArgType() ArgType {
+	return c.argType
 }
 
 func (c command[M, A]) CanCaptureInput() bool {
-	return c.CaptureInput
+	return c.captureInput
 }
 
 func (c *command[M, A]) Run(m any) (CommandModel, error) {
@@ -151,7 +151,7 @@ func (c *command[M, A]) Run(m any) (CommandModel, error) {
 			argCopy = new(*c.arg)
 			c.arg = nil
 		}
-		rm, err := c.RunFunc(v, argCopy)
+		rm, err := c.runFunc(v, argCopy)
 		if _, isType = rm.(M); !isType {
 			return nil, ErrModelTypeReturnMismatch
 		}
@@ -165,22 +165,22 @@ func (c *command[M, A]) Run(m any) (CommandModel, error) {
 
 func (c command[M, A]) View(m any) (tea.View, error) {
 	if v, isType := m.(M); isType {
-		return c.ViewFunc(v), nil
+		return c.viewFunc(v), nil
 	}
 	return tea.NewView(""), ErrModelTypeMismatch
 }
 
 func (c *command[M, A]) ResolveArg(arg string) error {
 	if len(arg) == 0 {
-		if c.ArgType == ArgNone {
+		if c.argType == ArgNone {
 			return ErrNoResolveArg
 		}
-		if c.ArgType == ArgOptional {
+		if c.argType == ArgOptional {
 			return nil
 		}
 	}
 
-	parsedArg, err := c.ParseFunc(arg)
+	parsedArg, err := c.parseFunc(arg)
 	if err != nil {
 		return err
 	}

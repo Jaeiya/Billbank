@@ -101,7 +101,7 @@ func NewCmdHandler[M any](
 	}
 
 	for _, cmd := range cmds {
-		cmdPath := cmd.GetPath()
+		cmdPath := cmd.Path()
 		for _, alias := range aliases {
 			fullCmdPath := strings.TrimSpace(alias + " " + cmdPath)
 			logger.Log(
@@ -298,18 +298,18 @@ func (ch cmdHandler[M]) ParseCommand(input string) CommandState {
 	}
 
 	for _, cmd := range ch.commands {
-		cmdPaths = append(cmdPaths, fmt.Sprintf("%s %s", alias, cmd.GetPath()))
-		cmdState.Path = strings.TrimSpace(alias + " " + cmd.GetPath())
+		cmdPaths = append(cmdPaths, fmt.Sprintf("%s %s", alias, cmd.Path()))
+		cmdState.Path = strings.TrimSpace(alias + " " + cmd.Path())
 		cmdState.CaptureInput = cmd.CanCaptureInput()
-		pathParts := strings.Split(cmd.GetPath(), " ")
+		pathParts := strings.Split(cmd.Path(), " ")
 
-		if cmd.GetArgType() < ArgRequired && inputPath == cmd.GetPath() {
+		if cmd.ArgType() < ArgRequired && inputPath == cmd.Path() {
 			return cmdState
 		}
 
 		hasArg := len(inputPathParts) == len(pathParts)+1
 
-		if cmd.GetArgType() > ArgNone && !hasArg && inputPath == cmd.GetPath() {
+		if cmd.ArgType() > ArgNone && !hasArg && inputPath == cmd.Path() {
 			cmdState.Error = fmt.Errorf(
 				"expected value after '%s'",
 				inputParts[len(inputParts)-1],
@@ -317,9 +317,9 @@ func (ch cmdHandler[M]) ParseCommand(input string) CommandState {
 			return cmdState
 		}
 
-		if cmd.GetArgType() > ArgNone && hasArg {
+		if cmd.ArgType() > ArgNone && hasArg {
 			argInputPath := strings.Join(inputPathParts[:len(inputPathParts)-1], " ")
-			if argInputPath == cmd.GetPath() {
+			if argInputPath == cmd.Path() {
 				arg := inputParts[len(inputParts)-1]
 				if err := cmd.ResolveArg(arg); err != nil {
 					cmdState.Error = err
@@ -372,7 +372,7 @@ func validateCommands[M any](modelName string, aliases []string, cmds []Command[
 	cmdMap := map[string]struct{}{}
 
 	for _, cmd := range cmds {
-		cmdPath := cmd.GetPath()
+		cmdPath := cmd.Path()
 		leaves := strings.Split(cmdPath, " ")
 		hasAlias := slices.ContainsFunc(aliases, func(alias string) bool {
 			return leaves[0] == alias
@@ -386,7 +386,7 @@ func validateCommands[M any](modelName string, aliases []string, cmds []Command[
 			)
 		}
 
-		if cmdPath == "" && cmd.GetArgType() > ArgNone && len(cmds) > 1 {
+		if cmdPath == "" && cmd.ArgType() > ArgNone && len(cmds) > 1 {
 			logger.LogFatal(
 				"[%s] has been initialized as a default command with args, but also has other command paths",
 				MsgIsCmdItselfErr,
