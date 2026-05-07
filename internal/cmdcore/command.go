@@ -72,6 +72,8 @@ type CommandOptions[M any, A any] struct {
 	// Executes the view for the command
 	ViewFunc func(model M) tea.View
 
+	// Should convert the arg string into the specified type
+	// or return an error if it's impossible or out of range.
 	ParseFunc func(arg string) (A, error)
 }
 
@@ -89,16 +91,16 @@ type command[M any, A any] struct {
 func NewCommand[M any, A any](opt CommandOptions[M, A]) Command[M] {
 	if opt.RunFunc == nil {
 		logger.LogFatal(
-			"command [%s] is missing a RunFunc",
-			"Did you forget to assign the RunFunc field for this command?",
+			"command [%s] is missing the RunFunc",
+			"Did you forget to assign the RunFunc for this command?",
 			opt.Path,
 		)
 	}
 
 	if opt.ViewFunc == nil {
 		logger.LogFatal(
-			"command [%s] is missing a ViewFunc",
-			"Did you forget to assign the ViewFunc field for this command?",
+			"command [%s] is missing the ViewFunc",
+			"Did you forget to assign the ViewFunc for this command?",
 			opt.Path,
 		)
 	}
@@ -113,8 +115,8 @@ func NewCommand[M any, A any](opt CommandOptions[M, A]) Command[M] {
 
 	if opt.ArgType > ArgNone && opt.ParseFunc == nil {
 		logger.LogFatal(
-			"command [%s] is missing ParseFunc",
-			"This command is setup to accept args, did you forget?",
+			"command [%s] is missing the ParseFunc",
+			"Did you forget to assign the ParseFunc for this command?",
 			opt.Path,
 		)
 	}
