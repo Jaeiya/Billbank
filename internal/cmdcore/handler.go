@@ -102,14 +102,12 @@ func NewCmdHandler[M any](
 
 	for _, cmd := range cmds {
 		cmdPath := cmd.GetPath()
-		leaves := strings.Split(cmdPath, " ")
-		path := strings.Join(leaves, " ")
 		for _, alias := range aliases {
-			fullCmdPath := strings.TrimSpace(fmt.Sprintf("%s %s", alias, path))
+			fullCmdPath := strings.TrimSpace(alias + " " + cmdPath)
 			logger.Log(
 				logger.Hot,
 				"handler [%s] binding command [%s] to [%s] as [%s]",
-				name, path, alias, fullCmdPath,
+				name, cmdPath, alias, fullCmdPath,
 			)
 			b.cmdMap[fullCmdPath] = cmd
 		}
