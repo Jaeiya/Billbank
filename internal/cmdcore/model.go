@@ -13,6 +13,9 @@ type ModelBase interface {
 	IsWorkingPath(path string) bool
 	ViewportSize() (w, h int)
 	SetViewportSize(w, h int)
+	// Loads the specified command path if it
+	// is already active.
+	Reload(path string) tea.Cmd
 }
 
 type commandModel struct {
@@ -43,4 +46,13 @@ func (cm commandModel) ViewportSize() (w, h int) {
 func (cm *commandModel) SetViewportSize(w, h int) {
 	cm.vpSize.w = w
 	cm.vpSize.h = h
+}
+
+func (cm commandModel) Reload(path string) tea.Cmd {
+	if cm.IsWorkingPath(path) {
+		return func() tea.Msg {
+			return ExecCmdMsg{cm.vpSize.w, cm.vpSize.h}
+		}
+	}
+	return nil
 }

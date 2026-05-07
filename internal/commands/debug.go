@@ -170,18 +170,15 @@ func (m debugModel) Update(msg tea.Msg) (cmdcore.CommandModel, tea.Cmd) {
 	var teaCmd tea.Cmd
 	var teaCmds []tea.Cmd
 
-	// switch msg := msg.(type) {
-	// case tea.KeyPressMsg:
-	// 	if m.IsWorkingPath("/ slog") {
-	// 		// Reload slog
-	// 		if msg.String() == "ctrl+r" {
-	// 			logger.Log(logger.Debug, "reload slog")
-	// 			// Wait for log to be written
-	// 			time.Sleep(10 * time.Millisecond)
-	// 			m = m.Exec(m)
-	// 		}
-	// 	}
-	// }
+	switch msg := msg.(type) {
+	case tea.KeyPressMsg:
+		// Reload slog
+		if msg.String() == "ctrl+r" {
+			// Wait for log to be written
+			time.Sleep(10 * time.Millisecond)
+			teaCmds = append(teaCmds, m.Reload("/ slog"))
+		}
+	}
 
 	m.slog.viewPort, teaCmd = m.slog.viewPort.Update(msg)
 	teaCmds = append(teaCmds, teaCmd)
