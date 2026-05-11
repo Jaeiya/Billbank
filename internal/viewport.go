@@ -12,17 +12,14 @@ import (
 	"github.com/jaeiya/billbank/internal/ui"
 )
 
-type ViewportSize struct {
-	Width  int
-	Height int
-}
-
 type ViewPort struct {
 	cmdInput       cmdcore.InputModel
 	cmdHandler     cmdcore.CommandHandler
 	hasHiddenInput bool
-	winHeight      int
-	winWidth       int
+	winSize        struct {
+		width  int
+		height int
+	}
 }
 
 func NewViewport(input cmdcore.InputModel) ViewPort {
@@ -47,10 +44,10 @@ func (vp ViewPort) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		// Don't update unless we have a new size
-		if msg.Height != vp.winHeight || msg.Width != vp.winWidth {
+		if msg.Height != vp.winSize.width || msg.Width != vp.winSize.height {
 			logger.Log(logger.Hot, "setting window size [%d:%d]", msg.Width, msg.Height)
-			vp.winHeight = msg.Height
-			vp.winWidth = msg.Width
+			vp.winSize.height = msg.Height
+			vp.winSize.width = msg.Width
 			teaCmds = append(teaCmds, vp.sendViewportSize())
 		}
 
@@ -102,8 +99,8 @@ func (vp ViewPort) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (vp ViewPort) View() tea.View {
-	cmdrStr := vp.cmdInput.View()
-	h := lipgloss.Height(cmdrStr.Content)
+	inputView := vp.cmdInput.View()
+	h := lipgloss.Height(inputView.Content)
 	v := tea.NewView("")
 	v.AltScreen = true
 	cmdView := ""
@@ -112,34 +109,34 @@ func (vp ViewPort) View() tea.View {
 		cmdView = vp.cmdHandler.View().Content
 	}
 
-	getCmdView := func(withoutTextInput bool) string {
+	renderViewport := func(withoutTextInput bool) string {
 		if withoutTextInput {
 			h = 0
 		}
 		return lipgloss.NewStyle().Foreground(ui.FgColor).Render(
 			lipgloss.Place(
-				vp.winWidth,
-				vp.winHeight-h,
+				vp.winSize.width,
+				vp.winSize.height-h,
 				lipgloss.Left,
 				lipgloss.Top,
 				cmdView,
 			))
 	}
 
-	// Do not display text-input when command has exclusive control
+	// Do not display command input when command has exclusive control
 	if vp.hasHiddenInput {
-		v.SetContent(getCmdView(true))
+		v.SetContent(renderViewport(true))
 		return v
 	}
 
 	v.SetContent(lipgloss.JoinVertical(
 		lipgloss.Top,
 		lipgloss.NewStyle().Foreground(ui.FgColor).Render(
-			getCmdView(false),
+			renderViewport(false),
 		),
-		cmdrStr.Content,
+		inputView.Content,
 	))
-	v.Cursor = cmdrStr.Cursor
+	v.Cursor = inputView.Cursor
 	return v
 }
 
@@ -158,18 +155,13 @@ func (vp *ViewPort) updateHandler(msg cmdcore.UpdateHandlerMsg) tea.Cmd {
 	}
 
 	return func() tea.Msg {
-		return cmdcore.ExecCmdMsg(vp.getSize())
-	}
-}
-
-func (vp ViewPort) getSize() ViewportSize {
-	offsetHeight := lipgloss.Height(vp.cmdInput.View().Content)
-	if vp.hasHiddenInput {
-		offsetHeight = 0
-	}
-	return ViewportSize{
-		Height: vp.winHeight - offsetHeight,
-		Width:  vp.winWidth,
+		w, h := vp.size()
+		// In case window size has changed between command
+		// executions, we send the viewport size.
+		return cmdcore.ExecCmdMsg{
+			Width:  w,
+			Height: h,
+		}
 	}
 }
 
@@ -179,21 +171,36 @@ func (vp ViewPort) toggleInput() (ViewPort, tea.Cmd) {
 	if !vp.hasHiddenInput {
 		teaCmd = textinput.Blink
 	}
-	// Updating directly, Avoids UI jumping around
-	vp.cmdHandler, _ = vp.cmdHandler.Update(cmdcore.ViewportSizeMsg(vp.getSize()))
+
+	w, h := vp.size()
+	// Updating directly, avoids UI jumping around
+	vp.cmdHandler, _ = vp.cmdHandler.Update(cmdcore.ViewportSizeMsg{
+		Width:  w,
+		Height: h,
+	})
 	return vp, teaCmd
 }
 
 func (vp ViewPort) sendViewportSize() tea.Cmd {
-	vpSize := vp.getSize()
+	w, h := vp.size()
 	logger.Log(
 		logger.Hot,
 		"sending viewport size msg [%d:%d]",
-		vpSize.Width,
-		vpSize.Height,
+		w, h,
 	)
 
 	return func() tea.Msg {
-		return cmdcore.ViewportSizeMsg(vpSize)
+		return cmdcore.ViewportSizeMsg{
+			Width:  w,
+			Height: h,
+		}
 	}
+}
+
+func (vp ViewPort) size() (width, height int) {
+	offsetHeight := vp.winSize.height
+	if !vp.hasHiddenInput {
+		offsetHeight -= lipgloss.Height(vp.cmdInput.View().Content)
+	}
+	return vp.winSize.width, offsetHeight
 }
