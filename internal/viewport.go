@@ -12,13 +12,6 @@ import (
 	"github.com/jaeiya/billbank/internal/ui"
 )
 
-type (
-	CommanderStatusMsg struct {
-		String   string
-		Severity cmdcore.StatusSeverity
-	}
-)
-
 type ViewportSize struct {
 	Width  int
 	Height int
@@ -79,8 +72,6 @@ func (vp ViewPort) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// We don't need to propagate this message
 		return vp, tea.Batch(teaCmds...)
 
-	case CommanderStatusMsg:
-		teaCmds = append(teaCmds, vp.sendStatusMsg(msg.String, msg.Severity))
 	}
 
 	_, isKey := msg.(tea.KeyPressMsg)
@@ -204,14 +195,5 @@ func (vp ViewPort) sendViewportSize() tea.Cmd {
 
 	return func() tea.Msg {
 		return cmdcore.ViewportSizeMsg(vpSize)
-	}
-}
-
-func (vp ViewPort) sendStatusMsg(msg string, s cmdcore.StatusSeverity) func() tea.Msg {
-	return func() tea.Msg {
-		return cmdcore.StatusBarMsg{
-			String:   msg,
-			Severity: s,
-		}
 	}
 }
