@@ -32,8 +32,6 @@ type CommandHandler interface {
 }
 
 type (
-	HomeMsg struct{}
-
 	StatusBarMsg struct {
 		String   string
 		Severity StatusSeverity

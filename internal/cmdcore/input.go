@@ -118,8 +118,17 @@ func commanderInput() textinput.Model {
 }
 
 func (m InputModel) Init() tea.Cmd {
-	homeMsg := func() tea.Msg { return HomeMsg{} }
-	return tea.Batch(homeMsg, textinput.Blink)
+	var cmd tea.Cmd
+
+	// Execute the command in the home path
+	if m.homePath != "" {
+		m.input.SetValue(m.homePath)
+		m, _ = tryParseCmd(m, tea.KeyPressMsg{})
+		m, cmd = m.tryEnterCmd()
+		m.input.Reset()
+	}
+
+	return tea.Batch(cmd, textinput.Blink)
 }
 
 func (m InputModel) Update(msg tea.Msg) (InputModel, tea.Cmd) {
@@ -132,15 +141,6 @@ func (m InputModel) Update(msg tea.Msg) (InputModel, tea.Cmd) {
 		statusStyle = statusStyle.Width(msg.Width)
 		m.winHeight = msg.Height
 		m.input.SetWidth(msg.Width)
-
-	case HomeMsg:
-		if m.homePath != "" {
-			m.input.SetValue(m.homePath)
-			m, _ = tryParseCmd(m, tea.KeyPressMsg{})
-			m, cmd = m.tryEnterCmd()
-			m.input.Reset()
-			return m, cmd
-		}
 
 	case StatusBarMsg:
 		color := ui.FgSuccessColor
