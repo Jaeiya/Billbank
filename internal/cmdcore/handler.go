@@ -32,17 +32,7 @@ type CommandHandler interface {
 }
 
 type (
-	StatusBarMsg struct {
-		String   string
-		Severity StatusSeverity
-	}
-
 	ViewportSizeMsg struct {
-		Width  int
-		Height int
-	}
-
-	WindowSizeMsg struct {
 		Width  int
 		Height int
 	}

@@ -22,6 +22,11 @@ const (
 	HIGH
 )
 
+type StatusBarMsg struct {
+	String   string
+	Severity StatusSeverity
+}
+
 type InputModel struct {
 	input     textinput.Model
 	winHeight int
