@@ -14,7 +14,7 @@ import (
 
 var (
 	ErrNotCommand    = fmt.Errorf("unrecognized command")
-	ErrIncompleteCmd = fmt.Errorf("incomplete command entry")
+	ErrIncompleteCmd = fmt.Errorf("incomplete command")
 	ErrEmptyCommand  = fmt.Errorf("empty command")
 	ErrMissingArg    = fmt.Errorf("missing required argument")
 )

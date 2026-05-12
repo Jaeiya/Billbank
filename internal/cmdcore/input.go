@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"slices"
-	"strings"
 
 	"charm.land/bubbles/v2/textinput"
 	tea "charm.land/bubbletea/v2"
@@ -74,8 +73,8 @@ func NewInputModel(
 	aliasStore := make(map[string]struct{}, aliasCount)
 	cmdPaths := make([]string, 0, 30)
 
-	for _, cmdModel := range cmdHandlers {
-		for _, alias := range cmdModel.Aliases() {
+	for _, handler := range cmdHandlers {
+		for _, alias := range handler.Aliases() {
 			if _, ok := aliasStore[alias]; ok {
 				logger.LogFatal(
 					"command alias [%s] already exists",
@@ -86,8 +85,8 @@ func NewInputModel(
 			aliasStore[alias] = struct{}{}
 			inputModel.aliases = append(inputModel.aliases, alias)
 		}
-		cmdPaths = append(cmdPaths, cmdModel.CommandPaths()...)
-		inputModel.cmdModels = append(inputModel.cmdModels, cmdModel)
+		cmdPaths = append(cmdPaths, handler.CommandPaths()...)
+		inputModel.cmdModels = append(inputModel.cmdModels, handler)
 	}
 
 	if homePath != "" {
@@ -237,7 +236,7 @@ func (m InputModel) tryEnterCmd() (InputModel, tea.Cmd) {
 	if cmdErr != nil {
 		m.statusText = cmdErr.Error()
 		statusStyle = statusStyle.Foreground(ui.FgErrColor)
-		if errors.Is(cmdErr, ErrIncompleteCmd) || strings.Contains(cmdErr.Error(), "expected") {
+		if errors.Is(cmdErr, ErrIncompleteCmd) || errors.Is(cmdErr, ErrMissingArg) {
 			statusStyle = statusStyle.Foreground(ui.FgWarnColor)
 		}
 		return m, nil
