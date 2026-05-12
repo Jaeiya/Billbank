@@ -69,8 +69,10 @@ func NewInputModel(
 		input:    commanderInput(),
 	}
 
-	aliasStore := make(map[string]struct{}, len(cmdHandlers))
-	cmdPaths := []string{}
+	// Assume at least N aliases per handler
+	aliasCount := len(cmdHandlers) * 2
+	aliasStore := make(map[string]struct{}, aliasCount)
+	cmdPaths := make([]string, 0, 30)
 
 	for _, cmdModel := range cmdHandlers {
 		for _, alias := range cmdModel.Aliases() {
