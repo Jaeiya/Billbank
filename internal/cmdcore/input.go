@@ -249,22 +249,14 @@ func (m InputModel) tryEnterCmd() (InputModel, tea.Cmd) {
 
 	if m.lastCmd != nil && m.lastCmd.Id() == cmdHandler.Id() {
 		m.input.Reset()
-		logger.Log(
-			logger.Debug,
-			"sending command [%s] status update",
-			cmdState.Path,
-		)
+		logger.Log(logger.Debug, "sending command [%s] status update", cmdState.Path)
 		cmdHandler.SetCmdState(cmdState)
 		return m, func() tea.Msg { return UpdateHandlerMsg{nil} }
 	}
 
 	m.lastCmd = cmdHandler
 	m.input.Reset()
-	logger.Log(
-		logger.Debug,
-		"sending UpdateHandlerMsg with [%s] handler",
-		cmdHandler.Name(),
-	)
+	logger.Log(logger.Debug, "sending UpdateHandlerMsg with [%s] handler", cmdHandler.Name())
 	cmdHandler.SetCmdState(cmdState)
 	return m, func() tea.Msg { return UpdateHandlerMsg{cmdHandler} }
 }
@@ -290,11 +282,9 @@ func tryParseCmd(m InputModel, msg tea.KeyMsg) (InputModel, tea.Cmd) {
 	}{cmdState: CommandState{}, activeHandler: nil}
 
 	for _, model := range m.cmdModels {
-		logger.Log(
-			logger.Insane,
+		logger.Log(logger.Insane,
 			"test if [%s] is a [%s] command",
-			m.input.Value(),
-			model.Name(),
+			m.input.Value(), model.Name(),
 		)
 		state := model.ParseCommand(m.input.Value())
 		m.state.cmdState = state
