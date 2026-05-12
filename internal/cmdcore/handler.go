@@ -360,9 +360,7 @@ func validateCommands[M any](modelName string, aliases []string, cmds []Command[
 	for _, cmd := range cmds {
 		cmdPath := cmd.Path()
 		leaves := strings.Split(cmdPath, " ")
-		hasAlias := slices.ContainsFunc(aliases, func(alias string) bool {
-			return leaves[0] == alias
-		})
+		hasAlias := slices.Contains(aliases, leaves[0])
 
 		if hasAlias {
 			logger.LogFatal(
