@@ -16,6 +16,7 @@ var (
 	ErrNotCommand    = fmt.Errorf("unrecognized command")
 	ErrIncompleteCmd = fmt.Errorf("incomplete command entry")
 	ErrEmptyCommand  = fmt.Errorf("empty command")
+	ErrMissingArg    = fmt.Errorf("missing required argument")
 )
 
 type CommandHandler interface {
@@ -298,10 +299,7 @@ func (ch cmdHandler[M]) ParseCommand(input string) CommandState {
 		hasArg := len(inputPathParts) == len(pathParts)+1
 
 		if cmd.ArgType() > ArgNone && !hasArg && inputPath == cmd.Path() {
-			cmdState.Error = fmt.Errorf(
-				"expected value after '%s'",
-				inputParts[len(inputParts)-1],
-			)
+			cmdState.Error = ErrMissingArg
 			return cmdState
 		}
 
