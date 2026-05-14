@@ -14,11 +14,11 @@ type mockCommandModel struct {
 	someInt int
 }
 
-func (m mockCommandModel) Update(msg tea.Msg) (CommandModel, tea.Cmd) { return m, nil }
+func (m mockCommandModel) Update(_ tea.Msg) (CommandModel, tea.Cmd) { return m, nil }
 
 type mockCommandModel2 struct{ ModelBase }
 
-func (m mockCommandModel2) Update(msg tea.Msg) (CommandModel, tea.Cmd) { return m, nil }
+func (m mockCommandModel2) Update(_ tea.Msg) (CommandModel, tea.Cmd) { return m, nil }
 
 func defaultView(mockCommandModel) tea.View { return tea.NewView("") }
 
@@ -58,7 +58,7 @@ func TestCommand(t *testing.T) {
 
 	t.Run("fails when wrong model returned from run func", func(t *testing.T) {
 		cmd := NewCommand(CommandOptions[mockCommandModel, NoArg]{
-			RunFunc: func(model mockCommandModel, _ *NoArg) (CommandModel, error) {
+			RunFunc: func(_ mockCommandModel, _ *NoArg) (CommandModel, error) {
 				return mockCommandModel2{}, nil
 			},
 			ViewFunc: defaultView,
@@ -70,7 +70,7 @@ func TestCommand(t *testing.T) {
 
 	t.Run("fails when wrong model passed to view", func(t *testing.T) {
 		cmd := NewCommand(CommandOptions[mockCommandModel, NoArg]{
-			RunFunc: func(model mockCommandModel, _ *NoArg) (CommandModel, error) {
+			RunFunc: func(_ mockCommandModel, _ *NoArg) (CommandModel, error) {
 				return mockCommandModel2{}, nil
 			},
 			ViewFunc: defaultView,
@@ -93,12 +93,15 @@ func TestCommand(t *testing.T) {
 			ParseFunc: func(arg string) (int, error) { return utils.ParseInt(arg) },
 		})
 
-		cmd.ResolveArg("5")
+		err := cmd.ResolveArg("5")
+		require.NoError(t, err)
 		mm := mockCommandModel{}
 		v, err := cmd.Run(mm)
 		require.NoError(t, err)
-		require.IsType(t, mockCommandModel{}, mm)
-		assert.Equal(t, v.(mockCommandModel).someInt, 5)
+
+		m, ok := v.(mockCommandModel)
+		assert.True(t, ok, true)
+		assert.Equal(t, m.someInt, 5)
 	})
 
 	t.Run("clears argument on each run", func(t *testing.T) {
@@ -116,18 +119,23 @@ func TestCommand(t *testing.T) {
 			ParseFunc: func(arg string) (int, error) { return utils.ParseInt(arg) },
 		})
 
-		cmd.ResolveArg("10")
+		err := cmd.ResolveArg("10")
+		require.NoError(t, err)
 
 		// First run
 		m1, err := cmd.Run(mockCommandModel{})
 		require.NoError(t, err)
-		require.IsType(t, mockCommandModel{}, m1)
-		assert.Equal(t, 10, m1.(mockCommandModel).someInt, "arg should be passed through")
+
+		mm1, ok := m1.(mockCommandModel)
+		require.True(t, ok)
+		assert.Equal(t, 10, mm1.someInt, "arg should be passed through")
 
 		// Second run
 		m2, err := cmd.Run(mockCommandModel{})
 		require.NoError(t, err)
-		require.IsType(t, mockCommandModel{}, m2)
-		assert.Equal(t, 0, m2.(mockCommandModel).someInt, "arg should be cleared of value")
+
+		mm2, ok := m2.(mockCommandModel)
+		require.True(t, ok)
+		assert.Equal(t, 0, mm2.someInt, "arg should be cleared of value")
 	})
 }

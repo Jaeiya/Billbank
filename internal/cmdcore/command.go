@@ -85,7 +85,6 @@ type command[M any, A any] struct {
 	viewFunc     func(model M) tea.View
 	parseFunc    func(arg string) (A, error)
 	arg          *A
-	workingPath  string
 }
 
 func NewCommand[M any, A any](opt CommandOptions[M, A]) Command[M] {

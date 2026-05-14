@@ -66,7 +66,6 @@ type cmdHandler[M any] struct {
 		command error
 	}
 	name       string
-	activePath string
 	id         int
 	viewWidth  int
 	viewHeight int
@@ -268,7 +267,7 @@ func (ch *cmdHandler[M]) ExecCommand(w, h int) CommandModel {
 }
 
 func (ch cmdHandler[M]) ParseCommand(input string) CommandState {
-	var inputParts []string = strings.Fields(input)
+	inputParts := strings.Fields(input)
 	if len(inputParts) == 0 {
 		return CommandState{Error: ErrEmptyCommand}
 	}

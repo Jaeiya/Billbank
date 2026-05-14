@@ -1,0 +1,40 @@
+version: "2"
+run:
+  concurrency: 6
+  tests: true
+linters:
+  default: none
+  enable:
+    - errcheck
+    - goconst
+    - govet
+    - ineffassign
+    - misspell
+    - staticcheck
+    - unused
+  settings:
+    goconst:
+      ignore-tests: true
+    errcheck:
+      check-type-assertions: true
+      check-blank: true
+    govet:
+      disable:
+        - fieldalignment
+      enable-all: true
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+formatters:
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

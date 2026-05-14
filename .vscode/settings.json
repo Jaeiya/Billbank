@@ -25,10 +25,16 @@
     "lipgloss",
     "mikepenz",
     "modernc",
+    "stretchr",
     "textinput",
     "trimpath"
   ],
   "cSpell.enabledFileTypes": {
     "markdown": true
-  }
+  },
+  "go.lintTool": "golangci-lint",
+    "go.lintOnSave": "package",
+    "go.lintFlags": [
+        "--config=${workspaceFolder}/.golangci.yml"
+    ]
 }

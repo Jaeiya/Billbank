@@ -262,7 +262,7 @@ func (m InputModel) tryEnterCmd() (InputModel, tea.Cmd) {
 }
 
 func onAnyKey(m InputModel, msg tea.KeyMsg) (InputModel, tea.Cmd) {
-	var key string = msg.String()
+	key := msg.String()
 	if key[0] == 0 {
 		key = "ctrl"
 	}
