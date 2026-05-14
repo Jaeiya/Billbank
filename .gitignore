@@ -4,3 +4,4 @@ tmp/
 examples/
 log.txt
 *.db
+*.bck.yml
