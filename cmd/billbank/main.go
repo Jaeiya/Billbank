@@ -19,6 +19,14 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	defer func() {
+		logger.Log(logger.Info, "exiting billbank")
+		err = logger.CloseLog()
+		if err != nil {
+			panic(err)
+		}
+	}()
+
 	logger.Log(logger.Info, "starting billbank")
 
 	filePath := filepath.Join(utils.GetWorkingDir(), "billbank.db")
@@ -54,12 +62,6 @@ func main() {
 	p1 := tea.NewProgram(vp)
 
 	if _, err := p1.Run(); err != nil {
-		panic(err)
-	}
-
-	logger.Log(logger.Info, "exiting billbank")
-	err = logger.CloseLog()
-	if err != nil {
 		panic(err)
 	}
 }
