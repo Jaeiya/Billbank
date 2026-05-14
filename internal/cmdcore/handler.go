@@ -13,10 +13,10 @@ import (
 )
 
 var (
-	ErrNotCommand    = fmt.Errorf("unrecognized command")
-	ErrIncompleteCmd = fmt.Errorf("incomplete command")
-	ErrEmptyCommand  = fmt.Errorf("empty command")
-	ErrMissingArg    = fmt.Errorf("missing required argument")
+	ErrNotCommand    = errors.New("unrecognized command")
+	ErrIncompleteCmd = errors.New("incomplete command")
+	ErrEmptyCommand  = errors.New("empty command")
+	ErrMissingArg    = errors.New("missing required argument")
 )
 
 type CommandHandler interface {

@@ -1,7 +1,7 @@
 package cmdcore
 
 import (
-	"fmt"
+	"errors"
 
 	tea "charm.land/bubbletea/v2"
 	"github.com/jaeiya/billbank/internal/logger"
@@ -20,9 +20,9 @@ const (
 type NoArg struct{}
 
 var (
-	ErrModelTypeMismatch       = fmt.Errorf("command model type mismatch")
-	ErrModelTypeReturnMismatch = fmt.Errorf("command has returned the wrong model type")
-	ErrNoResolveArg            = fmt.Errorf("command does not have an argument to resolve")
+	ErrModelTypeMismatch       = errors.New("command model type mismatch")
+	ErrModelTypeReturnMismatch = errors.New("command has returned the wrong model type")
+	ErrNoResolveArg            = errors.New("command does not have an argument to resolve")
 )
 
 type Command[M any] interface {
