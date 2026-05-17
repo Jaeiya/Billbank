@@ -51,7 +51,7 @@ func main() {
 
 	logger.Log(logger.Info, "loaded database")
 
-	h := utils.NewCmdHistory()
+	h := cmdcore.NewCmdHistory()
 
 	im := cmdcore.NewInputModel(
 		h,

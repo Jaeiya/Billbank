@@ -1,4 +1,4 @@
-package utils
+package cmdcore
 
 import (
 	tea "charm.land/bubbletea/v2"
