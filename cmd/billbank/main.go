@@ -32,7 +32,7 @@ func main() {
 	filePath := filepath.Join(utils.GetWorkingDir(), "billbank.db")
 	// TODO  Do not delete database in production
 	defer func() {
-		err := os.Remove(filePath)
+		err = os.Remove(filePath)
 		if err != nil {
 			panic(err)
 		}
@@ -42,7 +42,12 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	defer db.Close()
+	defer func() {
+		err = db.Close()
+		if err != nil {
+			panic(err)
+		}
+	}()
 
 	logger.Log(logger.Info, "loaded database")
 
