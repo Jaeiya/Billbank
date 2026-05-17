@@ -29,7 +29,7 @@ type StatusBarMsg struct {
 type InputModel struct {
 	input     textinput.Model
 	winHeight int
-	history   *utils.InputHistory
+	history   *InputHistory
 	homePath  string
 	cmdModels []CommandHandler
 	lastCmd   CommandHandler
@@ -57,7 +57,7 @@ var versionStyle = lipgloss.NewStyle().
 
 // TODO: Use an interface to define input history methods
 func NewInputModel(
-	h *utils.InputHistory,
+	h *InputHistory,
 	homePath string,
 	cmdHandlers ...CommandHandler,
 ) InputModel {

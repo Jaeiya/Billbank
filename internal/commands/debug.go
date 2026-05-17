@@ -31,7 +31,7 @@ type debugStats struct {
 }
 
 type debugHistory struct {
-	data    *utils.InputHistory
+	data    *cmdcore.InputHistory
 	view    string
 	lastLen int
 }
@@ -95,7 +95,7 @@ type debugModel struct {
 	}
 }
 
-func NewDebugHandler(h *utils.InputHistory) cmdcore.CommandHandler {
+func NewDebugHandler(h *cmdcore.InputHistory) cmdcore.CommandHandler {
 	vp := viewport.New(viewport.WithHeight(0), viewport.WithWidth(0))
 	vp.KeyMap.Down = key.NewBinding(key.WithKeys("j"))
 	vp.KeyMap.Up = key.NewBinding(key.WithKeys("k"))
