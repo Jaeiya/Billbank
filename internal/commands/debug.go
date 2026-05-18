@@ -262,14 +262,14 @@ func loadSlog(m debugModel, arg *int) (cmdcore.CommandModel, error) {
 		lines = lines[len(lines)-maxLines:]
 	}
 
-	var lastTimeStamp time.Time = time.Now()
+	lastTimeStamp := time.Now()
 	for i, line := range lines {
 		if line == "" {
 			continue
 		}
 		var err error
-		var parts []string = strings.Split(line, " ")
-		var tag string = parts[3]
+		parts := strings.Split(line, " ")
+		tag := parts[3]
 		var subjectStyle lipgloss.Style
 		var timeStamp time.Time
 
@@ -288,7 +288,7 @@ func loadSlog(m debugModel, arg *int) (cmdcore.CommandModel, error) {
 		tag, subjectStyle = getTagStyle(tag)
 		fmt.Fprintf(&tagBuilder, "%s \n", tag)
 
-		var words []string = parts[5:]
+		words := parts[5:]
 
 		bullet := subjectStyle.Render("<>")
 		subj := fmt.Sprintf("%s %s", strings.Split(parts[4], ".")[0][1:], bullet)
@@ -484,8 +484,8 @@ func viewStats(m debugModel) tea.View {
 }
 
 func setLogLevel(m debugModel, arg *logger.LogLevel) (cmdcore.CommandModel, error) {
-	// We ignore error because this check is already done
-	// in the parse func.
+	// Check is already done in the parse func.
+	//nolint:errcheck
 	_ = logger.SetLogLevel(*arg)
 	return m, nil
 }
