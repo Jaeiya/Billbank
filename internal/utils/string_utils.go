@@ -2,6 +2,40 @@ package utils
 
 import "fmt"
 
+type BorderStyle int
+
+const (
+	SingleLine BorderStyle = iota
+	Rounded
+)
+
+type borderComponents struct {
+	TopLeft, TopRight, BottomLeft, BottomRight rune
+	Horizontal, Vertical                       rune
+	TopT, BottomT, LeftT, RightT, Cross        rune
+}
+
+var borders = map[BorderStyle]borderComponents{
+	SingleLine: {
+		'┌', '┐', '└', '┘',
+		'─', '│',
+		'┬', '┴', '├', '┤', '┼',
+	},
+	Rounded: {
+		'╭', '╮', '╰', '╯',
+		'─', '│',
+		'┬', '┴', '├', '┤', '┼',
+	},
+}
+
+func GetBorderStyle(style BorderStyle) borderComponents {
+	if v, exists := borders[style]; exists {
+		return v
+	}
+	// there should never be a reason to pass the wrong style
+	panic(fmt.Errorf("border style '%d' does not exist", style))
+}
+
 type byteFormat struct {
 	amount uint64
 	suffix string
