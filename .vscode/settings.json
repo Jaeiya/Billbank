@@ -25,6 +25,7 @@
     "lipgloss",
     "mikepenz",
     "modernc",
+    "nolint",
     "stretchr",
     "textinput",
     "trimpath"
