@@ -27,16 +27,9 @@ func main() {
 		}
 	}()
 
-	logger.Log(logger.Info, "starting billbank")
-
 	filePath := filepath.Join(utils.GetWorkingDir(), "billbank.db")
-	// TODO  Do not delete database in production
-	defer func() {
-		err = os.Remove(filePath)
-		if err != nil {
-			panic(err)
-		}
-	}()
+
+	logger.Log(logger.Info, "starting billbank")
 
 	db, err := sqlite.NewSqliteDb(filePath, internal.USD)
 	if err != nil {
@@ -44,6 +37,12 @@ func main() {
 	}
 	defer func() {
 		err = db.Close()
+		if err != nil {
+			panic(err)
+		}
+
+		// TODO:  Do not delete database in production
+		err = os.Remove(filePath)
 		if err != nil {
 			panic(err)
 		}
