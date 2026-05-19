@@ -9,12 +9,34 @@ import (
 	"github.com/jaeiya/billbank/internal/utils"
 )
 
-func NewBox(content string) string {
+type BoxOptions struct {
+	Content string
+	Width   int
+	Align   lipgloss.Position
+}
+
+func NewBox(opts BoxOptions) string {
+	content := opts.Content
+	runes := []rune(content)
+	width := opts.Width
+	const minWidth = 3
+
+	if width <= minWidth {
+		width = len(runes)
+	}
+
+	if width > minWidth && width < len(content) {
+		runes = runes[:width-2]
+		runes = append(runes, '.', '.')
+	}
+
+	content = string(runes)
+
 	var sb strings.Builder
 	borders := utils.GetBorderStyle(utils.SingleLine)
 
 	// Compensates for spacing
-	borderCount := utils.RuneCount(content) + 2
+	borderCount := width + 2
 
 	// Compensates for vertical borders
 	borderBytes := (borderCount + 4) * utf8.RuneLen(borders.Horizontal)
@@ -25,7 +47,13 @@ func NewBox(content string) string {
 	sb.WriteString(utils.RepeatRune(borders.Horizontal, borderCount))
 	sb.WriteRune(borders.TopRight)
 	sb.WriteRune('\n')
-	fmt.Fprintf(&sb, "%c %s %c\n", borders.Vertical, content, borders.Vertical)
+	fmt.Fprintf(
+		&sb,
+		"%c %s %c\n",
+		borders.Vertical,
+		lipgloss.NewStyle().Width(width).AlignHorizontal(opts.Align).Render(content),
+		borders.Vertical,
+	)
 	sb.WriteRune(borders.BottomLeft)
 	sb.WriteString(utils.RepeatRune(borders.Horizontal, borderCount))
 	sb.WriteRune(borders.BottomRight)
