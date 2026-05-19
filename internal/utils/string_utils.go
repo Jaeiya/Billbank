@@ -1,6 +1,16 @@
 package utils
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+	"unicode/utf8"
+)
+
+const (
+	repeatedHBorder = "" +
+		"────────────────────────────────────────────────────────────────" +
+		"────────────────────────────────────────────────────────────────"
+)
 
 type BorderStyle int
 
@@ -60,4 +70,28 @@ func FormatBytes(bytes uint64) string {
 		}
 	}
 	return "unsupported size"
+}
+
+func RepeatRune(r rune, count int) string {
+	if count <= 0 {
+		return ""
+	}
+
+	byteCount := utf8.RuneLen(r) * count
+
+	if r == '─' && byteCount < len(repeatedHBorder) {
+		return repeatedHBorder[:byteCount]
+	}
+
+	sb := strings.Builder{}
+	sb.Grow(byteCount)
+
+	for range count {
+		sb.WriteRune(r)
+	}
+	return sb.String()
+}
+
+func RuneCount(s string) int {
+	return utf8.RuneCountInString(s)
 }
