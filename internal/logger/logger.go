@@ -11,8 +11,19 @@ import (
 	"time"
 
 	"charm.land/lipgloss/v2"
-	"github.com/jaeiya/billbank/internal/ui"
-	"github.com/jaeiya/billbank/internal/utils"
+)
+
+var (
+	_logChan         chan LogMsg
+	_doneChan        chan struct{}
+	_isReady         = false
+	_logLevel        = None
+	_stdLogger       *log.Logger
+	_fileHandle      *os.File
+	_timeFormat      = "03:04:05.000000 PM MST"
+	_defaultFileName = "log.txt"
+	_filePath        = ""
+	_mux             sync.Mutex
 )
 
 const (
@@ -49,17 +60,6 @@ type LogMsg struct {
 	line  int
 	vars  []any
 }
-
-var (
-	_logChan    chan LogMsg
-	_doneChan   chan struct{}
-	_isReady    = false
-	_logLevel   = None
-	_stdLogger  *log.Logger
-	_fileHandle *os.File
-	_timeFormat = "03:04:05.000000 PM MST"
-	_mux        sync.Mutex
-)
 
 func Log(ll LogLevel, msg string, vars ...any) {
 	if _logLevel == None || ll < _logLevel {
@@ -106,7 +106,7 @@ func LogFatal(errMsg string, description string, vars ...any) {
 		Width(maxDisplayWidth).
 		PaddingTop(1).
 		PaddingLeft(1).
-		Foreground(ui.Red)
+		Foreground(lipgloss.Red)
 
 	description = strings.TrimSpace(description)
 	if len(description) > 0 {
@@ -120,7 +120,7 @@ func LogFatal(errMsg string, description string, vars ...any) {
 		description = lipgloss.NewStyle().
 			PaddingLeft(1).
 			PaddingBottom(1).
-			Foreground(ui.Yellow).
+			Foreground(lipgloss.Yellow).
 			Render(lipgloss.JoinVertical(lipgloss.Left, paragraphs...))
 	}
 
@@ -174,6 +174,10 @@ func GetTimeFormat() string {
 	return _timeFormat
 }
 
+func SetFilePath(path string) {
+	_filePath = path
+}
+
 func CloseLog() error {
 	close(_logChan)
 	<-_doneChan
@@ -184,13 +188,22 @@ func tryInitLog() {
 	if _isReady {
 		return
 	}
-	path := filepath.Join(utils.GetWorkingDir(), "log.txt")
+
+	if _filePath == "" {
+		wd, err := os.Getwd()
+		if err != nil {
+			// This should effectively never happen
+			panic(err)
+		}
+		_filePath = filepath.Join(wd, _defaultFileName)
+	}
+
 	_logChan = make(chan LogMsg, 50)
 	_doneChan = make(chan struct{})
 
 	var err error
 	_fileHandle, err = os.OpenFile(
-		path,
+		_filePath,
 		os.O_CREATE|os.O_WRONLY|os.O_TRUNC,
 		0o644,
 	)
@@ -245,7 +258,7 @@ func getStack() string {
 		}
 	}
 	funcStyle := lipgloss.NewStyle().
-		Foreground(ui.Gray).
+		Foreground(lipgloss.BrightBlack).
 		Align(lipgloss.Right).
 		Render(funcBuilder.String())
 	display := lipgloss.JoinHorizontal(lipgloss.Top, funcStyle, fileBuilder.String())
