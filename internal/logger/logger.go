@@ -96,7 +96,11 @@ func LogFunc(ll LogLevel, msgFn func() string, vars ...any) {
 
 func LogFatal(errMsg string, description string, vars ...any) {
 	defer func() {
-		CloseLog()
+		err := CloseLog()
+		if err != nil {
+			// Should effectively never happen
+			panic(err)
+		}
 		os.Exit(1)
 	}()
 
