@@ -34,6 +34,15 @@ func NewBox(content string) string {
 	return sb.String()
 }
 
-func NewBoxArray(boxes ...string) string {
-	return lipgloss.JoinHorizontal(lipgloss.Left, boxes...)
+func NewBoxArray(width int, boxes ...string) string {
+	return lipgloss.Place(
+		width,
+		3, // a box is always: border, text, border
+		lipgloss.Center,
+		lipgloss.Center,
+		lipgloss.JoinHorizontal(lipgloss.Left, boxes...),
+		lipgloss.WithWhitespaceStyle(
+			lipgloss.NewStyle().Background(lipgloss.Color("#1E1E2E")),
+		),
+	)
 }
