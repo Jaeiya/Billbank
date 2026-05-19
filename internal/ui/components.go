@@ -29,8 +29,6 @@ func NewBox(content string) string {
 	sb.WriteRune(borders.BottomLeft)
 	sb.WriteString(utils.RepeatRune(borders.Horizontal, borderCount))
 	sb.WriteRune(borders.BottomRight)
-	sb.WriteRune('\n')
-
 	return sb.String()
 }
 
