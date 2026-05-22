@@ -9,6 +9,13 @@ import (
 	"github.com/jaeiya/billbank/internal/utils"
 )
 
+var (
+	Style          = lipgloss.NewStyle()
+	JoinVertical   = lipgloss.JoinVertical
+	JoinHorizontal = lipgloss.JoinHorizontal
+	Place          = lipgloss.Place
+)
+
 type BoxOptions struct {
 	Content string
 	Width   int
