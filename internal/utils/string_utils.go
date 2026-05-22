@@ -95,3 +95,35 @@ func RepeatRune(r rune, count int) string {
 func RuneCount(s string) int {
 	return utf8.RuneCountInString(s)
 }
+
+// TruncateStr truncates a string to the specified width
+// which includes the '…' char
+//
+// Example:
+//
+//	TruncateStr("hello", 4) => "hel…"
+//	TruncateStr("hello", 5) => "hello"
+func TruncateStr(s string, width int) string {
+	switch {
+	case width == 1:
+		return "…"
+	case width <= 0:
+		return ""
+	}
+
+	var truncateAt int
+	runes := 0
+
+	for i := range s {
+		if runes == width-1 {
+			truncateAt = i
+		}
+
+		if runes == width {
+			return s[:truncateAt] + "…"
+		}
+		runes++
+	}
+
+	return s
+}
