@@ -100,38 +100,6 @@ func (tm TableModel) Update(msg tea.Msg) (TableModel, tea.Cmd) {
 }
 
 func (tm TableModel) View() tea.View {
-	cols := make([]string, len(tm.header.values))
-	for i, h := range tm.header.values {
-		if h.Width == 0 {
-			h.Width = utils.RuneCount(h.Name)
-		}
-
-		h.Name = utils.TruncateStr(h.Name, h.Width)
-		cols[i] = columnStyle.
-			AlignHorizontal(tm.header.alignments[i]).
-			Width(h.Width).
-			Render(h.Name)
-	}
-
-	rows := make([]string, len(tm.data.values))
-	for i, data := range tm.data.values {
-		row := make([]string, len(data))
-		for k, val := range data {
-			width := tm.header.values[k].Width
-			if width == 0 {
-				width = utils.RuneCount(val)
-			}
-			val = utils.TruncateStr(val, width)
-			s := rowStyle.
-				AlignHorizontal(tm.data.alignments[k]).
-				Width(width)
-			if i == tm.selectedRow {
-				s = s.Background(Black)
-			}
-			row[k] = s.Render(val)
-		}
-		rows[i] = JoinHorizontal(lipgloss.Left, row...)
-	}
 	return tea.NewView(
 		Place(
 			tm.size.width,
@@ -140,8 +108,8 @@ func (tm TableModel) View() tea.View {
 			lipgloss.Center,
 			JoinVertical(
 				lipgloss.Left,
-				JoinHorizontal(lipgloss.Left, cols...),
-				JoinVertical(lipgloss.Left, rows...),
+				tm.ColumnView(),
+				tm.RowView(),
 			),
 			lipgloss.WithWhitespaceStyle(
 				lipgloss.NewStyle().Background(lipgloss.Color("#1E1E2E")),
@@ -156,4 +124,44 @@ func (tm *TableModel) SetWidth(w int) {
 
 func (tm *TableModel) SetHeight(h int) {
 	tm.size.height = h
+}
+
+func (tm TableModel) ColumnView() string {
+	cols := make([]string, len(tm.header.values))
+	for i, h := range tm.header.values {
+		if h.Width == 0 {
+			h.Width = utils.RuneCount(h.Name)
+		}
+
+		h.Name = utils.TruncateStr(h.Name, h.Width)
+		cols[i] = columnStyle.
+			AlignHorizontal(tm.header.alignments[i]).
+			Width(h.Width).
+			Render(h.Name)
+	}
+	return JoinHorizontal(lipgloss.Left, cols...)
+}
+
+func (tm TableModel) RowView() string {
+	rows := make([]string, len(tm.data.values))
+	rowBuf := make([]string, len(tm.data.values[0]))
+
+	for i, data := range tm.data.values {
+		for k, val := range data {
+			width := tm.header.values[k].Width
+			if width == 0 {
+				width = utils.RuneCount(val)
+			}
+			val = utils.TruncateStr(val, width)
+			s := rowStyle.
+				AlignHorizontal(tm.data.alignments[k]).
+				Width(width)
+			if i == tm.selectedRow {
+				s = s.Background(Black)
+			}
+			rowBuf[k] = s.Render(val)
+		}
+		rows[i] = JoinHorizontal(lipgloss.Left, rowBuf...)
+	}
+	return JoinVertical(lipgloss.Left, rows...)
 }
