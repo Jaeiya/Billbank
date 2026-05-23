@@ -40,6 +40,11 @@ type TableHeader struct {
 }
 
 func NewTable(headers []TableHeader, data [][]string, opts ...TableOption) (TableModel, error) {
+	if len(headers) != len(data[0]) {
+		return TableModel{}, errors.New(
+			"table headers and data do not have the same length",
+		)
+	}
 	t := TableModel{}
 	t.data.values = data
 	t.header.values = headers
