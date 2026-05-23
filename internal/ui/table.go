@@ -1,7 +1,9 @@
 package ui
 
 import (
+	"errors"
 	"fmt"
+	"image/color"
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
@@ -35,8 +37,10 @@ type TableModel struct {
 type TableOption func(*TableModel) error
 
 type TableHeader struct {
-	Name  string
-	Width int
+	Name          string
+	Width         int
+	Color         color.Color
+	SelectedColor color.Color
 }
 
 func NewTable(headers []TableHeader, data [][]string, opts ...TableOption) (TableModel, error) {
@@ -163,6 +167,14 @@ func (tm TableModel) RowView() string {
 				Width(width)
 			if i == tm.selectedRow {
 				s = s.Background(Black)
+			}
+			header := tm.header.values[k]
+			if header.Color != nil {
+				color := header.Color
+				if header.SelectedColor != nil && i == tm.selectedRow {
+					color = header.SelectedColor
+				}
+				s = s.Foreground(color)
 			}
 			rowBuf[k] = s.Render(val)
 		}
