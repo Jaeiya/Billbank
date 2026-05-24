@@ -20,8 +20,8 @@ var (
 )
 
 type TableModel struct {
-	data struct {
-		values     [][]string
+	table struct {
+		entries    [][]TableEntry
 		alignments []lipgloss.Position
 	}
 	header struct {
@@ -37,23 +37,34 @@ type TableModel struct {
 type TableOption func(*TableModel) error
 
 type TableHeader struct {
-	Name          string
-	Width         int
-	Color         color.Color
-	SelectedColor color.Color
+	Name         string
+	Width        int
+	Foreground   color.Color
+	Background   color.Color
+	SelectedBack color.Color
 }
 
-func NewTable(headers []TableHeader, data [][]string, opts ...TableOption) (TableModel, error) {
-	if len(headers) != len(data[0]) {
+type TableEntry struct {
+	Text       string
+	Foreground color.Color
+	Background color.Color
+}
+
+func NewTable(
+	headers []TableHeader,
+	entries [][]TableEntry,
+	opts ...TableOption,
+) (TableModel, error) {
+	if len(headers) != len(entries[0]) {
 		return TableModel{}, errors.New(
 			"table headers and data do not have the same length",
 		)
 	}
 	t := TableModel{}
-	t.data.values = data
+	t.table.entries = entries
 	t.header.values = headers
 	t.header.alignments = make([]lipgloss.Position, len(headers))
-	t.data.alignments = make([]lipgloss.Position, len(headers))
+	t.table.alignments = make([]lipgloss.Position, len(headers))
 
 	for _, o := range opts {
 		err := o(&t)
@@ -70,7 +81,7 @@ func WithDataAlignments(alignments []lipgloss.Position) TableOption {
 		if len(alignments) != len(tm.header.values) {
 			return fmt.Errorf("table requires %d alignment positions", len(tm.header.values))
 		}
-		tm.data.alignments = alignments
+		tm.table.alignments = alignments
 		return nil
 	}
 }
@@ -90,7 +101,7 @@ func (tm TableModel) Update(msg tea.Msg) (TableModel, tea.Cmd) {
 	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "j":
-			if tm.selectedRow+1 == len(tm.data.values) {
+			if tm.selectedRow+1 == len(tm.table.entries) {
 				return tm, nil
 			}
 			tm.selectedRow += 1
@@ -102,7 +113,7 @@ func (tm TableModel) Update(msg tea.Msg) (TableModel, tea.Cmd) {
 		case "h":
 			tm.selectedRow = 0
 		case "l":
-			tm.selectedRow = len(tm.data.values) - 1
+			tm.selectedRow = len(tm.table.entries) - 1
 		}
 	}
 	return tm, nil
@@ -152,33 +163,26 @@ func (tm TableModel) ColumnView() string {
 }
 
 func (tm TableModel) RowView() string {
-	rows := make([]string, len(tm.data.values))
-	rowBuf := make([]string, len(tm.data.values[0]))
+	rows := make([]string, len(tm.table.entries))
+	entryBuf := make([]string, len(tm.table.entries[0]))
 
-	for i, data := range tm.data.values {
-		for k, val := range data {
+	for i, entries := range tm.table.entries {
+		for k, entry := range entries {
 			width := tm.header.values[k].Width
 			if width == 0 {
-				width = utils.RuneCount(val)
+				width = utils.RuneCount(entry.Text)
 			}
-			val = utils.TruncateStr(val, width)
+			entry.Text = utils.TruncateStr(entry.Text, width)
 			s := rowStyle.
-				AlignHorizontal(tm.data.alignments[k]).
+				AlignHorizontal(tm.table.alignments[k]).
 				Width(width)
 			if i == tm.selectedRow {
 				s = s.Background(Black)
 			}
-			header := tm.header.values[k]
-			if header.Color != nil {
-				color := header.Color
-				if header.SelectedColor != nil && i == tm.selectedRow {
-					color = header.SelectedColor
-				}
-				s = s.Foreground(color)
-			}
-			rowBuf[k] = s.Render(val)
+			s = s.Foreground(entry.Foreground)
+			entryBuf[k] = s.Render(entry.Text)
 		}
-		rows[i] = JoinHorizontal(lipgloss.Left, rowBuf...)
+		rows[i] = JoinHorizontal(lipgloss.Left, entryBuf...)
 	}
 	return JoinVertical(lipgloss.Left, rows...)
 }
