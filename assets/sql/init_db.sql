@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS income_history (
     month_id  INTEGER NOT NULL,
     amount    INTEGER CHECK (amount>0),
     FOREIGN KEY (income_id) REFERENCES income (id),
-    FOREIGN KEY (month_id) REFERENCES months (id)
+    FOREIGN KEY (month_id)  REFERENCES months (id)
 )STRICT;
 
 
@@ -56,7 +56,7 @@ CREATE TABLE IF NOT EXISTS bank_account_history (
     account_id INTEGER NOT NULL,
     month_id   INTEGER NOT NULL,
     balance    INTEGER DEFAULT 0,
-    FOREIGN KEY (month_id) REFERENCES months (id),
+    FOREIGN KEY (month_id)   REFERENCES months (id),
     FOREIGN KEY (account_id) REFERENCES bank_accounts (id)
 )STRICT;
 
@@ -72,7 +72,7 @@ CREATE TABLE IF NOT EXISTS bank_transfers (
     to_whom    TEXT,
     from_whom  TEXT,
     FOREIGN KEY (bank_history_id) REFERENCES bank_account_history (id),
-    FOREIGN KEY (month_id) REFERENCES months (id)
+    FOREIGN KEY (month_id)        REFERENCES months (id)
 )STRICT;
 
 
@@ -96,10 +96,10 @@ CREATE TABLE IF NOT EXISTS credit_card_history (
     balance      INTEGER NOT NULL,
     due_day      INTEGER NOT NULL CHECK (due_day > 0 AND due_day < 32),
     credit_limit INTEGER,
-    paid_day     INTEGER CHECK (paid_day > 0 AND paid_day < 32),
+    paid_day     INTEGER NOT NULL CHECK (paid_day > 0 AND paid_day < 32),
     paid_amount  INTEGER,
     cleared_day  INTEGER,
-    FOREIGN KEY (card_id) REFERENCES credit_cards (id),
+    FOREIGN KEY (card_id)  REFERENCES credit_cards (id),
     FOREIGN KEY (month_id) REFERENCES months (id)
 )STRICT;
 
@@ -129,7 +129,7 @@ CREATE TABLE IF NOT EXISTS bills_history (
     cleared_day INTEGER,
     notes       TEXT,
     FOREIGN KEY (month_id) REFERENCES months (id)
-    FOREIGN KEY (type_id) REFERENCES bill_types (id)
+    FOREIGN KEY (type_id)  REFERENCES bill_types (id)
 )STRICT;
 
 
