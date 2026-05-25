@@ -29,6 +29,7 @@ func TestQueryBills(t *testing.T) {
 					TypeID:  1,
 					Amount:  internal.NewCurrency("19.99", internal.USD),
 					DueDate: createDate(now.Year(), now.Month(), 3),
+					Status:  "pending",
 					Period:  MONTHLY,
 				},
 				{
@@ -36,6 +37,7 @@ func TestQueryBills(t *testing.T) {
 					TypeID:  1,
 					Amount:  internal.NewCurrency("39.99", internal.USD),
 					DueDate: createDate(now.Year(), now.Month(), 27),
+					Status:  "pending",
 					Period:  MONTHLY,
 				},
 				{
@@ -43,6 +45,7 @@ func TestQueryBills(t *testing.T) {
 					TypeID:  1,
 					Amount:  internal.NewCurrency("10.45", internal.USD),
 					DueDate: createDate(now.Year(), now.Month(), 11),
+					Status:  "pending",
 					Period:  MONTHLY,
 				},
 				{
@@ -50,6 +53,7 @@ func TestQueryBills(t *testing.T) {
 					TypeID:  1,
 					Amount:  internal.NewCurrency("2.99", internal.USD),
 					DueDate: createDate(now.Year(), now.Month(), 8),
+					Status:  "pending",
 					Period:  MONTHLY,
 				},
 			},
@@ -60,6 +64,7 @@ func TestQueryBills(t *testing.T) {
 					TypeID:  1,
 					Amount:  internal.NewCurrency("19.99", internal.USD),
 					DueDate: createDate(now.Year(), now.Month(), 3),
+					Status:  "pending",
 					Period:  MONTHLY,
 				},
 				{
@@ -68,6 +73,7 @@ func TestQueryBills(t *testing.T) {
 					TypeID:  1,
 					Amount:  internal.NewCurrency("39.99", internal.USD),
 					DueDate: createDate(now.Year(), now.Month(), 27),
+					Status:  "pending",
 					Period:  MONTHLY,
 				},
 				{
@@ -76,6 +82,7 @@ func TestQueryBills(t *testing.T) {
 					TypeID:  1,
 					Amount:  internal.NewCurrency("10.45", internal.USD),
 					DueDate: createDate(now.Year(), now.Month(), 11),
+					Status:  "pending",
 					Period:  MONTHLY,
 				},
 				{
@@ -84,6 +91,7 @@ func TestQueryBills(t *testing.T) {
 					TypeID:  1,
 					Amount:  internal.NewCurrency("2.99", internal.USD),
 					DueDate: createDate(now.Year(), now.Month(), 8),
+					Status:  "pending",
 					Period:  MONTHLY,
 				},
 			},
@@ -96,6 +104,7 @@ func TestQueryBills(t *testing.T) {
 					TypeID:  2,
 					Amount:  internal.NewCurrency("123.4", internal.USD),
 					DueDate: createDate(now.Year(), now.Month(), 7),
+					Status:  "pending",
 					Period:  MONTHLY,
 				},
 			},
@@ -150,6 +159,7 @@ func TestQueryBills(t *testing.T) {
 				TypeID:  1,
 				Amount:  internal.NewCurrency("13.37", internal.USD),
 				DueDate: createDate(now.Year(), now.Month(), 10),
+				Status:  "pending",
 				Period:  MONTHLY,
 			},
 		})
@@ -161,6 +171,7 @@ func TestQueryBills(t *testing.T) {
 				TypeID:  1,
 				Amount:  internal.NewCurrency("133.7", internal.USD),
 				DueDate: createDate(now.Year(), now.Month(), 7),
+				Status:  "pending",
 				Period:  MONTHLY,
 			},
 		})
@@ -187,6 +198,7 @@ func TestCreateBillHistory(t *testing.T) {
 					TypeID:  1,
 					Amount:  internal.NewCurrency("13.37", internal.USD),
 					DueDate: createDate(time.Now().Year(), time.Now().Month(), 3),
+					Status:  "pending",
 					Period:  MONTHLY,
 				},
 			},
@@ -228,6 +240,7 @@ func TestCreateBillHistory(t *testing.T) {
 					TypeID:  1,
 					Amount:  internal.NewCurrency("1337", internal.USD),
 					DueDate: createDate(time.Now().Year(), time.Now().Month(), 3),
+					Status:  "pending",
 					Period:  MONTHLY,
 				},
 			},
@@ -264,6 +277,7 @@ func TestCreateBillHistory(t *testing.T) {
 					TypeID:  1,
 					Amount:  internal.NewCurrency("1337", internal.USD),
 					DueDate: createDate(time.Now().Year(), time.Now().Month(), 3),
+					Status:  "pending",
 					Period:  MONTHLY,
 				},
 			},
@@ -286,6 +300,7 @@ func TestCreateBillHistory(t *testing.T) {
 					TypeID:  1,
 					Amount:  internal.NewCurrency("1337", internal.USD),
 					DueDate: createDate(time.Now().Year(), time.Now().Month(), 3),
+					Status:  "pending",
 					Period:  MONTHLY,
 				},
 			},
@@ -358,6 +373,7 @@ func TestBillsMonthly(t *testing.T) {
 					Name:    "t1",
 					Amount:  internal.NewCurrency("123", internal.USD),
 					DueDate: createDate(time.Now().Year(), time.Now().Month(), 3),
+					Status:  "pending",
 					Period:  MONTHLY,
 				},
 				{
@@ -365,6 +381,7 @@ func TestBillsMonthly(t *testing.T) {
 					Name:    "t2",
 					Amount:  internal.NewCurrency("123", internal.USD),
 					DueDate: createDate(time.Now().Year(), time.Now().Month(), 3),
+					Status:  "pending",
 					Period:  MONTHLY,
 				},
 				{
@@ -372,6 +389,7 @@ func TestBillsMonthly(t *testing.T) {
 					Name:    "t3",
 					Amount:  internal.NewCurrency("123", internal.USD),
 					DueDate: createDate(time.Now().Year(), time.Now().Month(), 3),
+					Status:  "pending",
 					Period:  MONTHLY,
 				},
 				{
@@ -379,6 +397,7 @@ func TestBillsMonthly(t *testing.T) {
 					Name:    "t4",
 					Amount:  internal.NewCurrency("123", internal.USD),
 					DueDate: createDate(time.Now().Year(), time.Now().Month(), 3),
+					Status:  "pending",
 					Period:  MONTHLY,
 				},
 			},
@@ -403,6 +422,7 @@ func TestBillsMonthly(t *testing.T) {
 					Name:    "hello",
 					Amount:  internal.NewCurrency("1.12", internal.USD),
 					DueDate: createDate(time.Now().Year(), time.Now().Month(), 3),
+					Status:  "pending",
 					Period:  MONTHLY,
 				},
 			},
@@ -464,6 +484,7 @@ func TestBillsMonthly(t *testing.T) {
 				TypeID:  1,
 				Amount:  internal.NewCurrency("13.37", internal.USD),
 				DueDate: createDate(time.Now().Year(), time.Now().Month(), 3),
+				Status:  "pending",
 				Period:  MONTHLY,
 			},
 		})

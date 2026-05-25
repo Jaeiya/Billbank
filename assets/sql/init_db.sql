@@ -119,6 +119,7 @@ CREATE TABLE IF NOT EXISTS bills (
     name     TEXT     NOT NULL UNIQUE,
     amount   INTEGER  NOT NULL,
     due_date TEXT     NOT NULL,
+    status TEXT NOT NULL CHECK (status IN ('pending', 'missed', 'paid')),
     period   TEXT CHECK (
         period='yearly' OR
         period='monthly'

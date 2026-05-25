@@ -60,6 +60,7 @@ var tableData = TableFields{
 		"name",
 		"amount",
 		"due_date",
+		"status",
 		"period",
 	},
 	BILLS_HISTORY: {
