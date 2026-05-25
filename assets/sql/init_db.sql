@@ -17,12 +17,7 @@ CREATE TABLE IF NOT EXISTS income (
     id     INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     name   TEXT    NOT NULL UNIQUE,
     amount INTEGER NOT NULL CHECK (amount>0),
-    period TEXT CHECK (
-        period='yearly' OR
-        period='monthly' OR
-        period='biweekly' OR
-        period='weekly'
-    )
+    period TEXT    NOT NULL CHECK (period IN ('yearly', 'monthly', 'biweekly', 'weekly'))
 )STRICT;
 
 
@@ -73,11 +68,7 @@ CREATE TABLE IF NOT EXISTS bank_transfers (
     name            TEXT    NOT NULL,
     amount          INTEGER NOT NULL,
     due_day         INTEGER NOT NULL CHECK (due_day > 0 AND due_day < 32),
-    type            TEXT    NOT NULL CHECK (
-        type = 'withdrawal' OR
-        type = 'deposit' OR
-        type = 'move'
-    ),
+    type            TEXT    NOT NULL CHECK (type IN ('withdrawal', 'deposit', 'move')),
     to_whom    TEXT,
     from_whom  TEXT,
     FOREIGN KEY (bank_history_id) REFERENCES bank_account_history (id),
@@ -119,11 +110,8 @@ CREATE TABLE IF NOT EXISTS bills (
     name     TEXT     NOT NULL UNIQUE,
     amount   INTEGER  NOT NULL,
     due_date TEXT     NOT NULL,
-    status TEXT NOT NULL CHECK (status IN ('pending', 'missed', 'paid')),
-    period   TEXT CHECK (
-        period='yearly' OR
-        period='monthly'
-    ),
+    status   TEXT     NOT NULL CHECK (status IN ('pending', 'missed', 'paid')),
+    period   TEXT     NOT NULL CHECK (period IN ('yearly', 'monthly')),
     FOREIGN KEY (type_id) REFERENCES bill_types (id)
 )STRICT;
 
