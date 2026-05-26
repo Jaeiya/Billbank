@@ -120,7 +120,9 @@ func TestQueryBills(t *testing.T) {
 
 			db, err := NewSqliteDb("", internal.USD, WithMemoryDB())
 			r.NoError(err)
-			defer db.Close()
+			defer func() {
+				r.NoError(db.Close())
+			}()
 
 			err = db.CreateBillTypes([]string{"test"})
 			r.NoError(err, "expected to create bill types")
@@ -148,7 +150,9 @@ func TestQueryBills(t *testing.T) {
 
 		db, err := NewSqliteDb("", internal.USD, WithMemoryDB())
 		r.NoError(err)
-		defer db.Close()
+		defer func() {
+			r.NoError(db.Close())
+		}()
 
 		err = db.CreateBillTypes([]string{"test"})
 		r.NoError(err, "expected to create bill types")
@@ -325,7 +329,9 @@ func TestCreateBillHistory(t *testing.T) {
 
 			db, err := NewSqliteDb("", internal.USD, WithMemoryDB())
 			r.NoError(err)
-			defer db.Close()
+			defer func() {
+				r.NoError(db.Close())
+			}()
 
 			now := time.Now()
 			_, err = db.CreateMonth(now.Year(), now.Month())
@@ -439,7 +445,9 @@ func TestBillsMonthly(t *testing.T) {
 
 			db, err := NewSqliteDb("", internal.USD, WithMemoryDB())
 			r.NoError(err)
-			defer db.Close()
+			defer func() {
+				r.NoError(db.Close())
+			}()
 
 			now := time.Now()
 			_, err = db.CreateMonth(now.Year(), now.Month())
@@ -473,7 +481,9 @@ func TestBillsMonthly(t *testing.T) {
 
 		db, err := NewSqliteDb("", internal.USD, WithMemoryDB())
 		r.NoError(err)
-		defer db.Close()
+		defer func() {
+			r.NoError(db.Close())
+		}()
 
 		err = db.CreateBillTypes([]string{"test"})
 		r.NoError(err, "expected to create bill types")

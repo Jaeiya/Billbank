@@ -23,7 +23,10 @@ func (sdb SqliteDb) CreateMonth(year int, month time.Month) (int64, error) {
 		return 0, ErrCreatePastTime
 	}
 
-	d, _ := internal.NewDate(year, month, 1)
+	d, err := internal.NewDate(year, month, 1)
+	if err != nil {
+		return 0, err
+	}
 
 	res, err := sdb.insertInto(MONTHS, d)
 	if err != nil {

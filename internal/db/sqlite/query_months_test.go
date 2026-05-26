@@ -23,10 +23,6 @@ func TestCreateMonth(t *testing.T) {
 		expectedError error
 	}
 
-	createDate := func(year int, month time.Month, day int) internal.Date {
-		d, _ := internal.NewDate(year, month, day)
-		return d
-	}
 	now := time.Now()
 
 	table := []MockTable{
@@ -72,14 +68,17 @@ func TestCreateMonth(t *testing.T) {
 
 			db, err := NewSqliteDb("", internal.USD, WithMemoryDB())
 			r.NoError(err)
-			defer db.Close()
+			defer func() {
+				r.NoError(db.Close())
+			}()
 
 			if mock.expectedError != nil {
-				_, err := db.CreateMonth(mock.actual.year, mock.actual.month)
+				_, err = db.CreateMonth(mock.actual.year, mock.actual.month)
 				a.ErrorIs(err, mock.expectedError, "expected to get correct error")
 				return
 			}
-			db.CreateMonth(mock.actual.year, mock.actual.month)
+			_, err = db.CreateMonth(mock.actual.year, mock.actual.month)
+			r.NoError(err)
 
 			res, err := db.QueryMonths(QueryMap{})
 			r.NoError(err)

@@ -54,7 +54,9 @@ func TestCreateIncome(t *testing.T) {
 
 			db, err := NewSqliteDb("", internal.USD, WithMemoryDB())
 			r.NoError(err)
-			defer db.Close()
+			defer func() {
+				r.NoError(db.Close())
+			}()
 
 			if mock.expectedError != nil {
 				for _, iConfig := range mock.actual {
@@ -83,7 +85,9 @@ func TestCreateIncome(t *testing.T) {
 
 		db, err := NewSqliteDb("", internal.USD, WithMemoryDB())
 		r.NoError(err)
-		defer db.Close()
+		defer func() {
+			r.NoError(db.Close())
+		}()
 
 		_, err = db.CreateIncome(IncomeRecord{
 			Name:   "name",
@@ -188,7 +192,9 @@ func TestCreateIncomeHistory(t *testing.T) {
 
 			db, err := NewSqliteDb("", internal.USD, WithMemoryDB())
 			r.NoError(err)
-			defer db.Close()
+			defer func() {
+				r.NoError(db.Close())
+			}()
 
 			now := time.Now()
 			_, err = db.CreateMonth(now.Year(), now.Month())

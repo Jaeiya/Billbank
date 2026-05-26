@@ -73,6 +73,8 @@ func (sdb SqliteDb) QueryCreditCards(
 	qm QueryMap,
 	password *string,
 ) ([]CreditCardRecord, error) {
+	var err error
+
 	rows, err := sdb.query(CREDIT_CARDS, qm)
 	if err != nil {
 		return []CreditCardRecord{}, err
@@ -81,10 +83,9 @@ func (sdb SqliteDb) QueryCreditCards(
 	var records []CreditCardRecord
 	for rows.Next() {
 		var record CreditCardRecord
-		var err error
 		var cardNumBytes, noteBytes []byte
 
-		if err := rows.Scan(
+		if err = rows.Scan(
 			&record.ID,
 			&record.Name,
 			&record.DueDay,
