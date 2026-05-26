@@ -3,6 +3,7 @@ package utils
 import (
 	"fmt"
 	"strings"
+	"time"
 	"unicode/utf8"
 )
 
@@ -126,4 +127,12 @@ func TruncateStr(s string, width int) string {
 	}
 
 	return s
+}
+
+func ToISO8601(timeStr string) (time.Time, error) {
+	t, err := time.Parse(time.RFC3339, timeStr)
+	if err != nil {
+		return t, err
+	}
+	return t, nil
 }
