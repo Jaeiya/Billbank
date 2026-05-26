@@ -77,10 +77,9 @@ func EncryptData(data string, password string) ([]byte, error) {
 
 /*
 EncryptNonNil encrypts data using the password and returns the encrypted
-string; however if data is nil it returns nil. Will only error if
-password is nil.
+bytes; if data is nil it returns nil. Will only error if password is nil.
 */
-func EncryptNonNil(data *string, password *string) ([]byte, error) /* nil|string */ {
+func EncryptNonNil(data *string, password *string) ([]byte, error) {
 	if data == nil {
 		return nil, nil
 	}
