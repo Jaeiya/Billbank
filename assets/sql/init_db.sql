@@ -7,14 +7,14 @@ CREATE TABLE IF NOT EXISTS bank (
 
 
 CREATE TABLE IF NOT EXISTS months (
-    id    INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    id    INTEGER NOT NULL PRIMARY KEY,
     -- If my program survives to the year 3000, then something went wrong lol
     date TEXT
 )STRICT;
 
 
 CREATE TABLE IF NOT EXISTS income (
-    id     INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    id     INTEGER NOT NULL PRIMARY KEY,
     name   TEXT    NOT NULL UNIQUE,
     amount INTEGER NOT NULL CHECK (amount>0),
     period TEXT    NOT NULL CHECK (period IN ('yearly', 'monthly', 'biweekly', 'weekly'))
@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS income (
 
 
 CREATE TABLE IF NOT EXISTS income_history (
-    id        INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    id        INTEGER NOT NULL PRIMARY KEY,
     income_id INTEGER NOT NULL,
     month_id  INTEGER NOT NULL,
     amount    INTEGER CHECK (amount>0),
@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS income_history (
 
 -- When income has been raised through bonuses, overtime, etc..
 CREATE TABLE IF NOT EXISTS income_affixes (
-    id         INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    id         INTEGER NOT NULL PRIMARY KEY,
     history_id INTEGER NOT NULL,
     name       TEXT    NOT NULL,
     amount     INTEGER CHECK (amount>0),
@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS income_affixes (
 
 
 CREATE TABLE IF NOT EXISTS bank_accounts (
-    id       INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    id       INTEGER NOT NULL PRIMARY KEY,
     name     TEXT    NOT NULL,
     -- Should only store the encrypted value
     acct_num TEXT,
@@ -52,7 +52,7 @@ CREATE TABLE IF NOT EXISTS bank_accounts (
 
 
 CREATE TABLE IF NOT EXISTS bank_account_history (
-    id         INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    id         INTEGER NOT NULL PRIMARY KEY,
     account_id INTEGER NOT NULL,
     month_id   INTEGER NOT NULL,
     balance    INTEGER DEFAULT 0,
@@ -62,7 +62,7 @@ CREATE TABLE IF NOT EXISTS bank_account_history (
 
 
 CREATE TABLE IF NOT EXISTS bank_transfers (
-    id              INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    id              INTEGER NOT NULL PRIMARY KEY,
     bank_history_id INTEGER NOT NULL,
     month_id        INTEGER NOT NULL,
     name            TEXT    NOT NULL,
@@ -77,7 +77,7 @@ CREATE TABLE IF NOT EXISTS bank_transfers (
 
 
 CREATE TABLE IF NOT EXISTS credit_cards (
-    id               INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    id               INTEGER NOT NULL PRIMARY KEY,
     name             TEXT    NOT NULL UNIQUE,
     due_day          INTEGER NOT NULL CHECK (due_day > 0 AND due_day < 32),
     credit_limit     INTEGER,
@@ -90,7 +90,7 @@ CREATE TABLE IF NOT EXISTS credit_cards (
 
 
 CREATE TABLE IF NOT EXISTS credit_card_history (
-    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    id           INTEGER PRIMARY KEY,
     card_id      INTEGER NOT NULL,
     month_id     INTEGER NOT NULL,
     balance      INTEGER NOT NULL,
@@ -105,7 +105,7 @@ CREATE TABLE IF NOT EXISTS credit_card_history (
 
 
 CREATE TABLE IF NOT EXISTS bills (
-    id       INTEGER  PRIMARY KEY AUTOINCREMENT,
+    id       INTEGER  PRIMARY KEY,
     type_id  INTEGER  NOT NULL,
     name     TEXT     NOT NULL UNIQUE,
     amount   INTEGER  NOT NULL,
@@ -117,7 +117,7 @@ CREATE TABLE IF NOT EXISTS bills (
 
 
 CREATE TABLE IF NOT EXISTS bills_history (
-    id          INTEGER  PRIMARY KEY AUTOINCREMENT,
+    id          INTEGER  PRIMARY KEY,
     month_id    INTEGER  NOT NULL,
     type_id     INTEGER,
     name        TEXT     NOT NULL,
@@ -134,7 +134,7 @@ CREATE TABLE IF NOT EXISTS bills_history (
 
 
 CREATE TABLE IF NOT EXISTS bills_monthly (
-    id        INTEGER PRIMARY KEY AUTOINCREMENT,
+    id        INTEGER PRIMARY KEY,
     bill_id   INTEGER NOT NULL UNIQUE,
     is_active INTEGER NOT NULL,
     FOREIGN KEY (bill_id) REFERENCES bills (id)
@@ -142,6 +142,6 @@ CREATE TABLE IF NOT EXISTS bills_monthly (
 
 
 CREATE TABLE IF NOT EXISTS bill_types (
-    id   INTEGER PRIMARY KEY AUTOINCREMENT,
+    id   INTEGER PRIMARY KEY,
     name TEXT    NOT NULL UNIQUE
 )STRICT;
