@@ -96,7 +96,7 @@ CREATE TABLE IF NOT EXISTS credit_card_history (
     balance      INTEGER NOT NULL,
     due_day      INTEGER NOT NULL CHECK (due_day > 0 AND due_day < 32),
     credit_limit INTEGER,
-    paid_day     INTEGER NOT NULL CHECK (paid_day > 0 AND paid_day < 32),
+    paid_day     INTEGER CHECK (paid_day > 0 AND paid_day < 32),
     paid_amount  INTEGER,
     cleared_day  INTEGER,
     FOREIGN KEY (card_id)  REFERENCES credit_cards (id),
