@@ -69,24 +69,25 @@ func (sdb SqliteDb) QueryBankAccounts(qm QueryMap, pass *string) ([]BankAccountR
 	for rows.Next() {
 		var record BankAccountRecord
 		var err error
+		var accNumBytes, noteBytes []byte
 
 		if err = rows.Scan(
 			&record.ID,
 			&record.Name,
-			&record.AccountNumber,
-			&record.Notes,
+			&accNumBytes,
+			&noteBytes,
 		); err != nil {
 			return []BankAccountRecord{}, err
 		}
 
-		if pass != nil && record.AccountNumber != nil {
-			if record.AccountNumber, err = internal.DecryptNonNil(record.AccountNumber, *pass); err != nil {
+		if pass != nil && accNumBytes != nil {
+			if record.AccountNumber, err = internal.DecryptNonNil(accNumBytes, *pass); err != nil {
 				return []BankAccountRecord{}, err
 			}
 		}
 
-		if pass != nil && record.Notes != nil {
-			if record.Notes, err = internal.DecryptNonNil(record.Notes, *pass); err != nil {
+		if pass != nil && noteBytes != nil {
+			if record.Notes, err = internal.DecryptNonNil(noteBytes, *pass); err != nil {
 				return []BankAccountRecord{}, err
 			}
 		}

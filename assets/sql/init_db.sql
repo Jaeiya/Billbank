@@ -45,9 +45,9 @@ CREATE TABLE IF NOT EXISTS bank_accounts (
     id       INTEGER NOT NULL PRIMARY KEY,
     name     TEXT    NOT NULL,
     -- Should only store the encrypted value
-    acct_num TEXT,
+    acct_num BLOB,
     -- Should only store the encrypted value
-    notes    TEXT
+    notes    BLOB
 )STRICT;
 
 
@@ -82,10 +82,10 @@ CREATE TABLE IF NOT EXISTS credit_cards (
     due_day          INTEGER NOT NULL CHECK (due_day > 0 AND due_day < 32),
     credit_limit     INTEGER,
     -- Should only store the encrypted value
-    card_number      TEXT,
+    card_number      BLOB,
     last_four_digits TEXT   NOT NULL,
     -- Should only store the encrypted value
-    notes            TEXT
+    notes            BLOB
 )STRICT;
 
 

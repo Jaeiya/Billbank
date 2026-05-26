@@ -48,7 +48,7 @@ func ValidatePassword(password string, storedPass string) (bool, error) {
 	return subtle.ConstantTimeCompare(hash, newHash) == 1, nil
 }
 
-func EncryptData(data string, password string) (string, error) {
+func EncryptData(data string, password string) ([]byte, error) {
 	salt := make([]byte, saltLen)
 	if _, err := io.ReadFull(rand.Reader, salt); err != nil {
 		panic(err)
@@ -57,22 +57,22 @@ func EncryptData(data string, password string) (string, error) {
 
 	cBlock, err := aes.NewCipher(key)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	aesGCM, err := cipher.NewGCM(cBlock)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	nonce := make([]byte, aesGCM.NonceSize())
 	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
-		return "", err
+		return nil, err
 	}
 
 	cipherText := aesGCM.Seal(nonce, nonce, []byte(data), nil)
 
-	return base64.StdEncoding.EncodeToString(append(salt, cipherText...)), nil
+	return append(salt, cipherText...), nil
 }
 
 /*
@@ -80,7 +80,7 @@ EncryptNonNil encrypts data using the password and returns the encrypted
 string; however if data is nil it returns nil. Will only error if
 password is nil.
 */
-func EncryptNonNil(data *string, password *string) (any, error) /* nil|string */ {
+func EncryptNonNil(data *string, password *string) ([]byte, error) /* nil|string */ {
 	if data == nil {
 		return nil, nil
 	}
@@ -90,12 +90,12 @@ func EncryptNonNil(data *string, password *string) (any, error) /* nil|string */
 	return EncryptData(*data, *password)
 }
 
-func DecryptNonNil(data *string, password string) (*string, error) {
+func DecryptNonNil(data []byte, password string) (*string, error) {
 	if data == nil {
 		return nil, nil
 	}
 
-	decData, err := DecryptData(*data, password)
+	decData, err := DecryptData(data, password)
 	if err != nil {
 		return nil, err
 	}
@@ -103,13 +103,8 @@ func DecryptNonNil(data *string, password string) (*string, error) {
 	return &decData, err
 }
 
-func DecryptData(data string, password string) (string, error) {
-	cipherText, err := base64.StdEncoding.DecodeString(data)
-	if err != nil {
-		return "", err
-	}
-
-	salt := cipherText[:saltLen]
+func DecryptData(data []byte, password string) (string, error) {
+	salt := data[:saltLen]
 	key := deriveKey(password, salt)
 
 	cBlock, err := aes.NewCipher(key)
@@ -123,11 +118,11 @@ func DecryptData(data string, password string) (string, error) {
 	}
 
 	nonceSize := aesGCM.NonceSize()
-	nonce := cipherText[saltLen : int(saltLen)+nonceSize]
+	nonce := data[saltLen : int(saltLen)+nonceSize]
 
-	cipherText = cipherText[int(saltLen)+nonceSize:]
+	data = data[int(saltLen)+nonceSize:]
 
-	text, err := aesGCM.Open(nil, nonce, cipherText, nil)
+	text, err := aesGCM.Open(nil, nonce, data, nil)
 	if err != nil {
 		return "", err
 	}

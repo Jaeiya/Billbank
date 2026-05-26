@@ -82,27 +82,28 @@ func (sdb SqliteDb) QueryCreditCards(
 	for rows.Next() {
 		var record CreditCardRecord
 		var err error
+		var cardNumBytes, noteBytes []byte
 
 		if err := rows.Scan(
 			&record.ID,
 			&record.Name,
 			&record.DueDay,
 			&record.CreditLimit,
-			&record.CardNumber,
+			&cardNumBytes,
 			&record.LastFourDigits,
-			&record.Notes,
+			&noteBytes,
 		); err != nil {
 			return []CreditCardRecord{}, err
 		}
 
-		if password != nil && record.CardNumber != nil {
-			if record.CardNumber, err = internal.DecryptNonNil(record.CardNumber, *password); err != nil {
+		if password != nil && cardNumBytes != nil {
+			if record.CardNumber, err = internal.DecryptNonNil(cardNumBytes, *password); err != nil {
 				return []CreditCardRecord{}, err
 			}
 		}
 
-		if password != nil && record.Notes != nil {
-			if record.Notes, err = internal.DecryptNonNil(record.Notes, *password); err != nil {
+		if password != nil && noteBytes != nil {
+			if record.Notes, err = internal.DecryptNonNil(noteBytes, *password); err != nil {
 				return []CreditCardRecord{}, err
 			}
 		}

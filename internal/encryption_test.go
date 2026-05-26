@@ -123,7 +123,6 @@ func TestEncryption(t *testing.T) {
 				a.Error(err, "expected to get error")
 			}
 
-			encryptedBytes, err := base64.StdEncoding.DecodeString(encrypted)
 			r.NoError(err, "expected base64 encoded encryption")
 			a.NotEmpty(encrypted, "expected encrypted data")
 			a.NotEqual(tt.data, encrypted, "expected data to be encrypted")
@@ -137,7 +136,7 @@ func TestEncryption(t *testing.T) {
 			a.Equal(tt.data, decrypted, "expected data to be decrypted")
 
 			a.GreaterOrEqual(
-				len(encryptedBytes),
+				len(encrypted),
 				16*2,
 				"expected saltLen (16 bytes) + minimum GCM overhead",
 			)
@@ -195,13 +194,11 @@ func TestEncryptNonNil(t *testing.T) {
 
 			a.NotNil(result, "expected a result")
 
-			resultStr, isType := result.(string)
-			a.True(isType, "expected result to be a string")
-			a.NotEmpty(resultStr, "expected result to have a value")
+			a.NotEmpty(result, "expected result to have a value")
 
 			// Verify we can decrypt the result
 			if tt.data != nil && tt.password != nil {
-				decrypted, err := DecryptData(resultStr, *tt.password)
+				decrypted, err := DecryptData(result, *tt.password)
 				a.NoError(err, "expected to decrypt")
 				a.Equal(*tt.data, decrypted, "expected to get original data")
 			}
@@ -217,7 +214,7 @@ func TestDecryptNonNil(t *testing.T) {
 
 	tests := []struct {
 		should   string
-		data     *string
+		data     []byte
 		password string
 		wantErr  bool
 		wantNil  bool
@@ -231,14 +228,14 @@ func TestDecryptNonNil(t *testing.T) {
 		},
 		{
 			should:   "decrypt valid data and password",
-			data:     &encrypted,
+			data:     encrypted,
 			password: password,
 			wantErr:  false,
 			wantNil:  false,
 		},
 		{
 			should:   "catch wrong password",
-			data:     &encrypted,
+			data:     encrypted,
 			password: "wrong",
 			wantErr:  true,
 			wantNil:  false,
