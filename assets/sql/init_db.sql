@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS bank (
     id            INTEGER  NOT NULL PRIMARY KEY UNIQUE,
-    currency_code TEXT     NOT NULL,
+    currency_code TEXT     NOT NULL, -- USD, EUR, CAD, etc...
     month_id      INTEGER  NOT NULL,
     db_version    TEXT
 ) STRICT;
