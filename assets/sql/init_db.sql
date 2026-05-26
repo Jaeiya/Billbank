@@ -83,7 +83,7 @@ CREATE TABLE IF NOT EXISTS credit_cards (
     credit_limit     INTEGER,
     -- Should only store the encrypted value
     card_number      BLOB,
-    last_four_digits TEXT   NOT NULL,
+    last_four_digits TEXT NOT NULL,
     -- Should only store the encrypted value
     notes            BLOB
 )STRICT;
