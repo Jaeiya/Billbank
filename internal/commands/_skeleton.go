@@ -10,8 +10,6 @@ import (
 // (rename to reflect the name of your new command)
 type skeletonModel struct {
 	cmdcore.ModelBase
-	vpSize      struct{ w, h int }
-	workingPath string
 	thisCounter int
 	thatCounter int
 	lastKey     string
