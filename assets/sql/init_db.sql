@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS bank (
 
 CREATE TABLE IF NOT EXISTS months (
     id    INTEGER NOT NULL PRIMARY KEY,
-    -- If my program survives to the year 3000, then something went wrong lol
+    -- Saved as ISO-8601 (YYYY-MM-DD) but the day is constant: YYYY-MM-01
     date TEXT
 )STRICT;
 
