@@ -23,6 +23,7 @@ type TableModel struct {
 	table struct {
 		entries    [][]TableEntry
 		alignments []lipgloss.Position
+		rowLen     int
 	}
 	header struct {
 		values     []TableHeader
@@ -55,12 +56,16 @@ func NewTable(
 	entries [][]TableEntry,
 	opts ...TableOption,
 ) (TableModel, error) {
-	if len(headers) != len(entries[0]) {
-		return TableModel{}, errors.New(
+	t := TableModel{}
+	t.table.rowLen = len(headers)
+
+	if t.table.rowLen != len(entries[0]) {
+		return t, errors.New(
 			"table headers and data do not have the same length",
 		)
 	}
-	t := TableModel{}
+
+	t.table.rowLen = len(headers)
 	t.table.entries = entries
 	t.header.values = headers
 	t.header.alignments = make([]lipgloss.Position, len(headers))
@@ -144,6 +149,21 @@ func (tm *TableModel) SetWidth(w int) {
 
 func (tm *TableModel) SetHeight(h int) {
 	tm.size.height = h
+}
+
+func (tm TableModel) SelectedRow() int {
+	return tm.selectedRow
+}
+
+func (tm *TableModel) SetRow(rowIdx int, entries []TableEntry) error {
+	if rowIdx >= len(tm.table.entries) || rowIdx < 0 {
+		return errors.New("specified row index does not exist")
+	}
+	if len(entries) != tm.table.rowLen {
+		return fmt.Errorf("too many or too few row entires")
+	}
+	tm.table.entries[rowIdx] = entries
+	return nil
 }
 
 func (tm TableModel) ColumnView() string {
