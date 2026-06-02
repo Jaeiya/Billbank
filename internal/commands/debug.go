@@ -246,7 +246,6 @@ func loadSlog(m debugModel, arg *int) (cmdcore.CommandModel, error) {
 	}
 
 	m.log.view = strings.TrimSpace(string(bytes))
-	m.log.lineCount = strings.Count(m.log.view, "\n")
 
 	maxLines := 0
 	if arg != nil {
@@ -257,10 +256,17 @@ func loadSlog(m debugModel, arg *int) (cmdcore.CommandModel, error) {
 	now := time.Now()
 
 	lines := strings.Split(m.log.view, "\n")
+	m.log.lineCount = len(lines)
 
 	if maxLines > 0 {
 		lines = lines[len(lines)-maxLines:]
 	}
+
+	lineLen := len(lines)
+
+	tagBuilder.Grow(5 * lineLen)
+	subjBuilder.Grow(10 * lineLen)
+	wordBuilder.Grow(100 * lineLen)
 
 	lastTimeStamp := time.Now()
 	for i, line := range lines {
@@ -273,7 +279,7 @@ func loadSlog(m debugModel, arg *int) (cmdcore.CommandModel, error) {
 		var subjectStyle lipgloss.Style
 		var timeStamp time.Time
 
-		timeStamp, err = time.Parse(logger.GetTimeFormat(), strings.Join(parts[:3], " "))
+		timeStamp, err = time.Parse(logger.GetTimeFormat(), line[:25])
 		if err != nil {
 			logger.Log(logger.Error, err.Error())
 		}
@@ -283,19 +289,23 @@ func loadSlog(m debugModel, arg *int) (cmdcore.CommandModel, error) {
 			timeDiff = time.Duration(0)
 		}
 		lastTimeStamp = timeStamp
-		fmt.Fprintf(&timeBuilder, "%s \n", timeDiff.Round(10*time.Microsecond))
+		timeBuilder.WriteString(timeDiff.Round(10 * time.Microsecond).String())
+		timeBuilder.WriteString(" \n")
 
 		tag, subjectStyle = getTagStyle(tag)
-		fmt.Fprintf(&tagBuilder, "%s \n", tag)
+		tagBuilder.WriteString(tag)
+		tagBuilder.WriteByte('\n')
 
-		words := parts[5:]
+		_, msg, _ := strings.Cut(line, "]:")
 
 		bullet := subjectStyle.Render("<>")
-		subj := fmt.Sprintf("%s %s", strings.Split(parts[4], ".")[0][1:], bullet)
-
-		subjBuilder.WriteString(subj)
+		subjBuilder.WriteString(strings.Split(parts[4], ".")[0][1:])
+		subjBuilder.WriteByte(' ')
+		subjBuilder.WriteString(bullet)
 		subjBuilder.WriteString("\n ")
-		fmt.Fprintf(&wordBuilder, " %s\n", slogWordStyle.Render(strings.Join(words, " ")))
+
+		wordBuilder.WriteString(slogWordStyle.Render(msg))
+		wordBuilder.WriteByte('\n')
 	}
 
 	content := lipgloss.JoinHorizontal(
