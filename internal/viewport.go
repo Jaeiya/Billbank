@@ -58,7 +58,7 @@ func (vp ViewPort) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return vp, tea.Quit
 		}
 
-		if msg.String() == "`" {
+		if msg.String() == "/" {
 			logger.Log(logger.Hot, "[OnGrave] toggling viewport input")
 			vp, teaCmd = vp.toggleInput()
 			return vp, teaCmd
