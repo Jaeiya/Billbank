@@ -29,7 +29,8 @@
     "nolint",
     "stretchr",
     "textinput",
-    "trimpath"
+    "trimpath",
+    "Univers"
   ],
   "cSpell.enabledFileTypes": {
     "markdown": true
