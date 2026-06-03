@@ -126,19 +126,10 @@ func (tm TableModel) Update(msg tea.Msg) (TableModel, tea.Cmd) {
 
 func (tm TableModel) View() tea.View {
 	return tea.NewView(
-		Place(
-			tm.size.width,
-			tm.size.height,
-			lipgloss.Center,
-			lipgloss.Center,
-			JoinVertical(
-				lipgloss.Left,
-				tm.ColumnView(),
-				tm.RowView(),
-			),
-			lipgloss.WithWhitespaceStyle(
-				lipgloss.NewStyle().Background(lipgloss.Color("#1E1E2E")),
-			),
+		JoinVertical(
+			lipgloss.Left,
+			tm.ColumnView(),
+			tm.RowView(),
 		),
 	)
 }
