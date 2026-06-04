@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 
@@ -59,7 +58,6 @@ func main() {
 		commands.NewBillsHandler(db),
 		commands.NewDebugHandler(h),
 	)
-	fmt.Println("test codeberg commits")
 
 	vp := internal.NewViewport(im)
 
