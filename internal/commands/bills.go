@@ -173,7 +173,7 @@ func createRow() []ui.TableEntry {
 		paidColor = ui.BrightRed
 	} else if rand.IntN(100) < 50 {
 		paid = "Pending"
-		paidColor = ui.BrightYellow
+		paidColor = ui.Gray
 	}
 
 	return []ui.TableEntry{
