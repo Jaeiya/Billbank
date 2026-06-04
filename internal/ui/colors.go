@@ -30,4 +30,6 @@ var (
 	BrightMagenta = lipgloss.Color("13")
 	BrightCyan    = lipgloss.Color("14")
 	BrightWhite   = lipgloss.Color("15")
+
+	RealWhite = lipgloss.Color("#EEEEEE")
 )
