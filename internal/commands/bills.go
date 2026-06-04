@@ -73,9 +73,10 @@ func NewBillsHandler(db *sqlite.SqliteDb) cmdcore.CommandHandler {
 		[]string{"bills"},
 		[]cmdcore.Command[billsModel]{
 			cmdcore.NewCommand(cmdcore.CommandOptions[billsModel, cmdcore.NoArg]{
-				Path:     "",
-				RunFunc:  loadBills,
-				ViewFunc: viewBills,
+				Path:         "",
+				RunFunc:      loadBills,
+				ViewFunc:     viewBills,
+				CaptureInput: true,
 			}),
 		},
 		model,
@@ -87,6 +88,10 @@ func NewBillsHandler(db *sqlite.SqliteDb) cmdcore.CommandHandler {
 func (m billsModel) Update(msg tea.Msg) (cmdcore.CommandModel, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
+		if msg.String() == "esc" {
+			return m, tea.Quit
+		}
+
 		if msg.String() == "enter" {
 			idx := m.table.SelectedRow()
 			err := m.table.SetRow(idx, createRow())
