@@ -13,11 +13,6 @@ import (
 	"github.com/jaeiya/billbank/internal/utils"
 )
 
-var tableBottom = ui.Style.BorderTop(true).
-	BorderStyle(lipgloss.NormalBorder()).
-	BorderBackground(ui.BgColor).
-	Background(ui.BgColor)
-
 type billsModel struct {
 	cmdcore.ModelBase
 	db       *sqlite.SqliteDb
