@@ -11,9 +11,8 @@ import (
 )
 
 var (
-	headerStyle = Style.Bold(true)
-
-	columnStyle = Style.
+	headerStyle = Style.
+			Bold(true).
 			BorderBottom(true).
 			Background(BgColor).
 			BorderBackground(BgColor).
@@ -34,6 +33,10 @@ type TableModel struct {
 	}
 	size struct {
 		width, height int
+	}
+	style struct {
+		header lipgloss.Style
+		row    lipgloss.Style
 	}
 	selectedRow int
 }
@@ -70,6 +73,9 @@ func NewTable(
 	t.header.values = headers
 	t.header.alignments = make([]lipgloss.Position, len(headers))
 	t.table.alignments = make([]lipgloss.Position, len(headers))
+
+	t.style.header = headerStyle
+	t.style.row = rowStyle
 
 	for _, o := range opts {
 		err := o(&t)
@@ -128,8 +134,8 @@ func (tm TableModel) View() tea.View {
 	return tea.NewView(
 		JoinVertical(
 			lipgloss.Left,
-			tm.ColumnView(),
-			tm.RowView(),
+			tm.headerView(),
+			tm.rowView(),
 		),
 	)
 }
@@ -157,25 +163,31 @@ func (tm *TableModel) SetRow(rowIdx int, entries []TableEntry) error {
 	return nil
 }
 
-func (tm TableModel) ColumnView() string {
-	cols := make([]string, len(tm.header.values))
+func (tm *TableModel) SetHeaderStyle(s lipgloss.Style) {
+	tm.style.header = s.Inherit(tm.style.header)
+}
+
+func (tm *TableModel) SetRowStyle(s lipgloss.Style) {
+	tm.style.row = s.Inherit(tm.style.row)
+}
+
+func (tm TableModel) headerView() string {
+	headers := make([]string, len(tm.header.values))
 	for i, h := range tm.header.values {
 		if h.Width == 0 {
 			h.Width = utils.RuneCount(h.Name)
 		}
 
 		h.Name = utils.TruncateStr(h.Name, h.Width)
-		cols[i] = columnStyle.
+		headers[i] = tm.style.header.
 			AlignHorizontal(tm.header.alignments[i]).
-			Bold(true).
-			Foreground(RealWhite).
 			Width(h.Width).
 			Render(h.Name)
 	}
-	return JoinHorizontal(lipgloss.Left, cols...)
+	return JoinHorizontal(lipgloss.Left, headers...)
 }
 
-func (tm TableModel) RowView() string {
+func (tm TableModel) rowView() string {
 	rows := make([]string, len(tm.table.entries))
 	entryBuf := make([]string, len(tm.table.entries[0]))
 
@@ -186,7 +198,7 @@ func (tm TableModel) RowView() string {
 				width = utils.RuneCount(entry.Text)
 			}
 			entry.Text = utils.TruncateStr(entry.Text, width)
-			s := rowStyle.
+			s := tm.style.row.
 				AlignHorizontal(tm.table.alignments[k]).
 				Width(width)
 			if i == tm.selectedRow {
