@@ -151,7 +151,7 @@ func (tm *TableModel) SetRow(rowIdx int, entries []TableEntry) error {
 		return errors.New("specified row index does not exist")
 	}
 	if len(entries) != tm.table.rowLen {
-		return fmt.Errorf("too many or too few row entires")
+		return errors.New("too many or too few entries for row length")
 	}
 	tm.table.entries[rowIdx] = entries
 	return nil
