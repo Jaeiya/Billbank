@@ -11,11 +11,14 @@ import (
 )
 
 var (
+	headerStyle = Style.Bold(true)
+
 	columnStyle = Style.
 			BorderBottom(true).
 			Background(BgColor).
 			BorderBackground(BgColor).
 			BorderStyle(lipgloss.NormalBorder())
+
 	rowStyle = Style.Background(BgColor)
 )
 
@@ -167,6 +170,8 @@ func (tm TableModel) ColumnView() string {
 		h.Name = utils.TruncateStr(h.Name, h.Width)
 		cols[i] = columnStyle.
 			AlignHorizontal(tm.header.alignments[i]).
+			Bold(true).
+			Foreground(RealWhite).
 			Width(h.Width).
 			Render(h.Name)
 	}
