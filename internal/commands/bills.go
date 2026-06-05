@@ -63,6 +63,10 @@ func NewBillsHandler(db *sqlite.SqliteDb) cmdcore.CommandHandler {
 		panic(err)
 	}
 
+	model.table.SetHeaderStyle(
+		ui.Style.Foreground(ui.RealWhite).Bold(false),
+	)
+
 	h := cmdcore.NewCmdHandler(
 		"bills",
 		[]string{"bills"},
