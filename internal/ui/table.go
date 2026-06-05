@@ -41,11 +41,8 @@ type TableModel struct {
 type TableOption func(*TableModel) error
 
 type TableHeader struct {
-	Name         string
-	Width        int
-	Foreground   color.Color
-	Background   color.Color
-	SelectedBack color.Color
+	Name  string
+	Width int
 }
 
 type TableEntry struct {
