@@ -44,8 +44,9 @@ type TableModel struct {
 type TableOption func(*TableModel) error
 
 type TableHeader struct {
-	Name  string
-	Width int
+	Name      string
+	Width     int
+	Alignment lipgloss.Position
 }
 
 type TableEntry struct {
@@ -92,16 +93,6 @@ func WithDataAlignments(alignments []lipgloss.Position) TableOption {
 			return fmt.Errorf("table requires %d alignment positions", len(tm.header.values))
 		}
 		tm.table.alignments = alignments
-		return nil
-	}
-}
-
-func WithHeaderAlignments(alignments []lipgloss.Position) TableOption {
-	return func(tm *TableModel) error {
-		if len(alignments) != len(tm.header.values) {
-			return fmt.Errorf("table requires %d alignment positions", len(tm.header.values))
-		}
-		tm.header.alignments = alignments
 		return nil
 	}
 }
@@ -179,7 +170,7 @@ func (tm TableModel) headerView() string {
 
 		h.Name = utils.TruncateStr(h.Name, h.Width)
 		headers[i] = tm.style.header.
-			AlignHorizontal(tm.header.alignments[i]).
+			AlignHorizontal(tm.header.values[i].Alignment).
 			Width(h.Width).
 			Render(h.Name)
 	}

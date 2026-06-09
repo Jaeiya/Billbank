@@ -45,17 +45,14 @@ func NewBillsHandler(db *sqlite.SqliteDb) cmdcore.CommandHandler {
 	model.table, err = ui.NewTable(
 		[]ui.TableHeader{
 			{Name: "Name", Width: nameLen},
-			{Name: "Amount", Width: amountLen},
-			{Name: "Due", Width: dueDayLen},
+			{Name: "Amount", Width: amountLen, Alignment: lipgloss.Right},
+			{Name: "Due", Width: dueDayLen, Alignment: lipgloss.Center},
 			{Name: "Status", Width: statusLen},
-			{Name: "Interval", Width: intervalLen},
-			{Name: "Payment Method", Width: methodLen},
+			{Name: "Interval", Width: intervalLen, Alignment: lipgloss.Center},
+			{Name: "Payment Method", Width: methodLen, Alignment: lipgloss.Center},
 		},
 		rows,
 		ui.WithDataAlignments([]lipgloss.Position{
-			lipgloss.Left, lipgloss.Right, lipgloss.Center, lipgloss.Left, lipgloss.Center, lipgloss.Center,
-		}),
-		ui.WithHeaderAlignments([]lipgloss.Position{
 			lipgloss.Left, lipgloss.Right, lipgloss.Center, lipgloss.Left, lipgloss.Center, lipgloss.Center,
 		}),
 	)
