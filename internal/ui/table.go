@@ -51,7 +51,6 @@ type TableHeader struct {
 type TableEntry struct {
 	Text       string
 	Foreground color.Color
-	Background color.Color
 }
 
 func NewTable(
