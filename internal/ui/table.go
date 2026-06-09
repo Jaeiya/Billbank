@@ -25,7 +25,6 @@ type TableModel struct {
 	table struct {
 		entries    [][]TableEntry
 		alignments []lipgloss.Position
-		rowLen     int
 	}
 	header struct {
 		values     []TableHeader
@@ -38,6 +37,7 @@ type TableModel struct {
 		header lipgloss.Style
 		row    lipgloss.Style
 	}
+	rowLen      int
 	selectedRow int
 }
 
@@ -60,15 +60,15 @@ func NewTable(
 	opts ...TableOption,
 ) (TableModel, error) {
 	t := TableModel{}
-	t.table.rowLen = len(headers)
+	t.rowLen = len(headers)
 
-	if t.table.rowLen != len(entries[0]) {
+	if t.rowLen != len(entries[0]) {
 		return t, errors.New(
 			"table headers and data do not have the same length",
 		)
 	}
 
-	t.table.rowLen = len(headers)
+	t.rowLen = len(headers)
 	t.table.entries = entries
 	t.header.values = headers
 	t.header.alignments = make([]lipgloss.Position, len(headers))
@@ -156,7 +156,7 @@ func (tm *TableModel) SetRow(rowIdx int, entries []TableEntry) error {
 	if rowIdx >= len(tm.table.entries) || rowIdx < 0 {
 		return errors.New("specified row index does not exist")
 	}
-	if len(entries) != tm.table.rowLen {
+	if len(entries) != tm.rowLen {
 		return errors.New("too many or too few entries for row length")
 	}
 	tm.table.entries[rowIdx] = entries
