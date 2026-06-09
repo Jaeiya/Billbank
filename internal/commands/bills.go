@@ -42,8 +42,8 @@ func NewBillsHandler(db *sqlite.SqliteDb) cmdcore.CommandHandler {
 	model.tableLen = nameLen + amountLen + dueDayLen + statusLen + intervalLen + methodLen
 
 	var err error
-	model.table, err = ui.NewTable(
-		[]ui.TableHeader{
+	model.table, err = ui.NewTable(ui.TableData{
+		Headers: []ui.TableHeader{
 			{Name: "Name", Width: nameLen},
 			{Name: "Amount", Width: amountLen, Alignment: lipgloss.Right},
 			{Name: "Due", Width: dueDayLen, Alignment: lipgloss.Center},
@@ -51,11 +51,13 @@ func NewBillsHandler(db *sqlite.SqliteDb) cmdcore.CommandHandler {
 			{Name: "Interval", Width: intervalLen, Alignment: lipgloss.Center},
 			{Name: "Payment Method", Width: methodLen, Alignment: lipgloss.Center},
 		},
-		rows,
+		Entries: rows,
+	},
 		ui.WithColAlignments([]lipgloss.Position{
 			lipgloss.Left, lipgloss.Right, lipgloss.Center, lipgloss.Left, lipgloss.Center, lipgloss.Center,
 		}),
 	)
+
 	if err != nil {
 		panic(err)
 	}

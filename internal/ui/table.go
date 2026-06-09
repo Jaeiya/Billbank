@@ -21,58 +21,59 @@ var (
 	rowStyle = Style.Background(BgColor)
 )
 
-type TableModel struct {
-	table struct {
-		entries    [][]TableEntry
-		alignments []lipgloss.Position
-	}
-	header struct {
-		values     []TableHeader
-		alignments []lipgloss.Position
-	}
-	size struct {
-		width, height int
-	}
-	style struct {
-		header lipgloss.Style
-		row    lipgloss.Style
-	}
-	rowLen      int
-	selectedRow int
-}
 
-type TableOption func(*TableModel) error
+type (
+	TableHeader struct {
+		Name      string
+		Width     int
+		Alignment lipgloss.Position
+	}
 
-type TableHeader struct {
-	Name      string
-	Width     int
-	Alignment lipgloss.Position
-}
+	TableEntry struct {
+		Text       string
+		Foreground color.Color
+	}
 
-type TableEntry struct {
-	Text       string
-	Foreground color.Color
-}
+	TableData struct {
+		Headers []TableHeader
+		Entries [][]TableEntry
+	}
 
-func NewTable(
-	headers []TableHeader,
-	entries [][]TableEntry,
-	opts ...TableOption,
-) (TableModel, error) {
+	TableOption func(*TableModel) error
+
+	TableModel struct {
+		width, height   int
+		headers         []TableHeader
+		entries         [][]TableEntry
+		entryAlignments []lipgloss.Position
+		style           struct {
+			header lipgloss.Style
+			row    lipgloss.Style
+		}
+		selectedRow int
+	}
+)
+
+func NewTable(d TableData, opts ...TableOption) (TableModel, error) {
 	t := TableModel{}
-	t.rowLen = len(headers)
+	if len(d.Headers) == 0 {
+		return t, errors.New("missing table headers")
+	}
 
-	if t.rowLen != len(entries[0]) {
+	if len(d.Entries) == 0 {
+		return t, errors.New("missing table entries")
+	}
+
+	// This is a naive check; we assume subsequent entries match
+	if len(d.Headers) != len(d.Entries[0]) {
 		return t, errors.New(
-			"table headers and data do not have the same length",
+			"table entry length should match table header length",
 		)
 	}
 
-	t.rowLen = len(headers)
-	t.table.entries = entries
-	t.header.values = headers
-	t.header.alignments = make([]lipgloss.Position, len(headers))
-	t.table.alignments = make([]lipgloss.Position, len(headers))
+	t.entries = d.Entries
+	t.headers = d.Headers
+	t.entryAlignments = make([]lipgloss.Position, len(d.Headers))
 
 	t.style.header = headerStyle
 	t.style.row = rowStyle
@@ -89,109 +90,109 @@ func NewTable(
 
 func WithColAlignments(alignments []lipgloss.Position) TableOption {
 	return func(tm *TableModel) error {
-		if len(alignments) != len(tm.header.values) {
-			return fmt.Errorf("table requires %d alignment positions", len(tm.header.values))
+		if len(alignments) != len(tm.headers) {
+			return fmt.Errorf("table requires %d alignment positions", len(tm.headers))
 		}
-		tm.table.alignments = alignments
+		tm.entryAlignments = alignments
 		return nil
 	}
 }
 
-func (tm TableModel) Update(msg tea.Msg) (TableModel, tea.Cmd) {
+func (table TableModel) Update(msg tea.Msg) (TableModel, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "j":
-			if tm.selectedRow+1 == len(tm.table.entries) {
-				return tm, nil
+			if table.selectedRow+1 == len(table.entries) {
+				return table, nil
 			}
-			tm.selectedRow += 1
+			table.selectedRow += 1
 		case "k":
-			if tm.selectedRow-1 < 0 {
-				return tm, nil
+			if table.selectedRow-1 < 0 {
+				return table, nil
 			}
-			tm.selectedRow -= 1
+			table.selectedRow -= 1
 		case "h":
-			tm.selectedRow = 0
+			table.selectedRow = 0
 		case "l":
-			tm.selectedRow = len(tm.table.entries) - 1
+			table.selectedRow = len(table.entries) - 1
 		}
 	}
-	return tm, nil
+	return table, nil
 }
 
-func (tm TableModel) View() tea.View {
+func (table TableModel) View() tea.View {
 	return tea.NewView(
 		JoinVertical(
 			lipgloss.Left,
-			tm.headerView(),
-			tm.rowView(),
+			table.headerView(),
+			table.rowView(),
 		),
 	)
 }
 
-func (tm *TableModel) SetWidth(w int) {
-	tm.size.width = w
+func (table *TableModel) SetWidth(w int) {
+	table.width = w
 }
 
-func (tm *TableModel) SetHeight(h int) {
-	tm.size.height = h
+func (table *TableModel) SetHeight(h int) {
+	table.height = h
 }
 
-func (tm TableModel) SelectedRow() int {
-	return tm.selectedRow
+func (table TableModel) SelectedRow() int {
+	return table.selectedRow
 }
 
-func (tm *TableModel) SetRow(rowIdx int, entries []TableEntry) error {
-	if rowIdx >= len(tm.table.entries) || rowIdx < 0 {
+func (table *TableModel) SetRow(rowIdx int, entries []TableEntry) error {
+	if rowIdx >= len(table.entries) || rowIdx < 0 {
 		return errors.New("specified row index does not exist")
 	}
-	if len(entries) != tm.rowLen {
+	if len(entries) != len(table.headers) {
 		return errors.New("too many or too few entries for row length")
 	}
-	tm.table.entries[rowIdx] = entries
+	table.entries[rowIdx] = entries
 	return nil
 }
 
-func (tm *TableModel) SetHeaderStyle(s lipgloss.Style) {
-	tm.style.header = s.Inherit(tm.style.header)
+func (table *TableModel) SetHeaderStyle(s lipgloss.Style) {
+	table.style.header = s.Inherit(table.style.header)
 }
 
-func (tm *TableModel) SetRowStyle(s lipgloss.Style) {
-	tm.style.row = s.Inherit(tm.style.row)
+func (table *TableModel) SetRowStyle(s lipgloss.Style) {
+	table.style.row = s.Inherit(table.style.row)
 }
 
-func (tm TableModel) headerView() string {
-	headers := make([]string, len(tm.header.values))
-	for i, h := range tm.header.values {
+func (table TableModel) headerView() string {
+	headers := make([]string, len(table.headers))
+	for i, h := range table.headers {
 		if h.Width == 0 {
 			h.Width = utils.RuneCount(h.Name)
 		}
 
 		h.Name = utils.TruncateStr(h.Name, h.Width)
-		headers[i] = tm.style.header.
-			AlignHorizontal(tm.header.values[i].Alignment).
+		headers[i] = table.style.header.
+			AlignHorizontal(table.headers[i].Alignment).
 			Width(h.Width).
 			Render(h.Name)
 	}
 	return JoinHorizontal(lipgloss.Left, headers...)
 }
 
-func (tm TableModel) rowView() string {
-	rows := make([]string, len(tm.table.entries))
-	entryBuf := make([]string, len(tm.table.entries[0]))
+func (table TableModel) rowView() string {
+	rows := make([]string, len(table.entries))
+	entryBuf := make([]string, len(table.entries[0]))
 
-	for i, entries := range tm.table.entries {
+	for i, entries := range table.entries {
 		for k, entry := range entries {
-			width := tm.header.values[k].Width
+			width := table.headers[k].Width
 			if width == 0 {
 				width = utils.RuneCount(entry.Text)
 			}
 			entry.Text = utils.TruncateStr(entry.Text, width)
-			s := tm.style.row.
-				AlignHorizontal(tm.table.alignments[k]).
+			s := table.style.row.
+				AlignHorizontal(table.entryAlignments[k]).
 				Width(width)
-			if i == tm.selectedRow {
+			if i == table.selectedRow {
 				s = s.Background(Black)
 			}
 			s = s.Foreground(entry.Foreground)
