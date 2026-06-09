@@ -52,7 +52,7 @@ func NewBillsHandler(db *sqlite.SqliteDb) cmdcore.CommandHandler {
 			{Name: "Payment Method", Width: methodLen, Alignment: lipgloss.Center},
 		},
 		rows,
-		ui.WithDataAlignments([]lipgloss.Position{
+		ui.WithColAlignments([]lipgloss.Position{
 			lipgloss.Left, lipgloss.Right, lipgloss.Center, lipgloss.Left, lipgloss.Center, lipgloss.Center,
 		}),
 	)

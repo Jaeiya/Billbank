@@ -87,7 +87,7 @@ func NewTable(
 	return t, nil
 }
 
-func WithDataAlignments(alignments []lipgloss.Position) TableOption {
+func WithColAlignments(alignments []lipgloss.Position) TableOption {
 	return func(tm *TableModel) error {
 		if len(alignments) != len(tm.header.values) {
 			return fmt.Errorf("table requires %d alignment positions", len(tm.header.values))
