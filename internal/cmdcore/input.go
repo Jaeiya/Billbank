@@ -134,7 +134,7 @@ func (m InputModel) Init() tea.Cmd {
 		m.input.Reset()
 	}
 
-	return tea.Batch(cmd, textinput.Blink)
+	return cmd
 }
 
 func (m InputModel) Update(msg tea.Msg) (InputModel, tea.Cmd) {

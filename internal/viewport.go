@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"reflect"
 
-	"charm.land/bubbles/v2/textinput"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"github.com/jaeiya/billbank/internal/cmdcore"
@@ -30,7 +29,6 @@ func NewViewport(input cmdcore.InputModel) ViewPort {
 
 func (vp ViewPort) Init() tea.Cmd {
 	teaCmds := []tea.Cmd{
-		textinput.Blink,
 		vp.cmdInput.Init(),
 	}
 	logger.Log(logger.Info, "viewport loaded")
@@ -168,9 +166,6 @@ func (vp *ViewPort) updateHandler(msg cmdcore.UpdateHandlerMsg) tea.Cmd {
 func (vp ViewPort) toggleInput() (ViewPort, tea.Cmd) {
 	var teaCmd tea.Cmd
 	vp.hasHiddenInput = !vp.hasHiddenInput
-	if !vp.hasHiddenInput {
-		teaCmd = textinput.Blink
-	}
 
 	w, h := vp.size()
 	// Updating directly, avoids UI jumping around
