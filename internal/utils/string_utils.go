@@ -136,3 +136,81 @@ func ToISO8601(timeStr string) (time.Time, error) {
 	}
 	return t, nil
 }
+
+// IsNumber returns true if rune is in the range: 0-9
+func IsNumber(r rune) bool {
+	return r >= 48 && r <= 57
+}
+
+// IsAlpha returns true if rune is in the range: a-zA-Z
+func IsAlpha(r rune) bool {
+	return (r >= 65 && r <= 90) || (r >= 97 && r <= 122)
+}
+
+// IsSpecial returns true if rune is any of the following:
+// ! " # $ % & ' ( ) * + , - . /
+// : ; < = > ? @
+// [ \ ] ^ _ `
+// { | } ~
+func IsSpecial(r rune) bool {
+	return (r >= 33 && r <= 47) ||
+		(r >= 58 && r <= 64) ||
+		(r >= 91 && r <= 96) ||
+		(r >= 123 && r <= 126)
+}
+
+// IsAlphaNum returns true if a rune is in the range: a-zA-Z0-9
+func IsAlphaNum(r rune) bool {
+	return IsAlpha(r) || IsNumber(r)
+}
+
+// IsAlphaStr returns true if string runes are in the range: a-zA-Z0-9
+//
+// Or contains: space
+func IsAlphaStr(s string) bool {
+	for _, r := range s {
+		if !IsAlphaNum(r) && r != 32 {
+			return false
+		}
+	}
+	return true
+}
+
+// IsIntStr returns true if the string can be
+// parsed as a uint64.
+func IsIntStr(s string) bool {
+	if len(s) == 0 || len(s) > 19 {
+		return false
+	}
+	for _, r := range s {
+		if !IsNumber(r) {
+			return false
+		}
+	}
+	return true
+}
+
+// IsFloatStr returns true if the string can
+// be parsed as a precise unsigned float64.
+func IsFloatStr(s string) bool {
+	// After 15, float will round
+	if len(s) < 2 || len(s) > 15 {
+		return false
+	}
+
+	var decimalCount int
+
+	for _, r := range s {
+		if r != '.' && !IsNumber(r) {
+			return false
+		}
+		if r == '.' {
+			decimalCount++
+			if decimalCount > 1 {
+				return false
+			}
+		}
+	}
+
+	return decimalCount != 0
+}

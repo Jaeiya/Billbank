@@ -43,28 +43,6 @@ func IsInt(v any) bool {
 	return false
 }
 
-// IsNumber returns true if key is in the range: 0-9
-func IsNumber(key rune) bool {
-	return key >= 48 && key <= 57
-}
-
-// IsAlpha returns true if key is in the range: a-zA-Z
-func IsAlpha(key rune) bool {
-	return (key >= 65 && key <= 90) || (key >= 97 && key <= 122)
-}
-
-// IsSpecial returns true if key is any of the following:
-// ! " # $ % & ' ( ) * + , - . /
-// : ; < = > ? @
-// [ \ ] ^ _ `
-// { | } ~
-func IsSpecial(key rune) bool {
-	return (key >= 33 && key <= 47) ||
-		(key >= 58 && key <= 64) ||
-		(key >= 91 && key <= 96) ||
-		(key >= 123 && key <= 126)
-}
-
 func ParseInt(s string) (int, error) {
 	var newInt int64
 	var err error
