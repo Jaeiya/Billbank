@@ -10,7 +10,7 @@ var (
 	FgDimColor      = lipgloss.Color("#A6BACA")
 	FgSuccessColor  = lipgloss.Color("#00FFA2")
 	FgWarnColor     = lipgloss.Color("#FFE326")
-	FgErrColor      = lipgloss.Color("#FF5E5E")
+	FgErrColor      = lipgloss.Color("#FF6C6C")
 	FgErrLightColor = lipgloss.Color("#FE8BFF")
 
 	Black   = lipgloss.Color("0")
