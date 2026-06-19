@@ -29,13 +29,6 @@ func GetWorkingDir() string {
 	return workingDir
 }
 
-func IsString(v any) bool {
-	if _, ok := v.(string); ok {
-		return true
-	}
-	return false
-}
-
 func IsInt(v any) bool {
 	if _, ok := v.(int); ok {
 		return true
@@ -60,12 +53,4 @@ func ParseInt(s string) (int, error) {
 	}
 
 	return int(newInt), nil
-}
-
-func ToAnySlice[T any](s []T) []any {
-	newSlice := make([]any, len(s))
-	for i, v := range s {
-		newSlice[i] = v
-	}
-	return newSlice
 }
