@@ -13,6 +13,7 @@ import (
 )
 
 const blinkSpeed = 400
+const inputSize = 18
 
 type FormInputType uint8
 
@@ -24,6 +25,20 @@ const (
 	IntegerInput  // Allow Number and Backspace keys only; validates as positive int64
 	FloatInput    // Allow Number, Decimal, and Backspace keys only; validates as positive float64
 	PriceInput    // Allows FloatInput keys; validation enforces 2 decimal places
+)
+
+var (
+	formItemTitleStyle = Style.Bold(true).
+				Width(inputSize + 1).
+				BorderRight(true).
+				BorderStyle(lipgloss.NormalBorder()).
+				BorderForeground(Gray).
+				Foreground(White)
+	formItemBorderStyle = Style.
+				BorderRight(true).
+				Width(inputSize + 1).
+				BorderStyle(lipgloss.NormalBorder()).
+				BorderForeground(Gray)
 )
 
 type FormInput struct {
@@ -40,7 +55,7 @@ func NewFormInput() FormInput {
 	fi := FormInput{}
 	fi.prompt = "> "
 
-	fi.input = NewDefaultInput(15)
+	fi.input = NewDefaultInput(inputSize - 3)
 
 	s := fi.input.Styles()
 	s.Cursor.Color = BrightGreen
@@ -100,29 +115,23 @@ func (fi FormInput) Prompt(p string) FormInput {
 
 func (fi FormInput) view() string {
 	isFocused := fi.input.Focused()
-	borderColor := Gray
-	titleColor := White
+	titleStyle := formItemTitleStyle
+	activeBorderStyle := Style.BorderRight(true).BorderStyle(lipgloss.NormalBorder()).BorderForeground(Gray)
 	fi.input.Prompt = ""
+
 	if isFocused {
-		borderColor = BrightYellow
-		titleColor = Yellow
+		titleStyle = titleStyle.BorderForeground(BrightYellow).Foreground(Yellow)
+		activeBorderStyle = activeBorderStyle.BorderForeground(BrightYellow)
+		fi.input.SetWidth(inputSize - 3)
 		fi.input.Prompt = fi.prompt
 	}
 
-	return JoinVertical(lipgloss.Left,
-		Style.Bold(true).
-			BorderLeft(true).
-			BorderStyle(lipgloss.NormalBorder()).
-			BorderForeground(borderColor).
-			Foreground(titleColor).
-			PaddingLeft(1).
-			Render(fi.title),
-		Style.
-			BorderLeft(true).
-			BorderStyle(lipgloss.NormalBorder()).
-			BorderForeground(borderColor).
-			PaddingRight(1).
-			Render("")+fi.input.View(),
+	return Style.Width(inputSize + 5).Align(lipgloss.Left).Render(
+		JoinVertical(lipgloss.Left,
+			titleStyle.Render(fi.title),
+			Style.Width(inputSize).Render(fi.input.View())+activeBorderStyle.Render(""),
+			formItemBorderStyle.Render(""),
+		),
 	)
 
 }
@@ -253,7 +262,7 @@ func (f Form) Update(msg tea.Msg) (Form, tea.Cmd) {
 
 	cmds = append(cmds, f.updateInputs(msg))
 
-	// Jumpstart blinking virtual cursor
+	// Jump-start blinking virtual cursor
 	if f.isInit {
 		cmds = append(cmds, textinput.Blink)
 		f.isInit = false
@@ -266,7 +275,8 @@ func (f Form) View() string {
 	var sb strings.Builder
 
 	for _, entry := range f.entries {
-		sb.WriteString(entry.view() + "\n\n")
+		sb.WriteString(entry.view())
+		sb.WriteString("\n")
 	}
 
 	formStatus := f.formStatus("Ok", true)
@@ -274,26 +284,29 @@ func (f Form) View() string {
 		formStatus = f.formStatus(f.err.Error(), false)
 	}
 
-	return JoinHorizontal(lipgloss.Left, Style.Width(20).PaddingTop(1).Render(sb.String()), formStatus)
+	header := Style.Foreground(BrightMagenta).Render(f.header)
+	form := JoinHorizontal(lipgloss.Left, Style.Width(inputSize+2).PaddingTop(1).Render(sb.String()), formStatus)
+
+	return JoinVertical(lipgloss.Center, header, form)
 }
 
 func (f Form) formStatus(status string, isGood bool) string {
-	const formSize = 30
+	const formSize = 35
 
 	statusWrapper := Style.
-		Border(lipgloss.RoundedBorder()).
-		BorderForeground(Gray).
+		Width(formSize).
 		Foreground(White).
-		MarginLeft(2).
+		MarginTop(1).
+		MarginLeft(1).
 		Padding(0, 1, 0)
 
 	entry := f.entries[f.tabPos]
 	title := entry.title
 	if entry.isOptional {
-		title = JoinVertical(lipgloss.Center, title, Style.Foreground(Magenta).Align(lipgloss.Center).Render("(Optional)"))
+		title = JoinHorizontal(lipgloss.Left, title, Style.Foreground(Magenta).Render(" (Optional)"))
 	}
 
-	formHead := Style.Width(formSize).Align(lipgloss.Center).Render(title)
+	formHead := Style.Foreground(Yellow).Align(lipgloss.Left).Render(title)
 
 	statusChar := "\u2713 "
 	statusFg := FgSuccessColor
@@ -302,7 +315,7 @@ func (f Form) formStatus(status string, isGood bool) string {
 		statusFg = FgErrColor
 	}
 
-	formBody := Style.Width(formSize).Foreground(statusFg).Render(statusChar + status)
+	formBody := Style.Foreground(statusFg).Render(statusChar + status)
 
 	if len(f.entries[f.tabPos].description) > 0 {
 		return statusWrapper.Render(
