@@ -12,8 +12,10 @@ import (
 	"github.com/jaeiya/billbank/internal/utils"
 )
 
-const blinkSpeed = 400
-const inputSize = 18
+const (
+	blinkSpeed = 400
+	inputSize  = 18
+)
 
 type FormInputType uint8
 
@@ -28,18 +30,38 @@ const (
 )
 
 var (
-	formItemTitleStyle = Style.Bold(true).
-				Width(inputSize + 1).
-				BorderRight(true).
-				BorderStyle(lipgloss.NormalBorder()).
-				BorderForeground(Gray).
-				Foreground(White)
-	formItemBorderStyle = Style.
-				BorderRight(true).
-				Width(inputSize + 1).
-				BorderStyle(lipgloss.NormalBorder()).
-				BorderForeground(Gray)
+	formActiveColor = BrightYellow
+	formBorderColor = lipgloss.Color("#505072")
 )
+
+var formStyles = struct {
+	itemTitle   lipgloss.Style
+	inputBorder lipgloss.Style
+	textInput   textinput.Styles
+}{
+	itemTitle: Style.
+		Bold(true).
+		Width(inputSize + 1).
+		BorderRight(true).
+		BorderStyle(lipgloss.NormalBorder()).
+		BorderForeground(formBorderColor),
+
+	inputBorder: Style.
+		BorderRight(true).
+		BorderStyle(lipgloss.NormalBorder()).
+		BorderForeground(formBorderColor),
+
+	textInput: func() textinput.Styles {
+		s := textinput.DefaultStyles(false)
+		s.Cursor.Color = BrightGreen
+		s.Cursor.BlinkSpeed = time.Millisecond * blinkSpeed
+		s.Focused.Text = s.Focused.Text.Foreground(BrightBlue)
+		s.Blurred.Text = s.Blurred.Text.Foreground(Green)
+		s.Focused.Prompt = s.Focused.Prompt.Foreground(BrightGreen)
+		s.Focused.Suggestion = s.Focused.Suggestion.Foreground(Gray)
+		return s
+	}(),
+}
 
 type FormInput struct {
 	title       string
@@ -54,18 +76,8 @@ type FormInput struct {
 func NewFormInput() FormInput {
 	fi := FormInput{}
 	fi.prompt = "> "
-
 	fi.input = NewDefaultInput(inputSize - 3)
-
-	s := fi.input.Styles()
-	s.Cursor.Color = BrightGreen
-	s.Cursor.BlinkSpeed = time.Millisecond * blinkSpeed
-	s.Focused.Text = s.Focused.Text.Foreground(BrightBlue)
-	s.Blurred.Text = s.Blurred.Text.Foreground(Green)
-	s.Focused.Prompt = s.Focused.Prompt.Foreground(BrightGreen)
-	s.Focused.Suggestion = s.Focused.Suggestion.Foreground(Gray)
-	fi.input.SetStyles(s)
-
+	fi.input.SetStyles(formStyles.textInput)
 	return fi
 }
 
@@ -115,25 +127,36 @@ func (fi FormInput) Prompt(p string) FormInput {
 
 func (fi FormInput) view() string {
 	isFocused := fi.input.Focused()
-	titleStyle := formItemTitleStyle
-	activeBorderStyle := Style.BorderRight(true).BorderStyle(lipgloss.NormalBorder()).BorderForeground(Gray)
+	titleStyle := formStyles.itemTitle
+	borderStyle := formStyles.inputBorder
+
 	fi.input.Prompt = ""
 
+	borderUtil := utils.GetBorderStyle(utils.SingleLine)
+	focusedLine := string(borderUtil.RightT)
+
 	if isFocused {
-		titleStyle = titleStyle.BorderForeground(BrightYellow).Foreground(Yellow)
-		activeBorderStyle = activeBorderStyle.BorderForeground(BrightYellow)
+		titleStyle = titleStyle.BorderForeground(formActiveColor).Foreground(formActiveColor)
+		borderStyle = borderStyle.BorderForeground(formActiveColor)
 		fi.input.SetWidth(inputSize - 3)
 		fi.input.Prompt = fi.prompt
+		focusedLine = strings.Repeat(string(borderUtil.Horizontal), inputSize-1) +
+			Style.Foreground(formActiveColor).Render(string(borderUtil.Horizontal)+
+				string(borderUtil.RightT),
+			)
 	}
 
 	return Style.Width(inputSize + 5).Align(lipgloss.Left).Render(
-		JoinVertical(lipgloss.Left,
+		JoinVertical(
+			lipgloss.Left,
 			titleStyle.Render(fi.title),
-			Style.Width(inputSize).Render(fi.input.View())+activeBorderStyle.Render(""),
-			formItemBorderStyle.Render(""),
+			Style.Width(inputSize).Render(fi.input.View())+borderStyle.Render(""),
+			Style.Foreground(formBorderColor).
+				Width(inputSize+1).
+				Align(lipgloss.Right).
+				Render(focusedLine),
 		),
 	)
-
 }
 
 func (fi FormInput) validate() error {
@@ -184,23 +207,43 @@ func (fi FormInput) validate() error {
 	default:
 		return errors.New("fatal::missing form input type")
 	}
-
 }
 
 type Form struct {
 	entries []FormInput
 	values  []string
 	header  string
-	tabPos  int
-	isInit  bool
-	err     error
+	buttons struct {
+		save   Button
+		cancel Button
+	}
+	tabPos int
+	isInit bool
+	err    error
 }
 
 func NewForm(header string, inputs ...FormInput) Form {
-	f := Form{}
-	f.header = header
-	f.isInit = true
-	f.entries = inputs
+	f := Form{
+		header:  header,
+		isInit:  true,
+		entries: inputs,
+	}
+
+	saveButton := NewButton("Save")
+	cancelButton := NewButton("Cancel")
+
+	s := saveButton.Styles()
+	s.Text.Focused = s.Text.Focused.Foreground(BrightGreen)
+	s.Text.Blurred = s.Text.Blurred.Foreground(Gray)
+	s.Selected.Foreground(White)
+	saveButton.SetStyle(s)
+
+	s.Text.Focused = s.Text.Focused.Foreground(BrightRed)
+	cancelButton.SetStyle(s)
+
+	f.buttons.save = saveButton
+	f.buttons.cancel = cancelButton
+
 	for i := range f.entries {
 		if i == 0 {
 			continue
@@ -218,8 +261,22 @@ func (f Form) Update(msg tea.Msg) (Form, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
 		switch msg.String() {
-		case "enter", "ctrl+j":
+		case "ctrl+j":
+			if f.hasFocusedButtons() {
+				return f, nil
+			}
+			f.entries[f.tabPos].input.Blur()
+			f.tabPos = len(f.entries) - 1
+			f.buttons.save.Focus()
+			return f, nil
+
+		case "enter":
 			if f.tabPos == len(f.entries)-1 {
+				if f.hasFocusedButtons() {
+					return f, nil
+				}
+				f.entries[f.tabPos].input.Blur()
+				f.buttons.save.Focus()
 				return f, nil
 			}
 
@@ -233,17 +290,65 @@ func (f Form) Update(msg tea.Msg) (Form, tea.Cmd) {
 			f.entries[f.tabPos].input.Focus()
 			f.isInit = true
 
+		case "h", "left":
+			if f.buttons.cancel.Focused() {
+				f.buttons.cancel.Blur()
+				f.buttons.save.Focus()
+			}
+
+		case "l", "right":
+			if f.buttons.save.Focused() {
+				f.buttons.save.Blur()
+				f.buttons.cancel.Focus()
+			}
+
 		case "tab":
+			// Toggle buttons back and forth
+			if f.hasFocusedButtons() {
+				if f.buttons.save.Focused() {
+					f.buttons.save.Blur()
+					f.buttons.cancel.Focus()
+				} else {
+					f.buttons.cancel.Blur()
+					f.buttons.save.Focus()
+				}
+				return f, nil
+			}
+
 			// Manually update focused input
 			f.entries[f.tabPos].input, cmd = f.entries[f.tabPos].input.Update(msg)
+			cmds = append(cmds, cmd)
 
 			f.err = f.entries[f.tabPos].validate()
 			if f.err != nil { // do not tab on error
 				return f, nil
 			}
-			return f, cmd
 
-		case "shift+tab", "ctrl+k":
+			if f.tabPos+1 == len(f.entries) {
+				f.buttons.save.Focus()
+				f.entries[f.tabPos].input.Blur()
+				return f, cmd
+			}
+
+			f.entries[f.tabPos].input.Blur()
+			f.tabPos++
+			cmds = append(cmds, f.entries[f.tabPos].input.Focus())
+			return f, tea.Batch(cmds...)
+
+		case "backspace":
+			if f.hasFocusedButtons() {
+				f.buttons.save.Blur()
+				f.buttons.cancel.Blur()
+				return f, f.entries[f.tabPos].input.Focus()
+			}
+
+		case "shift+tab":
+			if f.hasFocusedButtons() {
+				f.buttons.save.Blur()
+				f.buttons.cancel.Blur()
+				return f, f.entries[f.tabPos].input.Focus()
+			}
+
 			if f.tabPos == 0 {
 				return f, nil
 			}
@@ -255,8 +360,8 @@ func (f Form) Update(msg tea.Msg) (Form, tea.Cmd) {
 
 			f.entries[f.tabPos].input.Blur()
 			f.tabPos--
-			f.entries[f.tabPos].input.Focus()
 			f.isInit = true
+			return f, f.entries[f.tabPos].input.Focus()
 		}
 	}
 
@@ -274,9 +379,11 @@ func (f Form) Update(msg tea.Msg) (Form, tea.Cmd) {
 func (f Form) View() string {
 	var sb strings.Builder
 
-	for _, entry := range f.entries {
+	for i, entry := range f.entries {
+		if i != 0 {
+			sb.WriteByte('\n')
+		}
 		sb.WriteString(entry.view())
-		sb.WriteString("\n")
 	}
 
 	formStatus := f.formStatus("Ok", true)
@@ -284,10 +391,33 @@ func (f Form) View() string {
 		formStatus = f.formStatus(f.err.Error(), false)
 	}
 
-	header := Style.Foreground(BrightMagenta).Render(f.header)
-	form := JoinHorizontal(lipgloss.Left, Style.Width(inputSize+2).PaddingTop(1).Render(sb.String()), formStatus)
+	cancelView := f.buttons.cancel.View() + " "
+	if f.buttons.cancel.Focused() {
+		cancelView = strings.TrimRight(cancelView, " ")
+	}
 
-	return JoinVertical(lipgloss.Center, header, form)
+	buttons := f.buttons.save.View() + "   " + cancelView
+
+	border := Style.Border(lipgloss.RoundedBorder()).
+		PaddingLeft(1).
+		PaddingRight(1).
+		BorderForeground(lipgloss.Color("#505072"))
+	form := border.Render(
+		JoinVertical(lipgloss.Right,
+			JoinHorizontal(lipgloss.Left, Style.Width(inputSize+2).Render(sb.String()), formStatus),
+			buttons,
+		),
+	)
+	header := Style.Foreground(BrightMagenta).
+		Width(lipgloss.Width(form)).
+		Align(lipgloss.Center).
+		Render(f.header)
+
+	return JoinVertical(lipgloss.Left, header, form)
+}
+
+func (f Form) hasFocusedButtons() bool {
+	return f.buttons.save.Focused() || f.buttons.cancel.Focused()
 }
 
 func (f Form) formStatus(status string, isGood bool) string {
@@ -295,15 +425,19 @@ func (f Form) formStatus(status string, isGood bool) string {
 
 	statusWrapper := Style.
 		Width(formSize).
+		MarginTop(0).
 		Foreground(White).
-		MarginTop(1).
 		MarginLeft(1).
 		Padding(0, 1, 0)
 
 	entry := f.entries[f.tabPos]
 	title := entry.title
 	if entry.isOptional {
-		title = JoinHorizontal(lipgloss.Left, title, Style.Foreground(Magenta).Render(" (Optional)"))
+		title = JoinHorizontal(
+			lipgloss.Left,
+			title,
+			Style.Foreground(Magenta).Render(" (Optional)"),
+		)
 	}
 
 	formHead := Style.Foreground(Yellow).Align(lipgloss.Left).Render(title)
