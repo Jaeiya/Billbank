@@ -482,6 +482,12 @@ func (f *Form) updateInputs(msg tea.Msg) tea.Cmd {
 
 			switch msg := msg.(type) {
 			case tea.KeyPressMsg:
+				// Inputs handle alt keys internally
+				if msg.Mod.Contains(tea.ModAlt) {
+					f.entries[i].input, cmd = f.entries[i].input.Update(msg)
+					return cmd
+				}
+
 				key = msg.Code
 				switch msg.String() {
 				// Do not restrict control keys
