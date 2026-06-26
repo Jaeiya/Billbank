@@ -22,11 +22,11 @@ type FormInputType uint8
 const (
 	AnyInput FormInputType = iota
 
-	AlphaInput    // Allow Alphabet, Space, and Backspace keys only; no validation limits
-	AlphaNumInput // Allow Alphabet, Number, Space, and Backspace keys only; no validation limits
-	IntegerInput  // Allow Number and Backspace keys only; validates as positive int64
-	FloatInput    // Allow Number, Decimal, and Backspace keys only; validates as positive float64
-	PriceInput    // Allows FloatInput keys; validation enforces 2 decimal places
+	AlphaInput    // Alphabet, Space, and Backspace keys only; no validation
+	AlphaNumInput // Alphabet, Number, Space, and Backspace keys only; no validation
+	IntegerInput  // Number and Backspace keys only; validates as positive int64
+	FloatInput    // Number, Decimal, and Backspace keys only; validates as positive float64
+	PriceInput    // FloatInput keys only; validation enforces 2 decimal places
 )
 
 var (
