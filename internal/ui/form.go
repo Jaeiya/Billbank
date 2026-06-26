@@ -105,13 +105,13 @@ func (fi FormInput) Value(s string) FormInput {
 	return fi
 }
 
-func (fi FormInput) Validate(v func(s string) error) FormInput {
+func (fi FormInput) Validator(v func(s string) error) FormInput {
 	fi.validator = v
 	return fi
 }
 
-func (fi FormInput) Optional(v bool) FormInput {
-	fi.isOptional = v
+func (fi FormInput) Optional() FormInput {
+	fi.isOptional = true
 	return fi
 }
 
