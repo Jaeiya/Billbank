@@ -221,7 +221,7 @@ func (fi FormInput) validate() error {
 				return errors.New("missing cents place")
 			}
 
-			if strLen == 2 && inputStr[1] == '.' {
+			if inputStr[strLen-1] == '.' {
 				return errors.New("trailing decimal not allowed")
 			}
 
