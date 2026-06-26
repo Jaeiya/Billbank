@@ -217,16 +217,16 @@ func (fi FormInput) validate() error {
 				return errors.New("invalid price")
 			}
 
-			if strLen == 2 && inputStr[0] == '.' {
-				return errors.New("missing cents place")
-			}
-
 			if inputStr[strLen-1] == '.' {
 				return errors.New("trailing decimal not allowed")
 			}
 
-			if strLen > 2 && inputStr[strLen-3] != '.' {
-				return errors.New("too many or too few cent places")
+			if inputStr[strLen-2] == '.' {
+				return errors.New("missing cents place")
+			}
+
+			if inputStr[strLen-3] != '.' {
+				return errors.New("too many cents places")
 			}
 			return nil
 		}
