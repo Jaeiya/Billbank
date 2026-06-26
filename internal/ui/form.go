@@ -105,11 +105,17 @@ func (fi FormInput) Value(s string) FormInput {
 	return fi
 }
 
+// Validator validates the form input with the provided validator
+// func.
+//
+// 🟡 Overrides default validation activated by InputType()
 func (fi FormInput) Validator(v func(s string) error) FormInput {
 	fi.validator = v
 	return fi
 }
 
+// Optional sets the field to optional. By default, all input
+// fields are required.
 func (fi FormInput) Optional() FormInput {
 	fi.isOptional = true
 	return fi
@@ -483,12 +489,14 @@ func (f Form) formStatus(status string, isGood bool) string {
 func (f *Form) updateInputs(msg tea.Msg) tea.Cmd {
 	var cmd tea.Cmd
 	for i := range f.entries {
+		// Focused input
 		if i == f.tabPos {
 			switch msg := msg.(type) {
 			case tea.KeyPressMsg:
 				if !f.isValidKey(f.entries[i].inputType, msg) {
 					return cmd
 				}
+			}
 
 			f.entries[i].input, cmd = f.entries[i].input.Update(msg)
 			break
