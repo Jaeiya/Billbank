@@ -66,7 +66,7 @@ var formStyles = struct {
 
 type FormInput struct {
 	input       textinput.Model
-	validator   func(s string) error
+	validator   func(s string, defaultValidator func() error) error
 	title       string
 	description string
 	prompt      string
@@ -109,7 +109,7 @@ func (fi FormInput) Value(s string) FormInput {
 // func.
 //
 // 🟡 Overrides default validation activated by InputType()
-func (fi FormInput) Validator(v func(s string) error) FormInput {
+func (fi FormInput) Validator(v func(s string, defaultValidator func() error) error) FormInput {
 	fi.validator = v
 	return fi
 }
@@ -173,47 +173,66 @@ func (fi FormInput) validate() error {
 		return fmt.Errorf("%s is a required field", fi.title)
 	}
 
-	if fi.validator != nil {
-		return fi.validator(inputStr)
-	}
+	var defaultValidator func() error
 
 	switch fi.inputType {
-	case AnyInput:
-		return nil
-
-	case AlphaNumInput:
-		if !utils.IsAlphaStr(inputStr) {
-			return errors.New("invalid characters in string")
-		}
-		return nil
-
-	case IntegerInput:
-		if !utils.IsIntStr(inputStr) {
-			return errors.New("invalid number")
-		}
-		return nil
-
-	case FloatInput:
-		if !utils.IsFloatStr(inputStr) {
-			return errors.New("invalid float")
-		}
-		return nil
-
-	case PriceInput:
-		if utils.IsIntStr(inputStr) {
+	case AnyInput, AlphaInput:
+		defaultValidator = func() error {
 			return nil
 		}
-		if !utils.IsFloatStr(inputStr) {
-			return errors.New("invalid price")
-		}
-		if len(inputStr) > 2 && inputStr[len(inputStr)-3] != '.' {
-			return errors.New("too many or too few cent places")
-		}
-		return nil
 
-	default:
-		return errors.New("fatal::missing form input type")
+	case AlphaNumInput:
+		defaultValidator = func() error {
+			if !utils.IsAlphaStr(inputStr) {
+				return errors.New("invalid characters in string")
+			}
+			return nil
+		}
+
+	case IntegerInput:
+		defaultValidator = func() error {
+			if !utils.IsIntStr(inputStr) {
+				return errors.New("invalid number")
+			}
+			return nil
+		}
+
+	case FloatInput:
+		defaultValidator = func() error {
+			if !utils.IsFloatStr(inputStr) {
+				return errors.New("invalid float")
+			}
+			return nil
+		}
+
+	case PriceInput:
+		defaultValidator = func() error {
+			strLen := len(inputStr)
+
+			if utils.IsIntStr(inputStr) {
+				return nil
+			}
+
+			if !utils.IsFloatStr(inputStr) {
+				return errors.New("invalid price")
+			}
+
+			if strLen > 2 && inputStr[strLen-3] != '.' {
+				return errors.New("too many or too few cent places")
+			}
+			return nil
+		}
 	}
+
+	if defaultValidator == nil {
+		return errors.New("fatal::missing form input type ")
+	}
+
+	if fi.validator != nil {
+		return fi.validator(inputStr, defaultValidator)
+	}
+
+	return defaultValidator()
 }
 
 type Form struct {
