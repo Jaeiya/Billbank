@@ -105,11 +105,11 @@ func (fi FormInput) Value(s string) FormInput {
 	return fi
 }
 
-// Validator validates the form input with the provided validator
-// func.
+// Validator overwrites the default InputType validator with
+// the one specified. Not all InputType's have a validator.
 //
-// 🟡 Overrides default validation activated by InputType()
-func (fi FormInput) Validator(v func(s string, defaultValidator func() error) error) FormInput {
+// 🔵 The default validator is passed as the defaultV arg.
+func (fi FormInput) Validator(v func(s string, defaultV func() error) error) FormInput {
 	fi.validator = v
 	return fi
 }
