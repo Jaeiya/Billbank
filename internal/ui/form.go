@@ -3,6 +3,7 @@ package ui
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -64,12 +65,12 @@ var formStyles = struct {
 }
 
 type FormInput struct {
+	input       textinput.Model
+	validator   func(s string) error
 	title       string
 	description string
 	prompt      string
 	inputType   FormInputType
-	input       textinput.Model
-	validator   func(s string) error
 	isOptional  bool
 }
 
@@ -403,8 +404,13 @@ func (f Form) View() string {
 		PaddingRight(1).
 		BorderForeground(lipgloss.Color("#505072"))
 	form := border.Render(
-		JoinVertical(lipgloss.Right,
-			JoinHorizontal(lipgloss.Left, Style.Width(inputSize+2).Render(sb.String()), formStatus),
+		JoinVertical(
+			lipgloss.Right,
+			JoinHorizontal(
+				lipgloss.Left,
+				Style.Width(inputSize+2).Render(sb.String()),
+				formStatus,
+			),
 			buttons,
 		),
 	)
@@ -478,57 +484,53 @@ func (f *Form) updateInputs(msg tea.Msg) tea.Cmd {
 	var cmd tea.Cmd
 	for i := range f.entries {
 		if i == f.tabPos {
-			var key rune
-
 			switch msg := msg.(type) {
 			case tea.KeyPressMsg:
-				// Inputs handle alt keys internally
-				if msg.Mod.Contains(tea.ModAlt) {
-					f.entries[i].input, cmd = f.entries[i].input.Update(msg)
+				if !f.isValidKey(f.entries[i].inputType, msg) {
 					return cmd
 				}
 
-				key = msg.Code
-				switch msg.String() {
-				// Do not restrict control keys
-				case "enter", "tab", "backspace":
-					f.entries[i].input, cmd = f.entries[i].input.Update(msg)
-					return cmd
-				}
-
-			default:
-				f.entries[i].input, cmd = f.entries[i].input.Update(msg)
-				return cmd
-			}
-
-			switch f.entries[i].inputType {
-			case AlphaInput:
-				if utils.IsAlpha(key) || key == 32 {
-					f.entries[i].input, cmd = f.entries[i].input.Update(msg)
-				}
-
-			case AlphaNumInput:
-				// Only allows numbers, upper/lower case alphabet, and space
-				if utils.IsAlphaNum(key) || key == 32 {
-					f.entries[i].input, cmd = f.entries[i].input.Update(msg)
-				}
-
-			case IntegerInput:
-				// Only allow numbers
-				if utils.IsNumber(key) {
-					f.entries[i].input, cmd = f.entries[i].input.Update(msg)
-				}
-
-			case FloatInput, PriceInput:
-				// Only allow decimal and numbers
-				if key == '.' || utils.IsNumber(key) {
-					f.entries[i].input, cmd = f.entries[i].input.Update(msg)
-				}
-
-			default:
-				f.entries[i].input, cmd = f.entries[i].input.Update(msg)
-			}
+			f.entries[i].input, cmd = f.entries[i].input.Update(msg)
+			break
 		}
 	}
 	return cmd
+}
+
+// isValidKey returns true if the specified input type allows
+// the pressed key.
+func (f Form) isValidKey(t FormInputType, keyMsg tea.KeyPressMsg) bool {
+	key := keyMsg.Code
+	keyStr := keyMsg.String()
+
+	// Special keys that should always be allowed
+	allowedKeyMatches := [4]bool{
+		keyStr == "enter",
+		keyStr == "tab",
+		keyStr == "backspace",
+		keyMsg.Mod.Contains(tea.ModAlt),
+	}
+
+	if slices.Contains(allowedKeyMatches[:], true) {
+		return true
+	}
+
+	switch t {
+	case AnyInput:
+		return true
+
+	case AlphaInput:
+		return utils.IsAlpha(key) || key == ' '
+
+	case AlphaNumInput:
+		return utils.IsAlphaNum(key) || key == ' '
+
+	case IntegerInput:
+		return utils.IsNumber(key)
+
+	case FloatInput, PriceInput:
+		return key == '.' || utils.IsNumber(key)
+	}
+
+	return false
 }
