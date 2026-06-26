@@ -30,6 +30,14 @@ const (
 	PriceInput    // FloatInput keys only; validation enforces 2 decimal places
 )
 
+type formFocusState uint8
+
+const (
+	formFocusInput formFocusState = iota
+	formFocusSave
+	formFocusCancel
+)
+
 var (
 	formActiveColor = BrightYellow
 	formBorderColor = lipgloss.Color("#505072")
@@ -251,6 +259,7 @@ type Form struct {
 		save   Button
 		cancel Button
 	}
+	focus  formFocusState
 	tabPos int
 	isInit bool
 	err    error
@@ -296,20 +305,22 @@ func (f Form) Update(msg tea.Msg) (Form, tea.Cmd) {
 	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "ctrl+j":
-			if f.hasFocusedButtons() {
+			if f.focus > formFocusInput {
 				return f, nil
 			}
 			f.entries[f.tabPos].input.Blur()
 			f.tabPos = len(f.entries) - 1
+			f.focus = formFocusSave
 			f.buttons.save.Focus()
 			return f, nil
 
 		case "enter":
 			if f.tabPos == len(f.entries)-1 {
-				if f.hasFocusedButtons() {
+				if f.focus > formFocusInput {
 					return f, nil
 				}
 				f.entries[f.tabPos].input.Blur()
+				f.focus = formFocusSave
 				f.buttons.save.Focus()
 				return f, nil
 			}
@@ -328,23 +339,27 @@ func (f Form) Update(msg tea.Msg) (Form, tea.Cmd) {
 			if f.buttons.cancel.Focused() {
 				f.buttons.cancel.Blur()
 				f.buttons.save.Focus()
+				f.focus = formFocusSave
 			}
 
 		case "l", "right":
 			if f.buttons.save.Focused() {
 				f.buttons.save.Blur()
 				f.buttons.cancel.Focus()
+				f.focus = formFocusCancel
 			}
 
 		case "tab":
 			// Toggle buttons back and forth
-			if f.hasFocusedButtons() {
+			if f.focus > formFocusInput {
 				if f.buttons.save.Focused() {
 					f.buttons.save.Blur()
 					f.buttons.cancel.Focus()
+					f.focus = formFocusCancel
 				} else {
 					f.buttons.cancel.Blur()
 					f.buttons.save.Focus()
+					f.focus = formFocusSave
 				}
 				return f, nil
 			}
@@ -360,6 +375,7 @@ func (f Form) Update(msg tea.Msg) (Form, tea.Cmd) {
 
 			if f.tabPos+1 == len(f.entries) {
 				f.buttons.save.Focus()
+				f.focus = formFocusSave
 				f.entries[f.tabPos].input.Blur()
 				return f, cmd
 			}
@@ -370,16 +386,18 @@ func (f Form) Update(msg tea.Msg) (Form, tea.Cmd) {
 			return f, tea.Batch(cmds...)
 
 		case "backspace":
-			if f.hasFocusedButtons() {
+			if f.focus > formFocusInput {
 				f.buttons.save.Blur()
 				f.buttons.cancel.Blur()
+				f.focus = formFocusInput
 				return f, f.entries[f.tabPos].input.Focus()
 			}
 
 		case "shift+tab":
-			if f.hasFocusedButtons() {
+			if f.focus > formFocusInput {
 				f.buttons.save.Blur()
 				f.buttons.cancel.Blur()
+				f.focus = formFocusInput
 				return f, f.entries[f.tabPos].input.Focus()
 			}
 
