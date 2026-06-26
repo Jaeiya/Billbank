@@ -214,7 +214,7 @@ func (fi FormInput) validate() error {
 			}
 
 			if !utils.IsFloatStr(inputStr) {
-				return errors.New("invalid price")
+				return errors.New("malformed price")
 			}
 
 			if inputStr[strLen-1] == '.' {
