@@ -44,19 +44,25 @@ var (
 )
 
 var formStyles = struct {
+	border      lipgloss.Style
+	header      lipgloss.Style
 	itemTitle   lipgloss.Style
 	inputBorder lipgloss.Style
 	textInput   textinput.Styles
 	statusTitle lipgloss.Style
 }{
-	itemTitle: Style.
-		Bold(true).
-		Width(inputSize + 1).
-		BorderRight(true).
-		BorderStyle(lipgloss.NormalBorder()).
+	border: Style.
+		PaddingLeft(1).
+		PaddingRight(1).
+		Border(lipgloss.RoundedBorder()).
 		BorderForeground(formBorderColor),
 
+	header: Style.Foreground(BrightMagenta).Align(lipgloss.Center),
+
+	itemTitle: Style.Bold(true),
+
 	inputBorder: Style.
+		Width(inputSize + 2).
 		BorderRight(true).
 		BorderStyle(lipgloss.NormalBorder()).
 		BorderForeground(formBorderColor),
@@ -146,33 +152,20 @@ func (fi FormInput) Prompt(p string) FormInput {
 func (fi FormInput) view() string {
 	isFocused := fi.input.Focused()
 	titleStyle := formStyles.itemTitle
-	borderStyle := formStyles.inputBorder
 
 	fi.input.Prompt = ""
 
-	borderUtil := utils.GetBorderStyle(utils.SingleLine)
-	focusedLine := string(borderUtil.RightT)
-
 	if isFocused {
-		titleStyle = titleStyle.BorderForeground(formActiveColor).Foreground(formActiveColor)
-		borderStyle = borderStyle.BorderForeground(formActiveColor)
+		titleStyle = titleStyle.Foreground(formActiveColor)
 		fi.input.SetWidth(inputSize - 3)
 		fi.input.Prompt = fi.prompt
-		focusedLine = strings.Repeat(string(borderUtil.Horizontal), inputSize-1) +
-			Style.Foreground(formActiveColor).Render(string(borderUtil.Horizontal)+
-				string(borderUtil.RightT),
-			)
 	}
 
 	return Style.Width(inputSize + 5).Align(lipgloss.Left).Render(
 		JoinVertical(
 			lipgloss.Left,
 			titleStyle.Render(fi.title),
-			Style.Width(inputSize).Render(fi.input.View())+borderStyle.Render(""),
-			Style.Foreground(formBorderColor).
-				Width(inputSize+1).
-				Align(lipgloss.Right).
-				Render(focusedLine),
+			Style.Width(inputSize).Render(fi.input.View()),
 		),
 	)
 }
@@ -432,18 +425,9 @@ func (f Form) Update(msg tea.Msg) (Form, tea.Cmd) {
 }
 
 func (f Form) View() string {
-	var sb strings.Builder
-
-	for i, entry := range f.entries {
-		if i != 0 {
-			sb.WriteByte('\n')
-		}
-		sb.WriteString(entry.view())
-	}
-
-	formStatus := f.formStatus("Ok", true)
+	formStatusView := f.viewFormStatus("Ok", true)
 	if f.err != nil {
-		formStatus = f.formStatus(f.err.Error(), false)
+		formStatusView = f.viewFormStatus(f.err.Error(), false)
 	}
 
 	cancelView := f.buttons.cancel.View() + " "
@@ -451,32 +435,69 @@ func (f Form) View() string {
 		cancelView = strings.TrimRight(cancelView, " ")
 	}
 
-	buttons := f.buttons.save.View() + "   " + cancelView
+	buttonView := f.buttons.save.View() + "   " + cancelView
 
-	border := Style.Border(lipgloss.RoundedBorder()).
-		PaddingLeft(1).
-		PaddingRight(1).
-		BorderForeground(lipgloss.Color("#505072"))
-	form := border.Render(
+	formView := formStyles.border.Render(
 		JoinVertical(
 			lipgloss.Right,
 			JoinHorizontal(
 				lipgloss.Left,
-				Style.Width(inputSize+2).Render(sb.String()),
-				formStatus,
+				f.viewInputs(),
+				formStatusView,
 			),
-			buttons,
+			buttonView,
 		),
 	)
-	header := Style.Foreground(BrightMagenta).
-		Width(lipgloss.Width(form)).
-		Align(lipgloss.Center).
-		Render(f.header)
 
-	return JoinVertical(lipgloss.Left, header, form)
+	return Style.
+		Render(JoinVertical(
+			lipgloss.Center,
+			formStyles.header.Render(f.header),
+			formView,
+		))
 }
 
-func (f Form) formStatus(status string, isGood bool) string {
+func (f Form) viewInputs() string {
+	var sb strings.Builder
+	sb.Grow((inputSize + 2) * len(f.entries))
+
+	for i, entry := range f.entries {
+		if i != 0 {
+			sb.WriteByte('\n')
+		}
+
+		borderColor := formBorderColor
+		if i == f.tabPos && f.focus == formFocusInput {
+			borderColor = formActiveColor
+		}
+
+		b := utils.GetBorderStyle(utils.Rounded)
+
+		sb.WriteString(formStyles.inputBorder.BorderForeground(borderColor).Render(entry.view()))
+		sb.WriteByte('\n')
+
+		// Use corner border for last input entry
+		activeBorderChar := string(b.RightT)
+		if i == len(f.entries)-1 {
+			activeBorderChar = string(b.BottomRight)
+		}
+
+		if f.tabPos == i && f.focus == formFocusInput {
+			sb.WriteString(Style.
+				Width(inputSize + 1).
+				Foreground(formBorderColor).
+				Render(strings.Repeat(string(b.Horizontal)+" ", inputSize/2+1)),
+			)
+			sb.WriteString(Style.Foreground(formBorderColor).Render(string(activeBorderChar)))
+		} else {
+			sb.WriteString(formStyles.inputBorder.Render(""))
+		}
+	}
+
+	return sb.String()
+}
+
+func (f Form) viewFormStatus(status string, isGood bool) string {
 	const formSize = 35
 
 	statusWrapper := Style.
