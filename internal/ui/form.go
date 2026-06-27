@@ -47,6 +47,7 @@ var formStyles = struct {
 	itemTitle   lipgloss.Style
 	inputBorder lipgloss.Style
 	textInput   textinput.Styles
+	statusTitle lipgloss.Style
 }{
 	itemTitle: Style.
 		Bold(true).
@@ -70,6 +71,8 @@ var formStyles = struct {
 		s.Focused.Suggestion = s.Focused.Suggestion.Foreground(Gray)
 		return s
 	}(),
+
+	statusTitle: Style.Foreground(Yellow).Align(lipgloss.Left),
 }
 
 type FormInput struct {
@@ -473,10 +476,6 @@ func (f Form) View() string {
 	return JoinVertical(lipgloss.Left, header, form)
 }
 
-func (f Form) hasFocusedButtons() bool {
-	return f.buttons.save.Focused() || f.buttons.cancel.Focused()
-}
-
 func (f Form) formStatus(status string, isGood bool) string {
 	const formSize = 35
 
@@ -497,36 +496,42 @@ func (f Form) formStatus(status string, isGood bool) string {
 		)
 	}
 
-	formHead := Style.Foreground(Yellow).Align(lipgloss.Left).Render(title)
+	var statusTitle, description, statusText string
 
 	statusChar := "\u2713 "
 	statusFg := FgSuccessColor
-	if !isGood {
+	if !isGood || f.focus == formFocusCancel {
 		statusChar = "\u2717 "
 		statusFg = FgErrColor
 	}
 
-	formBody := Style.Foreground(statusFg).Render(statusChar + status)
+	statusTextStyle := Style.Foreground(statusFg)
 
-	if len(f.entries[f.tabPos].description) > 0 {
-		return statusWrapper.Render(
-			JoinVertical(
-				lipgloss.Left,
-				formHead,
-				"",
-				Style.Foreground(Blue).Render(f.entries[f.tabPos].description),
-				"",
-				formBody,
-			),
-		)
+	switch f.focus {
+	case formFocusSave:
+		statusTitle = "Save Form"
+		statusText = statusTextStyle.Render(statusChar + "Form is ready to save")
+		description = "Take a moment to look over the form and make sure it's correct before saving."
+	case formFocusCancel:
+		statusTitle = "Cancel Form"
+		description = "The data you have entered will not be saved. The old data will remain intact."
+		statusText = statusTextStyle.Render(statusChar + "Form will be discarded")
+	default:
+		statusTitle = title
+		if len(f.entries[f.tabPos].description) > 0 {
+			description = f.entries[f.tabPos].description
+		}
+		statusText = statusTextStyle.Render(statusChar + status)
 	}
 
 	return statusWrapper.Render(
 		JoinVertical(
 			lipgloss.Left,
-			formHead,
+			formStyles.statusTitle.Render(statusTitle),
 			"",
-			formBody,
+			Style.Foreground(Blue).Render(description),
+			"",
+			statusText,
 		),
 	)
 }
