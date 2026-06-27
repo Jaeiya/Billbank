@@ -1,4 +1,5 @@
 words = [
+    "billbank",
     "errcheck",
     "fieldalignment",
     "goconst",
