@@ -14,8 +14,10 @@ import (
 )
 
 const (
-	blinkSpeed = 400
-	inputSize  = 18
+	inputWidth     = 18
+	inputMargin    = 2              // Should always be >= 2
+	inputCharLimit = inputWidth - 2 // should always be < inputWidth
+	blinkSpeed     = 400
 )
 
 type FormInputType uint8
@@ -62,7 +64,7 @@ var formStyles = struct {
 	itemTitle: Style.Bold(true),
 
 	inputBorder: Style.
-		Width(inputSize + 2).
+		Width(inputWidth + inputMargin).
 		BorderRight(true).
 		BorderStyle(lipgloss.NormalBorder()).
 		BorderForeground(formBorderColor),
@@ -94,7 +96,7 @@ type FormInput struct {
 func NewFormInput() FormInput {
 	fi := FormInput{}
 	fi.prompt = "> "
-	fi.input = NewDefaultInput(inputSize - 3)
+	fi.input = NewDefaultInput(inputCharLimit)
 	fi.input.SetStyles(formStyles.textInput)
 	return fi
 }
@@ -157,16 +159,14 @@ func (fi FormInput) view() string {
 
 	if isFocused {
 		titleStyle = titleStyle.Foreground(formActiveColor)
-		fi.input.SetWidth(inputSize - 3)
+		fi.input.SetWidth(inputWidth)
 		fi.input.Prompt = fi.prompt
 	}
 
-	return Style.Width(inputSize + 5).Align(lipgloss.Left).Render(
-		JoinVertical(
-			lipgloss.Left,
-			titleStyle.Render(fi.title),
-			Style.Width(inputSize).Render(fi.input.View()),
-		),
+	return JoinVertical(
+		lipgloss.Left,
+		titleStyle.Render(fi.title),
+		fi.input.View(),
 	)
 }
 
@@ -425,11 +425,6 @@ func (f Form) Update(msg tea.Msg) (Form, tea.Cmd) {
 }
 
 func (f Form) View() string {
-	formStatusView := f.viewFormStatus("Ok", true)
-	if f.err != nil {
-		formStatusView = f.viewFormStatus(f.err.Error(), false)
-	}
-
 	cancelView := f.buttons.cancel.View() + " "
 	if f.buttons.cancel.Focused() {
 		cancelView = strings.TrimRight(cancelView, " ")
@@ -437,21 +432,20 @@ func (f Form) View() string {
 
 	buttonView := f.buttons.save.View() + "   " + cancelView
 
+	formStatusView := f.viewFormStatus("Ok", true)
+	if f.err != nil {
+		formStatusView = f.viewFormStatus(f.err.Error(), false)
+	}
+
 	formView := formStyles.border.Render(
-		JoinVertical(
-			lipgloss.Right,
-			JoinHorizontal(
-				lipgloss.Left,
-				f.viewInputs(),
-				formStatusView,
-			),
+		JoinVertical(lipgloss.Right,
+			JoinHorizontal(lipgloss.Left, f.viewInputs(), formStatusView),
 			buttonView,
 		),
 	)
 
 	return Style.
-		Render(JoinVertical(
-			lipgloss.Center,
+		Render(JoinVertical(lipgloss.Center,
 			formStyles.header.Render(f.header),
 			formView,
 		))
@@ -459,7 +453,7 @@ func (f Form) View() string {
 
 func (f Form) viewInputs() string {
 	var sb strings.Builder
-	sb.Grow((inputSize + 2) * len(f.entries))
+	sb.Grow((inputWidth + inputMargin) * len(f.entries))
 
 	for i, entry := range f.entries {
 		if i != 0 {
@@ -484,11 +478,10 @@ func (f Form) viewInputs() string {
 
 		if f.tabPos == i && f.focus == formFocusInput {
 			sb.WriteString(Style.
-				Width(inputSize + 1).
+				Width(inputWidth + inputMargin).
 				Foreground(formBorderColor).
-				Render(strings.Repeat(string(b.Horizontal)+" ", inputSize/2+1)),
+				Render(utils.GenDashedBorder(inputWidth+inputMargin-1) + string(activeBorderChar)),
 			)
-			sb.WriteString(Style.Foreground(formBorderColor).Render(string(activeBorderChar)))
 		} else {
 			sb.WriteString(formStyles.inputBorder.Render(""))
 		}
