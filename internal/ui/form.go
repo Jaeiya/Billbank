@@ -45,6 +45,11 @@ var (
 	formBorderColor = lipgloss.Color("#505072")
 )
 
+type (
+	FormSavedMsg  []string
+	FormCancelMsg struct{}
+)
+
 var formStyles = struct {
 	border      lipgloss.Style
 	header      lipgloss.Style
@@ -313,6 +318,12 @@ func (f Form) Update(msg tea.Msg) (Form, tea.Cmd) {
 		case "enter":
 			if f.tabPos == len(f.entries)-1 {
 				if f.focus > formFocusInput {
+					if f.focus == formFocusSave {
+						return f, f.SendSaveMsg()
+					}
+					if f.focus == formFocusCancel {
+						return f, f.SendCancelMsg()
+					}
 					return f, nil
 				}
 				f.entries[f.tabPos].input.Blur()
@@ -605,4 +616,21 @@ func (f Form) isValidKey(t FormInputType, keyMsg tea.KeyPressMsg) bool {
 	}
 
 	return false
+}
+
+func (f Form) SendSaveMsg() tea.Cmd {
+	data := make([]string, len(f.entries))
+	for i, entry := range f.entries {
+		data[i] = entry.input.Value()
+	}
+
+	return func() tea.Msg {
+		return FormSavedMsg(data)
+	}
+}
+
+func (f Form) SendCancelMsg() tea.Cmd {
+	return func() tea.Msg {
+		return FormCancelMsg{}
+	}
 }
