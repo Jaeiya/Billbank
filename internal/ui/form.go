@@ -255,7 +255,7 @@ func (fi FormInput) validate() error {
 type Form struct {
 	entries []FormInput
 	values  []string
-	header  string
+	name    string
 	buttons struct {
 		save   Button
 		cancel Button
@@ -266,9 +266,9 @@ type Form struct {
 	err    error
 }
 
-func NewForm(header string, inputs ...FormInput) Form {
+func NewForm(name string, inputs ...FormInput) Form {
 	f := Form{
-		header:  header,
+		name:    name,
 		isInit:  true,
 		entries: inputs,
 	}
@@ -456,7 +456,7 @@ func (f Form) View() string {
 
 	return JoinVertical(
 		lipgloss.Right,
-		JoinVertical(lipgloss.Center, formStyles.header.Render(f.header), formView),
+		JoinVertical(lipgloss.Center, formStyles.header.Render(f.name+" Form"), formView),
 		buttonView,
 	)
 }
@@ -538,7 +538,7 @@ func (f Form) viewFormStatus(status string, isGood bool) string {
 		description = "Take a moment to look over the form and make sure it's correct before saving."
 	case formFocusCancel:
 		statusTitle = "Cancel Form"
-		description = "The data you have entered will not be saved. The old data will remain intact."
+		description = "No changes will be made to " + f.name + "."
 		statusText = statusTextStyle.Render(statusChar + "Form will be discarded")
 	default:
 		statusTitle = title
