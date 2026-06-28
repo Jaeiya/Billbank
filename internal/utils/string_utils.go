@@ -214,3 +214,19 @@ func IsFloatStr(s string) bool {
 
 	return decimalCount != 0
 }
+
+func GenDashedBorder(length int) string {
+	var sb strings.Builder
+	sb.Grow(length)
+
+	b := GetBorderStyle(SingleLine)
+	for i := range length {
+		if i%2 == 0 {
+			sb.WriteRune(b.Horizontal)
+		} else {
+			sb.WriteByte(' ')
+		}
+	}
+
+	return sb.String()
+}
