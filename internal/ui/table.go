@@ -16,6 +16,7 @@ var (
 			BorderBottom(true).
 			Background(BgColor).
 			BorderBackground(BgColor).
+			BorderForeground(Gray).
 			BorderStyle(lipgloss.NormalBorder())
 
 	rowStyle = Style.Background(BgColor)
