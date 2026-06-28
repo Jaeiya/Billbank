@@ -441,25 +441,24 @@ func (f Form) View() string {
 		cancelView = strings.TrimRight(cancelView, " ")
 	}
 
-	buttonView := f.buttons.save.View() + "   " + cancelView
+	buttonView := Style.MarginRight(1).Render(f.buttons.save.View() + "   " + cancelView)
 
 	formStatusView := f.viewFormStatus("Ok", true)
 	if f.err != nil {
 		formStatusView = f.viewFormStatus(f.err.Error(), false)
 	}
 
-	formView := formStyles.border.Render(
-		JoinVertical(lipgloss.Right,
-			JoinHorizontal(lipgloss.Left, f.viewInputs(), formStatusView),
-			buttonView,
-		),
-	)
+	formView := formStyles.border.Render(JoinHorizontal(
+		lipgloss.Left,
+		f.viewInputs(),
+		formStatusView,
+	))
 
-	return Style.
-		Render(JoinVertical(lipgloss.Center,
-			formStyles.header.Render(f.header),
-			formView,
-		))
+	return JoinVertical(
+		lipgloss.Right,
+		JoinVertical(lipgloss.Center, formStyles.header.Render(f.header), formView),
+		buttonView,
+	)
 }
 
 func (f Form) viewInputs() string {
