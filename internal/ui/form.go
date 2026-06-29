@@ -88,35 +88,53 @@ var formStyles = struct {
 	statusTitle: Style.Foreground(Yellow).Align(lipgloss.Left),
 }
 
-type FormInput struct {
+type FormValidatorFunc func(s string, defaultValidator func() error, args ...string) error
+
+type FormField struct {
 	input       textinput.Model
-	validator   func(s string, defaultValidator func() error) error
+	validator   FormValidatorFunc
 	title       string
 	description string
+	descFunc    func(args ...string) string
 	prompt      string
 	inputType   FormInputType
+	linkedInput string
 	isOptional  bool
 }
 
-func NewFormInput() FormInput {
-	fi := FormInput{}
+func NewFormField() FormField {
+	fi := FormField{}
 	fi.prompt = "> "
 	fi.input = NewDefaultInput(inputCharLimit)
 	fi.input.SetStyles(formStyles.textInput)
 	return fi
 }
 
-func (fi FormInput) Title(s string) FormInput {
+func (fi FormField) Title(s string) FormField {
 	fi.title = s
 	return fi
 }
 
-func (fi FormInput) Description(s string) FormInput {
+func (fi FormField) Description(s string) FormField {
 	fi.description = s
 	return fi
 }
 
-func (fi FormInput) InputType(t FormInputType) FormInput {
+// DescriptionDyn accepts a function that should be used to create
+// a dynamic description. The input of all fields prior to this
+// one, will be passed as args to this func.
+//
+// For instance if this is the 3rd field in a form, then arg[1]
+// references the 2nd field's input.
+//
+// 🟡 This func takes precedence over Description() when the
+// field is not the first.
+func (fi FormField) DescriptionDyn(d func(args ...string) string) FormField {
+	fi.descFunc = d
+	return fi
+}
+
+func (fi FormField) InputType(t FormInputType) FormField {
 	fi.inputType = t
 	if t == PriceInput {
 		fi.prompt = "$ "
@@ -124,7 +142,7 @@ func (fi FormInput) InputType(t FormInputType) FormInput {
 	return fi
 }
 
-func (fi FormInput) Value(s string) FormInput {
+func (fi FormField) Value(s string) FormField {
 	fi.input.SetValue(s)
 	return fi
 }
@@ -132,31 +150,45 @@ func (fi FormInput) Value(s string) FormInput {
 // Validator overwrites the default InputType validator with
 // the one specified. Not all InputType's have a validator.
 //
-// 🔵 The default validator is passed as the defaultV arg.
-func (fi FormInput) Validator(v func(s string, defaultV func() error) error) FormInput {
+// 🔵 You can still use the default validator alongside
+// your custom validator, since it is passed as an arg.
+func (fi FormField) Validator(v FormValidatorFunc) FormField {
 	fi.validator = v
 	return fi
 }
 
 // Optional sets the field to optional. By default, all input
 // fields are required.
-func (fi FormInput) Optional() FormInput {
+func (fi FormField) Optional() FormField {
 	fi.isOptional = true
 	return fi
 }
 
-func (fi FormInput) Suggestions(sugs ...string) FormInput {
+func (fi FormField) Suggestions(sugs ...string) FormField {
 	fi.input.ShowSuggestions = true
 	fi.input.SetSuggestions(sugs)
 	return fi
 }
 
-func (fi FormInput) Prompt(p string) FormInput {
+func (fi FormField) Prompt(p string) FormField {
 	fi.prompt = p
 	return fi
 }
 
-func (fi FormInput) view() string {
+// LinkTo requires the name of another field that is required
+// before this field. When a field is linked, its input will
+// be passed as an argument to this fields custom validator
+// function.
+func (fi FormField) LinkTo(name string) FormField {
+	fi.linkedInput = name
+	return fi
+}
+
+func (fi FormField) hasLinkedInput() bool {
+	return len(fi.linkedInput) > 0
+}
+
+func (fi FormField) view() string {
 	isFocused := fi.input.Focused()
 	titleStyle := formStyles.itemTitle
 
@@ -175,7 +207,7 @@ func (fi FormInput) view() string {
 	)
 }
 
-func (fi FormInput) validate() error {
+func (fi FormField) validate(args ...string) error {
 	inputStr := fi.input.Value()
 
 	if !fi.isOptional && len(fi.input.Value()) == 0 {
@@ -246,31 +278,33 @@ func (fi FormInput) validate() error {
 	}
 
 	if fi.validator != nil {
-		return fi.validator(inputStr, defaultValidator)
+		return fi.validator(inputStr, defaultValidator, args...)
 	}
 
 	return defaultValidator()
 }
 
 type Form struct {
-	entries []FormInput
+	entries []FormField
 	values  []string
 	name    string
 	buttons struct {
 		save   Button
 		cancel Button
 	}
-	focus  formFocusState
-	tabPos int
-	isInit bool
-	err    error
+	linkMap map[string]int
+	focus   formFocusState
+	tabPos  int
+	isInit  bool
+	err     error
 }
 
-func NewForm(name string, inputs ...FormInput) Form {
+func NewForm(name string, inputs ...FormField) Form {
 	f := Form{
 		name:    name,
 		isInit:  true,
 		entries: inputs,
+		linkMap: map[string]int{},
 	}
 
 	saveButton := NewButton("Save")
@@ -288,11 +322,21 @@ func NewForm(name string, inputs ...FormInput) Form {
 	f.buttons.save = saveButton
 	f.buttons.cancel = cancelButton
 
-	for i := range f.entries {
-		if i == 0 {
-			continue
+	inputMap := make(map[string]int, len(f.entries))
+
+	for i, entry := range f.entries {
+		inputMap[entry.title] = i
+		if entry.linkedInput != "" {
+			inputIdx, exists := inputMap[entry.linkedInput]
+			if !exists {
+				panic(fmt.Errorf("fatal form error: %s field needs to be before %s", entry.linkedInput, entry.title))
+			}
+			f.linkMap[entry.title] = inputIdx
 		}
-		f.entries[i].input.Blur()
+		// Remove focus from all inputs
+		if i > 0 {
+			f.entries[i].input.Blur()
+		}
 	}
 	f.values = make([]string, len(inputs))
 	return f
@@ -332,7 +376,13 @@ func (f Form) Update(msg tea.Msg) (Form, tea.Cmd) {
 				return f, nil
 			}
 
-			f.err = f.entries[f.tabPos].validate()
+			entry := f.entries[f.tabPos]
+			if entry.hasLinkedInput() {
+				f.err = entry.validate(f.entries[f.linkMap[entry.title]].input.Value())
+			} else {
+				f.err = entry.validate()
+			}
+
 			if f.err != nil { // do not tab on error
 				return f, nil
 			}
@@ -375,7 +425,13 @@ func (f Form) Update(msg tea.Msg) (Form, tea.Cmd) {
 			f.entries[f.tabPos].input, cmd = f.entries[f.tabPos].input.Update(msg)
 			cmds = append(cmds, cmd)
 
-			f.err = f.entries[f.tabPos].validate()
+			entry := f.entries[f.tabPos]
+			if entry.hasLinkedInput() {
+				f.err = entry.validate(f.entries[f.linkMap[entry.title]].input.Value())
+			} else {
+				f.err = entry.validate()
+			}
+
 			if f.err != nil { // do not tab on error
 				return f, nil
 			}
@@ -412,7 +468,13 @@ func (f Form) Update(msg tea.Msg) (Form, tea.Cmd) {
 				return f, nil
 			}
 
-			f.err = f.entries[f.tabPos].validate()
+			entry := f.entries[f.tabPos]
+			if entry.hasLinkedInput() {
+				f.err = entry.validate(f.entries[f.linkMap[entry.title]].input.Value())
+			} else {
+				f.err = entry.validate()
+			}
+
 			if f.err != nil { // do not tab on error
 				return f, nil
 			}
@@ -542,7 +604,14 @@ func (f Form) formStatusView(status string, isGood bool) string {
 		statusText = statusTextStyle.Render(statusChar + "Form will be discarded")
 	default:
 		statusTitle = title
-		if len(f.entries[f.tabPos].description) > 0 {
+		entry := f.entries[f.tabPos]
+		if entry.descFunc != nil && f.tabPos > 0 {
+			fieldInputs := make([]string, f.tabPos)
+			for i := range f.tabPos {
+				fieldInputs[i] = f.entries[i].input.Value()
+			}
+			description = entry.descFunc(fieldInputs...)
+		} else if len(entry.description) > 0 {
 			description = f.entries[f.tabPos].description
 		}
 		statusText = statusTextStyle.Render(statusChar + status)
