@@ -443,14 +443,14 @@ func (f Form) View() string {
 
 	buttonView := Style.MarginRight(1).Render(f.buttons.save.View() + "   " + cancelView)
 
-	formStatusView := f.viewFormStatus("Ok", true)
+	formStatusView := f.formStatusView("Ok", true)
 	if f.err != nil {
-		formStatusView = f.viewFormStatus(f.err.Error(), false)
+		formStatusView = f.formStatusView(f.err.Error(), false)
 	}
 
 	formView := formStyles.border.Render(JoinHorizontal(
 		lipgloss.Left,
-		f.viewInputs(),
+		f.inputView(),
 		formStatusView,
 	))
 
@@ -461,7 +461,7 @@ func (f Form) View() string {
 	)
 }
 
-func (f Form) viewInputs() string {
+func (f Form) inputView() string {
 	var sb strings.Builder
 	sb.Grow((inputWidth + inputMargin) * len(f.entries))
 
@@ -500,7 +500,7 @@ func (f Form) viewInputs() string {
 	return sb.String()
 }
 
-func (f Form) viewFormStatus(status string, isGood bool) string {
+func (f Form) formStatusView(status string, isGood bool) string {
 	const formSize = 35
 
 	statusWrapper := Style.
