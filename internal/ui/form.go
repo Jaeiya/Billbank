@@ -376,20 +376,13 @@ func (f Form) Update(msg tea.Msg) (Form, tea.Cmd) {
 				return f, nil
 			}
 
-			field := f.fields[f.tabPos]
-			if field.hasLinkedInput() {
-				f.err = field.validate(f.fields[f.linkMap[field.title]].input.Value())
-			} else {
-				f.err = field.validate()
-			}
-
-			if f.err != nil { // do not tab on error
+			if !f.validateField(f.fields[f.tabPos]) {
 				return f, nil
 			}
 
-			field.input.Blur()
+			f.fields[f.tabPos].input.Blur()
 			f.tabPos++
-			field.input.Focus()
+			f.fields[f.tabPos].input.Focus()
 			f.isInit = true
 
 		case "h", "left":
@@ -425,14 +418,7 @@ func (f Form) Update(msg tea.Msg) (Form, tea.Cmd) {
 			f.fields[f.tabPos].input, cmd = f.fields[f.tabPos].input.Update(msg)
 			cmds = append(cmds, cmd)
 
-			field := f.fields[f.tabPos]
-			if field.hasLinkedInput() {
-				f.err = field.validate(f.fields[f.linkMap[field.title]].input.Value())
-			} else {
-				f.err = field.validate()
-			}
-
-			if f.err != nil { // do not tab on error
+			if !f.validateField(f.fields[f.tabPos]) {
 				return f, nil
 			}
 
@@ -468,14 +454,7 @@ func (f Form) Update(msg tea.Msg) (Form, tea.Cmd) {
 				return f, nil
 			}
 
-			field := f.fields[f.tabPos]
-			if field.hasLinkedInput() {
-				f.err = field.validate(f.fields[f.linkMap[field.title]].input.Value())
-			} else {
-				f.err = field.validate()
-			}
-
-			if f.err != nil { // do not tab on error
+			if !f.validateField(f.fields[f.tabPos]) {
 				return f, nil
 			}
 
@@ -521,6 +500,15 @@ func (f Form) View() string {
 		JoinVertical(lipgloss.Center, formStyles.header.Render(f.name+" Form"), formView),
 		buttonView,
 	)
+}
+
+func (f *Form) validateField(entry FormField) bool {
+	if entry.hasLinkedInput() {
+		f.err = entry.validate(f.fields[f.linkMap[entry.title]].input.Value())
+	} else {
+		f.err = entry.validate()
+	}
+	return f.err == nil
 }
 
 func (f Form) inputView() string {
