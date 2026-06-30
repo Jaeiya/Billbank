@@ -285,7 +285,7 @@ func (fi FormField) validate(args ...string) error {
 }
 
 type Form struct {
-	entries []FormField
+	fields  []FormField
 	values  []string
 	name    string
 	buttons struct {
@@ -303,7 +303,7 @@ func NewForm(name string, inputs ...FormField) Form {
 	f := Form{
 		name:    name,
 		isInit:  true,
-		entries: inputs,
+		fields:  inputs,
 		linkMap: map[string]int{},
 	}
 
@@ -322,20 +322,20 @@ func NewForm(name string, inputs ...FormField) Form {
 	f.buttons.save = saveButton
 	f.buttons.cancel = cancelButton
 
-	inputMap := make(map[string]int, len(f.entries))
+	inputMap := make(map[string]int, len(f.fields))
 
-	for i, entry := range f.entries {
-		inputMap[entry.title] = i
-		if entry.linkedInput != "" {
-			inputIdx, exists := inputMap[entry.linkedInput]
+	for i, field := range f.fields {
+		inputMap[field.title] = i
+		if field.linkedInput != "" {
+			inputIdx, exists := inputMap[field.linkedInput]
 			if !exists {
-				panic(fmt.Errorf("fatal form error: %s field needs to be before %s", entry.linkedInput, entry.title))
+				panic(fmt.Errorf("fatal form error: %s field needs to be before %s", field.linkedInput, field.title))
 			}
-			f.linkMap[entry.title] = inputIdx
+			f.linkMap[field.title] = inputIdx
 		}
 		// Remove focus from all inputs
 		if i > 0 {
-			f.entries[i].input.Blur()
+			f.fields[i].input.Blur()
 		}
 	}
 	f.values = make([]string, len(inputs))
@@ -353,14 +353,14 @@ func (f Form) Update(msg tea.Msg) (Form, tea.Cmd) {
 			if f.focus > formFocusInput {
 				return f, nil
 			}
-			f.entries[f.tabPos].input.Blur()
-			f.tabPos = len(f.entries) - 1
+			f.fields[f.tabPos].input.Blur()
+			f.tabPos = len(f.fields) - 1
 			f.focus = formFocusSave
 			f.buttons.save.Focus()
 			return f, nil
 
 		case "enter":
-			if f.tabPos == len(f.entries)-1 {
+			if f.tabPos == len(f.fields)-1 {
 				if f.focus > formFocusInput {
 					if f.focus == formFocusSave {
 						return f, f.SendSaveMsg()
@@ -370,26 +370,26 @@ func (f Form) Update(msg tea.Msg) (Form, tea.Cmd) {
 					}
 					return f, nil
 				}
-				f.entries[f.tabPos].input.Blur()
+				f.fields[f.tabPos].input.Blur()
 				f.focus = formFocusSave
 				f.buttons.save.Focus()
 				return f, nil
 			}
 
-			entry := f.entries[f.tabPos]
-			if entry.hasLinkedInput() {
-				f.err = entry.validate(f.entries[f.linkMap[entry.title]].input.Value())
+			field := f.fields[f.tabPos]
+			if field.hasLinkedInput() {
+				f.err = field.validate(f.fields[f.linkMap[field.title]].input.Value())
 			} else {
-				f.err = entry.validate()
+				f.err = field.validate()
 			}
 
 			if f.err != nil { // do not tab on error
 				return f, nil
 			}
 
-			f.entries[f.tabPos].input.Blur()
+			field.input.Blur()
 			f.tabPos++
-			f.entries[f.tabPos].input.Focus()
+			field.input.Focus()
 			f.isInit = true
 
 		case "h", "left":
@@ -422,30 +422,30 @@ func (f Form) Update(msg tea.Msg) (Form, tea.Cmd) {
 			}
 
 			// Manually update focused input
-			f.entries[f.tabPos].input, cmd = f.entries[f.tabPos].input.Update(msg)
+			f.fields[f.tabPos].input, cmd = f.fields[f.tabPos].input.Update(msg)
 			cmds = append(cmds, cmd)
 
-			entry := f.entries[f.tabPos]
-			if entry.hasLinkedInput() {
-				f.err = entry.validate(f.entries[f.linkMap[entry.title]].input.Value())
+			field := f.fields[f.tabPos]
+			if field.hasLinkedInput() {
+				f.err = field.validate(f.fields[f.linkMap[field.title]].input.Value())
 			} else {
-				f.err = entry.validate()
+				f.err = field.validate()
 			}
 
 			if f.err != nil { // do not tab on error
 				return f, nil
 			}
 
-			if f.tabPos+1 == len(f.entries) {
+			if f.tabPos+1 == len(f.fields) {
 				f.buttons.save.Focus()
 				f.focus = formFocusSave
-				f.entries[f.tabPos].input.Blur()
+				f.fields[f.tabPos].input.Blur()
 				return f, cmd
 			}
 
-			f.entries[f.tabPos].input.Blur()
+			f.fields[f.tabPos].input.Blur()
 			f.tabPos++
-			cmds = append(cmds, f.entries[f.tabPos].input.Focus())
+			cmds = append(cmds, f.fields[f.tabPos].input.Focus())
 			return f, tea.Batch(cmds...)
 
 		case "backspace":
@@ -453,7 +453,7 @@ func (f Form) Update(msg tea.Msg) (Form, tea.Cmd) {
 				f.buttons.save.Blur()
 				f.buttons.cancel.Blur()
 				f.focus = formFocusInput
-				return f, f.entries[f.tabPos].input.Focus()
+				return f, f.fields[f.tabPos].input.Focus()
 			}
 
 		case "shift+tab":
@@ -461,28 +461,28 @@ func (f Form) Update(msg tea.Msg) (Form, tea.Cmd) {
 				f.buttons.save.Blur()
 				f.buttons.cancel.Blur()
 				f.focus = formFocusInput
-				return f, f.entries[f.tabPos].input.Focus()
+				return f, f.fields[f.tabPos].input.Focus()
 			}
 
 			if f.tabPos == 0 {
 				return f, nil
 			}
 
-			entry := f.entries[f.tabPos]
-			if entry.hasLinkedInput() {
-				f.err = entry.validate(f.entries[f.linkMap[entry.title]].input.Value())
+			field := f.fields[f.tabPos]
+			if field.hasLinkedInput() {
+				f.err = field.validate(f.fields[f.linkMap[field.title]].input.Value())
 			} else {
-				f.err = entry.validate()
+				f.err = field.validate()
 			}
 
 			if f.err != nil { // do not tab on error
 				return f, nil
 			}
 
-			f.entries[f.tabPos].input.Blur()
+			f.fields[f.tabPos].input.Blur()
 			f.tabPos--
 			f.isInit = true
-			return f, f.entries[f.tabPos].input.Focus()
+			return f, f.fields[f.tabPos].input.Focus()
 		}
 	}
 
@@ -525,9 +525,9 @@ func (f Form) View() string {
 
 func (f Form) inputView() string {
 	var sb strings.Builder
-	sb.Grow((inputWidth + inputMargin) * len(f.entries))
+	sb.Grow((inputWidth + inputMargin) * len(f.fields))
 
-	for i, entry := range f.entries {
+	for i, field := range f.fields {
 		if i != 0 {
 			sb.WriteByte('\n')
 		}
@@ -539,12 +539,12 @@ func (f Form) inputView() string {
 
 		b := utils.GetBorderStyle(utils.Rounded)
 
-		sb.WriteString(formStyles.inputBorder.BorderForeground(borderColor).Render(entry.view()))
+		sb.WriteString(formStyles.inputBorder.BorderForeground(borderColor).Render(field.view()))
 		sb.WriteByte('\n')
 
-		// Use corner border for last input entry
+		// Use corner border for last input field
 		activeBorderChar := string(b.RightT)
-		if i == len(f.entries)-1 {
+		if i == len(f.fields)-1 {
 			activeBorderChar = string(b.BottomRight)
 		}
 
@@ -572,9 +572,9 @@ func (f Form) formStatusView(status string, isGood bool) string {
 		MarginLeft(1).
 		Padding(0, 1, 0)
 
-	entry := f.entries[f.tabPos]
-	title := entry.title
-	if entry.isOptional {
+	field := f.fields[f.tabPos]
+	title := field.title
+	if field.isOptional {
 		title = JoinHorizontal(
 			lipgloss.Left,
 			title,
@@ -604,15 +604,15 @@ func (f Form) formStatusView(status string, isGood bool) string {
 		statusText = statusTextStyle.Render(statusChar + "Form will be discarded")
 	default:
 		statusTitle = title
-		entry := f.entries[f.tabPos]
-		if entry.descFunc != nil && f.tabPos > 0 {
+		field := f.fields[f.tabPos]
+		if field.descFunc != nil && f.tabPos > 0 {
 			fieldInputs := make([]string, f.tabPos)
 			for i := range f.tabPos {
-				fieldInputs[i] = f.entries[i].input.Value()
+				fieldInputs[i] = f.fields[i].input.Value()
 			}
-			description = entry.descFunc(fieldInputs...)
-		} else if len(entry.description) > 0 {
-			description = f.entries[f.tabPos].description
+			description = field.descFunc(fieldInputs...)
+		} else if len(field.description) > 0 {
+			description = f.fields[f.tabPos].description
 		}
 		statusText = statusTextStyle.Render(statusChar + status)
 	}
@@ -631,17 +631,17 @@ func (f Form) formStatusView(status string, isGood bool) string {
 
 func (f *Form) updateInputs(msg tea.Msg) tea.Cmd {
 	var cmd tea.Cmd
-	for i := range f.entries {
+	for i := range f.fields {
 		// Focused input
 		if i == f.tabPos {
 			switch msg := msg.(type) {
 			case tea.KeyPressMsg:
-				if !f.isValidKey(f.entries[i].inputType, msg) {
+				if !f.isValidKey(f.fields[i].inputType, msg) {
 					return cmd
 				}
 			}
 
-			f.entries[i].input, cmd = f.entries[i].input.Update(msg)
+			f.fields[i].input, cmd = f.fields[i].input.Update(msg)
 			break
 		}
 	}
@@ -687,9 +687,9 @@ func (f Form) isValidKey(t FormInputType, keyMsg tea.KeyPressMsg) bool {
 }
 
 func (f Form) SendSaveMsg() tea.Cmd {
-	data := make([]string, len(f.entries))
-	for i, entry := range f.entries {
-		data[i] = entry.input.Value()
+	data := make([]string, len(f.fields))
+	for i, field := range f.fields {
+		data[i] = field.input.Value()
 	}
 
 	return func() tea.Msg {
