@@ -12,6 +12,9 @@ func ToAsciiFont(s string, style FontStyle) string {
 	case BigMoney:
 		return newAsciiStr(s, bigMoneyFont[:])
 
+	case FutureSmooth:
+		return newAsciiStr(s, futureFont[:])
+
 	default:
 		return ""
 	}
@@ -28,8 +31,10 @@ func newAsciiStr(s string, font []string) string {
 			letters[i] = font[r-'a']
 		} else if r >= 'A' && r <= 'Z' {
 			letters[i] = font[r-'A'+26]
+		} else if r >= '0' && r <= '9' {
+			letters[i] = font[r-'0'+52]
 		} else {
-			letters[i] = font[52] // Always the space char
+			letters[i] = font[62] // Always the space char
 		}
 	}
 	return JoinHorizontal(lipgloss.Left, letters...)
