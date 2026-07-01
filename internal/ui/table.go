@@ -10,17 +10,20 @@ import (
 	"github.com/jaeiya/billbank/internal/utils"
 )
 
-var (
-	headerStyle = Style.
-			Bold(true).
-			BorderBottom(true).
-			Background(BgColor).
-			BorderBackground(BgColor).
-			BorderForeground(Gray).
-			BorderStyle(lipgloss.NormalBorder())
+var tableStyles = struct {
+	header lipgloss.Style
+	row    lipgloss.Style
+}{
+	header: Style.
+		Bold(true).
+		BorderBottom(true).
+		Background(BgColor).
+		BorderBackground(BgColor).
+		BorderForeground(Gray).
+		BorderStyle(lipgloss.NormalBorder()),
 
-	rowStyle = Style.Background(BgColor)
-)
+	row: Style.Background(BgColor),
+}
 
 type (
 	TableEntry struct {
@@ -43,7 +46,6 @@ type (
 
 	TableStyles struct {
 		Header lipgloss.Style
-		Row    lipgloss.Style
 	}
 
 	TableModel struct {
@@ -172,7 +174,7 @@ func (t TableModel) headerView() string {
 		header := t.style.Header.
 			AlignHorizontal(t.headers[i].Alignment).
 			Width(h.Width).
-			Inherit(headerStyle).
+			Inherit(tableStyles.header).
 			Render(h.Name)
 
 		headers[i] = header
@@ -190,16 +192,14 @@ func (t TableModel) rowView() string {
 			if width == 0 {
 				width = utils.RuneCount(entry.Text)
 			}
-			s := t.style.Row.
-				AlignHorizontal(t.entryAlignments[k]).
-				Width(width)
+			s := Style.AlignHorizontal(t.entryAlignments[k]).Width(width)
 			if i == t.selectedRow {
 				s = s.Background(Black)
 			}
 			s = s.Foreground(entry.Foreground)
 			entryBuf[k] = s.Render(utils.TruncateStr(entry.Text, width))
 		}
-		rows[i] = rowStyle.Render(JoinHorizontal(lipgloss.Left, entryBuf...))
+		rows[i] = tableStyles.row.Render(JoinHorizontal(lipgloss.Left, entryBuf...))
 	}
 	return JoinVertical(lipgloss.Left, rows...)
 }
