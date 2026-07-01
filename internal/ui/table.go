@@ -163,6 +163,14 @@ func (t *TableModel) SetStyle(s TableStyles) {
 	t.style = s
 }
 
+func (t *TableModel) SelectRow(rowIdx int) error {
+	if rowIdx > len(t.entries)-1 || rowIdx < 0 {
+		return errors.New("cannot select row; index out of range")
+	}
+	t.selectedRow = rowIdx
+	return nil
+}
+
 func (t TableModel) headerView() string {
 	headers := make([]string, len(t.headers))
 	for i, h := range t.headers {
