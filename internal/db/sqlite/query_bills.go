@@ -55,6 +55,14 @@ func (db SqliteDb) QueryBills(qm QueryMap) ([]BillRecord, error) {
 	return records, nil
 }
 
+func (db SqliteDb) QueryBillsCount() (int, error) {
+	var count int
+	if err := db.handle.QueryRow("SELECT COUNT(*) FROM " + string(BILLS)).Scan(&count); err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
 type BillHistoryRecord struct {
 	ID         int
 	MonthID    int

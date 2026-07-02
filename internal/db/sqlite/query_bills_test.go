@@ -183,6 +183,111 @@ func TestQueryBills(t *testing.T) {
 	})
 }
 
+func TestQueryBillsCount(t *testing.T) {
+	t.Parallel()
+	type MockTable struct {
+		should   string
+		actual   []BillRecord
+		expected int
+	}
+
+	now := time.Now()
+
+	table := []MockTable{
+		{
+			should:   "count 0 records in bills table",
+			actual:   []BillRecord{},
+			expected: 0,
+		},
+		{
+			should: "count 1 record in bills table",
+			actual: []BillRecord{
+				{
+					Name:    "t1",
+					TypeID:  1,
+					Amount:  internal.NewCurrency("19.99", internal.USD),
+					DueDate: createDate(now.Year(), now.Month(), 3),
+					Status:  "pending",
+					Period:  MONTHLY,
+				},
+			},
+			expected: 1,
+		},
+		{
+			should: "count 5 records in bills table",
+			actual: []BillRecord{
+				{
+					Name:    "t1",
+					TypeID:  1,
+					Amount:  internal.NewCurrency("19.99", internal.USD),
+					DueDate: createDate(now.Year(), now.Month(), 3),
+					Status:  "pending",
+					Period:  MONTHLY,
+				},
+				{
+					Name:    "t2",
+					TypeID:  1,
+					Amount:  internal.NewCurrency("19.99", internal.USD),
+					DueDate: createDate(now.Year(), now.Month(), 3),
+					Status:  "pending",
+					Period:  MONTHLY,
+				},
+				{
+					Name:    "t3",
+					TypeID:  1,
+					Amount:  internal.NewCurrency("19.99", internal.USD),
+					DueDate: createDate(now.Year(), now.Month(), 3),
+					Status:  "pending",
+					Period:  MONTHLY,
+				},
+				{
+					Name:    "t4",
+					TypeID:  1,
+					Amount:  internal.NewCurrency("19.99", internal.USD),
+					DueDate: createDate(now.Year(), now.Month(), 3),
+					Status:  "pending",
+					Period:  MONTHLY,
+				},
+				{
+					Name:    "t5",
+					TypeID:  1,
+					Amount:  internal.NewCurrency("19.99", internal.USD),
+					DueDate: createDate(now.Year(), now.Month(), 3),
+					Status:  "pending",
+					Period:  MONTHLY,
+				},
+			},
+			expected: 5,
+		},
+	}
+
+	r := require.New(t)
+	a := assert.New(t)
+
+	for _, mock := range table {
+		t.Run("should "+mock.should, func(t *testing.T) {
+			db, err := NewSqliteDb("", internal.USD, WithMemoryDB())
+			r.NoError(err)
+			defer func() {
+				r.NoError(db.Close())
+			}()
+
+			err = db.CreateBillTypes([]string{"test"})
+			r.NoError(err, "expected to create bill types")
+
+			if len(mock.actual) > 0 {
+				err = db.CreateNewBills(mock.actual)
+				r.NoError(err, "expected to create bills")
+			}
+
+			count, err := db.QueryBillsCount()
+			r.NoError(err, "should successfully count bills")
+
+			a.Equal(mock.expected, count)
+		})
+	}
+}
+
 func TestCreateBillHistory(t *testing.T) {
 	t.Parallel()
 	type Mock struct {
