@@ -78,15 +78,15 @@ func WithMemoryDB() Option {
 	}
 }
 
-func (sdb SqliteDb) Close() error {
-	return sdb.handle.Close()
+func (db SqliteDb) Close() error {
+	return db.handle.Close()
 }
 
-func (sdb SqliteDb) Query(s string) (*sql.Rows, error) {
-	return sdb.handle.Query(s)
+func (db SqliteDb) Query(s string) (*sql.Rows, error) {
+	return db.handle.Query(s)
 }
 
-func (sdb SqliteDb) insertInto(t Table, args ...any) (sql.Result, error) {
+func (db SqliteDb) insertInto(t Table, args ...any) (sql.Result, error) {
 	columns, exists := tableData[t]
 	if !exists {
 		return nil, ErrUnsupportedTable
@@ -96,18 +96,18 @@ func (sdb SqliteDb) insertInto(t Table, args ...any) (sql.Result, error) {
 		return nil, ErrMismatchColsValues
 	}
 
-	return sdb.handle.Exec(toInsertStr(string(t), columns), args...)
+	return db.handle.Exec(toInsertStr(string(t), columns), args...)
 }
 
-func (sdb SqliteDb) queryAll(t Table) (*sql.Rows, error) {
-	rows, err := sdb.handle.Query(fmt.Sprintf("SELECT * FROM %s", t))
+func (db SqliteDb) queryAll(t Table) (*sql.Rows, error) {
+	rows, err := db.handle.Query(fmt.Sprintf("SELECT * FROM %s", t))
 	if err != nil {
 		return nil, err
 	}
 	return rows, nil
 }
 
-func (sdb SqliteDb) query(t Table, qm QueryMap) (*sql.Rows, error) {
+func (db SqliteDb) query(t Table, qm QueryMap) (*sql.Rows, error) {
 	var fm FieldMap
 	var err error
 
@@ -153,7 +153,7 @@ func (sdb SqliteDb) query(t Table, qm QueryMap) (*sql.Rows, error) {
 		return nil, err
 	}
 
-	rows, err := sdb.handle.Query(queryStr)
+	rows, err := db.handle.Query(queryStr)
 	if err != nil {
 		return nil, err
 	}

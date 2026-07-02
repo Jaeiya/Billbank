@@ -14,7 +14,7 @@ type MonthRecord struct {
 	Date internal.Date
 }
 
-func (sdb SqliteDb) CreateMonth(year int, month time.Month) (int64, error) {
+func (db SqliteDb) CreateMonth(year int, month time.Month) (int64, error) {
 	now := time.Now()
 	// Maybe in the future this might be a bad idea, but
 	// for now, there's no reason to create months
@@ -28,7 +28,7 @@ func (sdb SqliteDb) CreateMonth(year int, month time.Month) (int64, error) {
 		return 0, err
 	}
 
-	res, err := sdb.insertInto(MONTHS, d)
+	res, err := db.insertInto(MONTHS, d)
 	if err != nil {
 		return 0, getExecError(err)
 	}
@@ -41,8 +41,8 @@ func (sdb SqliteDb) CreateMonth(year int, month time.Month) (int64, error) {
 	return id, nil
 }
 
-func (sdb SqliteDb) QueryMonths(qm QueryMap) ([]MonthRecord, error) {
-	rows, err := sdb.query(MONTHS, qm)
+func (db SqliteDb) QueryMonths(qm QueryMap) ([]MonthRecord, error) {
+	rows, err := db.query(MONTHS, qm)
 	if err != nil {
 		return []MonthRecord{}, err
 	}

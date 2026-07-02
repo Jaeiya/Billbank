@@ -43,7 +43,7 @@ type CreditCardHistoryRecord struct {
 	ClearedDay   *int
 }
 
-func (sdb SqliteDb) CreateCreditCard(config CreditCardRecord, pass *string) error {
+func (db SqliteDb) CreateCreditCard(config CreditCardRecord, pass *string) error {
 	encCardNum, err := internal.EncryptNonNil(config.CardNumber, pass)
 	if err != nil {
 		return err
@@ -54,7 +54,7 @@ func (sdb SqliteDb) CreateCreditCard(config CreditCardRecord, pass *string) erro
 		return err
 	}
 
-	_, err = sdb.insertInto(
+	_, err = db.insertInto(
 		CREDIT_CARDS,
 		config.Name,
 		config.DueDay,
@@ -69,13 +69,13 @@ func (sdb SqliteDb) CreateCreditCard(config CreditCardRecord, pass *string) erro
 	return nil
 }
 
-func (sdb SqliteDb) QueryCreditCards(
+func (db SqliteDb) QueryCreditCards(
 	qm QueryMap,
 	password *string,
 ) ([]CreditCardRecord, error) {
 	var err error
 
-	rows, err := sdb.query(CREDIT_CARDS, qm)
+	rows, err := db.query(CREDIT_CARDS, qm)
 	if err != nil {
 		return []CreditCardRecord{}, err
 	}
@@ -119,8 +119,8 @@ func (sdb SqliteDb) QueryCreditCards(
 	return records, nil
 }
 
-func (sdb SqliteDb) CreateCreditCardHistory(r CreditCardHistoryRecord) error {
-	_, err := sdb.insertInto(
+func (db SqliteDb) CreateCreditCardHistory(r CreditCardHistoryRecord) error {
+	_, err := db.insertInto(
 		CREDIT_CARD_HISTORY,
 		r.CreditCardID,
 		r.MonthID,
@@ -137,8 +137,8 @@ func (sdb SqliteDb) CreateCreditCardHistory(r CreditCardHistoryRecord) error {
 	return nil
 }
 
-func (sdb SqliteDb) QueryCreditCardHistory(qm QueryMap) ([]CreditCardHistoryRecord, error) {
-	rows, err := sdb.query(CREDIT_CARD_HISTORY, qm)
+func (db SqliteDb) QueryCreditCardHistory(qm QueryMap) ([]CreditCardHistoryRecord, error) {
+	rows, err := db.query(CREDIT_CARD_HISTORY, qm)
 	if err != nil {
 		return []CreditCardHistoryRecord{}, err
 	}
@@ -172,7 +172,7 @@ func (sdb SqliteDb) QueryCreditCardHistory(qm QueryMap) ([]CreditCardHistoryReco
 	return records, nil
 }
 
-func (sdb SqliteDb) SetCreditCardHistory(historyID int, fieldMap CCFieldMap) error {
+func (db SqliteDb) SetCreditCardHistory(historyID int, fieldMap CCFieldMap) error {
 	conditions := make([]string, 0, len(fieldMap))
 	for field, value := range fieldMap {
 		switch field {
@@ -202,7 +202,7 @@ func (sdb SqliteDb) SetCreditCardHistory(historyID int, fieldMap CCFieldMap) err
 		historyID,
 	)
 
-	if _, err := sdb.handle.Exec(query); err != nil {
+	if _, err := db.handle.Exec(query); err != nil {
 		return err
 	}
 	return nil
