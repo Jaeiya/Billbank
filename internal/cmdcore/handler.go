@@ -174,15 +174,17 @@ func (ch *cmdHandler[M]) Update(msg tea.Msg) (CommandHandler, tea.Cmd) {
 func (ch cmdHandler[M]) View() tea.View {
 	v := tea.NewView("")
 
+	err := ch.errors.command
 	errorTitle := "Command Error"
 	if ch.errors.fatal != nil {
 		errorTitle = "Fatal Error"
+		err = ch.errors.fatal
 	}
 
-	if ch.errors.fatal != nil || ch.errors.command != nil {
+	if err != nil {
 		v.SetContent(ui.NewErrorBox(
 			errorTitle,
-			ch.errors.fatal.Error(),
+			err.Error(),
 			ch.viewWidth,
 			ch.viewHeight,
 		))
@@ -198,7 +200,7 @@ func (ch cmdHandler[M]) View() tea.View {
 		)
 	}
 
-	v, err := cmd.View(ch.cmdModel)
+	v, err = cmd.View(ch.cmdModel)
 	if err != nil {
 		if errors.Is(err, ErrModelTypeMismatch) {
 			logger.LogFatal(
