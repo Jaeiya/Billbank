@@ -55,7 +55,7 @@ func (db SqliteDb) CreateCreditCard(config CreditCardRecord, pass *string) error
 	}
 
 	_, err = db.insertInto(
-		CREDIT_CARDS,
+		CreditCards,
 		config.Name,
 		config.DueDay,
 		config.CreditLimit,
@@ -75,7 +75,7 @@ func (db SqliteDb) QueryCreditCards(
 ) ([]CreditCardRecord, error) {
 	var err error
 
-	rows, err := db.query(CREDIT_CARDS, qm)
+	rows, err := db.query(CreditCards, qm)
 	if err != nil {
 		return []CreditCardRecord{}, err
 	}
@@ -121,7 +121,7 @@ func (db SqliteDb) QueryCreditCards(
 
 func (db SqliteDb) CreateCreditCardHistory(r CreditCardHistoryRecord) error {
 	_, err := db.insertInto(
-		CREDIT_CARD_HISTORY,
+		CreditCardHistory,
 		r.CreditCardID,
 		r.MonthID,
 		r.Balance.StoredValue(),
@@ -138,7 +138,7 @@ func (db SqliteDb) CreateCreditCardHistory(r CreditCardHistoryRecord) error {
 }
 
 func (db SqliteDb) QueryCreditCardHistory(qm QueryMap) ([]CreditCardHistoryRecord, error) {
-	rows, err := db.query(CREDIT_CARD_HISTORY, qm)
+	rows, err := db.query(CreditCardHistory, qm)
 	if err != nil {
 		return []CreditCardHistoryRecord{}, err
 	}
@@ -197,7 +197,7 @@ func (db SqliteDb) SetCreditCardHistory(historyID int, fieldMap CCFieldMap) erro
 
 	query := fmt.Sprintf(
 		"UPDATE %s SET %s WHERE id = %d",
-		CREDIT_CARD_HISTORY,
+		CreditCardHistory,
 		strings.Join(conditions, ","),
 		historyID,
 	)

@@ -25,7 +25,7 @@ func TestCreateIncome(t *testing.T) {
 				{
 					Name:   "test",
 					Amount: internal.NewCurrency("200", internal.USD),
-					Period: MONTHLY,
+					Period: Monthly,
 				},
 			},
 			expected: []IncomeRecord{
@@ -33,7 +33,7 @@ func TestCreateIncome(t *testing.T) {
 					ID:     1,
 					Name:   "test",
 					Amount: internal.NewCurrency("200", internal.USD),
-					Period: MONTHLY,
+					Period: Monthly,
 				},
 			},
 		},
@@ -92,14 +92,14 @@ func TestCreateIncome(t *testing.T) {
 		_, err = db.CreateIncome(IncomeRecord{
 			Name:   "name",
 			Amount: internal.NewCurrency("13.37", internal.USD),
-			Period: MONTHLY,
+			Period: Monthly,
 		})
 		r.NoError(err)
 
 		_, err = db.CreateIncome(IncomeRecord{
 			Name:   "name",
 			Amount: internal.NewCurrency("133.7", internal.USD),
-			Period: MONTHLY,
+			Period: Monthly,
 		})
 		a.ErrorIs(err, ErrUniqueName)
 	})
@@ -122,7 +122,7 @@ func TestCreateIncomeHistory(t *testing.T) {
 				{
 					Name:   "test",
 					Amount: internal.NewCurrency("250", internal.USD),
-					Period: BIWEEKLY,
+					Period: BiWeekly,
 				},
 			},
 			actual: []IncomeHistoryRecord{
@@ -147,7 +147,7 @@ func TestCreateIncomeHistory(t *testing.T) {
 				{
 					Name:   "test",
 					Amount: internal.NewCurrency("250", internal.USD),
-					Period: BIWEEKLY,
+					Period: BiWeekly,
 				},
 			},
 			actual: []IncomeHistoryRecord{
@@ -165,7 +165,7 @@ func TestCreateIncomeHistory(t *testing.T) {
 				{
 					Name:   "test",
 					Amount: internal.NewCurrency("250", internal.USD),
-					Period: BIWEEKLY,
+					Period: BiWeekly,
 				},
 			},
 			actual: []IncomeHistoryRecord{

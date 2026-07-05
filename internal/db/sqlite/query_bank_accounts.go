@@ -52,7 +52,7 @@ func (db SqliteDb) CreateBankAccount(config BankAccountRecord, password *string)
 		return err
 	}
 
-	_, err = db.insertInto(BANK_ACCOUNTS, config.Name, encAccountNum, encNotes)
+	_, err = db.insertInto(BankAccts, config.Name, encAccountNum, encNotes)
 	if err != nil {
 		return getExecError(err)
 	}
@@ -60,7 +60,7 @@ func (db SqliteDb) CreateBankAccount(config BankAccountRecord, password *string)
 }
 
 func (db SqliteDb) QueryBankAccounts(qm QueryMap, pass *string) ([]BankAccountRecord, error) {
-	rows, err := db.query(BANK_ACCOUNTS, qm)
+	rows, err := db.query(BankAccts, qm)
 	if err != nil {
 		return []BankAccountRecord{}, err
 	}
@@ -104,7 +104,7 @@ func (db SqliteDb) QueryBankAccounts(qm QueryMap, pass *string) ([]BankAccountRe
 
 func (db SqliteDb) CreateBankAccountHistory(config BankHistoryRecord) error {
 	_, err := db.insertInto(
-		BANK_ACCOUNT_HISTORY,
+		BankAcctHistory,
 		config.BankAccountID,
 		config.MonthID,
 		config.Balance,
@@ -116,7 +116,7 @@ func (db SqliteDb) CreateBankAccountHistory(config BankHistoryRecord) error {
 }
 
 func (db SqliteDb) QueryBankAccountHistory(qm QueryMap) ([]BankHistoryRecord, error) {
-	rows, err := db.query(BANK_ACCOUNT_HISTORY, qm)
+	rows, err := db.query(BankAcctHistory, qm)
 	if err != nil {
 		return []BankHistoryRecord{}, err
 	}
@@ -145,7 +145,7 @@ func (db SqliteDb) QueryBankAccountHistory(qm QueryMap) ([]BankHistoryRecord, er
 
 func (db SqliteDb) CreateTransfer(tr TransferRecord) error {
 	_, err := db.insertInto(
-		BANK_TRANSFERS,
+		BankTranx,
 		tr.HistoryID,
 		tr.MonthID,
 		tr.Name,
@@ -162,7 +162,7 @@ func (db SqliteDb) CreateTransfer(tr TransferRecord) error {
 }
 
 func (db SqliteDb) QueryTransfers(qm QueryMap) ([]TransferRecord, error) {
-	rows, err := db.query(BANK_TRANSFERS, qm)
+	rows, err := db.query(BankTranx, qm)
 	if err != nil {
 		return []TransferRecord{}, err
 	}

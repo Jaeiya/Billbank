@@ -16,7 +16,7 @@ type BillRecord struct {
 }
 
 func (db SqliteDb) AddNewBills(records []BillRecord) error {
-	_, err := insertMultiInto(db, BILLS, records, func(r BillRecord) []any {
+	_, err := insertMultiInto(db, Bills, records, func(r BillRecord) []any {
 		return []any{r.TypeID, r.Name, r.Amount, r.DueDate, r.Status, r.Period, r.IsActive}
 	})
 	if err != nil {
@@ -26,7 +26,7 @@ func (db SqliteDb) AddNewBills(records []BillRecord) error {
 }
 
 func (db SqliteDb) QueryBills(qm QueryMap) ([]BillRecord, error) {
-	rows, err := db.query(BILLS, qm)
+	rows, err := db.query(Bills, qm)
 	if err != nil {
 		return []BillRecord{}, err
 	}
@@ -59,7 +59,7 @@ func (db SqliteDb) QueryBills(qm QueryMap) ([]BillRecord, error) {
 
 func (db SqliteDb) QueryBillsCount() (int, error) {
 	var count int
-	if err := db.handle.QueryRow("SELECT COUNT(*) FROM " + string(BILLS)).Scan(&count); err != nil {
+	if err := db.handle.QueryRow("SELECT COUNT(*) FROM " + string(Bills)).Scan(&count); err != nil {
 		return 0, err
 	}
 	return count, nil
@@ -80,7 +80,7 @@ type BillHistoryRecord struct {
 }
 
 func (db SqliteDb) CreateBillHistory(records []BillHistoryRecord) error {
-	_, err := insertMultiInto(db, BILLS_HISTORY, records, func(r BillHistoryRecord) []any {
+	_, err := insertMultiInto(db, BillsHistory, records, func(r BillHistoryRecord) []any {
 		return []any{
 			r.MonthID,
 			r.TypeID,
@@ -101,7 +101,7 @@ func (db SqliteDb) CreateBillHistory(records []BillHistoryRecord) error {
 }
 
 func (db SqliteDb) QueryBillHistory(qm QueryMap) ([]BillHistoryRecord, error) {
-	rows, err := db.query(BILLS_HISTORY, qm)
+	rows, err := db.query(BillsHistory, qm)
 	if err != nil {
 		return []BillHistoryRecord{}, err
 	}
@@ -136,7 +136,7 @@ func (db SqliteDb) QueryBillHistory(qm QueryMap) ([]BillHistoryRecord, error) {
 }
 
 func (db SqliteDb) CreateBillTypes(names []string) error {
-	_, err := insertMultiInto(db, BILL_TYPES, names, func(name string) []any {
+	_, err := insertMultiInto(db, BillTypes, names, func(name string) []any {
 		return []any{name}
 	})
 	if err != nil {
@@ -146,7 +146,7 @@ func (db SqliteDb) CreateBillTypes(names []string) error {
 }
 
 func (db SqliteDb) QueryBillTypes() (types []string, err error) {
-	rows, err := db.queryAll(BILL_TYPES)
+	rows, err := db.queryAll(BillTypes)
 	if err != nil {
 		return []string{}, err
 	}

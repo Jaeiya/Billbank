@@ -28,7 +28,7 @@ func (db SqliteDb) CreateMonth(year int, month time.Month) (int64, error) {
 		return 0, err
 	}
 
-	res, err := db.insertInto(MONTHS, d)
+	res, err := db.insertInto(Months, d)
 	if err != nil {
 		return 0, getExecError(err)
 	}
@@ -42,7 +42,7 @@ func (db SqliteDb) CreateMonth(year int, month time.Month) (int64, error) {
 }
 
 func (db SqliteDb) QueryMonths(qm QueryMap) ([]MonthRecord, error) {
-	rows, err := db.query(MONTHS, qm)
+	rows, err := db.query(Months, qm)
 	if err != nil {
 		return []MonthRecord{}, err
 	}

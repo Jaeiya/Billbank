@@ -30,7 +30,7 @@ func TestQueryBills(t *testing.T) {
 					Amount:  internal.NewCurrency("19.99", internal.USD),
 					DueDate: createDate(now.Year(), now.Month(), 3),
 					Status:  "pending",
-					Period:  MONTHLY,
+					Period:  Monthly,
 				},
 				{
 					Name:    "t2",
@@ -38,7 +38,7 @@ func TestQueryBills(t *testing.T) {
 					Amount:  internal.NewCurrency("39.99", internal.USD),
 					DueDate: createDate(now.Year(), now.Month(), 27),
 					Status:  "pending",
-					Period:  MONTHLY,
+					Period:  Monthly,
 				},
 				{
 					Name:    "t3",
@@ -46,7 +46,7 @@ func TestQueryBills(t *testing.T) {
 					Amount:  internal.NewCurrency("10.45", internal.USD),
 					DueDate: createDate(now.Year(), now.Month(), 11),
 					Status:  "pending",
-					Period:  MONTHLY,
+					Period:  Monthly,
 				},
 				{
 					Name:    "t4",
@@ -54,7 +54,7 @@ func TestQueryBills(t *testing.T) {
 					Amount:  internal.NewCurrency("2.99", internal.USD),
 					DueDate: createDate(now.Year(), now.Month(), 8),
 					Status:  "pending",
-					Period:  MONTHLY,
+					Period:  Monthly,
 				},
 			},
 			expected: []BillRecord{
@@ -65,7 +65,7 @@ func TestQueryBills(t *testing.T) {
 					Amount:  internal.NewCurrency("19.99", internal.USD),
 					DueDate: createDate(now.Year(), now.Month(), 3),
 					Status:  "pending",
-					Period:  MONTHLY,
+					Period:  Monthly,
 				},
 				{
 					ID:      2,
@@ -74,7 +74,7 @@ func TestQueryBills(t *testing.T) {
 					Amount:  internal.NewCurrency("39.99", internal.USD),
 					DueDate: createDate(now.Year(), now.Month(), 27),
 					Status:  "pending",
-					Period:  MONTHLY,
+					Period:  Monthly,
 				},
 				{
 					ID:      3,
@@ -83,7 +83,7 @@ func TestQueryBills(t *testing.T) {
 					Amount:  internal.NewCurrency("10.45", internal.USD),
 					DueDate: createDate(now.Year(), now.Month(), 11),
 					Status:  "pending",
-					Period:  MONTHLY,
+					Period:  Monthly,
 				},
 				{
 					ID:      4,
@@ -92,7 +92,7 @@ func TestQueryBills(t *testing.T) {
 					Amount:  internal.NewCurrency("2.99", internal.USD),
 					DueDate: createDate(now.Year(), now.Month(), 8),
 					Status:  "pending",
-					Period:  MONTHLY,
+					Period:  Monthly,
 				},
 			},
 		},
@@ -105,7 +105,7 @@ func TestQueryBills(t *testing.T) {
 					Amount:  internal.NewCurrency("123.4", internal.USD),
 					DueDate: createDate(now.Year(), now.Month(), 7),
 					Status:  "pending",
-					Period:  MONTHLY,
+					Period:  Monthly,
 				},
 			},
 			expectedError: ErrForeignKey,
@@ -120,7 +120,7 @@ func TestQueryBills(t *testing.T) {
 					DueDate:  createDate(now.Year(), now.Month(), 7),
 					Status:   "pending",
 					IsActive: false,
-					Period:   MONTHLY,
+					Period:   Monthly,
 				},
 			},
 			expected: []BillRecord{
@@ -132,7 +132,7 @@ func TestQueryBills(t *testing.T) {
 					DueDate:  createDate(now.Year(), now.Month(), 7),
 					Status:   "pending",
 					IsActive: false,
-					Period:   MONTHLY,
+					Period:   Monthly,
 				},
 			},
 		},
@@ -190,7 +190,7 @@ func TestQueryBills(t *testing.T) {
 				Amount:  internal.NewCurrency("13.37", internal.USD),
 				DueDate: createDate(now.Year(), now.Month(), 10),
 				Status:  "pending",
-				Period:  MONTHLY,
+				Period:  Monthly,
 			},
 		})
 		r.NoError(err, "expected to successfully create test bill")
@@ -202,7 +202,7 @@ func TestQueryBills(t *testing.T) {
 				Amount:  internal.NewCurrency("133.7", internal.USD),
 				DueDate: createDate(now.Year(), now.Month(), 7),
 				Status:  "pending",
-				Period:  MONTHLY,
+				Period:  Monthly,
 			},
 		})
 		a.ErrorIs(err, ErrUniqueName, "expected error when creating duplicate bill name")
@@ -234,7 +234,7 @@ func TestQueryBillsCount(t *testing.T) {
 					Amount:  internal.NewCurrency("19.99", internal.USD),
 					DueDate: createDate(now.Year(), now.Month(), 3),
 					Status:  "pending",
-					Period:  MONTHLY,
+					Period:  Monthly,
 				},
 			},
 			expected: 1,
@@ -248,7 +248,7 @@ func TestQueryBillsCount(t *testing.T) {
 					Amount:  internal.NewCurrency("19.99", internal.USD),
 					DueDate: createDate(now.Year(), now.Month(), 3),
 					Status:  "pending",
-					Period:  MONTHLY,
+					Period:  Monthly,
 				},
 				{
 					Name:    "t2",
@@ -256,7 +256,7 @@ func TestQueryBillsCount(t *testing.T) {
 					Amount:  internal.NewCurrency("19.99", internal.USD),
 					DueDate: createDate(now.Year(), now.Month(), 3),
 					Status:  "pending",
-					Period:  MONTHLY,
+					Period:  Monthly,
 				},
 				{
 					Name:    "t3",
@@ -264,7 +264,7 @@ func TestQueryBillsCount(t *testing.T) {
 					Amount:  internal.NewCurrency("19.99", internal.USD),
 					DueDate: createDate(now.Year(), now.Month(), 3),
 					Status:  "pending",
-					Period:  MONTHLY,
+					Period:  Monthly,
 				},
 				{
 					Name:    "t4",
@@ -272,7 +272,7 @@ func TestQueryBillsCount(t *testing.T) {
 					Amount:  internal.NewCurrency("19.99", internal.USD),
 					DueDate: createDate(now.Year(), now.Month(), 3),
 					Status:  "pending",
-					Period:  MONTHLY,
+					Period:  Monthly,
 				},
 				{
 					Name:    "t5",
@@ -280,7 +280,7 @@ func TestQueryBillsCount(t *testing.T) {
 					Amount:  internal.NewCurrency("19.99", internal.USD),
 					DueDate: createDate(now.Year(), now.Month(), 3),
 					Status:  "pending",
-					Period:  MONTHLY,
+					Period:  Monthly,
 				},
 			},
 			expected: 5,
@@ -334,7 +334,7 @@ func TestCreateBillHistory(t *testing.T) {
 					Amount:  internal.NewCurrency("13.37", internal.USD),
 					DueDate: createDate(time.Now().Year(), time.Now().Month(), 3),
 					Status:  "pending",
-					Period:  MONTHLY,
+					Period:  Monthly,
 				},
 			},
 			actual: []BillHistoryRecord{
@@ -376,7 +376,7 @@ func TestCreateBillHistory(t *testing.T) {
 					Amount:  internal.NewCurrency("1337", internal.USD),
 					DueDate: createDate(time.Now().Year(), time.Now().Month(), 3),
 					Status:  "pending",
-					Period:  MONTHLY,
+					Period:  Monthly,
 				},
 			},
 			actual: []BillHistoryRecord{
@@ -413,7 +413,7 @@ func TestCreateBillHistory(t *testing.T) {
 					Amount:  internal.NewCurrency("1337", internal.USD),
 					DueDate: createDate(time.Now().Year(), time.Now().Month(), 3),
 					Status:  "pending",
-					Period:  MONTHLY,
+					Period:  Monthly,
 				},
 			},
 			actual: []BillHistoryRecord{
@@ -436,7 +436,7 @@ func TestCreateBillHistory(t *testing.T) {
 					Amount:  internal.NewCurrency("1337", internal.USD),
 					DueDate: createDate(time.Now().Year(), time.Now().Month(), 3),
 					Status:  "pending",
-					Period:  MONTHLY,
+					Period:  Monthly,
 				},
 			},
 			actual: []BillHistoryRecord{
