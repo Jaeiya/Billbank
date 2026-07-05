@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS income (
     id     INTEGER NOT NULL PRIMARY KEY,
     name   TEXT    NOT NULL UNIQUE,
     amount INTEGER NOT NULL CHECK (amount>0),
-    period TEXT    NOT NULL CHECK (period IN ('yearly', 'monthly', 'biweekly', 'weekly'))
+    period TEXT    NOT NULL CHECK (period IN ('yearly', 'monthly', 'bi-weekly', 'weekly'))
 )STRICT;
 
 
@@ -110,7 +110,7 @@ CREATE TABLE IF NOT EXISTS bills (
     amount   INTEGER  NOT NULL,
     due_date TEXT     NOT NULL,
     status   TEXT     NOT NULL CHECK (status IN ('pending', 'missed', 'paid')),
-    period   TEXT     NOT NULL CHECK (period IN ('yearly', 'monthly')),
+    period   TEXT     NOT NULL CHECK (period IN ('yearly', 'monthly', 'bi-monthly', 'bi-yearly')),
     -- Whether or not the bill should show up
     -- in the bills list for the next month
     is_active INTEGER NOT NULL DEFAULT 1 CHECK (is_active IN (0, 1)),
