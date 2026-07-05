@@ -132,15 +132,6 @@ CREATE TABLE IF NOT EXISTS bills_history (
     FOREIGN KEY (type_id)  REFERENCES bill_types (id)
 )STRICT;
 
-
-CREATE TABLE IF NOT EXISTS bills_monthly (
-    id        INTEGER PRIMARY KEY,
-    bill_id   INTEGER NOT NULL UNIQUE,
-    is_active INTEGER NOT NULL,
-    FOREIGN KEY (bill_id) REFERENCES bills (id)
-)STRICT;
-
-
 CREATE TABLE IF NOT EXISTS bill_types (
     id   INTEGER PRIMARY KEY,
     name TEXT    NOT NULL UNIQUE
