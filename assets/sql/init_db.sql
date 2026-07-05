@@ -103,7 +103,6 @@ CREATE TABLE IF NOT EXISTS credit_card_history (
     FOREIGN KEY (month_id) REFERENCES months (id)
 )STRICT;
 
-
 CREATE TABLE IF NOT EXISTS bills (
     id       INTEGER  PRIMARY KEY,
     type_id  INTEGER  NOT NULL,
@@ -112,9 +111,11 @@ CREATE TABLE IF NOT EXISTS bills (
     due_date TEXT     NOT NULL,
     status   TEXT     NOT NULL CHECK (status IN ('pending', 'missed', 'paid')),
     period   TEXT     NOT NULL CHECK (period IN ('yearly', 'monthly')),
+    -- Whether or not the bill should show up
+    -- in the bills list for the next month
+    is_active INTEGER NOT NULL DEFAULT 1 CHECK (is_active IN (0, 1)),
     FOREIGN KEY (type_id) REFERENCES bill_types (id)
 )STRICT;
-
 
 CREATE TABLE IF NOT EXISTS bills_history (
     id          INTEGER  PRIMARY KEY,

@@ -63,6 +63,7 @@ var tableData = TableFields{
 		"due_date",
 		"status",
 		"period",
+		"is_active",
 	},
 	BILLS_HISTORY: {
 		"month_id",

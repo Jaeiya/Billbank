@@ -110,6 +110,32 @@ func TestQueryBills(t *testing.T) {
 			},
 			expectedError: ErrForeignKey,
 		},
+		{
+			should: "set bill to inactive",
+			actual: []BillRecord{
+				{
+					Name:     "t1",
+					TypeID:   1,
+					Amount:   internal.NewCurrency("123.4", internal.USD),
+					DueDate:  createDate(now.Year(), now.Month(), 7),
+					Status:   "pending",
+					IsActive: false,
+					Period:   MONTHLY,
+				},
+			},
+			expected: []BillRecord{
+				{
+					ID:       1,
+					Name:     "t1",
+					TypeID:   1,
+					Amount:   internal.NewCurrency("123.4", internal.USD),
+					DueDate:  createDate(now.Year(), now.Month(), 7),
+					Status:   "pending",
+					IsActive: false,
+					Period:   MONTHLY,
+				},
+			},
+		},
 	}
 
 	for _, mock := range table {

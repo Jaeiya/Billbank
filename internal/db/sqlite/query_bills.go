@@ -5,18 +5,19 @@ import (
 )
 
 type BillRecord struct {
-	ID      int
-	TypeID  int
-	Name    string
-	Amount  internal.Currency
-	DueDate internal.Date
-	Status  string
-	Period  Period
+	ID       int
+	TypeID   int
+	Name     string
+	Amount   internal.Currency
+	DueDate  internal.Date
+	Status   string
+	Period   Period
+	IsActive bool
 }
 
 func (db SqliteDb) AddNewBills(records []BillRecord) error {
 	_, err := insertMultiInto(db, BILLS, records, func(r BillRecord) []any {
-		return []any{r.TypeID, r.Name, r.Amount, r.DueDate, r.Status, r.Period}
+		return []any{r.TypeID, r.Name, r.Amount, r.DueDate, r.Status, r.Period, r.IsActive}
 	})
 	if err != nil {
 		return getExecError(err)
@@ -42,6 +43,7 @@ func (db SqliteDb) QueryBills(qm QueryMap) ([]BillRecord, error) {
 			&record.DueDate,
 			&record.Status,
 			&record.Period,
+			&record.IsActive,
 		); err != nil {
 			return []BillRecord{}, err
 		}
