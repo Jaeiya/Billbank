@@ -272,7 +272,7 @@ func buildQueryStr(t Table, fm FieldMap) (string, error) {
 		case int, int64, int32:
 			conditions = append(conditions, fmt.Sprintf("%s=%v", field, realVal))
 		case internal.Currency:
-			conditions = append(conditions, fmt.Sprintf("%s=%d", field, realVal.GetStoredValue()))
+			conditions = append(conditions, fmt.Sprintf("%s=%d", field, realVal.StoredValue()))
 		default:
 			return "", fmt.Errorf("unsupported type [%T]", val)
 		}

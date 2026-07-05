@@ -124,7 +124,7 @@ func (db SqliteDb) CreateCreditCardHistory(r CreditCardHistoryRecord) error {
 		CREDIT_CARD_HISTORY,
 		r.CreditCardID,
 		r.MonthID,
-		r.Balance.GetStoredValue(),
+		r.Balance.StoredValue(),
 		r.DueDay,
 		r.CreditLimit,
 		r.PaidDay,
@@ -182,7 +182,7 @@ func (db SqliteDb) SetCreditCardHistory(historyID int, fieldMap CCFieldMap) erro
 			if err != nil {
 				return fmt.Errorf("%s should be of type: internal.Currency", field)
 			}
-			conditions = append(conditions, fmt.Sprintf("%s=%d", field, c.GetStoredValue()))
+			conditions = append(conditions, fmt.Sprintf("%s=%d", field, c.StoredValue()))
 
 		case CC_DUE_DAY, CC_PAID_DAY:
 			if !utils.IsInt(value) {

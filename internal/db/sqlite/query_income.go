@@ -59,7 +59,7 @@ func (db SqliteDb) CreateIncome(config IncomeRecord) (int64, error) {
 
 func (db SqliteDb) SetIncome(id int, amount internal.Currency) error {
 	_, err := db.handle.Exec(
-		fmt.Sprintf("UPDATE income SET amount=%d WHERE id=%d", amount.GetStoredValue(), id),
+		fmt.Sprintf("UPDATE income SET amount=%d WHERE id=%d", amount.StoredValue(), id),
 	)
 	if err != nil {
 		return err
@@ -139,7 +139,7 @@ AffixIncome tracks an appended amount to an existing income. This could
 be a bonus or overtime amount.
 */
 func (db SqliteDb) AffixIncome(historyID int, name string, amount internal.Currency) error {
-	_, err := db.insertInto(INCOME_AFFIXES, historyID, name, amount.GetStoredValue())
+	_, err := db.insertInto(INCOME_AFFIXES, historyID, name, amount.StoredValue())
 	if err != nil {
 		return getExecError(err)
 	}
