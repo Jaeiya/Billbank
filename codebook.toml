@@ -1,6 +1,7 @@
 words = [
     "billbank",
     "errcheck",
+    "esc",
     "fieldalignment",
     "goconst",
     "govet",

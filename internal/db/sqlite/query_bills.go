@@ -14,7 +14,7 @@ type BillRecord struct {
 	Period  Period
 }
 
-func (db SqliteDb) CreateNewBills(records []BillRecord) error {
+func (db SqliteDb) AddNewBills(records []BillRecord) error {
 	_, err := insertMultiInto(db, BILLS, records, func(r BillRecord) []any {
 		return []any{r.TypeID, r.Name, r.Amount, r.DueDate, r.Status, r.Period}
 	})

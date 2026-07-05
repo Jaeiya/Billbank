@@ -128,12 +128,12 @@ func TestQueryBills(t *testing.T) {
 			r.NoError(err, "expected to create bill types")
 
 			if mock.expectedError != nil {
-				err = db.CreateNewBills(mock.actual)
+				err = db.AddNewBills(mock.actual)
 				r.ErrorIs(err, mock.expectedError, "expected specific error")
 				return
 			}
 
-			err = db.CreateNewBills(mock.actual)
+			err = db.AddNewBills(mock.actual)
 			r.NoError(err, "expected bill to be created properly")
 
 			bills, err := db.QueryBills(QueryMap{})
@@ -157,7 +157,7 @@ func TestQueryBills(t *testing.T) {
 		err = db.CreateBillTypes([]string{"test"})
 		r.NoError(err, "expected to create bill types")
 
-		err = db.CreateNewBills([]BillRecord{
+		err = db.AddNewBills([]BillRecord{
 			{
 				Name:    "name",
 				TypeID:  1,
@@ -169,7 +169,7 @@ func TestQueryBills(t *testing.T) {
 		})
 		r.NoError(err, "expected to successfully create test bill")
 
-		err = db.CreateNewBills([]BillRecord{
+		err = db.AddNewBills([]BillRecord{
 			{
 				Name:    "name",
 				TypeID:  1,
@@ -276,7 +276,7 @@ func TestQueryBillsCount(t *testing.T) {
 			r.NoError(err, "expected to create bill types")
 
 			if len(mock.actual) > 0 {
-				err = db.CreateNewBills(mock.actual)
+				err = db.AddNewBills(mock.actual)
 				r.NoError(err, "expected to create bills")
 			}
 
@@ -445,7 +445,7 @@ func TestCreateBillHistory(t *testing.T) {
 			err = db.CreateBillTypes([]string{"test"})
 			r.NoError(err, "expected bill types to be created")
 
-			err = db.CreateNewBills(mock.bills)
+			err = db.AddNewBills(mock.bills)
 			r.NoError(err)
 
 			if mock.expectedError != nil {
@@ -561,7 +561,7 @@ func TestBillsMonthly(t *testing.T) {
 			err = db.CreateBillTypes([]string{"test"})
 			r.NoError(err, "expected bill types to be created")
 
-			err = db.CreateNewBills(mock.bills)
+			err = db.AddNewBills(mock.bills)
 			r.NoError(err)
 
 			if mock.expectedError != nil {
@@ -593,7 +593,7 @@ func TestBillsMonthly(t *testing.T) {
 		err = db.CreateBillTypes([]string{"test"})
 		r.NoError(err, "expected to create bill types")
 
-		err = db.CreateNewBills([]BillRecord{
+		err = db.AddNewBills([]BillRecord{
 			{
 				Name:    "t1",
 				TypeID:  1,
