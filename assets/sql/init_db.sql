@@ -44,10 +44,8 @@ CREATE TABLE IF NOT EXISTS income_affixes (
 CREATE TABLE IF NOT EXISTS bank_accounts (
     id       INTEGER NOT NULL PRIMARY KEY,
     name     TEXT    NOT NULL,
-    -- Should only store the encrypted value
-    acct_num BLOB,
-    -- Should only store the encrypted value
-    notes    BLOB
+    acct_num BLOB, -- Should only store the encrypted value
+    notes    BLOB  -- Should only store the encrypted value
 )STRICT;
 
 
@@ -81,11 +79,9 @@ CREATE TABLE IF NOT EXISTS credit_cards (
     name             TEXT    NOT NULL UNIQUE,
     due_day          INTEGER NOT NULL CHECK (due_day > 0 AND due_day < 32),
     credit_limit     INTEGER,
-    -- Should only store the encrypted value
-    card_number      BLOB,
+    card_number      BLOB, -- Should only store the encrypted value
     last_four_digits TEXT NOT NULL,
-    -- Should only store the encrypted value
-    notes            BLOB
+    notes            BLOB -- Should only store the encrypted value
 )STRICT;
 
 
@@ -103,20 +99,24 @@ CREATE TABLE IF NOT EXISTS credit_card_history (
     FOREIGN KEY (month_id) REFERENCES months (id)
 )STRICT;
 
+-- Stores all bill templates to use each month. After each month, a bills
+-- current data is saved to the bills_history table. After the bill is
+-- saved, its template will be reset for the next month.
 CREATE TABLE IF NOT EXISTS bills (
     id       INTEGER  PRIMARY KEY,
-    type_id  INTEGER  NOT NULL,
-    name     TEXT     NOT NULL UNIQUE,
-    amount   INTEGER  NOT NULL,
+    type_id  INTEGER  NOT NULL,        -- Category of the bill (Utility, Tax, Rent...)
+    name     TEXT     NOT NULL UNIQUE, -- Name of the bill
+    amount   INTEGER  NOT NULL,        -- Base currency amount (USD would be stored in cents)
     due_date TEXT     NOT NULL,
     status   TEXT     NOT NULL CHECK (status IN ('pending', 'missed', 'paid')),
     period   TEXT     NOT NULL CHECK (period IN ('yearly', 'monthly', 'bi-monthly', 'bi-yearly')),
-    -- Whether or not the bill should show up
-    -- in the bills list for the next month
+    -- Whether to track the bill or not each month
     is_active INTEGER NOT NULL DEFAULT 1 CHECK (is_active IN (0, 1)),
     FOREIGN KEY (type_id) REFERENCES bill_types (id)
 )STRICT;
 
+-- Stores the entirety of a users bill history and links
+-- each bill to the month in which it was active.
 CREATE TABLE IF NOT EXISTS bills_history (
     id          INTEGER  PRIMARY KEY,
     month_id    INTEGER  NOT NULL,
