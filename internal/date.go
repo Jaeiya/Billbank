@@ -32,10 +32,14 @@ func (d Date) GetTime() time.Time {
 	return d.time
 }
 
+// Value is a SQL helper method to return the the date as
+// an RFC formatted string.
 func (d Date) Value() (driver.Value, error) {
 	return d.String(), nil
 }
 
+// Scan is a SQL helper method to parse an RFC formatted
+// date string back into a Date.
 func (d *Date) Scan(data any) error {
 	var err error
 	if v, isStr := data.(string); isStr {
