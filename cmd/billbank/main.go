@@ -31,6 +31,9 @@ func main() {
 
 	logger.Log(logger.Info, "starting billbank")
 
+	// TODO: defer loading database to viewport state
+	// This way we can show a loading TUI element instead of having the
+	// user look at a blank screen
 	db, err := sqlite.NewSqliteDb(filePath, internal.USD)
 	if err != nil {
 		panic(err)
