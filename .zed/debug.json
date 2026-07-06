@@ -1,0 +1,10 @@
+[
+    {
+        "adapter": "Delve",
+        "label": "Debug Go",
+        "request": "launch",
+        "mode": "debug",
+        "program": "./cmd/billbank",
+        "cwd": "${ZED_WORKTREE_ROOT}",
+    },
+]
