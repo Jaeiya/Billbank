@@ -21,9 +21,9 @@ func ToAsciiFont(s string, style FontStyle) string {
 }
 
 func newAsciiStr(s string, font []string) string {
-	// if len(font) != 27 {
-	// 	panic("font arrays must contain exactly 27 values")
-	// }
+	if len(font) != 63 {
+		panic("font arrays must contain exactly 27 values")
+	}
 
 	letters := make([]string, len(s))
 	for i, r := range s {
