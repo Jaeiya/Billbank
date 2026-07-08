@@ -29,7 +29,7 @@ const (
 	AlphaNumInput // Alphabet, Number, Space, and Backspace keys only; no validation
 	IntegerInput  // Number and Backspace keys only; validates as positive int64
 	FloatInput    // Number, Decimal, and Backspace keys only; validates as positive float64
-	PriceInput    // FloatInput keys only; validation enforces 2 decimal places
+	CurrencyInput // FloatInput keys only; validation enforces 2 decimal places
 )
 
 type formFocusState uint8
@@ -136,7 +136,7 @@ func (fi FormField) DescriptionDyn(d func(args ...string) string) FormField {
 
 func (fi FormField) InputType(t FormInputType) FormField {
 	fi.inputType = t
-	if t == PriceInput {
+	if t == CurrencyInput {
 		fi.prompt = "$ "
 	}
 	return fi
@@ -246,7 +246,7 @@ func (fi FormField) validate(args ...string) error {
 			return nil
 		}
 
-	case PriceInput:
+	case CurrencyInput:
 		defaultValidator = func() error {
 			strLen := len(inputStr)
 
@@ -675,7 +675,7 @@ func (f Form) isValidKey(t FormInputType, keyMsg tea.KeyPressMsg) bool {
 	case IntegerInput:
 		return utils.IsNumber(key)
 
-	case FloatInput, PriceInput:
+	case FloatInput, CurrencyInput:
 		return key == '.' || utils.IsNumber(key)
 	}
 
