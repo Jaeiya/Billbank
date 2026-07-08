@@ -329,7 +329,13 @@ func NewForm(name string, inputs ...FormField) Form {
 		if field.linkedInput != "" {
 			inputIdx, exists := inputMap[field.linkedInput]
 			if !exists {
-				panic(fmt.Errorf("fatal form error: %s field needs to be before %s", field.linkedInput, field.title))
+				panic(
+					fmt.Errorf(
+						"fatal form error: %s field needs to be before %s",
+						field.linkedInput,
+						field.title,
+					),
+				)
 			}
 			f.linkMap[field.title] = inputIdx
 		}
@@ -527,7 +533,9 @@ func (f Form) inputView() string {
 
 		b := utils.GetBorderStyle(utils.Rounded)
 
-		sb.WriteString(formStyles.inputBorder.BorderForeground(borderColor).Render(field.view()))
+		sb.WriteString(
+			formStyles.inputBorder.BorderForeground(borderColor).Render(field.view()),
+		)
 		sb.WriteByte('\n')
 
 		// Use corner border for last input field
