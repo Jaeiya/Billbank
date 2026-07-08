@@ -360,6 +360,10 @@ func (f Form) Update(msg tea.Msg) (Form, tea.Cmd) {
 			return f, nil
 
 		case "enter":
+			if !f.validateField(f.fields[f.tabPos]) {
+				return f, nil
+			}
+
 			if f.tabPos == len(f.fields)-1 {
 				if f.focus > formFocusInput {
 					if f.focus == formFocusSave {
@@ -373,10 +377,6 @@ func (f Form) Update(msg tea.Msg) (Form, tea.Cmd) {
 				f.fields[f.tabPos].input.Blur()
 				f.focus = formFocusSave
 				f.buttons.save.Focus()
-				return f, nil
-			}
-
-			if !f.validateField(f.fields[f.tabPos]) {
 				return f, nil
 			}
 
