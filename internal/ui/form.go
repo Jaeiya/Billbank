@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	inputWidth     = 18
+	inputWidth     = 20
 	inputMargin    = 2              // Should always be >= 2
 	inputCharLimit = inputWidth - 2 // Should always be < inputWidth
 	blinkSpeed     = 400
