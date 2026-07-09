@@ -120,6 +120,11 @@ func (fi FormField) Description(s string) FormField {
 	return fi
 }
 
+func (fi FormField) Placeholder(s string) FormField {
+	fi.input.Placeholder = s
+	return fi
+}
+
 // DescriptionDyn accepts a function that should be used to create
 // a dynamic description. The input of all fields prior to this
 // one, will be passed as args to this func.
