@@ -28,31 +28,31 @@ func NewModelBase() ModelBase {
 	return &commandModel{}
 }
 
-func (cm commandModel) WorkingPath() string {
-	return cm.workingPath
+func (m commandModel) WorkingPath() string {
+	return m.workingPath
 }
 
-func (cm *commandModel) SetWorkingPath(path string) {
-	cm.workingPath = path
+func (m *commandModel) SetWorkingPath(path string) {
+	m.workingPath = path
 }
 
-func (cm commandModel) IsWorkingPath(path string) bool {
-	return cm.workingPath == path
+func (m commandModel) IsWorkingPath(path string) bool {
+	return m.workingPath == path
 }
 
-func (cm commandModel) ViewportSize() (w, h int) {
-	return cm.vpSize.w, cm.vpSize.h
+func (m commandModel) ViewportSize() (w, h int) {
+	return m.vpSize.w, m.vpSize.h
 }
 
-func (cm *commandModel) SetViewportSize(w, h int) {
-	cm.vpSize.w = w
-	cm.vpSize.h = h
+func (m *commandModel) SetViewportSize(w, h int) {
+	m.vpSize.w = w
+	m.vpSize.h = h
 }
 
-func (cm commandModel) Reload(path string) tea.Cmd {
-	if cm.IsWorkingPath(path) {
+func (m commandModel) Reload(path string) tea.Cmd {
+	if m.IsWorkingPath(path) {
 		return func() tea.Msg {
-			return ExecCmdMsg{cm.vpSize.w, cm.vpSize.h}
+			return ExecCmdMsg{m.vpSize.w, m.vpSize.h}
 		}
 	}
 	return nil
