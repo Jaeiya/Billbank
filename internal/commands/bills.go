@@ -17,22 +17,22 @@ const (
 )
 
 var defaultBillTypes = [...]string{
-	"Credit Card",
-	"Donation",
-	"Education",
-	"Entertainment",
-	"Family",
-	"Food",
-	"Health",
-	"Housing",
-	"Insurance",
-	"Loan",
-	"Maintenance",
-	"Medical",
-	"Subscription",
-	"Tax",
-	"Transit",
-	"Utility",
+	"credit card",
+	"donation",
+	"education",
+	"entertainment",
+	"family",
+	"food",
+	"health",
+	"housing",
+	"insurance",
+	"loan",
+	"maintenance",
+	"medical",
+	"subscription",
+	"tax",
+	"transit",
+	"utility",
 }
 
 type billsModel struct {
