@@ -120,7 +120,7 @@ var WhereFieldMap = map[WhereFlag]string{
 type Period string
 
 const (
-	YEARLY    = Period("yearly")
+	Yearly    = Period("yearly")
 	BiYearly  = Period("bi-yearly")
 	TriYearly = Period("tri-yearly")
 
@@ -132,7 +132,7 @@ const (
 )
 
 var PeriodStrings = [...]string{
-	string(YEARLY),
+	string(Yearly),
 	string(BiYearly),
 	string(TriYearly),
 	string(Monthly),
