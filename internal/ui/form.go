@@ -29,7 +29,7 @@ const (
 	AlphaNumInput // Alphabet, Number, Space, and Backspace keys only; no validation
 	IntegerInput  // Number and Backspace keys only; validates as positive int64
 	FloatInput    // Number, Decimal, and Backspace keys only; validates as positive float64
-	CurrencyInput // FloatInput keys only; validation enforces 2 decimal places
+	CurrencyInput // FloatInput keys only; validation enforces USD amounts to 2 decimal places
 )
 
 type formFocusState uint8
