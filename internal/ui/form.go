@@ -545,10 +545,11 @@ func (f Form) inputView() string {
 		}
 
 		if f.tabPos == i && f.focus == formFocusInput {
-			sb.WriteString(Style.
-				Width(inputWidth + inputMargin).
-				Foreground(formBorderColor).
-				Render(utils.GenDashedBorder(inputWidth+inputMargin-1) + string(activeBorderChar)),
+			sb.WriteString(
+				Style.
+					Width(inputWidth + inputMargin).
+					Foreground(formBorderColor).
+					Render(utils.GenDashedBorder(inputWidth+inputMargin-1) + string(activeBorderChar)),
 			)
 		} else {
 			sb.WriteString(formStyles.inputBorder.Render(""))
