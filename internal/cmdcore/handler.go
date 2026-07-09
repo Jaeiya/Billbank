@@ -122,7 +122,8 @@ func (ch *cmdHandler[M]) Update(msg tea.Msg) (CommandHandler, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case ViewportSizeMsg:
-		logger.Log(logger.Hot,
+		logger.Log(
+			logger.Hot,
 			"[%s] handler setting viewport size [%d:%d]",
 			ch.name, msg.Width, msg.Height,
 		)
