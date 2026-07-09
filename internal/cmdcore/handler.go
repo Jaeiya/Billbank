@@ -19,6 +19,8 @@ var (
 	ErrMissingArg    = errors.New("missing required argument")
 )
 
+type FatalCmdErrMsg error
+
 type CommandHandler interface {
 	Update(tea.Msg) (CommandHandler, tea.Cmd)
 	View() tea.View
@@ -159,6 +161,9 @@ func (ch *cmdHandler[M]) Update(msg tea.Msg) (CommandHandler, tea.Cmd) {
 		ch.viewHeight = msg.Height
 		ch.viewWidth = msg.Width
 		ch.cmdModel = ch.ExecCommand(msg.Width, msg.Height)
+
+	case FatalCmdErrMsg:
+		ch.errors.command = msg
 	}
 
 	// Do not update an erroring command

@@ -16,6 +16,7 @@ type ModelBase interface {
 	// Loads the specified command path if it
 	// is already active.
 	Reload(path string) tea.Cmd
+	SendErr(err error) tea.Cmd
 }
 
 type commandModel struct {
@@ -55,4 +56,10 @@ func (cm commandModel) Reload(path string) tea.Cmd {
 		}
 	}
 	return nil
+}
+
+func (m commandModel) SendErr(err error) tea.Cmd {
+	return func() tea.Msg {
+		return FatalCmdErrMsg(err)
+	}
 }
