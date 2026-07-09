@@ -130,3 +130,13 @@ const (
 	Weekly   = Period("weekly")
 	BiWeekly = Period("bi-weekly")
 )
+
+var PeriodStrings = [...]string{
+	string(YEARLY),
+	string(BiYearly),
+	string(TriYearly),
+	string(Monthly),
+	string(BiMonthly),
+	string(Weekly),
+	string(BiWeekly),
+}
