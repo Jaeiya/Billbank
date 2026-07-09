@@ -84,7 +84,8 @@ func (vp ViewPort) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// Ignore key input unless command has exclusive control
 		if isKey && vp.hasHiddenInput || !isKey {
 			logger.LogFunc(logger.Hot, func() string {
-				return fmt.Sprintf("sending [%+v] to [%s] handler",
+				return fmt.Sprintf(
+					"sending [%+v] to [%s] handler",
 					reflect.TypeOf(msg), vp.cmdHandler.Name(),
 				)
 			})
@@ -118,7 +119,8 @@ func (vp ViewPort) View() tea.View {
 				lipgloss.Left,
 				lipgloss.Top,
 				cmdView,
-			))
+			),
+		)
 	}
 
 	// Do not display command input when command has exclusive control
