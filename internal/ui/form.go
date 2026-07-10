@@ -40,10 +40,7 @@ const (
 	formFocusCancel
 )
 
-var (
-	formActiveColor = BrightYellow
-	formBorderColor = lipgloss.Color("#505072")
-)
+var formActiveColor = BrightYellow
 
 type (
 	FormSavedMsg  []string
@@ -62,7 +59,7 @@ var formStyles = struct {
 		PaddingLeft(1).
 		PaddingRight(1).
 		Border(lipgloss.RoundedBorder()).
-		BorderForeground(formBorderColor),
+		BorderForeground(DarkBorderColor),
 
 	header: Style.Foreground(BrightMagenta).Align(lipgloss.Center),
 
@@ -72,7 +69,7 @@ var formStyles = struct {
 		Width(inputWidth + inputMargin).
 		BorderRight(true).
 		BorderStyle(lipgloss.NormalBorder()).
-		BorderForeground(formBorderColor),
+		BorderForeground(DarkBorderColor),
 
 	textInput: func() textinput.Styles {
 		s := textinput.DefaultStyles(false)
@@ -528,7 +525,7 @@ func (f Form) inputView() string {
 			sb.WriteByte('\n')
 		}
 
-		borderColor := formBorderColor
+		borderColor := DarkBorderColor
 		if i == f.tabPos && f.focus == formFocusInput {
 			borderColor = formActiveColor
 		}
@@ -550,7 +547,7 @@ func (f Form) inputView() string {
 			sb.WriteString(
 				Style.
 					Width(inputWidth + inputMargin).
-					Foreground(formBorderColor).
+					Foreground(DarkBorderColor).
 					Render(utils.GenDashedBorder(inputWidth+inputMargin-1) + string(activeBorderChar)),
 			)
 		} else {
