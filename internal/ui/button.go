@@ -49,7 +49,9 @@ func (b Button) View() string {
 		textBuilder.WriteString(text)
 		textBuilder.WriteString(bracketStyle.Render("]"))
 	} else {
+		textBuilder.WriteString(" ")
 		textBuilder.WriteString(text)
+		textBuilder.WriteString(" ")
 	}
 
 	return Style.Render(textBuilder.String())

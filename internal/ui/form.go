@@ -488,12 +488,9 @@ func (f Form) Update(msg tea.Msg) (Form, tea.Cmd) {
 }
 
 func (f Form) View() string {
-	cancelView := f.buttons.cancel.View() + " "
-	if f.buttons.cancel.Focused() {
-		cancelView = strings.TrimRight(cancelView, " ")
-	}
-
-	buttonView := Style.MarginRight(1).Render(f.buttons.save.View() + "   " + cancelView)
+	buttonView := Style.
+		MarginRight(1).
+		Render(f.buttons.save.View() + " " + f.buttons.cancel.View())
 
 	formStatusView := f.formStatusView("Ok", true)
 	if f.err != nil {
