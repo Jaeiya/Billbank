@@ -10,7 +10,7 @@ type BillRecord struct {
 	Name     string
 	Amount   internal.Currency
 	DueDate  internal.Date
-	Status   string
+	Status   BillStatus
 	Period   Period
 	IsActive bool
 }

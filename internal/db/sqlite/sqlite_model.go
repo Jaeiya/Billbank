@@ -142,6 +142,14 @@ var PeriodStrings = [...]string{
 	string(BiWeekly),
 }
 
+type BillStatus string
+
+const (
+	Pending = BillStatus("pending")
+	Missed  = BillStatus("missed")
+	Paid    = BillStatus("paid")
+)
+
 // Bill types mapped directly to their database ID.
 //
 // 🔴 These ID's should NEVER change! If a type needs to be
