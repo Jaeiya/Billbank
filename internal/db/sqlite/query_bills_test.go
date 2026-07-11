@@ -150,7 +150,7 @@ func TestQueryBills(t *testing.T) {
 				r.NoError(db.Close())
 			}()
 
-			err = db.CreateBillTypes([]string{"test"})
+			err = db.CreateBillTypes([]BillTypeRecord{{ID: 1, Name: "test"}})
 			r.NoError(err, "expected to create bill types")
 
 			if mock.expectedError != nil {
@@ -180,7 +180,7 @@ func TestQueryBills(t *testing.T) {
 			r.NoError(db.Close())
 		}()
 
-		err = db.CreateBillTypes([]string{"test"})
+		err = db.CreateBillTypes([]BillTypeRecord{{ID: 1, Name: "test"}})
 		r.NoError(err, "expected to create bill types")
 
 		err = db.AddNewBills([]BillRecord{
@@ -298,7 +298,7 @@ func TestQueryBillsCount(t *testing.T) {
 				r.NoError(db.Close())
 			}()
 
-			err = db.CreateBillTypes([]string{"test"})
+			err = db.CreateBillTypes([]BillTypeRecord{{ID: 1, Name: "test"}})
 			r.NoError(err, "expected to create bill types")
 
 			if len(mock.actual) > 0 {
@@ -468,7 +468,7 @@ func TestCreateBillHistory(t *testing.T) {
 			_, err = db.CreateMonth(now.Year(), now.Month())
 			r.NoError(err, "expected month to be created successfully")
 
-			err = db.CreateBillTypes([]string{"test"})
+			err = db.CreateBillTypes([]BillTypeRecord{{ID: 1, Name: "test"}})
 			r.NoError(err, "expected bill types to be created")
 
 			err = db.AddNewBills(mock.bills)

@@ -77,6 +77,7 @@ var tableData = TableFields{
 		"notes",
 	},
 	BillTypes: {
+		"id",
 		"name",
 	},
 }
@@ -139,4 +140,28 @@ var PeriodStrings = [...]string{
 	string(BiMonthly),
 	string(Weekly),
 	string(BiWeekly),
+}
+
+// Bill types mapped directly to their database ID.
+//
+// 🔴 These ID's should NEVER change! If a type needs to be
+// added, add the type name (keeping alphabetical order) and
+// set its ID to the current largest id + 1.
+var BillTypeMap = map[string]int{
+	"credit card":   1,
+	"donation":      2,
+	"education":     3,
+	"entertainment": 4,
+	"family":        5,
+	"food":          6,
+	"health":        7,
+	"housing":       8,
+	"insurance":     9,
+	"loan":          10,
+	"maintenance":   11,
+	"medical":       12,
+	"subscription":  13,
+	"tax":           14,
+	"transit":       15,
+	"utility":       16,
 }

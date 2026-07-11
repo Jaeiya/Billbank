@@ -135,9 +135,14 @@ func (db SqliteDb) QueryBillHistory(qm QueryMap) ([]BillHistoryRecord, error) {
 	return records, nil
 }
 
-func (db SqliteDb) CreateBillTypes(names []string) error {
-	_, err := insertMultiInto(db, BillTypes, names, func(name string) []any {
-		return []any{name}
+type BillTypeRecord struct {
+	ID   int
+	Name string
+}
+
+func (db SqliteDb) CreateBillTypes(records []BillTypeRecord) error {
+	_, err := insertMultiInto(db, BillTypes, records, func(r BillTypeRecord) []any {
+		return []any{r.ID, r.Name}
 	})
 	if err != nil {
 		return getExecError(err)
@@ -145,18 +150,18 @@ func (db SqliteDb) CreateBillTypes(names []string) error {
 	return nil
 }
 
-func (db SqliteDb) QueryBillTypes() (types []string, err error) {
+func (db SqliteDb) QueryBillTypes() (types []BillTypeRecord, err error) {
 	rows, err := db.queryAll(BillTypes)
 	if err != nil {
-		return []string{}, err
+		return []BillTypeRecord{}, err
 	}
 	var name *string
 	var id *int
 	for rows.Next() {
 		if err = rows.Scan(&id, &name); err != nil {
-			return []string{}, err
+			return []BillTypeRecord{}, err
 		}
-		types = append(types, *name)
+		types = append(types, BillTypeRecord{*id, *name})
 	}
 	return types, nil
 }
