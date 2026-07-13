@@ -507,6 +507,23 @@ func (f Form) View() string {
 	)
 }
 
+func (f Form) SendSaveMsg() tea.Cmd {
+	data := make([]string, len(f.fields))
+	for i, field := range f.fields {
+		data[i] = field.input.Value()
+	}
+
+	return func() tea.Msg {
+		return FormSavedMsg(data)
+	}
+}
+
+func (f Form) SendCancelMsg() tea.Cmd {
+	return func() tea.Msg {
+		return FormCancelMsg{}
+	}
+}
+
 func (f *Form) validateField(entry FormField) bool {
 	if entry.hasLinkedInput() {
 		f.err = entry.validate(f.fields[f.linkMap[entry.title]].input.Value())
@@ -680,21 +697,4 @@ func (f Form) isValidKey(t FormInputType, keyMsg tea.KeyPressMsg) bool {
 	}
 
 	return false
-}
-
-func (f Form) SendSaveMsg() tea.Cmd {
-	data := make([]string, len(f.fields))
-	for i, field := range f.fields {
-		data[i] = field.input.Value()
-	}
-
-	return func() tea.Msg {
-		return FormSavedMsg(data)
-	}
-}
-
-func (f Form) SendCancelMsg() tea.Cmd {
-	return func() tea.Msg {
-		return FormCancelMsg{}
-	}
 }
