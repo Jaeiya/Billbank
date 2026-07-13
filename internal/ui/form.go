@@ -507,6 +507,18 @@ func (f Form) View() string {
 	)
 }
 
+func (f *Form) Reset() tea.Cmd {
+	for i := range f.fields {
+		f.fields[i].input.SetValue("")
+	}
+	f.focus = formFocusInput
+	f.buttons.cancel.Blur()
+	f.buttons.save.Blur()
+	f.fields[0].input.Focus()
+	f.tabPos = 0
+	return textinput.Blink
+}
+
 func (f Form) SendSaveMsg() tea.Cmd {
 	data := make([]string, len(f.fields))
 	for i, field := range f.fields {
