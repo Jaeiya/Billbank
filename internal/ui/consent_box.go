@@ -5,6 +5,10 @@ import (
 	"charm.land/lipgloss/v2"
 )
 
+type ConsentMsg struct {
+	Yes bool
+}
+
 type ConsentModel struct {
 	msg     string
 	buttons struct {
@@ -63,15 +67,19 @@ func (m ConsentModel) Update(msg tea.Msg) (ConsentModel, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
 		switch msg.String() {
+		case "enter":
+			yes := m.buttons.yes.isFocused
+			return m, func() tea.Msg { return ConsentMsg{yes} }
+
 		case "h", "left":
 			m.buttons.no.Blur()
 			m.buttons.yes.Focus()
+
 		case "l", "right":
 			m.buttons.yes.Blur()
 			m.buttons.no.Focus()
 		}
 	}
-
 	return m, nil
 }
 
