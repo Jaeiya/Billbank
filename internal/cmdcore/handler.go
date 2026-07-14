@@ -71,6 +71,7 @@ type cmdHandler[M any] struct {
 	id         int
 	viewWidth  int
 	viewHeight int
+	isLoaded   bool // Has the command been executed?
 }
 
 func NewCmdHandler[M any](
@@ -162,6 +163,7 @@ func (ch *cmdHandler[M]) Update(msg tea.Msg) (CommandHandler, tea.Cmd) {
 		ch.viewHeight = msg.Height
 		ch.viewWidth = msg.Width
 		ch.cmdModel = ch.ExecCommand(msg.Width, msg.Height)
+		ch.isLoaded = true
 
 	case FatalCmdErrMsg:
 		ch.errors.command = msg
@@ -204,6 +206,15 @@ func (ch cmdHandler[M]) View() tea.View {
 			MsgFatalMissingCmd,
 			ch.name, ch.cmdState.Path,
 		)
+	}
+
+	/*
+		INFO: The contract between a command and its view is that
+		the view will not be executed before the command has
+		been executed.
+	*/
+	if !ch.isLoaded {
+		return v
 	}
 
 	v, err = cmd.View(ch.cmdModel)
