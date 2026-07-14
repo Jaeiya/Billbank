@@ -31,9 +31,11 @@ func main() {
 
 	logger.Log(logger.Info, "starting billbank")
 
-	// TODO: defer loading database to viewport state
-	// This way we can show a loading TUI element instead of having the
-	// user look at a blank screen
+	/*
+		TODO: defer loading database to viewport state, that way we
+		can show a loading TUI element instead of having the
+		user look at a blank screen.
+	*/
 	db, err := sqlite.NewSqliteDb(filePath, internal.USD)
 	if err != nil {
 		panic(err)
@@ -44,7 +46,7 @@ func main() {
 			panic(err)
 		}
 
-		// TODO:  Do not delete database in production
+		// WARN: This code should be removed in production
 		err = os.Remove(filePath)
 		if err != nil {
 			panic(err)
