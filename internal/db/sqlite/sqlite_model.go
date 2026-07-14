@@ -173,3 +173,12 @@ var BillTypeMap = map[string]int{
 	"transit":       15,
 	"utility":       16,
 }
+
+func FindBillType(typeID int) string {
+	for typeName, id := range BillTypeMap {
+		if id == typeID {
+			return typeName
+		}
+	}
+	return ""
+}
