@@ -3,6 +3,7 @@ package commands
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -49,10 +50,8 @@ type billsModel struct {
 	table     ui.TableModel
 	form      ui.Form
 	consent   ui.ConsentModel
+	billNames *[]string
 	state     BillCmdState
-	updateErr error
-	initForm  bool
-	tableLen  int
 }
 
 func NewBillsHandler(db *sqlite.SqliteDb) cmdcore.CommandHandler {
@@ -60,6 +59,7 @@ func NewBillsHandler(db *sqlite.SqliteDb) cmdcore.CommandHandler {
 		ModelBase: cmdcore.NewModelBase(),
 		db:        db,
 		consent:   ui.NewConsentBox(true),
+		billNames: &[]string{},
 	}
 
 	h := cmdcore.NewCmdHandler(
@@ -157,7 +157,7 @@ func loadBills(m billsModel, arg *cmdcore.NoArg) (cmdcore.CommandModel, error) {
 			return m, err
 		}
 
-		m.form = newBillForm()
+		m.form = m.createBillForm()
 	}
 
 	return m, nil
@@ -201,15 +201,11 @@ func viewBills(m billsModel) tea.View {
 	return tea.NewView("")
 }
 
-func (m billsModel) saveBill(data []string) error {
+func (m *billsModel) saveBill(data []string) error {
 	name, typeStr, amount, periodStr, dueDateStr := data[0], data[1], data[2], data[3], data[4]
 	_ = dueDateStr
 
-	/*
-		TODO: check if an existing bill already has the same name. We
-		need somewhere to store the name of each added bill, so that
-		we can detect the conflicts.
-	*/
+	*m.billNames = append(*m.billNames, name)
 
 	typeID, exists := sqlite.BillTypeMap[typeStr]
 	if !exists {
@@ -336,7 +332,7 @@ func (m *billsModel) createBillsTable() error {
 	return nil
 }
 
-func newBillForm() ui.Form {
+func (m *billsModel) createBillForm() ui.Form {
 	return ui.NewForm(
 		"New Bill",
 		ui.NewFormField().
@@ -347,6 +343,9 @@ func newBillForm() ui.Form {
 			Validator(func(s string, defaultValidator func() error, args ...string) error {
 				if utils.RuneCount(s) < 3 {
 					return errors.New("invalid name; bill name must be more than 3 characters")
+				}
+				if slices.Contains(*m.billNames, s) {
+					return errors.New("bill already exists; bill name must be unique")
 				}
 				return nil
 			}),
