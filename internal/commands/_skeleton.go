@@ -1,3 +1,4 @@
+
 import (
 	"fmt"
 
@@ -10,8 +11,6 @@ import (
 // (rename to reflect the name of your new command)
 type skeletonModel struct {
 	cmdcore.ModelBase
-	vpSize      struct{ w, h int }
-	workingPath string
 	thisCounter int
 	thatCounter int
 	lastKey     string
@@ -87,6 +86,14 @@ func NewSkeletonHandler() cmdcore.CommandHandler {
 			ViewFunc:     viewD,
 			CaptureInput: true,
 		}),
+
+		// Creates a "skeleton e" command which demonstrates how to get the
+		// view port size.
+		cmdcore.NewCommand(cmdcore.CommandOptions[skeletonModel, cmdcore.NoArg]{
+			Path:     "e",
+			RunFunc:  loadDummy,
+			ViewFunc: viewE,
+		}),
 	}
 
 	return cmdcore.NewCmdHandler(
@@ -151,7 +158,7 @@ Execute the command again to increment the counter: %d
 When resizing the window, you will not see the
 counter update, even though technically the
 view is re-rendered. This is because window
-resizes do not re-execute command logic.
+resizes do not execute command logic.
 
 This means that you'll need to place all
 layout logic into the view. The reason for
@@ -196,4 +203,16 @@ won't see the keys change above, because the
 command input will be intercepting all of
 them.
 `, m.lastKey))
+}
+
+func viewE(m skeletonModel) tea.View {
+	v := tea.NewView("")
+	w, h := m.ViewportSize()
+	content := `
+Width: %d, Height: %d
+
+Resize the terminal to see the dimensions change in real time.
+	`
+	v.SetContent(fmt.Sprintf(content, w, h))
+	return v
 }

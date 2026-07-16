@@ -41,7 +41,7 @@ type TransferRecord struct {
 	FromWhom *string
 }
 
-func (sdb SqliteDb) CreateBankAccount(config BankAccountRecord, password *string) error {
+func (db SqliteDb) CreateBankAccount(config BankAccountRecord, password *string) error {
 	encAccountNum, err := internal.EncryptNonNil(config.AccountNumber, password)
 	if err != nil {
 		return err
@@ -52,15 +52,15 @@ func (sdb SqliteDb) CreateBankAccount(config BankAccountRecord, password *string
 		return err
 	}
 
-	_, err = sdb.insertInto(BANK_ACCOUNTS, config.Name, encAccountNum, encNotes)
+	_, err = db.insertInto(BankAccts, config.Name, encAccountNum, encNotes)
 	if err != nil {
 		return getExecError(err)
 	}
 	return nil
 }
 
-func (sdb SqliteDb) QueryBankAccounts(qm QueryMap, pass *string) ([]BankAccountRecord, error) {
-	rows, err := sdb.query(BANK_ACCOUNTS, qm)
+func (db SqliteDb) QueryBankAccounts(qm QueryMap, pass *string) ([]BankAccountRecord, error) {
+	rows, err := db.query(BankAccts, qm)
 	if err != nil {
 		return []BankAccountRecord{}, err
 	}
@@ -69,24 +69,25 @@ func (sdb SqliteDb) QueryBankAccounts(qm QueryMap, pass *string) ([]BankAccountR
 	for rows.Next() {
 		var record BankAccountRecord
 		var err error
+		var accNumBytes, noteBytes []byte
 
 		if err = rows.Scan(
 			&record.ID,
 			&record.Name,
-			&record.AccountNumber,
-			&record.Notes,
+			&accNumBytes,
+			&noteBytes,
 		); err != nil {
 			return []BankAccountRecord{}, err
 		}
 
-		if pass != nil && record.AccountNumber != nil {
-			if record.AccountNumber, err = internal.DecryptNonNil(record.AccountNumber, *pass); err != nil {
+		if pass != nil && accNumBytes != nil {
+			if record.AccountNumber, err = internal.DecryptNonNil(accNumBytes, *pass); err != nil {
 				return []BankAccountRecord{}, err
 			}
 		}
 
-		if pass != nil && record.Notes != nil {
-			if record.Notes, err = internal.DecryptNonNil(record.Notes, *pass); err != nil {
+		if pass != nil && noteBytes != nil {
+			if record.Notes, err = internal.DecryptNonNil(noteBytes, *pass); err != nil {
 				return []BankAccountRecord{}, err
 			}
 		}
@@ -101,9 +102,9 @@ func (sdb SqliteDb) QueryBankAccounts(qm QueryMap, pass *string) ([]BankAccountR
 	return records, nil
 }
 
-func (sdb SqliteDb) CreateBankAccountHistory(config BankHistoryRecord) error {
-	_, err := sdb.insertInto(
-		BANK_ACCOUNT_HISTORY,
+func (db SqliteDb) CreateBankAccountHistory(config BankHistoryRecord) error {
+	_, err := db.insertInto(
+		BankAcctHistory,
 		config.BankAccountID,
 		config.MonthID,
 		config.Balance,
@@ -114,8 +115,8 @@ func (sdb SqliteDb) CreateBankAccountHistory(config BankHistoryRecord) error {
 	return nil
 }
 
-func (sdb SqliteDb) QueryBankAccountHistory(qm QueryMap) ([]BankHistoryRecord, error) {
-	rows, err := sdb.query(BANK_ACCOUNT_HISTORY, qm)
+func (db SqliteDb) QueryBankAccountHistory(qm QueryMap) ([]BankHistoryRecord, error) {
+	rows, err := db.query(BankAcctHistory, qm)
 	if err != nil {
 		return []BankHistoryRecord{}, err
 	}
@@ -142,9 +143,9 @@ func (sdb SqliteDb) QueryBankAccountHistory(qm QueryMap) ([]BankHistoryRecord, e
 	return records, nil
 }
 
-func (sdb SqliteDb) CreateTransfer(tr TransferRecord) error {
-	_, err := sdb.insertInto(
-		BANK_TRANSFERS,
+func (db SqliteDb) CreateTransfer(tr TransferRecord) error {
+	_, err := db.insertInto(
+		BankTranx,
 		tr.HistoryID,
 		tr.MonthID,
 		tr.Name,
@@ -160,8 +161,8 @@ func (sdb SqliteDb) CreateTransfer(tr TransferRecord) error {
 	return nil
 }
 
-func (sdb SqliteDb) QueryTransfers(qm QueryMap) ([]TransferRecord, error) {
-	rows, err := sdb.query(BANK_TRANSFERS, qm)
+func (db SqliteDb) QueryTransfers(qm QueryMap) ([]TransferRecord, error) {
+	rows, err := db.query(BankTranx, qm)
 	if err != nil {
 		return []TransferRecord{}, err
 	}

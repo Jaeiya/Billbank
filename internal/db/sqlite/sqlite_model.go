@@ -1,33 +1,33 @@
+//nolint:goconst
 package sqlite
 
 type Table string
 
 const (
-	MONTHS               = Table("months")
-	INCOME               = Table("income")
-	INCOME_HISTORY       = Table("income_history")
-	INCOME_AFFIXES       = Table("income_affixes")
-	BANK_ACCOUNTS        = Table("bank_accounts")
-	BANK_ACCOUNT_HISTORY = Table("bank_account_history")
-	BANK_TRANSFERS       = Table("bank_transfers")
-	CREDIT_CARDS         = Table("credit_cards")
-	CREDIT_CARD_HISTORY  = Table("credit_card_history")
-	BILLS                = Table("bills")
-	BILLS_HISTORY        = Table("bills_history")
-	BILLS_MONTHLY        = Table("bills_monthly")
-	BILL_TYPES           = Table("bill_types")
+	Months            = Table("months")
+	Income            = Table("income")
+	IncomeHistory     = Table("income_history")
+	IncomeAffixes     = Table("income_affixes")
+	BankAccts         = Table("bank_accounts")
+	BankAcctHistory   = Table("bank_account_history")
+	BankTranx         = Table("bank_transfers")
+	CreditCards       = Table("credit_cards")
+	CreditCardHistory = Table("credit_card_history")
+	Bills             = Table("bills")
+	BillsHistory      = Table("bills_history")
+	BillTypes         = Table("bill_types")
 )
 
 type TableFields = map[Table][]string
 
 var tableData = TableFields{
-	MONTHS:               {"date"},
-	INCOME:               {"name", "amount", "period"},
-	INCOME_HISTORY:       {"income_id", "month_id", "amount"},
-	INCOME_AFFIXES:       {"history_id", "name", "amount"},
-	BANK_ACCOUNTS:        {"name", "acct_num", "notes"},
-	BANK_ACCOUNT_HISTORY: {"account_id", "month_id", "balance"},
-	BANK_TRANSFERS: {
+	Months:          {"date"},
+	Income:          {"name", "amount", "period"},
+	IncomeHistory:   {"income_id", "month_id", "amount"},
+	IncomeAffixes:   {"history_id", "name", "amount"},
+	BankAccts:       {"name", "acct_num", "notes"},
+	BankAcctHistory: {"account_id", "month_id", "balance"},
+	BankTranx: {
 		"bank_history_id",
 		"month_id",
 		"name",
@@ -37,7 +37,7 @@ var tableData = TableFields{
 		"to_whom",
 		"from_whom",
 	},
-	CREDIT_CARDS: {
+	CreditCards: {
 		"name",
 		"due_day",
 		"credit_limit",
@@ -45,7 +45,7 @@ var tableData = TableFields{
 		"last_four_digits",
 		"notes",
 	},
-	CREDIT_CARD_HISTORY: {
+	CreditCardHistory: {
 		"card_id",
 		"month_id",
 		"balance",
@@ -55,14 +55,16 @@ var tableData = TableFields{
 		"paid_amount",
 		"cleared_day",
 	},
-	BILLS: {
+	Bills: {
 		"type_id",
 		"name",
 		"amount",
 		"due_date",
+		"status",
 		"period",
+		"is_active",
 	},
-	BILLS_HISTORY: {
+	BillsHistory: {
 		"month_id",
 		"type_id",
 		"name",
@@ -74,11 +76,8 @@ var tableData = TableFields{
 		"cleared_day",
 		"notes",
 	},
-	BILLS_MONTHLY: {
-		"bill_id",
-		"is_active",
-	},
-	BILL_TYPES: {
+	BillTypes: {
+		"id",
 		"name",
 	},
 }
@@ -90,40 +89,96 @@ type (
 )
 
 const (
-	WHERE_ID = WhereFlag(1 << iota)
-	WHERE_NAME
-	WHERE_AMOUNT
-	WHERE_BALANCE
-	WHERE_YEAR
-	WHERE_MONTH
-	WHERE_MONTH_ID
-	WHERE_BANK_ACCOUNT_ID
-	WHERE_INCOME_ID
-	WHERE_INCOME_HISTORY_ID
-	WHERE_CREDIT_CARD_ID
-	WHERE_BILL_ID
+	WhereID = WhereFlag(1 << iota)
+	WhereName
+	WhereAmount
+	WhereBalance
+	WhereYear
+	WhereMonth
+	WhereMonthID
+	WhereBankAcctID
+	WhereIncomeID
+	WhereIncomeHistoryID
+	WhereCreditCardID
+	WhereBillID
 )
 
 var WhereFieldMap = map[WhereFlag]string{
-	WHERE_ID:                "id",
-	WHERE_NAME:              "name",
-	WHERE_AMOUNT:            "amount",
-	WHERE_BALANCE:           "balance",
-	WHERE_YEAR:              "year",
-	WHERE_MONTH:             "month",
-	WHERE_MONTH_ID:          "month_id",
-	WHERE_BANK_ACCOUNT_ID:   "bank_account_id",
-	WHERE_INCOME_ID:         "income_id",
-	WHERE_INCOME_HISTORY_ID: "income_history_id",
-	WHERE_CREDIT_CARD_ID:    "credit_card_id",
-	WHERE_BILL_ID:           "bill_id",
+	WhereID:              "id",
+	WhereName:            "name",
+	WhereAmount:          "amount",
+	WhereBalance:         "balance",
+	WhereYear:            "year",
+	WhereMonth:           "month",
+	WhereMonthID:         "month_id",
+	WhereBankAcctID:      "bank_account_id",
+	WhereIncomeID:        "income_id",
+	WhereIncomeHistoryID: "income_history_id",
+	WhereCreditCardID:    "credit_card_id",
+	WhereBillID:          "bill_id",
 }
 
 type Period string
 
 const (
-	YEARLY   = Period("yearly")
-	MONTHLY  = Period("monthly")
-	WEEKLY   = Period("weekly")
-	BIWEEKLY = Period("biweekly")
+	Yearly    = Period("yearly")
+	BiYearly  = Period("bi-yearly")
+	TriYearly = Period("tri-yearly")
+
+	Monthly   = Period("monthly")
+	BiMonthly = Period("bi-monthly")
+
+	Weekly   = Period("weekly")
+	BiWeekly = Period("bi-weekly")
 )
+
+var PeriodStrings = [...]string{
+	string(Yearly),
+	string(BiYearly),
+	string(TriYearly),
+	string(Monthly),
+	string(BiMonthly),
+	string(Weekly),
+	string(BiWeekly),
+}
+
+type BillStatus string
+
+const (
+	Pending = BillStatus("pending")
+	Missed  = BillStatus("missed")
+	Paid    = BillStatus("paid")
+)
+
+// Bill types mapped directly to their database ID.
+//
+// 🔴 These ID's should NEVER change! If a type needs to be
+// added, add the type name (keeping alphabetical order) and
+// set its ID to the current largest id + 1.
+var BillTypeMap = map[string]int{
+	"credit card":   1,
+	"donation":      2,
+	"education":     3,
+	"entertainment": 4,
+	"family":        5,
+	"food":          6,
+	"health":        7,
+	"housing":       8,
+	"insurance":     9,
+	"loan":          10,
+	"maintenance":   11,
+	"medical":       12,
+	"subscription":  13,
+	"tax":           14,
+	"transit":       15,
+	"utility":       16,
+}
+
+func FindBillType(typeID int) string {
+	for typeName, id := range BillTypeMap {
+		if id == typeID {
+			return typeName
+		}
+	}
+	return ""
+}

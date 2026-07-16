@@ -20,11 +20,12 @@ var (
 	_logLevel        = None
 	_stdLogger       *log.Logger
 	_fileHandle      *os.File
-	_timeFormat      = "03:04:05.000000 PM MST"
 	_defaultFileName = "log.txt"
 	_filePath        = ""
 	_mux             sync.Mutex
 )
+
+const _timeFormat = "03:04:05.000000 PM Z07:00"
 
 const (
 	Insane = LogLevel(iota)

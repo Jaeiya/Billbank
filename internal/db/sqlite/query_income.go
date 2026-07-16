@@ -38,9 +38,9 @@ type AffixIncomeRecord struct {
 	Amount          internal.Currency
 }
 
-func (sdb SqliteDb) CreateIncome(config IncomeRecord) (int64, error) {
-	res, err := sdb.insertInto(
-		INCOME,
+func (db SqliteDb) CreateIncome(config IncomeRecord) (int64, error) {
+	res, err := db.insertInto(
+		Income,
 		config.Name,
 		config.Amount,
 		config.Period,
@@ -57,9 +57,9 @@ func (sdb SqliteDb) CreateIncome(config IncomeRecord) (int64, error) {
 	return id, nil
 }
 
-func (sdb SqliteDb) SetIncome(id int, amount internal.Currency) error {
-	_, err := sdb.handle.Exec(
-		fmt.Sprintf("UPDATE income SET amount=%d WHERE id=%d", amount.GetStoredValue(), id),
+func (db SqliteDb) SetIncome(id int, amount internal.Currency) error {
+	_, err := db.handle.Exec(
+		fmt.Sprintf("UPDATE income SET amount=%d WHERE id=%d", amount.StoredValue(), id),
 	)
 	if err != nil {
 		return err
@@ -67,8 +67,8 @@ func (sdb SqliteDb) SetIncome(id int, amount internal.Currency) error {
 	return nil
 }
 
-func (sdb SqliteDb) QueryIncome(qm QueryMap) ([]IncomeRecord, error) {
-	rows, err := sdb.query(INCOME, qm)
+func (db SqliteDb) QueryIncome(qm QueryMap) ([]IncomeRecord, error) {
+	rows, err := db.query(Income, qm)
 	if err != nil {
 		return []IncomeRecord{}, err
 	}
@@ -94,9 +94,9 @@ func (sdb SqliteDb) QueryIncome(qm QueryMap) ([]IncomeRecord, error) {
 	return records, nil
 }
 
-func (sdb SqliteDb) CreateIncomeHistory(config IncomeHistoryRecord) error {
-	_, err := sdb.insertInto(
-		INCOME_HISTORY,
+func (db SqliteDb) CreateIncomeHistory(config IncomeHistoryRecord) error {
+	_, err := db.insertInto(
+		IncomeHistory,
 		config.IncomeID,
 		config.MonthID,
 		config.Amount,
@@ -107,8 +107,8 @@ func (sdb SqliteDb) CreateIncomeHistory(config IncomeHistoryRecord) error {
 	return nil
 }
 
-func (sdb SqliteDb) QueryIncomeHistory(qm QueryMap) ([]IncomeHistoryRecord, error) {
-	rows, err := sdb.query(INCOME_HISTORY, qm)
+func (db SqliteDb) QueryIncomeHistory(qm QueryMap) ([]IncomeHistoryRecord, error) {
+	rows, err := db.query(IncomeHistory, qm)
 	if err != nil {
 		return []IncomeHistoryRecord{}, err
 	}
@@ -138,16 +138,16 @@ func (sdb SqliteDb) QueryIncomeHistory(qm QueryMap) ([]IncomeHistoryRecord, erro
 AffixIncome tracks an appended amount to an existing income. This could
 be a bonus or overtime amount.
 */
-func (sdb SqliteDb) AffixIncome(historyID int, name string, amount internal.Currency) error {
-	_, err := sdb.insertInto(INCOME_AFFIXES, historyID, name, amount.GetStoredValue())
+func (db SqliteDb) AffixIncome(historyID int, name string, amount internal.Currency) error {
+	_, err := db.insertInto(IncomeAffixes, historyID, name, amount.StoredValue())
 	if err != nil {
 		return getExecError(err)
 	}
 	return nil
 }
 
-func (sdb SqliteDb) QueryAffixIncome(qm QueryMap) ([]AffixIncomeRecord, error) {
-	rows, err := sdb.query(INCOME_AFFIXES, qm)
+func (db SqliteDb) QueryAffixIncome(qm QueryMap) ([]AffixIncomeRecord, error) {
+	rows, err := db.query(IncomeAffixes, qm)
 	if err != nil {
 		return []AffixIncomeRecord{}, err
 	}

@@ -25,7 +25,7 @@ func TestCreateIncome(t *testing.T) {
 				{
 					Name:   "test",
 					Amount: internal.NewCurrency("200", internal.USD),
-					Period: MONTHLY,
+					Period: Monthly,
 				},
 			},
 			expected: []IncomeRecord{
@@ -33,7 +33,7 @@ func TestCreateIncome(t *testing.T) {
 					ID:     1,
 					Name:   "test",
 					Amount: internal.NewCurrency("200", internal.USD),
-					Period: MONTHLY,
+					Period: Monthly,
 				},
 			},
 		},
@@ -54,7 +54,9 @@ func TestCreateIncome(t *testing.T) {
 
 			db, err := NewSqliteDb("", internal.USD, WithMemoryDB())
 			r.NoError(err)
-			defer db.Close()
+			defer func() {
+				r.NoError(db.Close())
+			}()
 
 			if mock.expectedError != nil {
 				for _, iConfig := range mock.actual {
@@ -83,19 +85,21 @@ func TestCreateIncome(t *testing.T) {
 
 		db, err := NewSqliteDb("", internal.USD, WithMemoryDB())
 		r.NoError(err)
-		defer db.Close()
+		defer func() {
+			r.NoError(db.Close())
+		}()
 
 		_, err = db.CreateIncome(IncomeRecord{
 			Name:   "name",
 			Amount: internal.NewCurrency("13.37", internal.USD),
-			Period: MONTHLY,
+			Period: Monthly,
 		})
 		r.NoError(err)
 
 		_, err = db.CreateIncome(IncomeRecord{
 			Name:   "name",
 			Amount: internal.NewCurrency("133.7", internal.USD),
-			Period: MONTHLY,
+			Period: Monthly,
 		})
 		a.ErrorIs(err, ErrUniqueName)
 	})
@@ -118,7 +122,7 @@ func TestCreateIncomeHistory(t *testing.T) {
 				{
 					Name:   "test",
 					Amount: internal.NewCurrency("250", internal.USD),
-					Period: BIWEEKLY,
+					Period: BiWeekly,
 				},
 			},
 			actual: []IncomeHistoryRecord{
@@ -143,7 +147,7 @@ func TestCreateIncomeHistory(t *testing.T) {
 				{
 					Name:   "test",
 					Amount: internal.NewCurrency("250", internal.USD),
-					Period: BIWEEKLY,
+					Period: BiWeekly,
 				},
 			},
 			actual: []IncomeHistoryRecord{
@@ -161,7 +165,7 @@ func TestCreateIncomeHistory(t *testing.T) {
 				{
 					Name:   "test",
 					Amount: internal.NewCurrency("250", internal.USD),
-					Period: BIWEEKLY,
+					Period: BiWeekly,
 				},
 			},
 			actual: []IncomeHistoryRecord{
@@ -188,7 +192,9 @@ func TestCreateIncomeHistory(t *testing.T) {
 
 			db, err := NewSqliteDb("", internal.USD, WithMemoryDB())
 			r.NoError(err)
-			defer db.Close()
+			defer func() {
+				r.NoError(db.Close())
+			}()
 
 			now := time.Now()
 			_, err = db.CreateMonth(now.Year(), now.Month())

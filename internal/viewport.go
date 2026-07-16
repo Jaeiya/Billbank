@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"reflect"
 
-	"charm.land/bubbles/v2/textinput"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"github.com/jaeiya/billbank/internal/cmdcore"
@@ -30,7 +29,6 @@ func NewViewport(input cmdcore.InputModel) ViewPort {
 
 func (vp ViewPort) Init() tea.Cmd {
 	teaCmds := []tea.Cmd{
-		textinput.Blink,
 		vp.cmdInput.Init(),
 	}
 	logger.Log(logger.Info, "viewport loaded")
@@ -58,7 +56,7 @@ func (vp ViewPort) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return vp, tea.Quit
 		}
 
-		if msg.String() == "`" {
+		if msg.String() == "\\" {
 			logger.Log(logger.Hot, "[OnGrave] toggling viewport input")
 			vp, teaCmd = vp.toggleInput()
 			return vp, teaCmd
@@ -86,7 +84,8 @@ func (vp ViewPort) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// Ignore key input unless command has exclusive control
 		if isKey && vp.hasHiddenInput || !isKey {
 			logger.LogFunc(logger.Hot, func() string {
-				return fmt.Sprintf("sending [%+v] to [%s] handler",
+				return fmt.Sprintf(
+					"sending [%+v] to [%s] handler",
 					reflect.TypeOf(msg), vp.cmdHandler.Name(),
 				)
 			})
@@ -120,7 +119,8 @@ func (vp ViewPort) View() tea.View {
 				lipgloss.Left,
 				lipgloss.Top,
 				cmdView,
-			))
+			),
+		)
 	}
 
 	// Do not display command input when command has exclusive control
@@ -168,9 +168,6 @@ func (vp *ViewPort) updateHandler(msg cmdcore.UpdateHandlerMsg) tea.Cmd {
 func (vp ViewPort) toggleInput() (ViewPort, tea.Cmd) {
 	var teaCmd tea.Cmd
 	vp.hasHiddenInput = !vp.hasHiddenInput
-	if !vp.hasHiddenInput {
-		teaCmd = textinput.Blink
-	}
 
 	w, h := vp.size()
 	// Updating directly, avoids UI jumping around

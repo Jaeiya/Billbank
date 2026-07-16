@@ -1,0 +1,12 @@
+words = [
+    "Tri",
+    "billbank",
+    "cmdcore",
+    "errcheck",
+    "esc",
+    "fieldalignment",
+    "goconst",
+    "govet",
+    "ineffassign",
+    "staticcheck",
+]

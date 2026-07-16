@@ -78,15 +78,15 @@ func WithMemoryDB() Option {
 	}
 }
 
-func (sdb SqliteDb) Close() error {
-	return sdb.handle.Close()
+func (db SqliteDb) Close() error {
+	return db.handle.Close()
 }
 
-func (sdb SqliteDb) Query(s string) (*sql.Rows, error) {
-	return sdb.handle.Query(s)
+func (db SqliteDb) Query(s string) (*sql.Rows, error) {
+	return db.handle.Query(s)
 }
 
-func (sdb SqliteDb) insertInto(t Table, args ...any) (sql.Result, error) {
+func (db SqliteDb) insertInto(t Table, args ...any) (sql.Result, error) {
 	columns, exists := tableData[t]
 	if !exists {
 		return nil, ErrUnsupportedTable
@@ -96,49 +96,49 @@ func (sdb SqliteDb) insertInto(t Table, args ...any) (sql.Result, error) {
 		return nil, ErrMismatchColsValues
 	}
 
-	return sdb.handle.Exec(toInsertStr(string(t), columns), args...)
+	return db.handle.Exec(toInsertStr(string(t), columns), args...)
 }
 
-func (sdb SqliteDb) queryAll(t Table) (*sql.Rows, error) {
-	rows, err := sdb.handle.Query(fmt.Sprintf("SELECT * FROM %s", t))
+func (db SqliteDb) queryAll(t Table) (*sql.Rows, error) {
+	rows, err := db.handle.Query(fmt.Sprintf("SELECT * FROM %s", t))
 	if err != nil {
 		return nil, err
 	}
 	return rows, nil
 }
 
-func (sdb SqliteDb) query(t Table, qm QueryMap) (*sql.Rows, error) {
+func (db SqliteDb) query(t Table, qm QueryMap) (*sql.Rows, error) {
 	var fm FieldMap
 	var err error
 
-	whereIDOrMonthID := WHERE_ID | WHERE_MONTH_ID
+	whereIDOrMonthID := WhereID | WhereMonthID
 	switch t {
-	case MONTHS:
-		fm, err = buildFieldMap(WHERE_ID|WHERE_MONTH|WHERE_YEAR, qm)
+	case Months:
+		fm, err = buildFieldMap(WhereID|WhereMonth|WhereYear, qm)
 
-	case BANK_ACCOUNTS, INCOME, BILLS:
-		fm, err = buildFieldMap(WHERE_ID, qm)
+	case BankAccts, Income, Bills:
+		fm, err = buildFieldMap(WhereID, qm)
 
-	case BANK_ACCOUNT_HISTORY:
-		fm, err = buildFieldMap(whereIDOrMonthID|WHERE_BANK_ACCOUNT_ID, qm)
+	case BankAcctHistory:
+		fm, err = buildFieldMap(whereIDOrMonthID|WhereBankAcctID, qm)
 
-	case BANK_TRANSFERS:
-		fm, err = buildFieldMap(whereIDOrMonthID|WHERE_BANK_ACCOUNT_ID, qm)
+	case BankTranx:
+		fm, err = buildFieldMap(whereIDOrMonthID|WhereBankAcctID, qm)
 
-	case CREDIT_CARDS:
-		fm, err = buildFieldMap(WHERE_ID|WHERE_NAME, qm)
+	case CreditCards:
+		fm, err = buildFieldMap(WhereID|WhereName, qm)
 
-	case CREDIT_CARD_HISTORY:
-		fm, err = buildFieldMap(whereIDOrMonthID|WHERE_CREDIT_CARD_ID, qm)
+	case CreditCardHistory:
+		fm, err = buildFieldMap(whereIDOrMonthID|WhereCreditCardID, qm)
 
-	case INCOME_HISTORY:
-		fm, err = buildFieldMap(whereIDOrMonthID|WHERE_INCOME_ID, qm)
+	case IncomeHistory:
+		fm, err = buildFieldMap(whereIDOrMonthID|WhereIncomeID, qm)
 
-	case INCOME_AFFIXES:
-		fm, err = buildFieldMap(WHERE_ID|WHERE_INCOME_ID, qm)
+	case IncomeAffixes:
+		fm, err = buildFieldMap(WhereID|WhereIncomeID, qm)
 
-	case BILLS_HISTORY:
-		fm, err = buildFieldMap(whereIDOrMonthID|WHERE_BILL_ID, qm)
+	case BillsHistory:
+		fm, err = buildFieldMap(whereIDOrMonthID|WhereBillID, qm)
 
 	default:
 		err = fmt.Errorf("unsupported table: %s", t)
@@ -153,7 +153,7 @@ func (sdb SqliteDb) query(t Table, qm QueryMap) (*sql.Rows, error) {
 		return nil, err
 	}
 
-	rows, err := sdb.handle.Query(queryStr)
+	rows, err := db.handle.Query(queryStr)
 	if err != nil {
 		return nil, err
 	}
@@ -272,7 +272,7 @@ func buildQueryStr(t Table, fm FieldMap) (string, error) {
 		case int, int64, int32:
 			conditions = append(conditions, fmt.Sprintf("%s=%v", field, realVal))
 		case internal.Currency:
-			conditions = append(conditions, fmt.Sprintf("%s=%d", field, realVal.GetStoredValue()))
+			conditions = append(conditions, fmt.Sprintf("%s=%d", field, realVal.StoredValue()))
 		default:
 			return "", fmt.Errorf("unsupported type [%T]", val)
 		}

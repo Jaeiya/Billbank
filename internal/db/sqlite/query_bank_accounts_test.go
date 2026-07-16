@@ -127,7 +127,9 @@ func TestCreateBankAccount(t *testing.T) {
 
 			db, err := NewSqliteDb("", internal.USD, WithMemoryDB())
 			r.NoError(err)
-			defer db.Close()
+			defer func() {
+				r.NoError(db.Close())
+			}()
 
 			for _, acct := range mock.actual {
 				err = db.CreateBankAccount(acct, new("test"))
@@ -162,7 +164,9 @@ func TestCreateBankAccount(t *testing.T) {
 
 		db, err := NewSqliteDb(filepath.Join(dir, "mock.db"), internal.USD)
 		r.NoError(err)
-		defer db.Close()
+		defer func() {
+			r.NoError(db.Close())
+		}()
 
 		err = db.CreateBankAccount(BankAccountRecord{
 			Name:          "Test",
@@ -319,10 +323,13 @@ func TestBankAccountHistory(t *testing.T) {
 
 			db, err := NewSqliteDb("", internal.USD, WithMemoryDB())
 			r.NoError(err)
-			defer db.Close()
+			defer func() {
+				r.NoError(db.Close())
+			}()
 
 			now := time.Now()
 			_, err = db.CreateMonth(now.Year(), now.Month())
+			r.NoError(err)
 
 			for _, acct := range mock.accounts {
 				err = db.CreateBankAccount(acct, nil)
@@ -476,7 +483,9 @@ func TestBankTransfers(t *testing.T) {
 
 			db, err := NewSqliteDb("", internal.USD, WithMemoryDB())
 			r.NoError(err)
-			defer db.Close()
+			defer func() {
+				r.NoError(db.Close())
+			}()
 
 			now := time.Now()
 			_, err = db.CreateMonth(now.Year(), now.Month())

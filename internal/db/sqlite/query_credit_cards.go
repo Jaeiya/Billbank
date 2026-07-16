@@ -43,7 +43,7 @@ type CreditCardHistoryRecord struct {
 	ClearedDay   *int
 }
 
-func (sdb SqliteDb) CreateCreditCard(config CreditCardRecord, pass *string) error {
+func (db SqliteDb) CreateCreditCard(config CreditCardRecord, pass *string) error {
 	encCardNum, err := internal.EncryptNonNil(config.CardNumber, pass)
 	if err != nil {
 		return err
@@ -54,8 +54,8 @@ func (sdb SqliteDb) CreateCreditCard(config CreditCardRecord, pass *string) erro
 		return err
 	}
 
-	_, err = sdb.insertInto(
-		CREDIT_CARDS,
+	_, err = db.insertInto(
+		CreditCards,
 		config.Name,
 		config.DueDay,
 		config.CreditLimit,
@@ -69,11 +69,13 @@ func (sdb SqliteDb) CreateCreditCard(config CreditCardRecord, pass *string) erro
 	return nil
 }
 
-func (sdb SqliteDb) QueryCreditCards(
+func (db SqliteDb) QueryCreditCards(
 	qm QueryMap,
 	password *string,
 ) ([]CreditCardRecord, error) {
-	rows, err := sdb.query(CREDIT_CARDS, qm)
+	var err error
+
+	rows, err := db.query(CreditCards, qm)
 	if err != nil {
 		return []CreditCardRecord{}, err
 	}
@@ -81,28 +83,28 @@ func (sdb SqliteDb) QueryCreditCards(
 	var records []CreditCardRecord
 	for rows.Next() {
 		var record CreditCardRecord
-		var err error
+		var cardNumBytes, noteBytes []byte
 
-		if err := rows.Scan(
+		if err = rows.Scan(
 			&record.ID,
 			&record.Name,
 			&record.DueDay,
 			&record.CreditLimit,
-			&record.CardNumber,
+			&cardNumBytes,
 			&record.LastFourDigits,
-			&record.Notes,
+			&noteBytes,
 		); err != nil {
 			return []CreditCardRecord{}, err
 		}
 
-		if password != nil && record.CardNumber != nil {
-			if record.CardNumber, err = internal.DecryptNonNil(record.CardNumber, *password); err != nil {
+		if password != nil && cardNumBytes != nil {
+			if record.CardNumber, err = internal.DecryptNonNil(cardNumBytes, *password); err != nil {
 				return []CreditCardRecord{}, err
 			}
 		}
 
-		if password != nil && record.Notes != nil {
-			if record.Notes, err = internal.DecryptNonNil(record.Notes, *password); err != nil {
+		if password != nil && noteBytes != nil {
+			if record.Notes, err = internal.DecryptNonNil(noteBytes, *password); err != nil {
 				return []CreditCardRecord{}, err
 			}
 		}
@@ -117,12 +119,12 @@ func (sdb SqliteDb) QueryCreditCards(
 	return records, nil
 }
 
-func (sdb SqliteDb) CreateCreditCardHistory(r CreditCardHistoryRecord) error {
-	_, err := sdb.insertInto(
-		CREDIT_CARD_HISTORY,
+func (db SqliteDb) CreateCreditCardHistory(r CreditCardHistoryRecord) error {
+	_, err := db.insertInto(
+		CreditCardHistory,
 		r.CreditCardID,
 		r.MonthID,
-		r.Balance.GetStoredValue(),
+		r.Balance.StoredValue(),
 		r.DueDay,
 		r.CreditLimit,
 		r.PaidDay,
@@ -135,8 +137,8 @@ func (sdb SqliteDb) CreateCreditCardHistory(r CreditCardHistoryRecord) error {
 	return nil
 }
 
-func (sdb SqliteDb) QueryCreditCardHistory(qm QueryMap) ([]CreditCardHistoryRecord, error) {
-	rows, err := sdb.query(CREDIT_CARD_HISTORY, qm)
+func (db SqliteDb) QueryCreditCardHistory(qm QueryMap) ([]CreditCardHistoryRecord, error) {
+	rows, err := db.query(CreditCardHistory, qm)
 	if err != nil {
 		return []CreditCardHistoryRecord{}, err
 	}
@@ -170,7 +172,7 @@ func (sdb SqliteDb) QueryCreditCardHistory(qm QueryMap) ([]CreditCardHistoryReco
 	return records, nil
 }
 
-func (sdb SqliteDb) SetCreditCardHistory(historyID int, fieldMap CCFieldMap) error {
+func (db SqliteDb) SetCreditCardHistory(historyID int, fieldMap CCFieldMap) error {
 	conditions := make([]string, 0, len(fieldMap))
 	for field, value := range fieldMap {
 		switch field {
@@ -180,7 +182,7 @@ func (sdb SqliteDb) SetCreditCardHistory(historyID int, fieldMap CCFieldMap) err
 			if err != nil {
 				return fmt.Errorf("%s should be of type: internal.Currency", field)
 			}
-			conditions = append(conditions, fmt.Sprintf("%s=%d", field, c.GetStoredValue()))
+			conditions = append(conditions, fmt.Sprintf("%s=%d", field, c.StoredValue()))
 
 		case CC_DUE_DAY, CC_PAID_DAY:
 			if !utils.IsInt(value) {
@@ -195,12 +197,12 @@ func (sdb SqliteDb) SetCreditCardHistory(historyID int, fieldMap CCFieldMap) err
 
 	query := fmt.Sprintf(
 		"UPDATE %s SET %s WHERE id = %d",
-		CREDIT_CARD_HISTORY,
+		CreditCardHistory,
 		strings.Join(conditions, ","),
 		historyID,
 	)
 
-	if _, err := sdb.handle.Exec(query); err != nil {
+	if _, err := db.handle.Exec(query); err != nil {
 		return err
 	}
 	return nil

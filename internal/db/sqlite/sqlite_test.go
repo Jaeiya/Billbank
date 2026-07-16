@@ -7,6 +7,7 @@ import (
 )
 
 func createDate(year int, month time.Month, day int) internal.Date {
+	//nolint:errcheck
 	d, _ := internal.NewDate(year, month, day)
 	return d
 }

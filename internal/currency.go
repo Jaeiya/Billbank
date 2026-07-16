@@ -157,21 +157,25 @@ func (c Currency) String() string {
 }
 
 /*
-GetStoredValue returns the total currency amount in the lowest
+StoredValue returns the total currency amount in the lowest
 denomination for that currency. If the currency code is USD
 then it would return the total Cents.
 
 🟠 As the name suggests, it should only be used when needing
 the raw value.
 */
-func (c Currency) GetStoredValue() int {
+func (c Currency) StoredValue() int {
 	return c.amount
 }
 
+// Value is a SQL helper method to return the base value of
+// the stored currency.
 func (c Currency) Value() (driver.Value, error) {
 	return int64(c.amount), nil
 }
 
+// Scan is a SQL helper method to serialize a stored amount
+// into a currency.
 func (c *Currency) Scan(src any) error {
 	switch v := src.(type) {
 	case int64:

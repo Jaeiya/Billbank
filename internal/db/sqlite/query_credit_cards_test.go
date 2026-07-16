@@ -124,7 +124,9 @@ func TestCreateCreditCards(t *testing.T) {
 
 			db, err := NewSqliteDb("", internal.USD, WithMemoryDB())
 			r.NoError(err)
-			defer db.Close()
+			defer func() {
+				r.NoError(db.Close())
+			}()
 
 			if mock.expectedError != nil {
 				for _, cardConfig := range mock.actual {
@@ -153,7 +155,9 @@ func TestCreateCreditCards(t *testing.T) {
 
 		db, err := NewSqliteDb("", internal.USD, WithMemoryDB())
 		r.NoError(err)
-		defer db.Close()
+		defer func() {
+			r.NoError(db.Close())
+		}()
 
 		err = db.CreateCreditCard(CreditCardRecord{
 			Name:           "test",
@@ -310,7 +314,9 @@ func TestCreateCreditCardHistory(t *testing.T) {
 
 			db, err := NewSqliteDb("", internal.USD, WithMemoryDB())
 			r.NoError(err)
-			defer db.Close()
+			defer func() {
+				r.NoError(db.Close())
+			}()
 
 			now := time.Now()
 			_, err = db.CreateMonth(now.Year(), now.Month())
@@ -424,7 +430,9 @@ func TestSetCreditCardHistory(t *testing.T) {
 
 			db, err := NewSqliteDb("", internal.USD, WithMemoryDB())
 			r.NoError(err)
-			defer db.Close()
+			defer func() {
+				r.NoError(db.Close())
+			}()
 
 			now := time.Now()
 			_, err = db.CreateMonth(now.Year(), now.Month())
@@ -446,7 +454,7 @@ func TestSetCreditCardHistory(t *testing.T) {
 			r.NoError(err)
 
 			if mock.expectedErrContains != nil {
-				err := db.SetCreditCardHistory(1, mock.actual)
+				err = db.SetCreditCardHistory(1, mock.actual)
 				r.Error(err)
 				a.Contains(err.Error(), *mock.expectedErrContains)
 				return

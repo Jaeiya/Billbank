@@ -119,7 +119,8 @@ func TestCurrency(t *testing.T) {
 		c := NewCurrency("", USD)
 		a := assert.New(t)
 
-		c.Set("1.56")
+		err := c.Set("1.56")
+		a.NoError(err, "there should be no parsing errors")
 		a.Equal(c.String(), "$1.56")
 
 		c.SetCurrency(NewCurrency(".5", USD))

@@ -19,6 +19,8 @@ var (
 	ErrMissingArg    = errors.New("missing required argument")
 )
 
+type FatalCmdErrMsg error
+
 type CommandHandler interface {
 	Update(tea.Msg) (CommandHandler, tea.Cmd)
 	View() tea.View
@@ -69,6 +71,7 @@ type cmdHandler[M any] struct {
 	id         int
 	viewWidth  int
 	viewHeight int
+	isLoaded   bool // Has the command been executed?
 }
 
 func NewCmdHandler[M any](
@@ -120,7 +123,8 @@ func (ch *cmdHandler[M]) Update(msg tea.Msg) (CommandHandler, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case ViewportSizeMsg:
-		logger.Log(logger.Hot,
+		logger.Log(
+			logger.Hot,
 			"[%s] handler setting viewport size [%d:%d]",
 			ch.name, msg.Width, msg.Height,
 		)
@@ -159,6 +163,10 @@ func (ch *cmdHandler[M]) Update(msg tea.Msg) (CommandHandler, tea.Cmd) {
 		ch.viewHeight = msg.Height
 		ch.viewWidth = msg.Width
 		ch.cmdModel = ch.ExecCommand(msg.Width, msg.Height)
+		ch.isLoaded = true
+
+	case FatalCmdErrMsg:
+		ch.errors.command = msg
 	}
 
 	// Do not update an erroring command
@@ -174,15 +182,17 @@ func (ch *cmdHandler[M]) Update(msg tea.Msg) (CommandHandler, tea.Cmd) {
 func (ch cmdHandler[M]) View() tea.View {
 	v := tea.NewView("")
 
+	err := ch.errors.command
 	errorTitle := "Command Error"
 	if ch.errors.fatal != nil {
 		errorTitle = "Fatal Error"
+		err = ch.errors.fatal
 	}
 
-	if ch.errors.fatal != nil || ch.errors.command != nil {
+	if err != nil {
 		v.SetContent(ui.NewErrorBox(
 			errorTitle,
-			ch.errors.fatal.Error(),
+			err.Error(),
 			ch.viewWidth,
 			ch.viewHeight,
 		))
@@ -198,7 +208,16 @@ func (ch cmdHandler[M]) View() tea.View {
 		)
 	}
 
-	v, err := cmd.View(ch.cmdModel)
+	/*
+		INFO: The contract between a command and its view is that
+		the view will not be executed before the command has
+		been executed.
+	*/
+	if !ch.isLoaded {
+		return v
+	}
+
+	v, err = cmd.View(ch.cmdModel)
 	if err != nil {
 		if errors.Is(err, ErrModelTypeMismatch) {
 			logger.LogFatal(
