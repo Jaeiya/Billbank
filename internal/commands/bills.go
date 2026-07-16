@@ -84,12 +84,6 @@ func (m billsModel) Update(msg tea.Msg) (cmdcore.CommandModel, tea.Cmd) {
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
-	case tea.KeyPressMsg:
-		// Exits application
-		if msg.String() == "esc" {
-			return m, tea.Quit
-		}
-
 	case ui.FormSavedMsg:
 		if len(msg) != 5 {
 			return m, m.SendErr(fmt.Errorf("fatal::expected form with 5 fields, but got %d", len(msg)))

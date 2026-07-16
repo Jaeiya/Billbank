@@ -38,6 +38,7 @@ const (
 	formFocusInput formFocusState = iota
 	formFocusSave
 	formFocusCancel
+	formFocusEsc
 )
 
 var formActiveColor = BrightYellow
@@ -357,15 +358,6 @@ func (f Form) Update(msg tea.Msg) (Form, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
 		switch msg.String() {
-		case "ctrl+j":
-			if f.focus > formFocusInput {
-				return f, nil
-			}
-			f.fields[f.tabPos].input.Blur()
-			f.tabPos = len(f.fields) - 1
-			f.focus = formFocusSave
-			f.buttons.save.Focus()
-			return f, nil
 
 		case "enter":
 			if !f.validateField(f.fields[f.tabPos]) {
@@ -394,6 +386,9 @@ func (f Form) Update(msg tea.Msg) (Form, tea.Cmd) {
 			f.isInit = true
 
 		case "h", "left":
+			if f.focus == formFocusEsc {
+				return f, nil
+			}
 			if f.buttons.cancel.Focused() {
 				f.buttons.cancel.Blur()
 				f.buttons.save.Focus()
@@ -401,6 +396,9 @@ func (f Form) Update(msg tea.Msg) (Form, tea.Cmd) {
 			}
 
 		case "l", "right":
+			if f.focus == formFocusEsc {
+				return f, nil
+			}
 			if f.buttons.save.Focused() {
 				f.buttons.save.Blur()
 				f.buttons.cancel.Focus()
@@ -408,6 +406,10 @@ func (f Form) Update(msg tea.Msg) (Form, tea.Cmd) {
 			}
 
 		case "tab":
+			if f.focus == formFocusEsc {
+				return f, nil
+			}
+
 			// Toggle buttons back and forth
 			if f.focus > formFocusInput {
 				if f.buttons.save.Focused() {
@@ -443,6 +445,10 @@ func (f Form) Update(msg tea.Msg) (Form, tea.Cmd) {
 			return f, tea.Batch(cmds...)
 
 		case "backspace":
+			if f.focus == formFocusEsc {
+				return f, nil
+			}
+
 			if f.focus > formFocusInput {
 				f.buttons.save.Blur()
 				f.buttons.cancel.Blur()
@@ -451,6 +457,10 @@ func (f Form) Update(msg tea.Msg) (Form, tea.Cmd) {
 			}
 
 		case "shift+tab":
+			if f.focus == formFocusEsc {
+				return f, nil
+			}
+
 			if f.focus > formFocusInput {
 				f.buttons.save.Blur()
 				f.buttons.cancel.Blur()
@@ -470,6 +480,20 @@ func (f Form) Update(msg tea.Msg) (Form, tea.Cmd) {
 			f.tabPos--
 			f.isInit = true
 			return f, f.fields[f.tabPos].input.Focus()
+
+		case "esc":
+			if f.focus == formFocusEsc {
+				f.focus = formFocusInput
+				f.tabPos = 0
+				f.buttons.cancel.Blur()
+				return f, f.fields[f.tabPos].input.Focus()
+			}
+
+			if f.focus == formFocusInput {
+				f.fields[f.tabPos].input.Blur()
+				f.focus = formFocusEsc
+				f.buttons.cancel.Focus()
+			}
 		}
 	}
 
@@ -611,7 +635,7 @@ func (f Form) formStatusView(status string, isGood bool) string {
 
 	statusChar := "\u2713 "
 	statusFg := FgSuccessColor
-	if !isGood || f.focus == formFocusCancel {
+	if !isGood || f.focus >= formFocusCancel {
 		statusChar = "\u2717 "
 		statusFg = FgErrColor
 	}
@@ -623,7 +647,7 @@ func (f Form) formStatusView(status string, isGood bool) string {
 		statusTitle = "Save Form"
 		statusText = statusTextStyle.Render(statusChar + "Form is ready to save")
 		description = "Take a moment to look over the form and make sure it's correct before saving."
-	case formFocusCancel:
+	case formFocusCancel, formFocusEsc:
 		statusTitle = "Cancel Form"
 		description = "No changes will be made to " + f.name + "."
 		statusText = statusTextStyle.Render(statusChar + "Form will be discarded")
