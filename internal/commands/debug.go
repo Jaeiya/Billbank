@@ -262,12 +262,6 @@ func loadSlog(m debugModel, arg *int) (cmdcore.CommandModel, error) {
 		lines = lines[len(lines)-maxLines:]
 	}
 
-	lineLen := len(lines)
-
-	tagBuilder.Grow(5 * lineLen)
-	subjBuilder.Grow(10 * lineLen)
-	wordBuilder.Grow(100 * lineLen)
-
 	lastTimeStamp := time.Now()
 	for i, line := range lines {
 		if line == "" {
@@ -296,7 +290,7 @@ func loadSlog(m debugModel, arg *int) (cmdcore.CommandModel, error) {
 		tagBuilder.WriteString(tag)
 		tagBuilder.WriteByte('\n')
 
-		_, msg, _ := strings.Cut(line, "]:")
+		words := parts[5:]
 
 		bullet := subjectStyle.Render("<>")
 		subjBuilder.WriteString(strings.Split(parts[4], ".")[0][1:])

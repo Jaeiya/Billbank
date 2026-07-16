@@ -46,7 +46,7 @@ func main() {
 			panic(err)
 		}
 
-		// WARN: This code should be removed in production
+		// TODO:  Do not delete database in production
 		err = os.Remove(filePath)
 		if err != nil {
 			panic(err)
