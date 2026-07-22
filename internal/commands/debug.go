@@ -298,7 +298,8 @@ func loadSlog(m debugModel, arg *int) (cmdcore.CommandModel, error) {
 		subjBuilder.WriteString(bullet)
 		subjBuilder.WriteString("\n ")
 
-		wordBuilder.WriteString(slogWordStyle.Render(msg))
+		wordBuilder.WriteByte(' ')
+		wordBuilder.WriteString(slogWordStyle.Render(strings.Join(words, " ")))
 		wordBuilder.WriteByte('\n')
 	}
 
